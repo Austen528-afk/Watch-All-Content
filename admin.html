@@ -3,7 +3,6 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -14,9 +13,9 @@
 <style>
 
 *{
+    box-sizing:border-box;
     margin:0;
     padding:0;
-    box-sizing:border-box;
 }
 
 body{
@@ -25,8 +24,6 @@ body{
     font-family:Arial,Helvetica,sans-serif;
     min-height:100vh;
 }
-
-/* HEADER */
 
 header{
     height:70px;
@@ -50,54 +47,35 @@ header{
 }
 
 .user-button{
-    text-decoration:none;
     background:#ff1744;
-    color:#fff;
+    color:white;
+    text-decoration:none;
 
     padding:11px 18px;
 
     border-radius:8px;
-
-    font-weight:bold;
-
-    transition:.2s;
 }
-
-.user-button:hover{
-    background:#e60035;
-}
-
-/* MAIN */
 
 .container{
     width:100%;
-    max-width:1000px;
-
+    max-width:900px;
     margin:auto;
 
     padding:40px 20px;
 }
 
-/* TITLE */
-
-.page-title{
-    margin-bottom:30px;
-}
-
-.page-title h1{
+h1{
     font-size:32px;
     margin-bottom:8px;
 }
 
-.page-title p{
+.subtitle{
     color:#888;
+    margin-bottom:30px;
 }
 
-/* UPLOAD CARD */
-
-.upload-card{
+.card{
     background:#151515;
-
     border:1px solid #292929;
 
     border-radius:14px;
@@ -105,19 +83,14 @@ header{
     padding:30px;
 }
 
-/* FORM */
-
 .form-group{
     margin-bottom:22px;
 }
 
-label{
+label.title-label{
     display:block;
-
-    font-size:14px;
-
     color:#ddd;
-
+    font-size:14px;
     margin-bottom:8px;
 }
 
@@ -129,9 +102,9 @@ select{
 
     background:#0d0d0d;
 
-    border:1px solid #333;
+    color:#fff;
 
-    color:white;
+    border:1px solid #333;
 
     border-radius:8px;
 
@@ -140,48 +113,42 @@ select{
     font-size:14px;
 
     outline:none;
-
-    font-family:inherit;
-
-}
-
-input[type="text"]:focus,
-textarea:focus,
-select:focus{
-
-    border-color:#ff1744;
-
 }
 
 textarea{
-
     min-height:120px;
-
     resize:vertical;
-
 }
 
-/* FILE INPUT */
+input:focus,
+textarea:focus,
+select:focus{
+    border-color:#ff1744;
+}
 
-.file-box{
+
+/* FILE SELECTOR */
+
+.file-selector{
+
+    width:100%;
+
+    border:2px dashed #444;
 
     background:#0d0d0d;
 
-    border:1px dashed #444;
-
     border-radius:10px;
 
-    padding:25px;
+    padding:30px 20px;
 
     text-align:center;
 
     cursor:pointer;
 
     transition:.2s;
-
 }
 
-.file-box:hover{
+.file-selector:hover{
 
     border-color:#ff1744;
 
@@ -189,7 +156,7 @@ textarea{
 
 }
 
-.file-box input{
+.file-selector input{
 
     display:none;
 
@@ -197,31 +164,46 @@ textarea{
 
 .file-icon{
 
-    font-size:40px;
+    font-size:42px;
 
     margin-bottom:10px;
 
 }
 
-.file-box strong{
+.file-selector strong{
 
     display:block;
 
-    margin-bottom:6px;
+    font-size:15px;
+
+    margin-bottom:7px;
 
 }
 
-.file-box small{
+.file-selector small{
 
     color:#777;
 
 }
 
-.file-name{
+
+/* SELECTED FILE */
+
+.selected-file{
+
+    display:none;
 
     margin-top:12px;
 
-    color:#21c477;
+    padding:12px;
+
+    background:#10251b;
+
+    border:1px solid #1f7549;
+
+    border-radius:8px;
+
+    color:#42d889;
 
     font-size:13px;
 
@@ -229,17 +211,6 @@ textarea{
 
 }
 
-/* GRID */
-
-.form-grid{
-
-    display:grid;
-
-    grid-template-columns:1fr 1fr;
-
-    gap:20px;
-
-}
 
 /* BUTTON */
 
@@ -263,13 +234,11 @@ textarea{
 
     cursor:pointer;
 
-    margin-top:5px;
-
 }
 
 .upload-button:hover{
 
-    background:#e60035;
+    background:#e00038;
 
 }
 
@@ -281,17 +250,61 @@ textarea{
 
 }
 
-/* PROGRESS */
 
-.progress-container{
+/* STATUS */
+
+#status{
+
+    margin-top:20px;
+
+    padding:14px;
+
+    border-radius:8px;
 
     display:none;
 
-    margin-top:25px;
+    font-size:14px;
+
+    line-height:1.5;
 
 }
 
-.progress-label{
+.success{
+
+    display:block !important;
+
+    background:#10251b;
+
+    border:1px solid #1f7549;
+
+    color:#42d889;
+
+}
+
+.error{
+
+    display:block !important;
+
+    background:#2a1015;
+
+    border:1px solid #8f2036;
+
+    color:#ff6b86;
+
+}
+
+
+/* PROGRESS */
+
+#progressContainer{
+
+    display:none;
+
+    margin-top:20px;
+
+}
+
+.progress-top{
 
     display:flex;
 
@@ -307,6 +320,8 @@ textarea{
 
 .progress{
 
+    width:100%;
+
     height:8px;
 
     background:#292929;
@@ -319,110 +334,33 @@ textarea{
 
 .progress-bar{
 
-    width:0%;
-
     height:100%;
+
+    width:0%;
 
     background:#ff1744;
 
-    transition:.2s;
-
 }
 
-/* STATUS */
-
-.status{
-
-    margin-top:20px;
-
-    padding:14px;
-
-    border-radius:8px;
-
-    display:none;
-
-    font-size:14px;
-
-}
-
-.status.success{
-
-    display:block;
-
-    background:#10251b;
-
-    border:1px solid #1f7549;
-
-    color:#42d889;
-
-}
-
-.status.error{
-
-    display:block;
-
-    background:#2a1015;
-
-    border:1px solid #8f2036;
-
-    color:#ff6b86;
-
-}
-
-/* INFO */
-
-.info{
-
-    margin-top:25px;
-
-    background:#101010;
-
-    border:1px solid #292929;
-
-    border-radius:10px;
-
-    padding:18px;
-
-    color:#888;
-
-    font-size:13px;
-
-    line-height:1.6;
-
-}
-
-.info strong{
-
-    color:#fff;
-
-}
 
 /* MOBILE */
 
 @media(max-width:700px){
 
     header{
-
         padding:0 15px;
-
     }
 
-    .form-grid{
-
-        grid-template-columns:1fr;
-
+    .container{
+        padding:25px 15px;
     }
 
-    .upload-card{
-
+    .card{
         padding:20px;
-
     }
 
-    .page-title h1{
-
+    h1{
         font-size:26px;
-
     }
 
 }
@@ -452,84 +390,74 @@ textarea{
 
 <main class="container">
 
+    <h1>
+        Admin Dashboard
+    </h1>
 
-    <div class="page-title">
-
-        <h1>
-            Admin Dashboard
-        </h1>
-
-        <p>
-            Upload and manage content for StreamX.
-        </p>
-
-    </div>
+    <p class="subtitle">
+        Upload videos to StreamX.
+    </p>
 
 
-    <div class="upload-card">
+    <div class="card">
 
 
-        <div class="form-grid">
+        <!-- TITLE -->
+
+        <div class="form-group">
+
+            <label class="title-label">
+                Video Title
+            </label>
+
+            <input
+                type="text"
+                id="title"
+                placeholder="Enter video title"
+            >
+
+        </div>
 
 
-            <!-- TITLE -->
+        <!-- CATEGORY -->
 
-            <div class="form-group">
+        <div class="form-group">
 
-                <label>
-                    Video Title
-                </label>
+            <label class="title-label">
+                Category
+            </label>
 
-                <input
-                    type="text"
-                    id="title"
-                    placeholder="Enter video title"
-                >
+            <select id="category">
 
-            </div>
+                <option value="Trending">
+                    🔥 Trending
+                </option>
 
+                <option value="Entertainment">
+                    🎭 Entertainment
+                </option>
 
-            <!-- CATEGORY -->
+                <option value="Music">
+                    🎵 Music
+                </option>
 
-            <div class="form-group">
+                <option value="Sports">
+                    ⚽ Sports
+                </option>
 
-                <label>
-                    Category
-                </label>
+                <option value="Gaming">
+                    🎮 Gaming
+                </option>
 
-                <select id="category">
+                <option value="Education">
+                    🎓 Education
+                </option>
 
-                    <option value="Trending">
-                        🔥 Trending
-                    </option>
+                <option value="Lifestyle">
+                    ✨ Lifestyle
+                </option>
 
-                    <option value="Entertainment">
-                        🎭 Entertainment
-                    </option>
-
-                    <option value="Music">
-                        🎵 Music
-                    </option>
-
-                    <option value="Sports">
-                        ⚽ Sports
-                    </option>
-
-                    <option value="Gaming">
-                        🎮 Gaming
-                    </option>
-
-                    <option value="Education">
-                        🎓 Education
-                    </option>
-
-                    <option value="Lifestyle">
-                        ✨ Lifestyle
-                    </option>
-
-                </select>
-
-            </div>
+            </select>
 
         </div>
 
@@ -538,106 +466,102 @@ textarea{
 
         <div class="form-group">
 
-            <label>
+            <label class="title-label">
                 Description
             </label>
 
             <textarea
                 id="description"
-                placeholder="Describe the video..."
+                placeholder="Describe your video..."
             ></textarea>
 
         </div>
 
 
-        <div class="form-grid">
+        <!-- VIDEO -->
+
+        <div class="form-group">
+
+            <label class="title-label">
+                Video File
+            </label>
+
+            <label class="file-selector">
+
+                <input
+                    type="file"
+                    id="videoFile"
+                    accept="video/*"
+                >
+
+                <div class="file-icon">
+                    🎬
+                </div>
+
+                <strong>
+                    Click to select a video
+                </strong>
+
+                <small>
+                    MP4, WebM, MOV and other video formats
+                </small>
+
+            </label>
 
 
-            <!-- VIDEO -->
-
-            <div class="form-group">
-
-                <label>
-                    Video File
-                </label>
-
-                <label class="file-box">
-
-                    <input
-                        type="file"
-                        id="videoFile"
-                        accept="video/*"
-                    >
-
-                    <div class="file-icon">
-                        🎬
-                    </div>
-
-                    <strong>
-                        Choose Video
-                    </strong>
-
-                    <small>
-                        MP4, WebM, MOV and other video formats
-                    </small>
-
-                    <div
-                        class="file-name"
-                        id="videoName"
-                    ></div>
-
-                </label>
-
-            </div>
-
-
-            <!-- THUMBNAIL -->
-
-            <div class="form-group">
-
-                <label>
-                    Thumbnail
-                </label>
-
-                <label class="file-box">
-
-                    <input
-                        type="file"
-                        id="thumbnailFile"
-                        accept="image/*"
-                    >
-
-                    <div class="file-icon">
-                        🖼️
-                    </div>
-
-                    <strong>
-                        Choose Thumbnail
-                    </strong>
-
-                    <small>
-                        JPG, PNG or WebP
-                    </small>
-
-                    <div
-                        class="file-name"
-                        id="thumbnailName"
-                    ></div>
-
-                </label>
-
-            </div>
-
+            <div
+                id="selectedVideo"
+                class="selected-file"
+            ></div>
 
         </div>
 
 
-        <!-- UPLOAD BUTTON -->
+        <!-- THUMBNAIL -->
+
+        <div class="form-group">
+
+            <label class="title-label">
+                Thumbnail
+            </label>
+
+            <label class="file-selector">
+
+                <input
+                    type="file"
+                    id="thumbnailFile"
+                    accept="image/*"
+                >
+
+                <div class="file-icon">
+                    🖼️
+                </div>
+
+                <strong>
+                    Click to select thumbnail
+                </strong>
+
+                <small>
+                    JPG, PNG or WebP
+                </small>
+
+            </label>
+
+
+            <div
+                id="selectedThumbnail"
+                class="selected-file"
+            ></div>
+
+        </div>
+
+
+        <!-- UPLOAD -->
 
         <button
-            class="upload-button"
             id="uploadButton"
-            onclick="uploadVideo()"
+            class="upload-button"
+            type="button"
         >
             ⬆️ Upload Video
         </button>
@@ -646,14 +570,13 @@ textarea{
         <!-- PROGRESS -->
 
         <div
-            class="progress-container"
             id="progressContainer"
         >
 
-            <div class="progress-label">
+            <div class="progress-top">
 
                 <span id="progressText">
-                    Uploading...
+                    Preparing...
                 </span>
 
                 <span id="progressPercent">
@@ -665,8 +588,8 @@ textarea{
             <div class="progress">
 
                 <div
-                    class="progress-bar"
                     id="progressBar"
+                    class="progress-bar"
                 ></div>
 
             </div>
@@ -676,57 +599,10 @@ textarea{
 
         <!-- STATUS -->
 
-        <div
-            id="status"
-            class="status"
-        ></div>
-
-
-        <div class="info">
-
-            <strong>How this works:</strong>
-
-            <br>
-
-            1. Select a video.
-
-            <br>
-
-            2. Select a thumbnail.
-
-            <br>
-
-            3. Enter the video information.
-
-            <br>
-
-            4. Click Upload Video.
-
-            <br>
-
-            5. The video is uploaded to the
-            <strong>videos</strong> bucket.
-
-            <br>
-
-            6. The thumbnail is uploaded to the
-            <strong>thumbnails</strong> bucket.
-
-            <br>
-
-            7. The video information is saved in the
-            <strong>videos</strong> database table.
-
-            <br>
-
-            8. The user page automatically reads the
-            database and displays the video.
-
-        </div>
+        <div id="status"></div>
 
 
     </div>
-
 
 </main>
 
@@ -734,7 +610,7 @@ textarea{
 <script>
 
 /* =====================================================
-   SUPABASE CONNECTION
+   SUPABASE
 ===================================================== */
 
 const SUPABASE_URL =
@@ -752,26 +628,50 @@ window.supabase.createClient(
 
 
 /* =====================================================
-   FILE ELEMENTS
+   FILE VARIABLES
 ===================================================== */
 
-const videoInput =
-document.getElementById("videoFile");
+let selectedVideoFile = null;
 
-const thumbnailInput =
-document.getElementById("thumbnailFile");
+let selectedThumbnailFile = null;
 
 
-videoInput.addEventListener(
+/* =====================================================
+   VIDEO FILE SELECTION
+===================================================== */
+
+document
+.getElementById("videoFile")
+.addEventListener(
     "change",
     function(){
 
-        if(this.files.length > 0){
+        selectedVideoFile =
+        this.files[0] || null;
 
-            document.getElementById(
-                "videoName"
-            ).textContent =
-            "✓ " + this.files[0].name;
+
+        const display =
+        document.getElementById(
+            "selectedVideo"
+        );
+
+
+        if(selectedVideoFile){
+
+            display.textContent =
+            "✓ Selected video: " +
+            selectedVideoFile.name;
+
+            display.style.display =
+            "block";
+
+        }
+        else{
+
+            display.textContent = "";
+
+            display.style.display =
+            "none";
 
         }
 
@@ -779,16 +679,42 @@ videoInput.addEventListener(
 );
 
 
-thumbnailInput.addEventListener(
+/* =====================================================
+   THUMBNAIL SELECTION
+===================================================== */
+
+document
+.getElementById("thumbnailFile")
+.addEventListener(
     "change",
     function(){
 
-        if(this.files.length > 0){
+        selectedThumbnailFile =
+        this.files[0] || null;
 
-            document.getElementById(
-                "thumbnailName"
-            ).textContent =
-            "✓ " + this.files[0].name;
+
+        const display =
+        document.getElementById(
+            "selectedThumbnail"
+        );
+
+
+        if(selectedThumbnailFile){
+
+            display.textContent =
+            "✓ Selected thumbnail: " +
+            selectedThumbnailFile.name;
+
+            display.style.display =
+            "block";
+
+        }
+        else{
+
+            display.textContent = "";
+
+            display.style.display =
+            "none";
 
         }
 
@@ -806,13 +732,17 @@ function showStatus(
 ){
 
     const status =
-    document.getElementById("status");
+    document.getElementById(
+        "status"
+    );
+
 
     status.textContent =
     message;
 
+
     status.className =
-    "status " + type;
+    type;
 
 }
 
@@ -821,9 +751,9 @@ function showStatus(
    PROGRESS
 ===================================================== */
 
-function updateProgress(
+function progress(
     percent,
-    text
+    message
 ){
 
     document.getElementById(
@@ -831,22 +761,32 @@ function updateProgress(
     ).style.width =
     percent + "%";
 
+
     document.getElementById(
         "progressPercent"
     ).textContent =
     percent + "%";
 
+
     document.getElementById(
         "progressText"
     ).textContent =
-    text;
+    message;
 
 }
 
 
 /* =====================================================
-   UPLOAD VIDEO
+   UPLOAD
 ===================================================== */
+
+document
+.getElementById("uploadButton")
+.addEventListener(
+    "click",
+    uploadVideo
+);
+
 
 async function uploadVideo(){
 
@@ -870,20 +810,10 @@ async function uploadVideo(){
     .value;
 
 
-    const videoFile =
-    videoInput.files[0];
-
-
-    const thumbnailFile =
-    thumbnailInput.files[0];
-
-
-    /* VALIDATION */
-
     if(!title){
 
         showStatus(
-            "Please enter a video title.",
+            "Please enter a title.",
             "error"
         );
 
@@ -892,10 +822,10 @@ async function uploadVideo(){
     }
 
 
-    if(!videoFile){
+    if(!selectedVideoFile){
 
         showStatus(
-            "Please select a video file.",
+            "Please select a video.",
             "error"
         );
 
@@ -904,7 +834,7 @@ async function uploadVideo(){
     }
 
 
-    if(!thumbnailFile){
+    if(!selectedThumbnailFile){
 
         showStatus(
             "Please select a thumbnail.",
@@ -931,68 +861,62 @@ async function uploadVideo(){
     "block";
 
 
-    showStatus(
-        "Starting upload...",
-        "success"
-    );
-
-
     try{
 
 
         /* =========================================
-           CREATE UNIQUE FILE NAMES
+           FILE NAMES
         ========================================= */
 
-        const timestamp =
+        const id =
         Date.now();
 
 
         const videoExtension =
-        videoFile.name
+        selectedVideoFile.name
         .split(".")
-        .pop();
+        .pop()
+        .toLowerCase();
 
 
         const thumbnailExtension =
-        thumbnailFile.name
+        selectedThumbnailFile.name
         .split(".")
-        .pop();
+        .pop()
+        .toLowerCase();
 
 
         const videoPath =
-        timestamp +
+        id +
         "-video." +
         videoExtension;
 
 
         const thumbnailPath =
-        timestamp +
+        id +
         "-thumbnail." +
         thumbnailExtension;
 
 
         /* =========================================
-           UPLOAD VIDEO
+           VIDEO UPLOAD
         ========================================= */
 
-        updateProgress(
+        progress(
             10,
             "Uploading video..."
         );
 
 
         const {
-            data:videoData,
             error:videoError
         } =
         await supabase.storage
         .from("videos")
         .upload(
             videoPath,
-            videoFile,
+            selectedVideoFile,
             {
-                cacheControl:"3600",
                 upsert:false
             }
         );
@@ -1008,27 +932,25 @@ async function uploadVideo(){
         }
 
 
-        updateProgress(
+        /* =========================================
+           THUMBNAIL
+        ========================================= */
+
+        progress(
             55,
             "Uploading thumbnail..."
         );
 
 
-        /* =========================================
-           UPLOAD THUMBNAIL
-        ========================================= */
-
         const {
-            data:thumbnailData,
             error:thumbnailError
         } =
         await supabase.storage
         .from("thumbnails")
         .upload(
             thumbnailPath,
-            thumbnailFile,
+            selectedThumbnailFile,
             {
-                cacheControl:"3600",
                 upsert:false
             }
         );
@@ -1044,15 +966,15 @@ async function uploadVideo(){
         }
 
 
-        updateProgress(
+        /* =========================================
+           PUBLIC URLS
+        ========================================= */
+
+        progress(
             75,
             "Creating video record..."
         );
 
-
-        /* =========================================
-           GET PUBLIC URLS
-        ========================================= */
 
         const {
             data:videoPublic
@@ -1074,16 +996,8 @@ async function uploadVideo(){
         );
 
 
-        const videoURL =
-        videoPublic.publicUrl;
-
-
-        const thumbnailURL =
-        thumbnailPublic.publicUrl;
-
-
         /* =========================================
-           SAVE TO DATABASE
+           DATABASE
         ========================================= */
 
         const {
@@ -1099,9 +1013,11 @@ async function uploadVideo(){
 
             category:category,
 
-            video_url:videoURL,
+            video_url:
+            videoPublic.publicUrl,
 
-            thumbnail_url:thumbnailURL,
+            thumbnail_url:
+            thumbnailPublic.publicUrl,
 
             views:0
 
@@ -1118,20 +1034,20 @@ async function uploadVideo(){
         }
 
 
-        updateProgress(
+        progress(
             100,
             "Upload complete!"
         );
 
 
         showStatus(
-            "✅ Video uploaded successfully! It is now available on the user website.",
+            "✅ Video uploaded successfully. Open the User Website to view it.",
             "success"
         );
 
 
         /* =========================================
-           CLEAR FORM
+           RESET
         ========================================= */
 
         document.getElementById(
@@ -1144,27 +1060,42 @@ async function uploadVideo(){
         ).value = "";
 
 
-        videoInput.value = "";
-
-
-        thumbnailInput.value = "";
+        document.getElementById(
+            "category"
+        ).value = "Trending";
 
 
         document.getElementById(
-            "videoName"
-        ).textContent = "";
+            "videoFile"
+        ).value = "";
 
 
         document.getElementById(
-            "thumbnailName"
-        ).textContent = "";
+            "thumbnailFile"
+        ).value = "";
+
+
+        selectedVideoFile = null;
+
+        selectedThumbnailFile = null;
+
+
+        document.getElementById(
+            "selectedVideo"
+        ).style.display =
+        "none";
+
+
+        document.getElementById(
+            "selectedThumbnail"
+        ).style.display =
+        "none";
 
 
     }
     catch(error){
 
         console.error(
-            "UPLOAD ERROR:",
             error
         );
 

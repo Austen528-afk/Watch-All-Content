@@ -1,10 +1,13 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>StreamX</title>
+<title>StreamX Admin</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -17,117 +20,419 @@
 }
 
 body{
-    background:#0d0d0d;
-    color:white;
-    font-family:Arial,sans-serif;
+    background:#080808;
+    color:#fff;
+    font-family:Arial,Helvetica,sans-serif;
+    min-height:100vh;
 }
 
+/* HEADER */
+
 header{
-    padding:20px;
+    height:70px;
     background:#111;
-    border-bottom:1px solid #222;
+    border-bottom:1px solid #292929;
 
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    justify-content:space-between;
+
+    padding:0 30px;
 }
 
 .logo{
     font-size:28px;
-    font-weight:bold;
+    font-weight:900;
 }
 
 .logo span{
     color:#ff1744;
 }
 
-.admin-btn{
-    background:#ff1744;
-    color:white;
+.user-button{
     text-decoration:none;
-    padding:10px 15px;
+    background:#ff1744;
+    color:#fff;
+
+    padding:11px 18px;
+
     border-radius:8px;
+
+    font-weight:bold;
+
+    transition:.2s;
 }
+
+.user-button:hover{
+    background:#e60035;
+}
+
+/* MAIN */
 
 .container{
-    padding:25px;
-}
-
-.video-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-    gap:20px;
-}
-
-.card{
-    background:#151515;
-    border:1px solid #222;
-    border-radius:12px;
-    overflow:hidden;
-    cursor:pointer;
-}
-
-.card img{
     width:100%;
-    height:180px;
-    object-fit:cover;
+    max-width:1000px;
+
+    margin:auto;
+
+    padding:40px 20px;
 }
 
-.card-content{
-    padding:15px;
+/* TITLE */
+
+.page-title{
+    margin-bottom:30px;
 }
 
-.card h3{
+.page-title h1{
+    font-size:32px;
     margin-bottom:8px;
 }
 
-.card p{
-    color:#999;
-    font-size:13px;
+.page-title p{
+    color:#888;
 }
 
-.player-modal{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.9);
+/* UPLOAD CARD */
+
+.upload-card{
+    background:#151515;
+
+    border:1px solid #292929;
+
+    border-radius:14px;
+
+    padding:30px;
+}
+
+/* FORM */
+
+.form-group{
+    margin-bottom:22px;
+}
+
+label{
+    display:block;
+
+    font-size:14px;
+
+    color:#ddd;
+
+    margin-bottom:8px;
+}
+
+input[type="text"],
+textarea,
+select{
+
+    width:100%;
+
+    background:#0d0d0d;
+
+    border:1px solid #333;
+
+    color:white;
+
+    border-radius:8px;
+
+    padding:13px;
+
+    font-size:14px;
+
+    outline:none;
+
+    font-family:inherit;
+
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus{
+
+    border-color:#ff1744;
+
+}
+
+textarea{
+
+    min-height:120px;
+
+    resize:vertical;
+
+}
+
+/* FILE INPUT */
+
+.file-box{
+
+    background:#0d0d0d;
+
+    border:1px dashed #444;
+
+    border-radius:10px;
+
+    padding:25px;
+
+    text-align:center;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.file-box:hover{
+
+    border-color:#ff1744;
+
+    background:#111;
+
+}
+
+.file-box input{
 
     display:none;
-    justify-content:center;
-    align-items:center;
 
-    z-index:1000;
 }
 
-.player-box{
-    width:90%;
-    max-width:1000px;
-}
+.file-icon{
 
-.player-box video{
-    width:100%;
-    border-radius:12px;
-}
+    font-size:40px;
 
-.close-btn{
     margin-bottom:10px;
-    background:#ff1744;
-    border:none;
-    color:white;
-    padding:10px 15px;
-    border-radius:8px;
-    cursor:pointer;
+
 }
 
-.empty{
-    text-align:center;
+.file-box strong{
+
+    display:block;
+
+    margin-bottom:6px;
+
+}
+
+.file-box small{
+
     color:#777;
-    margin-top:50px;
+
+}
+
+.file-name{
+
+    margin-top:12px;
+
+    color:#21c477;
+
+    font-size:13px;
+
+    word-break:break-all;
+
+}
+
+/* GRID */
+
+.form-grid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:20px;
+
+}
+
+/* BUTTON */
+
+.upload-button{
+
+    width:100%;
+
+    border:none;
+
+    background:#ff1744;
+
+    color:white;
+
+    padding:15px;
+
+    border-radius:8px;
+
+    font-size:16px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    margin-top:5px;
+
+}
+
+.upload-button:hover{
+
+    background:#e60035;
+
+}
+
+.upload-button:disabled{
+
+    opacity:.5;
+
+    cursor:not-allowed;
+
+}
+
+/* PROGRESS */
+
+.progress-container{
+
+    display:none;
+
+    margin-top:25px;
+
+}
+
+.progress-label{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    color:#aaa;
+
+    font-size:13px;
+
+    margin-bottom:8px;
+
+}
+
+.progress{
+
+    height:8px;
+
+    background:#292929;
+
+    border-radius:10px;
+
+    overflow:hidden;
+
+}
+
+.progress-bar{
+
+    width:0%;
+
+    height:100%;
+
+    background:#ff1744;
+
+    transition:.2s;
+
+}
+
+/* STATUS */
+
+.status{
+
+    margin-top:20px;
+
+    padding:14px;
+
+    border-radius:8px;
+
+    display:none;
+
+    font-size:14px;
+
+}
+
+.status.success{
+
+    display:block;
+
+    background:#10251b;
+
+    border:1px solid #1f7549;
+
+    color:#42d889;
+
+}
+
+.status.error{
+
+    display:block;
+
+    background:#2a1015;
+
+    border:1px solid #8f2036;
+
+    color:#ff6b86;
+
+}
+
+/* INFO */
+
+.info{
+
+    margin-top:25px;
+
+    background:#101010;
+
+    border:1px solid #292929;
+
+    border-radius:10px;
+
+    padding:18px;
+
+    color:#888;
+
+    font-size:13px;
+
+    line-height:1.6;
+
+}
+
+.info strong{
+
+    color:#fff;
+
+}
+
+/* MOBILE */
+
+@media(max-width:700px){
+
+    header{
+
+        padding:0 15px;
+
+    }
+
+    .form-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+    .upload-card{
+
+        padding:20px;
+
+    }
+
+    .page-title h1{
+
+        font-size:26px;
+
+    }
+
 }
 
 </style>
+
 </head>
 
 <body>
+
 
 <header>
 
@@ -135,44 +440,302 @@ header{
         Stream<span>X</span>
     </div>
 
-    <a href="admin.html" class="admin-btn">
-        Admin
+    <a
+        href="index.html"
+        class="user-button"
+    >
+        🌐 User Website
     </a>
 
 </header>
 
-<div class="container">
 
-    <div id="videoGrid" class="video-grid"></div>
+<main class="container">
 
-    <div id="empty" class="empty">
-        Loading videos...
+
+    <div class="page-title">
+
+        <h1>
+            Admin Dashboard
+        </h1>
+
+        <p>
+            Upload and manage content for StreamX.
+        </p>
+
     </div>
 
-</div>
 
-<div class="player-modal" id="playerModal">
+    <div class="upload-card">
 
-    <div class="player-box">
+
+        <div class="form-grid">
+
+
+            <!-- TITLE -->
+
+            <div class="form-group">
+
+                <label>
+                    Video Title
+                </label>
+
+                <input
+                    type="text"
+                    id="title"
+                    placeholder="Enter video title"
+                >
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div class="form-group">
+
+                <label>
+                    Category
+                </label>
+
+                <select id="category">
+
+                    <option value="Trending">
+                        🔥 Trending
+                    </option>
+
+                    <option value="Entertainment">
+                        🎭 Entertainment
+                    </option>
+
+                    <option value="Music">
+                        🎵 Music
+                    </option>
+
+                    <option value="Sports">
+                        ⚽ Sports
+                    </option>
+
+                    <option value="Gaming">
+                        🎮 Gaming
+                    </option>
+
+                    <option value="Education">
+                        🎓 Education
+                    </option>
+
+                    <option value="Lifestyle">
+                        ✨ Lifestyle
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- DESCRIPTION -->
+
+        <div class="form-group">
+
+            <label>
+                Description
+            </label>
+
+            <textarea
+                id="description"
+                placeholder="Describe the video..."
+            ></textarea>
+
+        </div>
+
+
+        <div class="form-grid">
+
+
+            <!-- VIDEO -->
+
+            <div class="form-group">
+
+                <label>
+                    Video File
+                </label>
+
+                <label class="file-box">
+
+                    <input
+                        type="file"
+                        id="videoFile"
+                        accept="video/*"
+                    >
+
+                    <div class="file-icon">
+                        🎬
+                    </div>
+
+                    <strong>
+                        Choose Video
+                    </strong>
+
+                    <small>
+                        MP4, WebM, MOV and other video formats
+                    </small>
+
+                    <div
+                        class="file-name"
+                        id="videoName"
+                    ></div>
+
+                </label>
+
+            </div>
+
+
+            <!-- THUMBNAIL -->
+
+            <div class="form-group">
+
+                <label>
+                    Thumbnail
+                </label>
+
+                <label class="file-box">
+
+                    <input
+                        type="file"
+                        id="thumbnailFile"
+                        accept="image/*"
+                    >
+
+                    <div class="file-icon">
+                        🖼️
+                    </div>
+
+                    <strong>
+                        Choose Thumbnail
+                    </strong>
+
+                    <small>
+                        JPG, PNG or WebP
+                    </small>
+
+                    <div
+                        class="file-name"
+                        id="thumbnailName"
+                    ></div>
+
+                </label>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- UPLOAD BUTTON -->
 
         <button
-            class="close-btn"
-            onclick="closePlayer()"
+            class="upload-button"
+            id="uploadButton"
+            onclick="uploadVideo()"
         >
-            Close
+            ⬆️ Upload Video
         </button>
 
-        <video
-            id="videoPlayer"
-            controls
-            autoplay
-        ></video>
+
+        <!-- PROGRESS -->
+
+        <div
+            class="progress-container"
+            id="progressContainer"
+        >
+
+            <div class="progress-label">
+
+                <span id="progressText">
+                    Uploading...
+                </span>
+
+                <span id="progressPercent">
+                    0%
+                </span>
+
+            </div>
+
+            <div class="progress">
+
+                <div
+                    class="progress-bar"
+                    id="progressBar"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div
+            id="status"
+            class="status"
+        ></div>
+
+
+        <div class="info">
+
+            <strong>How this works:</strong>
+
+            <br>
+
+            1. Select a video.
+
+            <br>
+
+            2. Select a thumbnail.
+
+            <br>
+
+            3. Enter the video information.
+
+            <br>
+
+            4. Click Upload Video.
+
+            <br>
+
+            5. The video is uploaded to the
+            <strong>videos</strong> bucket.
+
+            <br>
+
+            6. The thumbnail is uploaded to the
+            <strong>thumbnails</strong> bucket.
+
+            <br>
+
+            7. The video information is saved in the
+            <strong>videos</strong> database table.
+
+            <br>
+
+            8. The user page automatically reads the
+            database and displays the video.
+
+        </div>
+
 
     </div>
 
-</div>
+
+</main>
+
 
 <script>
+
+/* =====================================================
+   SUPABASE CONNECTION
+===================================================== */
 
 const SUPABASE_URL =
 "https://iojjmoywrlnzpyatahyh.supabase.co";
@@ -180,114 +743,449 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
 "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 
+
 const supabase =
 window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
 
-async function loadVideos(){
 
-    const { data, error } =
-    await supabase
-    .from("videos")
-    .select("*")
-    .order("created_at",{ascending:false});
+/* =====================================================
+   FILE ELEMENTS
+===================================================== */
 
-    const grid =
-    document.getElementById("videoGrid");
+const videoInput =
+document.getElementById("videoFile");
 
-    const empty =
-    document.getElementById("empty");
+const thumbnailInput =
+document.getElementById("thumbnailFile");
 
-    grid.innerHTML="";
 
-    if(error){
+videoInput.addEventListener(
+    "change",
+    function(){
 
-        empty.innerHTML =
-        "Failed to load videos";
+        if(this.files.length > 0){
 
-        console.error(error);
+            document.getElementById(
+                "videoName"
+            ).textContent =
+            "✓ " + this.files[0].name;
+
+        }
+
+    }
+);
+
+
+thumbnailInput.addEventListener(
+    "change",
+    function(){
+
+        if(this.files.length > 0){
+
+            document.getElementById(
+                "thumbnailName"
+            ).textContent =
+            "✓ " + this.files[0].name;
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function showStatus(
+    message,
+    type
+){
+
+    const status =
+    document.getElementById("status");
+
+    status.textContent =
+    message;
+
+    status.className =
+    "status " + type;
+
+}
+
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+function updateProgress(
+    percent,
+    text
+){
+
+    document.getElementById(
+        "progressBar"
+    ).style.width =
+    percent + "%";
+
+    document.getElementById(
+        "progressPercent"
+    ).textContent =
+    percent + "%";
+
+    document.getElementById(
+        "progressText"
+    ).textContent =
+    text;
+
+}
+
+
+/* =====================================================
+   UPLOAD VIDEO
+===================================================== */
+
+async function uploadVideo(){
+
+    const title =
+    document
+    .getElementById("title")
+    .value
+    .trim();
+
+
+    const description =
+    document
+    .getElementById("description")
+    .value
+    .trim();
+
+
+    const category =
+    document
+    .getElementById("category")
+    .value;
+
+
+    const videoFile =
+    videoInput.files[0];
+
+
+    const thumbnailFile =
+    thumbnailInput.files[0];
+
+
+    /* VALIDATION */
+
+    if(!title){
+
+        showStatus(
+            "Please enter a video title.",
+            "error"
+        );
 
         return;
+
     }
 
-    if(!data || data.length===0){
 
-        empty.innerHTML =
-        "No videos uploaded yet.";
+    if(!videoFile){
+
+        showStatus(
+            "Please select a video file.",
+            "error"
+        );
 
         return;
+
     }
 
-    empty.style.display="none";
 
-    data.forEach(video=>{
+    if(!thumbnailFile){
 
-        const card =
-        document.createElement("div");
+        showStatus(
+            "Please select a thumbnail.",
+            "error"
+        );
 
-        card.className="card";
+        return;
 
-        card.innerHTML=`
+    }
 
-            <img
-                src="${video.thumbnail_url}"
-                alt="${video.title}"
-            >
 
-            <div class="card-content">
+    const button =
+    document.getElementById(
+        "uploadButton"
+    );
 
-                <h3>${video.title}</h3>
 
-                <p>${video.category || ""}</p>
+    button.disabled = true;
 
-            </div>
 
-        `;
+    document.getElementById(
+        "progressContainer"
+    ).style.display =
+    "block";
 
-        card.onclick=()=>{
 
-            openPlayer(video.video_url);
+    showStatus(
+        "Starting upload...",
+        "success"
+    );
 
-        };
 
-        grid.appendChild(card);
+    try{
 
-    });
+
+        /* =========================================
+           CREATE UNIQUE FILE NAMES
+        ========================================= */
+
+        const timestamp =
+        Date.now();
+
+
+        const videoExtension =
+        videoFile.name
+        .split(".")
+        .pop();
+
+
+        const thumbnailExtension =
+        thumbnailFile.name
+        .split(".")
+        .pop();
+
+
+        const videoPath =
+        timestamp +
+        "-video." +
+        videoExtension;
+
+
+        const thumbnailPath =
+        timestamp +
+        "-thumbnail." +
+        thumbnailExtension;
+
+
+        /* =========================================
+           UPLOAD VIDEO
+        ========================================= */
+
+        updateProgress(
+            10,
+            "Uploading video..."
+        );
+
+
+        const {
+            data:videoData,
+            error:videoError
+        } =
+        await supabase.storage
+        .from("videos")
+        .upload(
+            videoPath,
+            videoFile,
+            {
+                cacheControl:"3600",
+                upsert:false
+            }
+        );
+
+
+        if(videoError){
+
+            throw new Error(
+                "Video upload failed: " +
+                videoError.message
+            );
+
+        }
+
+
+        updateProgress(
+            55,
+            "Uploading thumbnail..."
+        );
+
+
+        /* =========================================
+           UPLOAD THUMBNAIL
+        ========================================= */
+
+        const {
+            data:thumbnailData,
+            error:thumbnailError
+        } =
+        await supabase.storage
+        .from("thumbnails")
+        .upload(
+            thumbnailPath,
+            thumbnailFile,
+            {
+                cacheControl:"3600",
+                upsert:false
+            }
+        );
+
+
+        if(thumbnailError){
+
+            throw new Error(
+                "Thumbnail upload failed: " +
+                thumbnailError.message
+            );
+
+        }
+
+
+        updateProgress(
+            75,
+            "Creating video record..."
+        );
+
+
+        /* =========================================
+           GET PUBLIC URLS
+        ========================================= */
+
+        const {
+            data:videoPublic
+        } =
+        supabase.storage
+        .from("videos")
+        .getPublicUrl(
+            videoPath
+        );
+
+
+        const {
+            data:thumbnailPublic
+        } =
+        supabase.storage
+        .from("thumbnails")
+        .getPublicUrl(
+            thumbnailPath
+        );
+
+
+        const videoURL =
+        videoPublic.publicUrl;
+
+
+        const thumbnailURL =
+        thumbnailPublic.publicUrl;
+
+
+        /* =========================================
+           SAVE TO DATABASE
+        ========================================= */
+
+        const {
+            error:databaseError
+        } =
+        await supabase
+        .from("videos")
+        .insert({
+
+            title:title,
+
+            description:description,
+
+            category:category,
+
+            video_url:videoURL,
+
+            thumbnail_url:thumbnailURL,
+
+            views:0
+
+        });
+
+
+        if(databaseError){
+
+            throw new Error(
+                "Database error: " +
+                databaseError.message
+            );
+
+        }
+
+
+        updateProgress(
+            100,
+            "Upload complete!"
+        );
+
+
+        showStatus(
+            "✅ Video uploaded successfully! It is now available on the user website.",
+            "success"
+        );
+
+
+        /* =========================================
+           CLEAR FORM
+        ========================================= */
+
+        document.getElementById(
+            "title"
+        ).value = "";
+
+
+        document.getElementById(
+            "description"
+        ).value = "";
+
+
+        videoInput.value = "";
+
+
+        thumbnailInput.value = "";
+
+
+        document.getElementById(
+            "videoName"
+        ).textContent = "";
+
+
+        document.getElementById(
+            "thumbnailName"
+        ).textContent = "";
+
+
+    }
+    catch(error){
+
+        console.error(
+            "UPLOAD ERROR:",
+            error
+        );
+
+
+        showStatus(
+            "❌ " + error.message,
+            "error"
+        );
+
+    }
+    finally{
+
+        button.disabled = false;
+
+    }
 
 }
-
-function openPlayer(url){
-
-    document
-    .getElementById("playerModal")
-    .style.display="flex";
-
-    document
-    .getElementById("videoPlayer")
-    .src=url;
-
-}
-
-function closePlayer(){
-
-    document
-    .getElementById("playerModal")
-    .style.display="none";
-
-    const player =
-    document.getElementById("videoPlayer");
-
-    player.pause();
-
-    player.src="";
-
-}
-
-loadVideos();
 
 </script>
 
 </body>
+
 </html>
+```

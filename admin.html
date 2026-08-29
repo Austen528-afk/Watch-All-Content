@@ -3,96 +3,461 @@
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>StreamX Admin</title>
 
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
+/* =====================================================
+   RESET
+===================================================== */
+
 *{
-    box-sizing:border-box;
     margin:0;
     padding:0;
+    box-sizing:border-box;
 }
+
+
+/* =====================================================
+   BODY
+===================================================== */
 
 body{
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
     background:#080808;
+
     color:#fff;
-    font-family:Arial,Helvetica,sans-serif;
+
     min-height:100vh;
+
 }
 
-header{
-    height:70px;
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header{
+
+    height:72px;
+
     background:#111;
-    border-bottom:1px solid #292929;
+
+    border-bottom:
+        1px solid #292929;
 
     display:flex;
+
     align-items:center;
+
     justify-content:space-between;
 
-    padding:0 30px;
+    padding:
+        0 30px;
+
 }
+
 
 .logo{
-    font-size:28px;
+
+    font-size:27px;
+
     font-weight:900;
+
 }
+
 
 .logo span{
+
     color:#ff1744;
+
 }
 
-.user-button{
-    background:#ff1744;
-    color:white;
+
+.header-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+}
+
+
+.status-dot{
+
+    width:9px;
+
+    height:9px;
+
+    background:#21c477;
+
+    border-radius:50%;
+
+}
+
+
+.admin-status{
+
+    color:#aaa;
+
+    font-size:13px;
+
+}
+
+
+.user-site-button{
+
     text-decoration:none;
 
-    padding:11px 18px;
+    color:white;
+
+    background:#ff1744;
+
+    padding:
+        10px 16px;
 
     border-radius:8px;
+
+    font-size:13px;
+
+    font-weight:bold;
+
 }
 
-.container{
+
+.user-site-button:hover{
+
+    background:#e90035;
+
+}
+
+
+/* =====================================================
+   LAYOUT
+===================================================== */
+
+.layout{
+
+    display:flex;
+
+    min-height:
+        calc(100vh - 72px);
+
+}
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar{
+
+    width:230px;
+
+    background:#101010;
+
+    border-right:
+        1px solid #292929;
+
+    padding:25px 15px;
+
+}
+
+
+.sidebar-title{
+
+    color:#666;
+
+    text-transform:uppercase;
+
+    letter-spacing:1.5px;
+
+    font-size:10px;
+
+    padding:
+        0 10px 12px;
+
+}
+
+
+.nav-item{
+
     width:100%;
-    max-width:900px;
-    margin:auto;
 
-    padding:40px 20px;
+    border:none;
+
+    background:transparent;
+
+    color:#999;
+
+    padding:13px;
+
+    text-align:left;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-size:13px;
+
+    margin-bottom:5px;
+
 }
 
-h1{
-    font-size:32px;
-    margin-bottom:8px;
+
+.nav-item:hover{
+
+    background:#1b1b1b;
+
+    color:white;
+
 }
 
-.subtitle{
-    color:#888;
+
+.nav-item.active{
+
+    background:#1d1d1d;
+
+    color:white;
+
+    border-left:
+        3px solid #ff1744;
+
+}
+
+
+.sidebar-info{
+
+    margin-top:40px;
+
+    background:#161616;
+
+    border:
+        1px solid #292929;
+
+    border-radius:8px;
+
+    padding:13px;
+
+    font-size:11px;
+
+    color:#777;
+
+    line-height:1.6;
+
+}
+
+
+.sidebar-info strong{
+
+    color:#21c477;
+
+}
+
+
+/* =====================================================
+   MAIN
+===================================================== */
+
+.main{
+
+    flex:1;
+
+    padding:35px;
+
+    max-width:1500px;
+
+}
+
+
+.page-title{
+
     margin-bottom:30px;
+
 }
 
-.card{
+
+.page-title h1{
+
+    font-size:30px;
+
+    margin-bottom:7px;
+
+}
+
+
+.page-title p{
+
+    color:#888;
+
+    font-size:13px;
+
+}
+
+
+/* =====================================================
+   DASHBOARD CARDS
+===================================================== */
+
+.stats{
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap:18px;
+
+    margin-bottom:25px;
+
+}
+
+
+.stat-card{
+
     background:#151515;
-    border:1px solid #292929;
+
+    border:
+        1px solid #292929;
+
+    border-radius:12px;
+
+    padding:20px;
+
+}
+
+
+.stat-icon{
+
+    font-size:25px;
+
+    margin-bottom:10px;
+
+}
+
+
+.stat-label{
+
+    color:#888;
+
+    font-size:12px;
+
+    margin-bottom:6px;
+
+}
+
+
+.stat-value{
+
+    font-size:27px;
+
+    font-weight:bold;
+
+}
+
+
+/* =====================================================
+   CONTENT CARD
+===================================================== */
+
+.content-card{
+
+    background:#151515;
+
+    border:
+        1px solid #292929;
 
     border-radius:14px;
 
-    padding:30px;
+    padding:25px;
+
+    margin-bottom:25px;
+
 }
+
+
+.card-header{
+
+    margin-bottom:25px;
+
+}
+
+
+.card-header h2{
+
+    font-size:20px;
+
+    margin-bottom:5px;
+
+}
+
+
+.card-header p{
+
+    color:#888;
+
+    font-size:12px;
+
+}
+
+
+/* =====================================================
+   FORM GRID
+===================================================== */
+
+.form-grid{
+
+    display:grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap:20px;
+
+}
+
 
 .form-group{
-    margin-bottom:22px;
+
+    margin-bottom:5px;
+
 }
 
-label.title-label{
-    display:block;
-    color:#ddd;
-    font-size:14px;
-    margin-bottom:8px;
+
+.form-group.full{
+
+    grid-column:
+        1 / -1;
+
 }
+
+
+.form-label{
+
+    display:block;
+
+    color:#ddd;
+
+    font-size:13px;
+
+    margin-bottom:8px;
+
+}
+
 
 input[type="text"],
 textarea,
@@ -102,133 +467,246 @@ select{
 
     background:#0d0d0d;
 
-    color:#fff;
+    border:
+        1px solid #333;
 
-    border:1px solid #333;
+    color:white;
 
     border-radius:8px;
 
     padding:13px;
 
+    outline:none;
+
     font-size:14px;
 
-    outline:none;
 }
 
-textarea{
-    min-height:120px;
-    resize:vertical;
-}
 
-input:focus,
+input[type="text"]:focus,
 textarea:focus,
 select:focus{
+
     border-color:#ff1744;
+
 }
 
 
-/* FILE SELECTOR */
+textarea{
 
-.file-selector{
+    min-height:120px;
+
+    resize:vertical;
+
+}
+
+
+/* =====================================================
+   FILE UPLOAD AREA
+===================================================== */
+
+.file-area{
 
     width:100%;
 
-    border:2px dashed #444;
+    border:
+        2px dashed #3b3b3b;
 
     background:#0d0d0d;
 
     border-radius:10px;
 
-    padding:30px 20px;
+    padding:35px 20px;
 
     text-align:center;
 
     cursor:pointer;
 
-    transition:.2s;
+    transition:
+        .2s;
+
 }
 
-.file-selector:hover{
+
+.file-area:hover{
 
     border-color:#ff1744;
 
-    background:#111;
+    background:#121212;
 
 }
 
-.file-selector input{
 
-    display:none;
+.file-area input{
+
+    position:absolute;
+
+    width:1px;
+
+    height:1px;
+
+    opacity:0;
+
+    pointer-events:none;
 
 }
+
 
 .file-icon{
 
-    font-size:42px;
+    font-size:40px;
 
     margin-bottom:10px;
 
 }
 
-.file-selector strong{
+
+.file-area strong{
 
     display:block;
 
-    font-size:15px;
+    font-size:14px;
 
-    margin-bottom:7px;
-
-}
-
-.file-selector small{
-
-    color:#777;
+    margin-bottom:6px;
 
 }
 
 
-/* SELECTED FILE */
+.file-area span{
 
-.selected-file{
+    color:#666;
+
+    font-size:11px;
+
+}
+
+
+/* =====================================================
+   SELECTED FILE INFORMATION
+===================================================== */
+
+.file-info{
 
     display:none;
 
     margin-top:12px;
 
-    padding:12px;
+    background:#101c16;
 
-    background:#10251b;
-
-    border:1px solid #1f7549;
+    border:
+        1px solid #1d6944;
 
     border-radius:8px;
 
-    color:#42d889;
-
-    font-size:13px;
-
-    word-break:break-all;
+    padding:13px;
 
 }
 
 
-/* BUTTON */
+.file-info.show{
 
-.upload-button{
+    display:block;
+
+}
+
+
+.file-name{
+
+    color:#35d986;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+    word-break:break-word;
+
+}
+
+
+.file-size{
+
+    color:#777;
+
+    font-size:11px;
+
+    margin-top:5px;
+
+}
+
+
+/* =====================================================
+   PREVIEWS
+===================================================== */
+
+.preview-container{
+
+    display:none;
+
+    margin-top:12px;
+
+}
+
+
+.preview-container.show{
+
+    display:block;
+
+}
+
+
+.preview-container video{
 
     width:100%;
 
-    border:none;
-
-    background:#ff1744;
-
-    color:white;
-
-    padding:15px;
+    max-height:220px;
 
     border-radius:8px;
 
-    font-size:16px;
+    background:#000;
+
+}
+
+
+.preview-container img{
+
+    width:100%;
+
+    height:180px;
+
+    object-fit:cover;
+
+    border-radius:8px;
+
+}
+
+
+/* =====================================================
+   ACTIONS
+===================================================== */
+
+.actions{
+
+    display:flex;
+
+    gap:12px;
+
+    margin-top:25px;
+
+}
+
+
+.upload-button{
+
+    background:#ff1744;
+
+    border:none;
+
+    color:white;
+
+    padding:
+        14px 25px;
+
+    border-radius:8px;
 
     font-weight:bold;
 
@@ -236,11 +714,13 @@ select:focus{
 
 }
 
+
 .upload-button:hover{
 
-    background:#e00038;
+    background:#e90035;
 
 }
+
 
 .upload-button:disabled{
 
@@ -251,60 +731,53 @@ select:focus{
 }
 
 
-/* STATUS */
+.clear-button{
 
-#status{
+    background:#222;
 
-    margin-top:20px;
+    border:
+        1px solid #333;
 
-    padding:14px;
+    color:#aaa;
+
+    padding:
+        13px 22px;
 
     border-radius:8px;
 
-    display:none;
-
-    font-size:14px;
-
-    line-height:1.5;
-
-}
-
-.success{
-
-    display:block !important;
-
-    background:#10251b;
-
-    border:1px solid #1f7549;
-
-    color:#42d889;
-
-}
-
-.error{
-
-    display:block !important;
-
-    background:#2a1015;
-
-    border:1px solid #8f2036;
-
-    color:#ff6b86;
+    cursor:pointer;
 
 }
 
 
-/* PROGRESS */
+.clear-button:hover{
 
-#progressContainer{
+    color:white;
+
+}
+
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+.progress-container{
 
     display:none;
 
-    margin-top:20px;
+    margin-top:22px;
 
 }
 
-.progress-top{
+
+.progress-container.show{
+
+    display:block;
+
+}
+
+
+.progress-header{
 
     display:flex;
 
@@ -312,11 +785,12 @@ select:focus{
 
     color:#aaa;
 
-    font-size:13px;
+    font-size:12px;
 
     margin-bottom:8px;
 
 }
+
 
 .progress{
 
@@ -332,6 +806,7 @@ select:focus{
 
 }
 
+
 .progress-bar{
 
     height:100%;
@@ -340,27 +815,160 @@ select:focus{
 
     background:#ff1744;
 
+    transition:
+        width .2s;
+
 }
 
 
-/* MOBILE */
+/* =====================================================
+   MESSAGE
+===================================================== */
 
-@media(max-width:700px){
+.message{
 
-    header{
-        padding:0 15px;
+    display:none;
+
+    margin-top:20px;
+
+    padding:14px;
+
+    border-radius:8px;
+
+    font-size:13px;
+
+    line-height:1.5;
+
+}
+
+
+.message.show{
+
+    display:block;
+
+}
+
+
+.message.success{
+
+    background:#10251b;
+
+    border:
+        1px solid #236c48;
+
+    color:#42d889;
+
+}
+
+
+.message.error{
+
+    background:#2a1015;
+
+    border:
+        1px solid #8f2036;
+
+    color:#ff6b86;
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width:850px){
+
+    .sidebar{
+
+        display:none;
+
     }
 
-    .container{
-        padding:25px 15px;
+    .main{
+
+        padding:
+            25px 15px 50px;
+
     }
 
-    .card{
-        padding:20px;
+    .stats{
+
+        grid-template-columns:
+            1fr;
+
     }
 
-    h1{
-        font-size:26px;
+    .form-grid{
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+    .form-group.full{
+
+        grid-column:auto;
+
+    }
+
+}
+
+
+@media(max-width:500px){
+
+    .header{
+
+        padding:
+            0 15px;
+
+    }
+
+    .admin-status{
+
+        display:none;
+
+    }
+
+    .header-right{
+
+        gap:7px;
+
+    }
+
+    .user-site-button{
+
+        padding:
+            9px 11px;
+
+        font-size:11px;
+
+    }
+
+    .main{
+
+        padding:
+            20px 12px 40px;
+
+    }
+
+    .content-card{
+
+        padding:18px;
+
+    }
+
+    .actions{
+
+        flex-direction:column;
+
+    }
+
+    .upload-button,
+    .clear-button{
+
+        width:100%;
+
     }
 
 }
@@ -369,214 +977,455 @@ select:focus{
 
 </head>
 
+
 <body>
 
 
-<header>
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="header">
 
     <div class="logo">
         Stream<span>X</span>
     </div>
 
-    <a
-        href="index.html"
-        class="user-button"
-    >
-        🌐 User Website
-    </a>
+
+    <div class="header-right">
+
+        <div class="status-dot"></div>
+
+        <div class="admin-status">
+            Admin Mode
+        </div>
+
+        <a
+            href="index.html"
+            class="user-site-button"
+        >
+            🌐 User Site
+        </a>
+
+    </div>
 
 </header>
 
 
-<main class="container">
-
-    <h1>
-        Admin Dashboard
-    </h1>
-
-    <p class="subtitle">
-        Upload videos to StreamX.
-    </p>
+<div class="layout">
 
 
-    <div class="card">
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
+
+<aside class="sidebar">
+
+    <div class="sidebar-title">
+        Administration
+    </div>
 
 
-        <!-- TITLE -->
+    <button
+        class="nav-item active"
+        onclick="scrollToUpload()"
+    >
+        ⬆️ Upload Content
+    </button>
 
-        <div class="form-group">
 
-            <label class="title-label">
-                Video Title
-            </label>
+    <button
+        class="nav-item"
+        onclick="scrollToLibrary()"
+    >
+        🎬 Video Library
+    </button>
 
-            <input
-                type="text"
-                id="title"
-                placeholder="Enter video title"
+
+    <div class="sidebar-info">
+
+        <strong>● System Ready</strong>
+
+        <br>
+
+        Supabase storage connected through your
+        browser.
+
+    </div>
+
+</aside>
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main class="main">
+
+
+    <!-- PAGE TITLE -->
+
+    <div class="page-title">
+
+        <h1>
+            Content Dashboard
+        </h1>
+
+        <p>
+            Upload and manage videos that appear on
+            the StreamX user website.
+        </p>
+
+    </div>
+
+
+    <!-- =================================================
+         STATISTICS
+    ================================================= -->
+
+    <div class="stats">
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                🎬
+            </div>
+
+            <div class="stat-label">
+                Uploaded Videos
+            </div>
+
+            <div
+                class="stat-value"
+                id="videoCount"
             >
+                0
+            </div>
 
         </div>
 
 
-        <!-- CATEGORY -->
+        <div class="stat-card">
 
-        <div class="form-group">
+            <div class="stat-icon">
+                ☁️
+            </div>
 
-            <label class="title-label">
-                Category
-            </label>
-
-            <select id="category">
-
-                <option value="Trending">
-                    🔥 Trending
-                </option>
-
-                <option value="Entertainment">
-                    🎭 Entertainment
-                </option>
-
-                <option value="Music">
-                    🎵 Music
-                </option>
-
-                <option value="Sports">
-                    ⚽ Sports
-                </option>
-
-                <option value="Gaming">
-                    🎮 Gaming
-                </option>
-
-                <option value="Education">
-                    🎓 Education
-                </option>
-
-                <option value="Lifestyle">
-                    ✨ Lifestyle
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <!-- DESCRIPTION -->
-
-        <div class="form-group">
-
-            <label class="title-label">
-                Description
-            </label>
-
-            <textarea
-                id="description"
-                placeholder="Describe your video..."
-            ></textarea>
-
-        </div>
-
-
-        <!-- VIDEO -->
-
-        <div class="form-group">
-
-            <label class="title-label">
-                Video File
-            </label>
-
-            <label class="file-selector">
-
-                <input
-                    type="file"
-                    id="videoFile"
-                    accept="video/*"
-                >
-
-                <div class="file-icon">
-                    🎬
-                </div>
-
-                <strong>
-                    Click to select a video
-                </strong>
-
-                <small>
-                    MP4, WebM, MOV and other video formats
-                </small>
-
-            </label>
-
+            <div class="stat-label">
+                Storage
+            </div>
 
             <div
-                id="selectedVideo"
-                class="selected-file"
-            ></div>
+                class="stat-value"
+                style="font-size:20px"
+            >
+                Supabase
+            </div>
 
         </div>
 
 
-        <!-- THUMBNAIL -->
+        <div class="stat-card">
 
-        <div class="form-group">
+            <div class="stat-icon">
+                📡
+            </div>
 
-            <label class="title-label">
-                Thumbnail
-            </label>
-
-            <label class="file-selector">
-
-                <input
-                    type="file"
-                    id="thumbnailFile"
-                    accept="image/*"
-                >
-
-                <div class="file-icon">
-                    🖼️
-                </div>
-
-                <strong>
-                    Click to select thumbnail
-                </strong>
-
-                <small>
-                    JPG, PNG or WebP
-                </small>
-
-            </label>
-
+            <div class="stat-label">
+                Platform
+            </div>
 
             <div
-                id="selectedThumbnail"
-                class="selected-file"
-            ></div>
+                class="stat-value"
+                style="font-size:20px"
+            >
+                Online
+            </div>
 
         </div>
 
 
-        <!-- UPLOAD -->
+    </div>
 
-        <button
-            id="uploadButton"
-            class="upload-button"
-            type="button"
-        >
-            ⬆️ Upload Video
-        </button>
+
+    <!-- =================================================
+         UPLOAD SECTION
+    ================================================= -->
+
+    <section
+        class="content-card"
+        id="uploadSection"
+    >
+
+
+        <div class="card-header">
+
+            <h2>
+                Upload New Video
+            </h2>
+
+            <p>
+                Add a video, thumbnail and information.
+                The content will be stored in Supabase.
+            </p>
+
+        </div>
+
+
+        <div class="form-grid">
+
+
+            <!-- TITLE -->
+
+            <div class="form-group">
+
+                <label class="form-label">
+                    Video Title
+                </label>
+
+                <input
+                    type="text"
+                    id="title"
+                    placeholder="Enter video title"
+                >
+
+            </div>
+
+
+            <!-- CATEGORY -->
+
+            <div class="form-group">
+
+                <label class="form-label">
+                    Category
+                </label>
+
+                <select id="category">
+
+                    <option value="Trending">
+                        🔥 Trending
+                    </option>
+
+                    <option value="Entertainment">
+                        🎭 Entertainment
+                    </option>
+
+                    <option value="Music">
+                        🎵 Music
+                    </option>
+
+                    <option value="Sports">
+                        ⚽ Sports
+                    </option>
+
+                    <option value="Gaming">
+                        🎮 Gaming
+                    </option>
+
+                    <option value="Education">
+                        🎓 Education
+                    </option>
+
+                    <option value="Lifestyle">
+                        ✨ Lifestyle
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-group full">
+
+                <label class="form-label">
+                    Description
+                </label>
+
+                <textarea
+                    id="description"
+                    placeholder="Write a description..."
+                ></textarea>
+
+            </div>
+
+
+            <!-- VIDEO FILE -->
+
+            <div class="form-group">
+
+                <label class="form-label">
+                    Video File
+                </label>
+
+
+                <label
+                    class="file-area"
+                    for="videoFile"
+                >
+
+                    <input
+                        type="file"
+                        id="videoFile"
+                        accept="video/*"
+                    >
+
+                    <div class="file-icon">
+                        🎬
+                    </div>
+
+                    <strong>
+                        Select Video
+                    </strong>
+
+                    <span>
+                        Click here to choose your video
+                    </span>
+
+                </label>
+
+
+                <div
+                    class="file-info"
+                    id="videoInfo"
+                >
+
+                    <div
+                        class="file-name"
+                        id="videoName"
+                    ></div>
+
+                    <div
+                        class="file-size"
+                        id="videoSize"
+                    ></div>
+
+                </div>
+
+
+                <div
+                    class="preview-container"
+                    id="videoPreviewContainer"
+                >
+
+                    <video
+                        id="videoPreview"
+                        controls
+                    ></video>
+
+                </div>
+
+            </div>
+
+
+            <!-- THUMBNAIL -->
+
+            <div class="form-group">
+
+                <label class="form-label">
+                    Thumbnail
+                </label>
+
+
+                <label
+                    class="file-area"
+                    for="thumbnailFile"
+                >
+
+                    <input
+                        type="file"
+                        id="thumbnailFile"
+                        accept="image/*"
+                    >
+
+                    <div class="file-icon">
+                        🖼️
+                    </div>
+
+                    <strong>
+                        Select Thumbnail
+                    </strong>
+
+                    <span>
+                        JPG, PNG or WebP
+                    </span>
+
+                </label>
+
+
+                <div
+                    class="file-info"
+                    id="thumbnailInfo"
+                >
+
+                    <div
+                        class="file-name"
+                        id="thumbnailName"
+                    ></div>
+
+                    <div
+                        class="file-size"
+                        id="thumbnailSize"
+                    ></div>
+
+                </div>
+
+
+                <div
+                    class="preview-container"
+                    id="thumbnailPreviewContainer"
+                >
+
+                    <img
+                        id="thumbnailPreview"
+                        alt="Thumbnail preview"
+                    >
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ACTION BUTTONS -->
+
+        <div class="actions">
+
+            <button
+                class="upload-button"
+                id="uploadButton"
+                type="button"
+            >
+                ⬆️ Upload Video
+            </button>
+
+
+            <button
+                class="clear-button"
+                id="clearButton"
+                type="button"
+            >
+                Clear Form
+            </button>
+
+        </div>
 
 
         <!-- PROGRESS -->
 
         <div
+            class="progress-container"
             id="progressContainer"
         >
 
-            <div class="progress-top">
+            <div class="progress-header">
 
                 <span id="progressText">
-                    Preparing...
+                    Preparing upload...
                 </span>
 
                 <span id="progressPercent">
@@ -585,11 +1434,12 @@ select:focus{
 
             </div>
 
+
             <div class="progress">
 
                 <div
-                    id="progressBar"
                     class="progress-bar"
+                    id="progressBar"
                 ></div>
 
             </div>
@@ -597,38 +1447,70 @@ select:focus{
         </div>
 
 
-        <!-- STATUS -->
+        <!-- MESSAGE -->
 
-        <div id="status"></div>
+        <div
+            class="message"
+            id="message"
+        ></div>
 
 
-    </div>
+    </section>
+
+
+    <!-- =================================================
+         LIBRARY
+    ================================================= -->
+
+    <section
+        class="content-card"
+        id="librarySection"
+    >
+
+        <div class="card-header">
+
+            <h2>
+                Video Library
+            </h2>
+
+            <p>
+                Videos stored in your Supabase database
+                will appear here.
+            </p>
+
+        </div>
+
+
+        <div
+            id="libraryMessage"
+            style="
+                color:#777;
+                font-size:13px;
+            "
+        >
+            Your uploaded videos will appear here.
+
+        </div>
+
+    </section>
+
 
 </main>
+
+</div>
 
 
 <script>
 
 /* =====================================================
-   SUPABASE
+   IMPORTANT:
+   FILE SELECTION IS SET UP FIRST.
+   SUPABASE CANNOT BREAK IT.
 ===================================================== */
-
-const SUPABASE_URL =
-"https://iojjmoywrlnzpyatahyh.supabase.co";
-
-const SUPABASE_KEY =
-"sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
-
-
-const supabase =
-window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
 
 
 /* =====================================================
-   FILE VARIABLES
+   VARIABLES
 ===================================================== */
 
 let selectedVideoFile = null;
@@ -637,112 +1519,359 @@ let selectedThumbnailFile = null;
 
 
 /* =====================================================
-   VIDEO FILE SELECTION
+   ELEMENTS
 ===================================================== */
 
-document
-.getElementById("videoFile")
-.addEventListener(
-    "change",
-    function(){
-
-        selectedVideoFile =
-        this.files[0] || null;
-
-
-        const display =
-        document.getElementById(
-            "selectedVideo"
-        );
-
-
-        if(selectedVideoFile){
-
-            display.textContent =
-            "✓ Selected video: " +
-            selectedVideoFile.name;
-
-            display.style.display =
-            "block";
-
-        }
-        else{
-
-            display.textContent = "";
-
-            display.style.display =
-            "none";
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   THUMBNAIL SELECTION
-===================================================== */
-
-document
-.getElementById("thumbnailFile")
-.addEventListener(
-    "change",
-    function(){
-
-        selectedThumbnailFile =
-        this.files[0] || null;
-
-
-        const display =
-        document.getElementById(
-            "selectedThumbnail"
-        );
-
-
-        if(selectedThumbnailFile){
-
-            display.textContent =
-            "✓ Selected thumbnail: " +
-            selectedThumbnailFile.name;
-
-            display.style.display =
-            "block";
-
-        }
-        else{
-
-            display.textContent = "";
-
-            display.style.display =
-            "none";
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   STATUS
-===================================================== */
-
-function showStatus(
-    message,
-    type
-){
-
-    const status =
+const videoInput =
     document.getElementById(
-        "status"
+        "videoFile"
     );
 
 
-    status.textContent =
-    message;
+const thumbnailInput =
+    document.getElementById(
+        "thumbnailFile"
+    );
 
 
-    status.className =
-    type;
+/* =====================================================
+   FORMAT FILE SIZE
+===================================================== */
+
+function formatFileSize(bytes){
+
+    if(bytes < 1024){
+
+        return bytes + " B";
+
+    }
+
+    if(bytes < 1024 * 1024){
+
+        return (
+            bytes / 1024
+        ).toFixed(1)
+        + " KB";
+
+    }
+
+    if(bytes < 1024 * 1024 * 1024){
+
+        return (
+            bytes /
+            (1024 * 1024)
+        ).toFixed(1)
+        + " MB";
+
+    }
+
+    return (
+        bytes /
+        (1024 * 1024 * 1024)
+    ).toFixed(2)
+    + " GB";
+
+}
+
+
+/* =====================================================
+   VIDEO FILE SELECTED
+===================================================== */
+
+videoInput.addEventListener(
+    "change",
+    function(event){
+
+        console.log(
+            "VIDEO INPUT CHANGED"
+        );
+
+
+        selectedVideoFile =
+            event.target.files[0];
+
+
+        if(!selectedVideoFile){
+
+            return;
+
+        }
+
+
+        console.log(
+            "Selected video:",
+            selectedVideoFile.name
+        );
+
+
+        document.getElementById(
+            "videoInfo"
+        ).classList.add("show");
+
+
+        document.getElementById(
+            "videoName"
+        ).textContent =
+            "✓ " +
+            selectedVideoFile.name;
+
+
+        document.getElementById(
+            "videoSize"
+        ).textContent =
+            formatFileSize(
+                selectedVideoFile.size
+            );
+
+
+        /* VIDEO PREVIEW */
+
+        const videoURL =
+            URL.createObjectURL(
+                selectedVideoFile
+            );
+
+
+        const preview =
+            document.getElementById(
+                "videoPreview"
+            );
+
+
+        preview.src =
+            videoURL;
+
+
+        document.getElementById(
+            "videoPreviewContainer"
+        ).classList.add("show");
+
+    }
+);
+
+
+/* =====================================================
+   THUMBNAIL SELECTED
+===================================================== */
+
+thumbnailInput.addEventListener(
+    "change",
+    function(event){
+
+        console.log(
+            "THUMBNAIL INPUT CHANGED"
+        );
+
+
+        selectedThumbnailFile =
+            event.target.files[0];
+
+
+        if(!selectedThumbnailFile){
+
+            return;
+
+        }
+
+
+        console.log(
+            "Selected thumbnail:",
+            selectedThumbnailFile.name
+        );
+
+
+        document.getElementById(
+            "thumbnailInfo"
+        ).classList.add("show");
+
+
+        document.getElementById(
+            "thumbnailName"
+        ).textContent =
+            "✓ " +
+            selectedThumbnailFile.name;
+
+
+        document.getElementById(
+            "thumbnailSize"
+        ).textContent =
+            formatFileSize(
+                selectedThumbnailFile.size
+            );
+
+
+        /* IMAGE PREVIEW */
+
+        const imageURL =
+            URL.createObjectURL(
+                selectedThumbnailFile
+            );
+
+
+        document.getElementById(
+            "thumbnailPreview"
+        ).src =
+            imageURL;
+
+
+        document.getElementById(
+            "thumbnailPreviewContainer"
+        ).classList.add("show");
+
+    }
+);
+
+
+/* =====================================================
+   CLEAR FORM
+===================================================== */
+
+document
+.getElementById("clearButton")
+.addEventListener(
+    "click",
+    clearForm
+);
+
+
+function clearForm(){
+
+    document.getElementById(
+        "title"
+    ).value = "";
+
+
+    document.getElementById(
+        "description"
+    ).value = "";
+
+
+    document.getElementById(
+        "category"
+    ).value = "Trending";
+
+
+    videoInput.value = "";
+
+    thumbnailInput.value = "";
+
+
+    selectedVideoFile = null;
+
+    selectedThumbnailFile = null;
+
+
+    document.getElementById(
+        "videoInfo"
+    ).classList.remove("show");
+
+
+    document.getElementById(
+        "thumbnailInfo"
+    ).classList.remove("show");
+
+
+    document.getElementById(
+        "videoPreviewContainer"
+    ).classList.remove("show");
+
+
+    document.getElementById(
+        "thumbnailPreviewContainer"
+    ).classList.remove("show");
+
+
+    document.getElementById(
+        "videoPreview"
+    ).src = "";
+
+
+    document.getElementById(
+        "thumbnailPreview"
+    ).src = "";
+
+}
+
+
+/* =====================================================
+   SUPABASE CONFIGURATION
+===================================================== */
+
+const SUPABASE_URL =
+"https://iojjmoywrlnzpyatahyh.supabase.co";
+
+
+const SUPABASE_KEY =
+"sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
+
+
+let supabaseClient = null;
+
+
+/* =====================================================
+   INITIALIZE SUPABASE
+===================================================== */
+
+try{
+
+    if(
+        window.supabase &&
+        typeof window.supabase.createClient ===
+        "function"
+    ){
+
+        supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
+
+        console.log(
+            "Supabase initialized successfully."
+        );
+
+    }
+    else{
+
+        console.error(
+            "Supabase library was not loaded."
+        );
+
+    }
+
+}
+catch(error){
+
+    console.error(
+        "Supabase initialization error:",
+        error
+    );
+
+}
+
+
+/* =====================================================
+   MESSAGE
+===================================================== */
+
+function showMessage(
+    text,
+    type
+){
+
+    const message =
+        document.getElementById(
+            "message"
+        );
+
+
+    message.textContent =
+        text;
+
+
+    message.className =
+        "message show " +
+        type;
 
 }
 
@@ -751,33 +1880,33 @@ function showStatus(
    PROGRESS
 ===================================================== */
 
-function progress(
+function setProgress(
     percent,
-    message
+    text
 ){
 
     document.getElementById(
         "progressBar"
     ).style.width =
-    percent + "%";
+        percent + "%";
 
 
     document.getElementById(
         "progressPercent"
     ).textContent =
-    percent + "%";
+        percent + "%";
 
 
     document.getElementById(
         "progressText"
     ).textContent =
-    message;
+        text;
 
 }
 
 
 /* =====================================================
-   UPLOAD
+   UPLOAD BUTTON
 ===================================================== */
 
 document
@@ -788,32 +1917,36 @@ document
 );
 
 
+/* =====================================================
+   UPLOAD VIDEO
+===================================================== */
+
 async function uploadVideo(){
 
     const title =
-    document
-    .getElementById("title")
-    .value
-    .trim();
+        document.getElementById(
+            "title"
+        ).value.trim();
 
 
     const description =
-    document
-    .getElementById("description")
-    .value
-    .trim();
+        document.getElementById(
+            "description"
+        ).value.trim();
 
 
     const category =
-    document
-    .getElementById("category")
-    .value;
+        document.getElementById(
+            "category"
+        ).value;
 
+
+    /* VALIDATION */
 
     if(!title){
 
-        showStatus(
-            "Please enter a title.",
+        showMessage(
+            "Please enter a video title.",
             "error"
         );
 
@@ -824,8 +1957,8 @@ async function uploadVideo(){
 
     if(!selectedVideoFile){
 
-        showStatus(
-            "Please select a video.",
+        showMessage(
+            "Please select a video file.",
             "error"
         );
 
@@ -836,7 +1969,7 @@ async function uploadVideo(){
 
     if(!selectedThumbnailFile){
 
-        showStatus(
+        showMessage(
             "Please select a thumbnail.",
             "error"
         );
@@ -846,10 +1979,22 @@ async function uploadVideo(){
     }
 
 
+    if(!supabaseClient){
+
+        showMessage(
+            "Supabase could not be initialized. Check the browser console.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
     const button =
-    document.getElementById(
-        "uploadButton"
-    );
+        document.getElementById(
+            "uploadButton"
+        );
 
 
     button.disabled = true;
@@ -857,52 +2002,51 @@ async function uploadVideo(){
 
     document.getElementById(
         "progressContainer"
-    ).style.display =
-    "block";
+    ).classList.add("show");
 
 
     try{
 
 
-        /* =========================================
-           FILE NAMES
-        ========================================= */
+        /* =============================================
+           CREATE UNIQUE FILE NAMES
+        ============================================= */
 
-        const id =
-        Date.now();
+        const timestamp =
+            Date.now();
 
 
         const videoExtension =
-        selectedVideoFile.name
-        .split(".")
-        .pop()
-        .toLowerCase();
+            selectedVideoFile.name
+            .split(".")
+            .pop()
+            .toLowerCase();
 
 
         const thumbnailExtension =
-        selectedThumbnailFile.name
-        .split(".")
-        .pop()
-        .toLowerCase();
+            selectedThumbnailFile.name
+            .split(".")
+            .pop()
+            .toLowerCase();
 
 
         const videoPath =
-        id +
-        "-video." +
-        videoExtension;
+            timestamp +
+            "-video." +
+            videoExtension;
 
 
         const thumbnailPath =
-        id +
-        "-thumbnail." +
-        thumbnailExtension;
+            timestamp +
+            "-thumbnail." +
+            thumbnailExtension;
 
 
-        /* =========================================
-           VIDEO UPLOAD
-        ========================================= */
+        /* =============================================
+           VIDEO
+        ============================================= */
 
-        progress(
+        setProgress(
             10,
             "Uploading video..."
         );
@@ -911,12 +2055,14 @@ async function uploadVideo(){
         const {
             error:videoError
         } =
-        await supabase.storage
+        await supabaseClient
+        .storage
         .from("videos")
         .upload(
             videoPath,
             selectedVideoFile,
             {
+                cacheControl:"3600",
                 upsert:false
             }
         );
@@ -932,11 +2078,11 @@ async function uploadVideo(){
         }
 
 
-        /* =========================================
+        /* =============================================
            THUMBNAIL
-        ========================================= */
+        ============================================= */
 
-        progress(
+        setProgress(
             55,
             "Uploading thumbnail..."
         );
@@ -945,12 +2091,14 @@ async function uploadVideo(){
         const {
             error:thumbnailError
         } =
-        await supabase.storage
+        await supabaseClient
+        .storage
         .from("thumbnails")
         .upload(
             thumbnailPath,
             selectedThumbnailFile,
             {
+                cacheControl:"3600",
                 upsert:false
             }
         );
@@ -966,44 +2114,46 @@ async function uploadVideo(){
         }
 
 
-        /* =========================================
-           PUBLIC URLS
-        ========================================= */
+        /* =============================================
+           GET PUBLIC URLS
+        ============================================= */
 
-        progress(
+        setProgress(
             75,
             "Creating video record..."
         );
 
 
-        const {
-            data:videoPublic
-        } =
-        supabase.storage
-        .from("videos")
-        .getPublicUrl(
-            videoPath
-        );
+        const videoURL =
+            supabaseClient
+            .storage
+            .from("videos")
+            .getPublicUrl(
+                videoPath
+            )
+            .data
+            .publicUrl;
 
 
-        const {
-            data:thumbnailPublic
-        } =
-        supabase.storage
-        .from("thumbnails")
-        .getPublicUrl(
-            thumbnailPath
-        );
+        const thumbnailURL =
+            supabaseClient
+            .storage
+            .from("thumbnails")
+            .getPublicUrl(
+                thumbnailPath
+            )
+            .data
+            .publicUrl;
 
 
-        /* =========================================
-           DATABASE
-        ========================================= */
+        /* =============================================
+           INSERT DATABASE RECORD
+        ============================================= */
 
         const {
             error:databaseError
         } =
-        await supabase
+        await supabaseClient
         .from("videos")
         .insert({
 
@@ -1013,11 +2163,9 @@ async function uploadVideo(){
 
             category:category,
 
-            video_url:
-            videoPublic.publicUrl,
+            video_url:videoURL,
 
-            thumbnail_url:
-            thumbnailPublic.publicUrl,
+            thumbnail_url:thumbnailURL,
 
             views:0
 
@@ -1027,81 +2175,58 @@ async function uploadVideo(){
         if(databaseError){
 
             throw new Error(
-                "Database error: " +
+                "Database insert failed: " +
                 databaseError.message
             );
 
         }
 
 
-        progress(
+        /* =============================================
+           SUCCESS
+        ============================================= */
+
+        setProgress(
             100,
             "Upload complete!"
         );
 
 
-        showStatus(
-            "✅ Video uploaded successfully. Open the User Website to view it.",
+        showMessage(
+            "✓ Video uploaded successfully. It is now available on the User Website.",
             "success"
         );
 
 
-        /* =========================================
-           RESET
-        ========================================= */
+        /* UPDATE COUNT */
 
-        document.getElementById(
-            "title"
-        ).value = "";
+        loadVideoCount();
 
 
-        document.getElementById(
-            "description"
-        ).value = "";
+        /* CLEAR FORM */
 
+        setTimeout(
+            function(){
 
-        document.getElementById(
-            "category"
-        ).value = "Trending";
+                clearForm();
 
-
-        document.getElementById(
-            "videoFile"
-        ).value = "";
-
-
-        document.getElementById(
-            "thumbnailFile"
-        ).value = "";
-
-
-        selectedVideoFile = null;
-
-        selectedThumbnailFile = null;
-
-
-        document.getElementById(
-            "selectedVideo"
-        ).style.display =
-        "none";
-
-
-        document.getElementById(
-            "selectedThumbnail"
-        ).style.display =
-        "none";
+            },
+            1200
+        );
 
 
     }
     catch(error){
 
         console.error(
+            "UPLOAD ERROR:",
             error
         );
 
 
-        showStatus(
-            "❌ " + error.message,
+        showMessage(
+            "❌ " +
+            error.message,
             "error"
         );
 
@@ -1114,9 +2239,98 @@ async function uploadVideo(){
 
 }
 
+
+/* =====================================================
+   VIDEO COUNT
+===================================================== */
+
+async function loadVideoCount(){
+
+    if(!supabaseClient){
+
+        return;
+
+    }
+
+
+    try{
+
+        const {
+            count,
+            error
+        } =
+        await supabaseClient
+        .from("videos")
+        .select(
+            "*",
+            {
+                count:"exact",
+                head:true
+            }
+        );
+
+
+        if(!error){
+
+            document.getElementById(
+                "videoCount"
+            ).textContent =
+                count || 0;
+
+        }
+
+    }
+    catch(error){
+
+        console.error(
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+function scrollToUpload(){
+
+    document
+    .getElementById(
+        "uploadSection"
+    )
+    .scrollIntoView({
+        behavior:"smooth"
+    });
+
+}
+
+
+function scrollToLibrary(){
+
+    document
+    .getElementById(
+        "librarySection"
+    )
+    .scrollIntoView({
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =====================================================
+   START
+===================================================== */
+
+loadVideoCount();
+
 </script>
 
 </body>
 
 </html>
 ```
+

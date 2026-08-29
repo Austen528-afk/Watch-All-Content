@@ -1,271 +1,149 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
-
->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>StreamX</title>
-
-<!-- SUPABASE -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
-/* =====================================================
-   RESET
-===================================================== */
-
 *{
+    box-sizing:border-box;
     margin:0;
     padding:0;
-    box-sizing:border-box;
 }
-
-
-/* =====================================================
-   BODY
-===================================================== */
 
 body{
-
-    background:#0d0d0d;
-
-    color:white;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    min-height:100vh;
+    background:#080808;
+    color:#fff;
+    font-family:Arial,Helvetica,sans-serif;
 }
 
-
-/* =====================================================
-   HEADER
-===================================================== */
+/* HEADER */
 
 header{
-
     height:70px;
-
-    padding:0 25px;
-
     background:#111;
-
     border-bottom:1px solid #292929;
 
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
 
-    position:sticky;
+    padding:0 30px;
 
+    position:sticky;
     top:0;
 
     z-index:100;
 }
 
-
 .logo{
-
-    font-size:28px;
-
+    font-size:27px;
     font-weight:900;
 }
 
-
 .logo span{
-
     color:#ff1744;
 }
 
-
-.admin-btn{
-
+.admin-button{
     background:#ff1744;
-
-    color:white;
+    color:#fff;
 
     text-decoration:none;
 
-    padding:10px 16px;
+    padding:11px 18px;
 
     border-radius:8px;
 
     font-size:13px;
-
     font-weight:bold;
-
-    transition:.2s;
 }
 
-
-.admin-btn:hover{
-
+.admin-button:hover{
     background:#e90035;
-
 }
 
 
-/* =====================================================
-   CATEGORY SECTION
-===================================================== */
+/* MAIN */
 
-.category-section{
+.container{
+    max-width:1500px;
+    margin:auto;
 
-    padding:20px 25px;
-
-    background:#0d0d0d;
-
-    border-bottom:1px solid #222;
+    padding:30px;
 }
 
+.page-title{
+    margin-bottom:25px;
+}
 
-.category-title{
+.page-title h1{
+    font-size:30px;
+}
 
+.page-title p{
     color:#888;
-
+    margin-top:7px;
     font-size:13px;
-
-    margin-bottom:13px;
 }
 
 
-.categories{
+/* STATUS */
 
-    display:flex;
+.status{
+    background:#111;
 
-    gap:10px;
+    border:1px solid #292929;
 
-    overflow-x:auto;
+    border-radius:10px;
 
-    padding-bottom:4px;
+    padding:14px 16px;
 
-    scrollbar-width:none;
-}
-
-
-.categories::-webkit-scrollbar{
-
-    display:none;
-}
-
-
-.category-btn{
-
-    flex-shrink:0;
-
-    border:1px solid #333;
-
-    background:#171717;
+    margin-bottom:25px;
 
     color:#aaa;
 
-    padding:10px 16px;
-
-    border-radius:20px;
-
-    cursor:pointer;
-
     font-size:13px;
+}
 
-    transition:.2s;
+.status.success{
+    border-color:#1d5b42;
+    color:#50d69a;
+}
+
+.status.error{
+    border-color:#7a2637;
+    color:#ff6684;
 }
 
 
-.category-btn:hover{
-
-    border-color:#ff1744;
-
-    color:white;
-}
-
-
-.category-btn.active{
-
-    background:#ff1744;
-
-    border-color:#ff1744;
-
-    color:white;
-}
-
-
-/* =====================================================
-   MAIN
-===================================================== */
-
-.container{
-
-    max-width:1600px;
-
-    margin:auto;
-
-    padding:25px;
-}
-
-
-/* =====================================================
-   PAGE HEADING
-===================================================== */
-
-.page-heading{
-
-    margin-bottom:20px;
-}
-
-
-.page-heading h1{
-
-    font-size:23px;
-}
-
-
-.current-category{
-
-    color:#ff1744;
-}
-
-
-/* =====================================================
-   VIDEO GRID
-===================================================== */
+/* VIDEO GRID */
 
 .video-grid{
 
     display:grid;
 
     grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(260px,1fr)
-        );
+        repeat(auto-fill,minmax(260px,1fr));
 
     gap:20px;
+
 }
 
 
-/* =====================================================
-   VIDEO CARD
-===================================================== */
+/* CARD */
 
-.card{
+.video-card{
 
-    background:#151515;
+    background:#141414;
 
-    border:1px solid #252525;
+    border:1px solid #292929;
 
     border-radius:12px;
 
@@ -274,212 +152,151 @@ header{
     cursor:pointer;
 
     transition:.2s;
+
+}
+
+.video-card:hover{
+
+    transform:translateY(-4px);
+
+    border-color:#ff1744;
+
 }
 
 
-.card:hover{
-
-    transform:translateY(-3px);
-
-    border-color:#444;
-}
-
-
-/* =====================================================
-   THUMBNAIL
-===================================================== */
+/* THUMBNAIL */
 
 .thumbnail{
 
     width:100%;
 
-    height:180px;
+    height:175px;
 
     background:#222;
 
     position:relative;
 
     overflow:hidden;
-}
 
+}
 
 .thumbnail img{
 
     width:100%;
-
     height:100%;
 
     object-fit:cover;
 
-    display:block;
 }
 
-
-/* =====================================================
-   CATEGORY LABEL
-===================================================== */
-
-.category-label{
+.play-icon{
 
     position:absolute;
 
-    top:10px;
+    left:50%;
+    top:50%;
 
-    left:10px;
+    transform:
+        translate(-50%,-50%);
 
-    background:rgba(0,0,0,.8);
+    width:55px;
+    height:55px;
 
-    color:white;
+    border-radius:50%;
 
-    padding:5px 8px;
-
-    border-radius:5px;
-
-    font-size:10px;
-}
-
-
-/* =====================================================
-   PLAY BUTTON
-===================================================== */
-
-.play-overlay{
-
-    position:absolute;
-
-    inset:0;
+    background:rgba(255,23,68,.95);
 
     display:flex;
 
+    align-items:center;
     justify-content:center;
 
-    align-items:center;
-
-    background:rgba(0,0,0,.3);
+    font-size:21px;
 
     opacity:0;
 
     transition:.2s;
+
 }
 
-
-.card:hover .play-overlay{
+.video-card:hover .play-icon{
 
     opacity:1;
+
 }
 
 
-.play-circle{
+/* CARD CONTENT */
 
-    width:52px;
-
-    height:52px;
-
-    border-radius:50%;
-
-    background:#ff1744;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    font-size:20px;
-}
-
-
-/* =====================================================
-   CARD CONTENT
-===================================================== */
-
-.card-content{
+.video-info{
 
     padding:15px;
+
 }
 
+.video-info h3{
 
-.card-content h3{
+    font-size:16px;
 
-    font-size:15px;
-
-    margin-bottom:7px;
+    margin-bottom:8px;
 
     white-space:nowrap;
 
     overflow:hidden;
 
     text-overflow:ellipsis;
+
 }
 
+.category{
 
-.card-content p{
+    color:#ff4568;
 
-    color:#999;
+    font-size:11px;
+
+    text-transform:uppercase;
+
+    font-weight:bold;
+
+    margin-bottom:8px;
+
+}
+
+.description{
+
+    color:#888;
 
     font-size:12px;
 
     line-height:1.5;
 
-    display:-webkit-box;
-
-    -webkit-line-clamp:2;
-
-    -webkit-box-orient:vertical;
-
-    overflow:hidden;
 }
 
 
-/* =====================================================
-   MESSAGE
-===================================================== */
+/* EMPTY */
 
-.message{
-
-    grid-column:1/-1;
+.empty{
 
     text-align:center;
 
     padding:70px 20px;
 
-    color:#777;
+    color:#666;
+
 }
 
+.empty-icon{
 
-.message-icon{
-
-    font-size:45px;
+    font-size:50px;
 
     margin-bottom:15px;
+
 }
 
 
-.message h3{
+/* PLAYER */
 
-    color:#aaa;
-
-    margin-bottom:5px;
-}
-
-
-.message p{
-
-    max-width:700px;
-
-    margin:auto;
-
-    line-height:1.6;
-
-    word-break:break-word;
-}
-
-
-/* =====================================================
-   PLAYER MODAL
-===================================================== */
-
-.player-modal{
+.player{
 
     position:fixed;
 
@@ -489,39 +306,51 @@ header{
 
     display:none;
 
-    justify-content:center;
-
     align-items:center;
+
+    justify-content:center;
 
     padding:20px;
 
     z-index:1000;
+
 }
 
+.player.active{
 
-.player-box{
+    display:flex;
+
+}
+
+.player-container{
 
     width:100%;
 
     max-width:1000px;
+
 }
 
+.player-top{
 
-.player-box video{
+    display:flex;
 
-    width:100%;
+    justify-content:space-between;
 
-    max-height:75vh;
+    align-items:center;
 
-    background:#000;
+    margin-bottom:12px;
 
-    border-radius:12px;
-
-    display:block;
 }
 
+.player-title{
 
-.close-btn{
+    font-size:18px;
+
+    font-weight:bold;
+
+}
+
+.close{
 
     background:#ff1744;
 
@@ -531,101 +360,61 @@ header{
 
     padding:10px 15px;
 
-    border-radius:8px;
+    border-radius:7px;
 
     cursor:pointer;
 
-    margin-bottom:10px;
-
-    font-weight:bold;
 }
 
+video{
 
-.close-btn:hover{
+    width:100%;
 
-    background:#e90035;
+    max-height:75vh;
+
+    background:#000;
+
+    border-radius:10px;
+
 }
 
+.player-description{
 
-.player-info{
-
-    padding-top:15px;
-}
-
-
-.player-info h2{
-
-    font-size:20px;
-
-    margin-bottom:8px;
-}
-
-
-.player-info p{
-
-    color:#999;
+    color:#888;
 
     font-size:13px;
 
-    line-height:1.5;
+    margin-top:12px;
+
 }
 
 
-/* =====================================================
-   MOBILE
-===================================================== */
+/* MOBILE */
 
 @media(max-width:600px){
 
     header{
 
-        height:60px;
-
         padding:0 15px;
-    }
 
+    }
 
     .logo{
 
-        font-size:23px;
+        font-size:22px;
+
     }
-
-
-    .admin-btn{
-
-        padding:8px 11px;
-
-        font-size:12px;
-    }
-
-
-    .category-section{
-
-        padding:15px;
-    }
-
 
     .container{
 
-        padding:15px;
-    }
+        padding:20px 15px;
 
+    }
 
     .video-grid{
 
         grid-template-columns:1fr;
-    }
 
-
-    .thumbnail{
-
-        height:210px;
-    }
-
-
-    .page-heading h1{
-
-        font-size:20px;
     }
 
 }
@@ -634,268 +423,139 @@ header{
 
 </head>
 
+
 <body>
 
-<!-- =====================================================
-     HEADER
-===================================================== -->
 
 <header>
 
-```
-<div class="logo">
+    <div class="logo">
+        Stream<span>X</span>
+    </div>
 
-    Stream<span>X</span>
-
-</div>
-
-
-<a
-    href="admin.html"
-    class="admin-btn"
->
-
-    Admin
-
-</a>
-```
+    <a
+        href="admin.html"
+        class="admin-button"
+    >
+        Admin
+    </a>
 
 </header>
 
-<!-- =====================================================
-     CATEGORY NAVIGATION
-===================================================== -->
-
-<section class="category-section">
-
-```
-<div class="category-title">
-
-    Browse by category
-
-</div>
-
-
-<div class="categories">
-
-
-    <button
-        class="category-btn active"
-        onclick="selectCategory('All',this)"
-    >
-
-        🎬 All Videos
-
-    </button>
-
-
-    <button
-        class="category-btn"
-        onclick="selectCategory('Trending',this)"
-    >
-
-        🔥 Trending
-
-    </button>
-
-
-    <button
-        class="category-btn"
-        onclick="selectCategory('Entertainment',this)"
-    >
-
-        🎭 Entertainment
-
-    </button>
-
-
-    <button
-        class="category-btn"
-        onclick="selectCategory('Music',this)"
-    >
-
-        🎵 Music
-
-    </button>
-
-
-    <button
-        class="category-btn"
-        onclick="selectCategory('Sports',this)"
-    >
-
-        ⚽ Sports
-
-    </button>
-
-
-    <button
-        class="category-btn"
-        onclick="selectCategory('Gaming',this)"
-    >
-
-        🎮 Gaming
-
-    </button>
-
-
-    <button
-        class="category-btn"
-        onclick="selectCategory('Education',this)"
-    >
-
-        🎓 Education
-
-    </button>
-
-
-    <button
-        class="category-btn"
-        onclick="selectCategory('Lifestyle',this)"
-    >
-
-        ✨ Lifestyle
-
-    </button>
-
-
-</div>
-```
-
-</section>
-
-<!-- =====================================================
-     MAIN CONTENT
-===================================================== -->
 
 <main class="container">
 
-```
-<div class="page-heading">
 
-    <h1>
+    <div class="page-title">
 
-        <span
-            id="currentCategory"
-            class="current-category"
-        >
-
-            All Videos
-
-        </span>
-
-    </h1>
-
-</div>
-
-
-<div
-    id="videoGrid"
-    class="video-grid"
->
-
-    <div class="message">
-
-        <div class="message-icon">
-
-            ⏳
-
-        </div>
-
-
-        <h3>
-
-            Connecting to StreamX...
-
-        </h3>
-
+        <h1>
+            Discover Videos
+        </h1>
 
         <p>
-
-            Loading videos from Supabase.
-
+            Watch the latest content uploaded to StreamX.
         </p>
 
     </div>
 
-</div>
-```
+
+    <div
+        id="status"
+        class="status"
+    >
+        Connecting to StreamX...
+    </div>
+
+
+    <div
+        id="videoGrid"
+        class="video-grid"
+    ></div>
+
+
+    <div
+        id="empty"
+        class="empty"
+        style="display:none;"
+    >
+
+        <div class="empty-icon">
+            🎬
+        </div>
+
+        <h2>
+            No videos available
+        </h2>
+
+        <p style="margin-top:8px;">
+            Videos uploaded by the administrator will appear here.
+        </p>
+
+    </div>
+
 
 </main>
 
-<!-- =====================================================
-     VIDEO PLAYER
-===================================================== -->
+
+<!-- PLAYER -->
 
 <div
-    id="playerModal"
-    class="player-modal"
+    id="player"
+    class="player"
 >
 
-```
-<div class="player-box">
+    <div class="player-container">
+
+        <div class="player-top">
+
+            <div
+                id="playerTitle"
+                class="player-title"
+            >
+                Video
+            </div>
+
+            <button
+                class="close"
+                onclick="closePlayer()"
+            >
+                ✕ Close
+            </button>
+
+        </div>
 
 
-    <button
-        class="close-btn"
-        onclick="closePlayer()"
-    >
-
-        ✕ Close
-
-    </button>
+        <video
+            id="videoPlayer"
+            controls
+            playsinline
+        ></video>
 
 
-    <video
-        id="videoPlayer"
-        controls
-        playsinline
-    ></video>
-
-
-    <div class="player-info">
-
-
-        <h2
-            id="playerTitle"
-        >
-
-            Video
-
-        </h2>
-
-
-        <p
+        <div
             id="playerDescription"
-        ></p>
-
+            class="player-description"
+        ></div>
 
     </div>
 
 </div>
-```
 
-</div>
 
 <script>
 
 /* =====================================================
-   SUPABASE CONFIGURATION
+   SUPABASE CONNECTION
 ===================================================== */
 
 const SUPABASE_URL =
 "https://iojjmoywrlnzpyatahyh.supabase.co";
 
-
 const SUPABASE_KEY =
 "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 
 
-/* =====================================================
-   CREATE SUPABASE CLIENT
-===================================================== */
-
-const supabase =
+const supabaseClient =
 window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
@@ -906,491 +566,428 @@ window.supabase.createClient(
    ELEMENTS
 ===================================================== */
 
-const videoGrid =
+const grid =
 document.getElementById(
     "videoGrid"
 );
 
-
-const currentCategory =
+const empty =
 document.getElementById(
-    "currentCategory"
+    "empty"
 );
+
+const status =
+document.getElementById(
+    "status"
+);
+
+
+/* =====================================================
+   STATUS MESSAGE
+===================================================== */
+
+function showStatus(
+    message,
+    type=""
+){
+
+    status.textContent =
+        message;
+
+    status.className =
+        "status " + type;
+
+}
+
+
+/* =====================================================
+   CREATE STORAGE URL
+===================================================== */
+
+function getVideoURL(value){
+
+    if(!value)
+        return null;
+
+
+    /*
+       If the database already contains
+       a complete URL, use it.
+    */
+
+    if(
+        value.startsWith(
+            "http://"
+        ) ||
+        value.startsWith(
+            "https://"
+        )
+    ){
+
+        return value;
+
+    }
+
+
+    /*
+       Otherwise assume the value
+       is a file path inside videos bucket.
+    */
+
+    const {
+        data
+    } =
+    supabaseClient
+        .storage
+        .from("videos")
+        .getPublicUrl(value);
+
+
+    return data.publicUrl;
+
+}
+
+
+/* =====================================================
+   CREATE THUMBNAIL URL
+===================================================== */
+
+function getThumbnailURL(value){
+
+    if(!value)
+        return null;
+
+
+    if(
+        value.startsWith(
+            "http://"
+        ) ||
+        value.startsWith(
+            "https://"
+        )
+    ){
+
+        return value;
+
+    }
+
+
+    const {
+        data
+    } =
+    supabaseClient
+        .storage
+        .from("thumbnails")
+        .getPublicUrl(value);
+
+
+    return data.publicUrl;
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(value){
+
+    return String(
+        value ?? ""
+    )
+
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+
+    .replace(
+        /</g,
+        "&lt;"
+    )
+
+    .replace(
+        />/g,
+        "&gt;"
+    )
+
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
 
 
 /* =====================================================
    LOAD VIDEOS
 ===================================================== */
 
-async function loadVideos(
-    category = "All"
+async function loadVideos(){
+
+    showStatus(
+        "Connecting to Supabase..."
+    );
+
+
+    grid.innerHTML = "";
+
+    empty.style.display =
+        "none";
+
+
+    console.log(
+        "StreamX: requesting videos..."
+    );
+
+
+    const result =
+        await supabaseClient
+
+        .from("videos")
+
+        .select("*")
+
+        .order(
+            "created_at",
+            {
+                ascending:false
+            }
+        );
+
+
+    const data =
+        result.data;
+
+    const error =
+        result.error;
+
+
+    console.log(
+        "StreamX database result:",
+        result
+    );
+
+
+    /* DATABASE ERROR */
+
+    if(error){
+
+        console.error(
+            "Supabase database error:",
+            error
+        );
+
+
+        showStatus(
+            "❌ Database error: " +
+            error.message,
+            "error"
+        );
+
+
+        empty.style.display =
+            "block";
+
+
+        empty.innerHTML = `
+
+            <div class="empty-icon">
+                ⚠️
+            </div>
+
+            <h2>
+                Could not load videos
+            </h2>
+
+            <p style="margin-top:10px;">
+                ${escapeHTML(
+                    error.message
+                )}
+            </p>
+
+        `;
+
+        return;
+
+    }
+
+
+    console.log(
+        "Videos found:",
+        data
+    );
+
+
+    /* NO DATA */
+
+    if(
+        !data ||
+        data.length === 0
+    ){
+
+        showStatus(
+            "Connected successfully — no videos found."
+        );
+
+
+        empty.style.display =
+            "block";
+
+
+        return;
+
+    }
+
+
+    /* VIDEOS FOUND */
+
+    showStatus(
+        "✓ Connected — " +
+        data.length +
+        " video(s) available.",
+        "success"
+    );
+
+
+    data.forEach(
+        video => {
+
+            createVideoCard(
+                video
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   CREATE VIDEO CARD
+===================================================== */
+
+function createVideoCard(
+    video
 ){
 
-    /*
-    Show loading message.
-    */
+    const card =
+        document.createElement(
+            "div"
+        );
 
-    videoGrid.innerHTML = `
 
-        <div class="message">
+    card.className =
+        "video-card";
 
-            <div class="message-icon">
-                ⏳
+
+    const thumbnail =
+        getThumbnailURL(
+            video.thumbnail_url
+        );
+
+
+    const title =
+        video.title ||
+        "Untitled Video";
+
+
+    const category =
+        video.category ||
+        "General";
+
+
+    const description =
+        video.description ||
+        "No description available.";
+
+
+    card.innerHTML = `
+
+        <div class="thumbnail">
+
+            ${
+                thumbnail
+                ?
+                `
+                <img
+                    src="${escapeHTML(thumbnail)}"
+                    alt="${escapeHTML(title)}"
+                    onerror="this.style.display='none'"
+                >
+                `
+                :
+                ""
+            }
+
+            <div class="play-icon">
+                ▶
+            </div>
+
+        </div>
+
+
+        <div class="video-info">
+
+            <div class="category">
+                ${escapeHTML(category)}
             </div>
 
             <h3>
-                Loading videos...
+                ${escapeHTML(title)}
             </h3>
 
-            <p>
-                Connecting to Supabase.
-            </p>
+            <div class="description">
+                ${escapeHTML(description)}
+            </div>
 
         </div>
 
     `;
 
 
-    console.log(
-        "Loading category:",
-        category
+    card.addEventListener(
+        "click",
+        function(){
+
+            openPlayer(
+                video
+            );
+
+        }
     );
 
 
-    try{
-
-
-        /*
-        Start Supabase query.
-        */
-
-        let query =
-            supabase
-            .from("videos")
-            .select(
-                "*"
-            );
-
-
-        /*
-        If category is not All,
-        filter directly in Supabase.
-        */
-
-        if(
-            category !== "All"
-        ){
-
-            query =
-                query.eq(
-                    "category",
-                    category
-                );
-
-        }
-
-
-        /*
-        Order newest videos first.
-        */
-
-        query =
-            query.order(
-                "created_at",
-                {
-                    ascending:false
-                }
-            );
-
-
-        /*
-        Execute query.
-        */
-
-        const {
-            data,
-            error
-        } = await query;
-
-
-        /*
-        Print result in browser console.
-        */
-
-        console.log(
-            "Supabase data:",
-            data
-        );
-
-
-        console.log(
-            "Supabase error:",
-            error
-        );
-
-
-        /*
-        Handle Supabase error.
-        */
-
-        if(error){
-
-            videoGrid.innerHTML = `
-
-                <div class="message">
-
-                    <div class="message-icon">
-                        ❌
-                    </div>
-
-                    <h3>
-                        Supabase Error
-                    </h3>
-
-                    <p>
-                        ${escapeHTML(
-                            error.message
-                        )}
-                    </p>
-
-                    <p style="margin-top:12px;">
-                        Error code:
-                        ${escapeHTML(
-                            error.code ||
-                            "Unknown"
-                        )}
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        /*
-        Check whether records exist.
-        */
-
-        if(
-            !data ||
-            data.length === 0
-        ){
-
-            videoGrid.innerHTML = `
-
-                <div class="message">
-
-                    <div class="message-icon">
-                        📭
-                    </div>
-
-                    <h3>
-                        No videos found
-                    </h3>
-
-                    <p>
-                        There are currently no videos
-                        in ${escapeHTML(
-                            category === "All"
-                                ? "StreamX"
-                                : category
-                        )}.
-                    </p>
-
-                </div>
-
-            `;
-
-            return;
-
-        }
-
-
-        /*
-        Display returned videos.
-        */
-
-        displayVideos(
-            data
-        );
-
-
-    }
-
-    catch(error){
-
-        console.error(
-            "JavaScript error:",
-            error
-        );
-
-
-        videoGrid.innerHTML = `
-
-            <div class="message">
-
-                <div class="message-icon">
-                    ❌
-                </div>
-
-                <h3>
-                    Connection Error
-                </h3>
-
-                <p>
-                    ${escapeHTML(
-                        error.message ||
-                        "Unknown error"
-                    )}
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-/* =====================================================
-   CATEGORY SELECTION
-===================================================== */
-
-function selectCategory(
-    category,
-    button
-){
-
-    /*
-    Remove active class
-    from all buttons.
-    */
-
-    document
-        .querySelectorAll(
-            ".category-btn"
-        )
-        .forEach(
-            function(btn){
-
-                btn.classList.remove(
-                    "active"
-                );
-
-            }
-        );
-
-
-    /*
-    Activate clicked button.
-    */
-
-    button.classList.add(
-        "active"
-    );
-
-
-    /*
-    Change page heading.
-    */
-
-    currentCategory.textContent =
-        category === "All"
-            ? "All Videos"
-            : category;
-
-
-    /*
-    Load the selected
-    category directly
-    from Supabase.
-    */
-
-    loadVideos(
-        category
+    grid.appendChild(
+        card
     );
 
 }
 
 
 /* =====================================================
-   DISPLAY VIDEOS
-===================================================== */
-
-function displayVideos(
-    videos
-){
-
-    videoGrid.innerHTML = "";
-
-
-    videos.forEach(
-        function(video){
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "card";
-
-
-            /*
-            Thumbnail.
-            */
-
-            const thumbnail =
-                video.thumbnail_url ||
-                "";
-
-
-            /*
-            Create card HTML.
-            */
-
-            card.innerHTML = `
-
-                <div class="thumbnail">
-
-                    ${
-                        thumbnail
-
-                        ?
-
-                        `<img
-                            src="${escapeHTML(
-                                thumbnail
-                            )}"
-                            alt="${escapeHTML(
-                                video.title ||
-                                "Video"
-                            )}"
-                            loading="lazy"
-                        >`
-
-                        :
-
-                        `<div
-                            style="
-                                width:100%;
-                                height:100%;
-                                display:flex;
-                                align-items:center;
-                                justify-content:center;
-                                color:#777;
-                                font-size:40px;
-                            "
-                        >
-                            🎬
-                        </div>`
-                    }
-
-
-                    <div class="category-label">
-
-                        ${escapeHTML(
-                            video.category ||
-                            "Uncategorized"
-                        )}
-
-                    </div>
-
-
-                    <div class="play-overlay">
-
-                        <div class="play-circle">
-
-                            ▶
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="card-content">
-
-                    <h3>
-
-                        ${escapeHTML(
-                            video.title ||
-                            "Untitled Video"
-                        )}
-
-                    </h3>
-
-
-                    <p>
-
-                        ${escapeHTML(
-                            video.description ||
-                            video.category ||
-                            ""
-                        )}
-
-                    </p>
-
-                </div>
-
-            `;
-
-
-            /*
-            Clicking card opens player.
-            */
-
-            card.addEventListener(
-                "click",
-                function(){
-
-                    openPlayer(
-                        video
-                    );
-
-                }
-            );
-
-
-            videoGrid.appendChild(
-                card
-            );
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   OPEN VIDEO PLAYER
+   OPEN PLAYER
 ===================================================== */
 
 function openPlayer(
     video
 ){
 
-    /*
-    Make sure video URL exists.
-    */
+    const url =
+        getVideoURL(
+            video.video_url
+        );
 
-    if(
-        !video.video_url
-    ){
+
+    if(!url){
 
         alert(
             "This video does not have a video URL."
-        );
-
-        console.error(
-            "Missing video_url:",
-            video
         );
 
         return;
@@ -1398,10 +995,10 @@ function openPlayer(
     }
 
 
-    const modal =
-        document.getElementById(
-            "playerModal"
-        );
+    console.log(
+        "Playing video:",
+        url
+    );
 
 
     const player =
@@ -1410,62 +1007,45 @@ function openPlayer(
         );
 
 
-    const title =
+    const modal =
         document.getElementById(
-            "playerTitle"
+            "player"
         );
 
 
-    const description =
-        document.getElementById(
-            "playerDescription"
-        );
-
-
-    /*
-    Set video.
-    */
-
-    player.src =
-        video.video_url;
-
-
-    /*
-    Set information.
-    */
-
-    title.textContent =
+    document.getElementById(
+        "playerTitle"
+    ).textContent =
         video.title ||
         "Video";
 
 
-    description.textContent =
+    document.getElementById(
+        "playerDescription"
+    ).textContent =
         video.description ||
         "";
 
 
-    /*
-    Show player.
-    */
-
-    modal.style.display =
-        "flex";
+    player.src =
+        url;
 
 
-    /*
-    Try autoplay.
-    */
+    modal.classList.add(
+        "active"
+    );
 
-    player.play()
-        .catch(
-            function(){
 
-                console.log(
-                    "Autoplay blocked by browser."
-                );
+    player.play().catch(
+        function(error){
 
-            }
-        );
+            console.log(
+                "Autoplay prevented:",
+                error
+            );
+
+        }
+    );
 
 }
 
@@ -1478,7 +1058,7 @@ function closePlayer(){
 
     const modal =
         document.getElementById(
-            "playerModal"
+            "player"
         );
 
 
@@ -1490,48 +1070,22 @@ function closePlayer(){
 
     player.pause();
 
-
     player.removeAttribute(
         "src"
     );
 
-
     player.load();
 
 
-    modal.style.display =
-        "none";
+    modal.classList.remove(
+        "active"
+    );
 
 }
 
 
 /* =====================================================
-   CLICK OUTSIDE PLAYER
-===================================================== */
-
-document
-    .getElementById(
-        "playerModal"
-    )
-    .addEventListener(
-        "click",
-        function(event){
-
-            if(
-                event.target ===
-                this
-            ){
-
-                closePlayer();
-
-            }
-
-        }
-    );
-
-
-/* =====================================================
-   ESCAPE KEY
+   CLOSE WITH ESCAPE
 ===================================================== */
 
 document.addEventListener(
@@ -1539,7 +1093,8 @@ document.addEventListener(
     function(event){
 
         if(
-            event.key === "Escape"
+            event.key ===
+            "Escape"
         ){
 
             closePlayer();
@@ -1551,48 +1106,12 @@ document.addEventListener(
 
 
 /* =====================================================
-   HTML SECURITY
+   START
 ===================================================== */
 
-function escapeHTML(
-    text
-){
-
-    return String(
-        text
-    )
-    .replace(
-        /[&<>"']/g,
-        function(character){
-
-            return {
-
-                "&":"&amp;",
-                "<":"&lt;",
-                ">":"&gt;",
-                '"':"&quot;",
-                "'":"&#039;"
-
-            }[
-                character
-            ];
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   START WEBSITE
-===================================================== */
-
-loadVideos(
-    "All"
-);
+loadVideos();
 
 </script>
 
 </body>
-
 </html>

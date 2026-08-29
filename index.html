@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
 <meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>StreamX</title>
 
@@ -15,66 +12,138 @@ content="width=device-width, initial-scale=1.0">
 <style>
 
 *{
+    box-sizing:border-box;
     margin:0;
     padding:0;
-    box-sizing:border-box;
 }
 
 body{
-    background:#0d0d0d;
-    color:white;
-    font-family:Arial,sans-serif;
+    background:#080808;
+    color:#fff;
+    font-family:Arial,Helvetica,sans-serif;
 }
 
+/* HEADER */
+
 header{
-    padding:20px;
+    height:70px;
     background:#111;
-    border-bottom:1px solid #222;
+    border-bottom:1px solid #292929;
 
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    justify-content:space-between;
+
+    padding:0 30px;
+
+    position:sticky;
+    top:0;
+
+    z-index:100;
 }
 
 .logo{
-    font-size:28px;
-    font-weight:bold;
+    font-size:27px;
+    font-weight:900;
 }
 
 .logo span{
     color:#ff1744;
 }
 
-.admin-btn{
+.admin-button{
     background:#ff1744;
-    color:white;
+    color:#fff;
 
     text-decoration:none;
 
-    padding:10px 15px;
+    padding:11px 18px;
 
     border-radius:8px;
+
+    font-size:13px;
+    font-weight:bold;
 }
+
+.admin-button:hover{
+    background:#e90035;
+}
+
+
+/* MAIN */
 
 .container{
-    padding:25px;
-    max-width:1400px;
+    max-width:1500px;
     margin:auto;
+
+    padding:30px;
 }
 
+.page-title{
+    margin-bottom:25px;
+}
+
+.page-title h1{
+    font-size:30px;
+}
+
+.page-title p{
+    color:#888;
+    margin-top:7px;
+    font-size:13px;
+}
+
+
+/* STATUS */
+
+.status{
+    background:#111;
+
+    border:1px solid #292929;
+
+    border-radius:10px;
+
+    padding:14px 16px;
+
+    margin-bottom:25px;
+
+    color:#aaa;
+
+    font-size:13px;
+}
+
+.status.success{
+    border-color:#1d5b42;
+    color:#50d69a;
+}
+
+.status.error{
+    border-color:#7a2637;
+    color:#ff6684;
+}
+
+
+/* VIDEO GRID */
+
 .video-grid{
+
     display:grid;
 
     grid-template-columns:
-    repeat(auto-fill,minmax(260px,1fr));
+        repeat(auto-fill,minmax(260px,1fr));
 
     gap:20px;
+
 }
 
-.card{
-    background:#151515;
 
-    border:1px solid #222;
+/* CARD */
+
+.video-card{
+
+    background:#141414;
+
+    border:1px solid #292929;
 
     border-radius:12px;
 
@@ -83,69 +152,205 @@ header{
     cursor:pointer;
 
     transition:.2s;
+
 }
 
-.card:hover{
+.video-card:hover{
+
     transform:translateY(-4px);
+
     border-color:#ff1744;
+
 }
 
-.card img{
+
+/* THUMBNAIL */
+
+.thumbnail{
+
     width:100%;
-    height:180px;
+
+    height:175px;
+
+    background:#222;
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.thumbnail img{
+
+    width:100%;
+    height:100%;
 
     object-fit:cover;
 
-    background:#222;
 }
 
-.card-content{
+.play-icon{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:
+        translate(-50%,-50%);
+
+    width:55px;
+    height:55px;
+
+    border-radius:50%;
+
+    background:rgba(255,23,68,.95);
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    font-size:21px;
+
+    opacity:0;
+
+    transition:.2s;
+
+}
+
+.video-card:hover .play-icon{
+
+    opacity:1;
+
+}
+
+
+/* CARD CONTENT */
+
+.video-info{
+
     padding:15px;
+
 }
 
-.card h3{
+.video-info h3{
+
+    font-size:16px;
+
     margin-bottom:8px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
 }
 
-.card p{
-    color:#999;
-    font-size:13px;
+.category{
+
+    color:#ff4568;
+
+    font-size:11px;
+
+    text-transform:uppercase;
+
+    font-weight:bold;
+
+    margin-bottom:8px;
+
 }
 
-.player-modal{
+.description{
+
+    color:#888;
+
+    font-size:12px;
+
+    line-height:1.5;
+
+}
+
+
+/* EMPTY */
+
+.empty{
+
+    text-align:center;
+
+    padding:70px 20px;
+
+    color:#666;
+
+}
+
+.empty-icon{
+
+    font-size:50px;
+
+    margin-bottom:15px;
+
+}
+
+
+/* PLAYER */
+
+.player{
+
     position:fixed;
 
     inset:0;
 
-    background:rgba(0,0,0,.95);
+    background:rgba(0,0,0,.96);
 
     display:none;
 
-    justify-content:center;
     align-items:center;
+
+    justify-content:center;
+
+    padding:20px;
 
     z-index:1000;
 
-    padding:20px;
 }
 
-.player-box{
+.player.active{
+
+    display:flex;
+
+}
+
+.player-container{
+
     width:100%;
+
     max-width:1000px;
+
 }
 
-.player-box video{
-    width:100%;
+.player-top{
 
-    max-height:75vh;
+    display:flex;
 
-    background:#000;
+    justify-content:space-between;
 
-    border-radius:12px;
+    align-items:center;
+
+    margin-bottom:12px;
+
 }
 
-.close-btn{
-    margin-bottom:10px;
+.player-title{
+
+    font-size:18px;
+
+    font-weight:bold;
+
+}
+
+.close{
 
     background:#ff1744;
 
@@ -155,38 +360,69 @@ header{
 
     padding:10px 15px;
 
-    border-radius:8px;
+    border-radius:7px;
 
     cursor:pointer;
+
 }
 
-.empty{
-    text-align:center;
+video{
 
-    color:#777;
+    width:100%;
 
-    margin-top:50px;
-}
+    max-height:75vh;
 
-.error{
-    color:#ff1744;
-
-    text-align:center;
-
-    margin-top:30px;
-
-    padding:20px;
-
-    background:#1a1012;
-
-    border:1px solid #442027;
+    background:#000;
 
     border-radius:10px;
+
+}
+
+.player-description{
+
+    color:#888;
+
+    font-size:13px;
+
+    margin-top:12px;
+
+}
+
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+    header{
+
+        padding:0 15px;
+
+    }
+
+    .logo{
+
+        font-size:22px;
+
+    }
+
+    .container{
+
+        padding:20px 15px;
+
+    }
+
+    .video-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
 }
 
 </style>
 
 </head>
+
 
 <body>
 
@@ -199,7 +435,7 @@ header{
 
     <a
         href="admin.html"
-        class="admin-btn"
+        class="admin-button"
     >
         Admin
     </a>
@@ -207,42 +443,99 @@ header{
 </header>
 
 
-<div class="container">
+<main class="container">
+
+
+    <div class="page-title">
+
+        <h1>
+            Discover Videos
+        </h1>
+
+        <p>
+            Watch the latest content uploaded to StreamX.
+        </p>
+
+    </div>
+
+
+    <div
+        id="status"
+        class="status"
+    >
+        Connecting to StreamX...
+    </div>
+
 
     <div
         id="videoGrid"
         class="video-grid"
     ></div>
 
+
     <div
         id="empty"
         class="empty"
+        style="display:none;"
     >
-        Loading videos...
+
+        <div class="empty-icon">
+            🎬
+        </div>
+
+        <h2>
+            No videos available
+        </h2>
+
+        <p style="margin-top:8px;">
+            Videos uploaded by the administrator will appear here.
+        </p>
+
     </div>
 
-</div>
 
+</main>
+
+
+<!-- PLAYER -->
 
 <div
-    class="player-modal"
-    id="playerModal"
+    id="player"
+    class="player"
 >
 
-    <div class="player-box">
+    <div class="player-container">
 
-        <button
-            class="close-btn"
-            onclick="closePlayer()"
-        >
-            ✕ Close
-        </button>
+        <div class="player-top">
+
+            <div
+                id="playerTitle"
+                class="player-title"
+            >
+                Video
+            </div>
+
+            <button
+                class="close"
+                onclick="closePlayer()"
+            >
+                ✕ Close
+            </button>
+
+        </div>
+
 
         <video
             id="videoPlayer"
             controls
             playsinline
         ></video>
+
+
+        <div
+            id="playerDescription"
+            class="player-description"
+        ></div>
 
     </div>
 
@@ -251,9 +544,9 @@ header{
 
 <script>
 
-/* =====================================
-   SUPABASE
-===================================== */
+/* =====================================================
+   SUPABASE CONNECTION
+===================================================== */
 
 const SUPABASE_URL =
 "https://iojjmoywrlnzpyatahyh.supabase.co";
@@ -261,52 +554,204 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
 "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 
-const supabase =
+
+const supabaseClient =
 window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
 
 
-/* =====================================
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const grid =
+document.getElementById(
+    "videoGrid"
+);
+
+const empty =
+document.getElementById(
+    "empty"
+);
+
+const status =
+document.getElementById(
+    "status"
+);
+
+
+/* =====================================================
+   STATUS MESSAGE
+===================================================== */
+
+function showStatus(
+    message,
+    type=""
+){
+
+    status.textContent =
+        message;
+
+    status.className =
+        "status " + type;
+
+}
+
+
+/* =====================================================
+   CREATE STORAGE URL
+===================================================== */
+
+function getVideoURL(value){
+
+    if(!value)
+        return null;
+
+
+    /*
+       If the database already contains
+       a complete URL, use it.
+    */
+
+    if(
+        value.startsWith(
+            "http://"
+        ) ||
+        value.startsWith(
+            "https://"
+        )
+    ){
+
+        return value;
+
+    }
+
+
+    /*
+       Otherwise assume the value
+       is a file path inside videos bucket.
+    */
+
+    const {
+        data
+    } =
+    supabaseClient
+        .storage
+        .from("videos")
+        .getPublicUrl(value);
+
+
+    return data.publicUrl;
+
+}
+
+
+/* =====================================================
+   CREATE THUMBNAIL URL
+===================================================== */
+
+function getThumbnailURL(value){
+
+    if(!value)
+        return null;
+
+
+    if(
+        value.startsWith(
+            "http://"
+        ) ||
+        value.startsWith(
+            "https://"
+        )
+    ){
+
+        return value;
+
+    }
+
+
+    const {
+        data
+    } =
+    supabaseClient
+        .storage
+        .from("thumbnails")
+        .getPublicUrl(value);
+
+
+    return data.publicUrl;
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(value){
+
+    return String(
+        value ?? ""
+    )
+
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+
+    .replace(
+        /</g,
+        "&lt;"
+    )
+
+    .replace(
+        />/g,
+        "&gt;"
+    )
+
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =====================================================
    LOAD VIDEOS
-===================================== */
+===================================================== */
 
 async function loadVideos(){
 
-    const grid =
-        document.getElementById(
-            "videoGrid"
-        );
-
-    const empty =
-        document.getElementById(
-            "empty"
-        );
-
-
-    empty.style.display =
-        "block";
-
-    empty.innerHTML =
-        "Loading videos...";
-
-
-    console.log(
+    showStatus(
         "Connecting to Supabase..."
     );
 
 
-    const {
-        data,
-        error
-    } = await supabase
+    grid.innerHTML = "";
+
+    empty.style.display =
+        "none";
+
+
+    console.log(
+        "StreamX: requesting videos..."
+    );
+
+
+    const result =
+        await supabaseClient
 
         .from("videos")
 
-        .select(
-            "id,title,description,category,video_url,thumbnail_url,views,created_at"
-        )
+        .select("*")
 
         .order(
             "created_at",
@@ -316,129 +761,106 @@ async function loadVideos(){
         );
 
 
+    const data =
+        result.data;
+
+    const error =
+        result.error;
+
+
     console.log(
-        "Supabase data:",
-        data
+        "StreamX database result:",
+        result
     );
 
-    console.log(
-        "Supabase error:",
-        error
-    );
 
-
-    /* ERROR */
+    /* DATABASE ERROR */
 
     if(error){
 
-        grid.innerHTML = "";
-
-        empty.innerHTML = `
-            <div class="error">
-
-                ❌ Could not load videos.
-
-                <br><br>
-
-                ${escapeHTML(
-                    error.message
-                )}
-
-            </div>
-        `;
-
         console.error(
-            "Supabase error:",
+            "Supabase database error:",
             error
         );
 
-        return;
-    }
 
+        showStatus(
+            "❌ Database error: " +
+            error.message,
+            "error"
+        );
 
-    /* NO VIDEOS */
-
-    if(!data || data.length === 0){
-
-        grid.innerHTML = "";
 
         empty.style.display =
             "block";
 
-        empty.innerHTML =
-            "No videos uploaded yet.";
+
+        empty.innerHTML = `
+
+            <div class="empty-icon">
+                ⚠️
+            </div>
+
+            <h2>
+                Could not load videos
+            </h2>
+
+            <p style="margin-top:10px;">
+                ${escapeHTML(
+                    error.message
+                )}
+            </p>
+
+        `;
 
         return;
+
+    }
+
+
+    console.log(
+        "Videos found:",
+        data
+    );
+
+
+    /* NO DATA */
+
+    if(
+        !data ||
+        data.length === 0
+    ){
+
+        showStatus(
+            "Connected successfully — no videos found."
+        );
+
+
+        empty.style.display =
+            "block";
+
+
+        return;
+
     }
 
 
     /* VIDEOS FOUND */
 
-    empty.style.display =
-        "none";
-
-    grid.innerHTML = "";
+    showStatus(
+        "✓ Connected — " +
+        data.length +
+        " video(s) available.",
+        "success"
+    );
 
 
     data.forEach(
         video => {
 
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "card";
-
-
-            const thumbnail =
-                video.thumbnail_url ||
-                "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80";
-
-
-            card.innerHTML = `
-
-                <img
-                    src="${escapeHTML(thumbnail)}"
-                    alt="${escapeHTML(video.title || "Video")}"
-                >
-
-                <div class="card-content">
-
-                    <h3>
-                        ${escapeHTML(
-                            video.title ||
-                            "Untitled Video"
-                        )}
-                    </h3>
-
-                    <p>
-                        ${escapeHTML(
-                            video.category ||
-                            "Uncategorized"
-                        )}
-                    </p>
-
-                </div>
-
-            `;
-
-
-            card.addEventListener(
-                "click",
-                function(){
-
-                    openPlayer(
-                        video.video_url
-                    );
-
-                }
+            createVideoCard(
+                video
             );
-
-
-            grid.appendChild(card);
 
         }
     );
@@ -446,11 +868,121 @@ async function loadVideos(){
 }
 
 
-/* =====================================
-   VIDEO PLAYER
-===================================== */
+/* =====================================================
+   CREATE VIDEO CARD
+===================================================== */
 
-function openPlayer(url){
+function createVideoCard(
+    video
+){
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+
+    card.className =
+        "video-card";
+
+
+    const thumbnail =
+        getThumbnailURL(
+            video.thumbnail_url
+        );
+
+
+    const title =
+        video.title ||
+        "Untitled Video";
+
+
+    const category =
+        video.category ||
+        "General";
+
+
+    const description =
+        video.description ||
+        "No description available.";
+
+
+    card.innerHTML = `
+
+        <div class="thumbnail">
+
+            ${
+                thumbnail
+                ?
+                `
+                <img
+                    src="${escapeHTML(thumbnail)}"
+                    alt="${escapeHTML(title)}"
+                    onerror="this.style.display='none'"
+                >
+                `
+                :
+                ""
+            }
+
+            <div class="play-icon">
+                ▶
+            </div>
+
+        </div>
+
+
+        <div class="video-info">
+
+            <div class="category">
+                ${escapeHTML(category)}
+            </div>
+
+            <h3>
+                ${escapeHTML(title)}
+            </h3>
+
+            <div class="description">
+                ${escapeHTML(description)}
+            </div>
+
+        </div>
+
+    `;
+
+
+    card.addEventListener(
+        "click",
+        function(){
+
+            openPlayer(
+                video
+            );
+
+        }
+    );
+
+
+    grid.appendChild(
+        card
+    );
+
+}
+
+
+/* =====================================================
+   OPEN PLAYER
+===================================================== */
+
+function openPlayer(
+    video
+){
+
+    const url =
+        getVideoURL(
+            video.video_url
+        );
+
 
     if(!url){
 
@@ -459,13 +991,14 @@ function openPlayer(url){
         );
 
         return;
+
     }
 
 
-    const modal =
-        document.getElementById(
-            "playerModal"
-        );
+    console.log(
+        "Playing video:",
+        url
+    );
 
 
     const player =
@@ -474,17 +1007,40 @@ function openPlayer(url){
         );
 
 
-    player.src = url;
+    const modal =
+        document.getElementById(
+            "player"
+        );
 
-    modal.style.display =
-        "flex";
+
+    document.getElementById(
+        "playerTitle"
+    ).textContent =
+        video.title ||
+        "Video";
+
+
+    document.getElementById(
+        "playerDescription"
+    ).textContent =
+        video.description ||
+        "";
+
+
+    player.src =
+        url;
+
+
+    modal.classList.add(
+        "active"
+    );
 
 
     player.play().catch(
         function(error){
 
             console.log(
-                "Autoplay blocked:",
+                "Autoplay prevented:",
                 error
             );
 
@@ -494,15 +1050,15 @@ function openPlayer(url){
 }
 
 
-/* =====================================
+/* =====================================================
    CLOSE PLAYER
-===================================== */
+===================================================== */
 
 function closePlayer(){
 
     const modal =
         document.getElementById(
-            "playerModal"
+            "player"
         );
 
 
@@ -514,58 +1070,48 @@ function closePlayer(){
 
     player.pause();
 
-    player.src = "";
+    player.removeAttribute(
+        "src"
+    );
 
-    modal.style.display =
-        "none";
-
-}
+    player.load();
 
 
-/* =====================================
-   ESCAPE HTML
-===================================== */
-
-function escapeHTML(text){
-
-    return String(text)
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+    modal.classList.remove(
+        "active"
+    );
 
 }
 
 
-/* =====================================
+/* =====================================================
+   CLOSE WITH ESCAPE
+===================================================== */
+
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(
+            event.key ===
+            "Escape"
+        ){
+
+            closePlayer();
+
+        }
+
+    }
+);
+
+
+/* =====================================================
    START
-===================================== */
+===================================================== */
 
 loadVideos();
 
 </script>
 
 </body>
-
 </html>

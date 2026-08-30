@@ -800,39 +800,58 @@ body{
 /* =========================
    AGE GATE
 ========================= */
+
 const ageGate = document.getElementById("ageGate");
 const ageYes = document.getElementById("ageYes");
 const ageNo = document.getElementById("ageNo");
 const ageBlocked = document.getElementById("ageBlocked");
 
-// Check if user already verified
-if (localStorage.getItem("streamx_age_verified") === "true") {
-    ageGate.classList.add("hidden");
-}
+/*
+   ALWAYS SHOW AGE GATE WHEN PAGE OPENS
 
-// User confirms they are 18+
+   No localStorage is used.
+   Therefore the user must confirm their age
+   every time the page is opened/refreshed.
+*/
+
+// Make sure the gate is visible
+ageGate.classList.remove("hidden");
+
+// Reset the gate to its original state
+ageBlocked.style.display = "none";
+ageYes.style.display = "";
+ageNo.style.display = "";
+
+
+/* =========================
+   18+ BUTTON
+========================= */
+
 ageYes.addEventListener("click", function () {
-    localStorage.setItem("streamx_age_verified", "true");
 
-    ageBlocked.style.display = "none";
-    ageYes.style.display = "";
-    ageNo.style.display = "";
-
+    // Hide the age gate for this visit
     ageGate.classList.add("hidden");
+
 });
 
-// User selects under 18
+
+/* =========================
+   UNDER 18 BUTTON
+========================= */
+
 ageNo.addEventListener("click", function () {
 
-    // Do NOT save anything to localStorage.
-    // The user is not permanently blocked.
-
+    // Show warning message
     ageBlocked.style.display = "block";
 
-    // Keep both choices available so the user can change
-    // their selection if they clicked by mistake.
-    ageYes.style.display = "";
-    ageNo.style.display = "";
+    /*
+       IMPORTANT:
+       Do NOT hide either button.
+
+       This allows someone who clicked
+       "I am under 18" by mistake to choose
+       again.
+    */
 
 });
 

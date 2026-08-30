@@ -123,6 +123,49 @@ header{
 }
 
 
+/* CATEGORY FILTER */
+
+.category-filter{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:25px;
+    padding:14px;
+    background:#111;
+    border:1px solid #292929;
+    border-radius:10px;
+}
+
+.category-filter label{
+    color:#aaa;
+    font-size:13px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.category-filter select{
+    flex:1;
+    max-width:320px;
+    background:#080808;
+    color:#fff;
+    border:1px solid #303030;
+    border-radius:8px;
+    padding:11px 13px;
+    outline:none;
+    font-size:13px;
+    cursor:pointer;
+}
+
+.category-filter select:focus{
+    border-color:#ff1744;
+}
+
+.category-filter-count{
+    color:#777;
+    font-size:12px;
+    margin-left:auto;
+}
+
 /* VIDEO GRID */
 
 .video-grid{
@@ -393,6 +436,20 @@ video{
 
 @media(max-width:600px){
 
+    .category-filter{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .category-filter select{
+        max-width:none;
+        width:100%;
+    }
+
+    .category-filter-count{
+        margin-left:0;
+    }
+
     header{
 
         padding:0 15px;
@@ -464,6 +521,57 @@ video{
         class="status"
     >
         Connecting to StreamX...
+    </div>
+
+
+    <!-- CATEGORY FILTER -->
+    <div class="category-filter">
+
+        <label for="categoryFilter">
+            Category
+        </label>
+
+        <select id="categoryFilter">
+            <option value="All">
+                🎬 All Videos
+            </option>
+
+            <option value="Trending">
+                🔥 Trending
+            </option>
+
+            <option value="Entertainment">
+                🎭 Entertainment
+            </option>
+
+            <option value="Music">
+                🎵 Music
+            </option>
+
+            <option value="Sports">
+                ⚽ Sports
+            </option>
+
+            <option value="Gaming">
+                🎮 Gaming
+            </option>
+
+            <option value="Education">
+                🎓 Education
+            </option>
+
+            <option value="Lifestyle">
+                ✨ Lifestyle
+            </option>
+        </select>
+
+        <span
+            id="categoryCount"
+            class="category-filter-count"
+        >
+            All videos
+        </span>
+
     </div>
 
 
@@ -579,6 +687,16 @@ document.getElementById(
 const status =
 document.getElementById(
     "status"
+);
+
+const categoryFilter =
+document.getElementById(
+    "categoryFilter"
+);
+
+const categoryCount =
+document.getElementById(
+    "categoryCount"
 );
 
 
@@ -730,10 +848,14 @@ function escapeHTML(value){
 
 async function loadVideos(){
 
-    showStatus(
-        "Connecting to Supabase..."
-    );
+    const selectedCategory =
+        categoryFilter.value;
 
+    showStatus(
+        selectedCategory === "All"
+            ? "Connecting to Supabase..."
+            : "Loading " + selectedCategory + " videos..."
+    );
 
     grid.innerHTML = "";
 
@@ -742,18 +864,36 @@ async function loadVideos(){
 
 
     console.log(
-        "StreamX: requesting videos..."
+        "StreamX: requesting category:",
+        selectedCategory
     );
 
 
+    let query =
+        supabaseClient
+            .from("videos")
+            .select("*");
+
+
+    /*
+       If a specific category is selected,
+       only request videos belonging to
+       that category from Supabase.
+    */
+
+    if(selectedCategory !== "All"){
+
+        query =
+            query.eq(
+                "category",
+                selectedCategory
+            );
+
+    }
+
+
     const result =
-        await supabaseClient
-
-        .from("videos")
-
-        .select("*")
-
-        .order(
+        await query.order(
             "created_at",
             {
                 ascending:false
@@ -813,6 +953,9 @@ async function loadVideos(){
 
         `;
 
+        categoryCount.textContent =
+            "Unable to load";
+
         return;
 
     }
@@ -824,21 +967,79 @@ async function loadVideos(){
     );
 
 
+    const videos =
+        data || [];
+
+
+    /*
+       Update the category counter.
+    */
+
+    if(selectedCategory === "All"){
+
+        categoryCount.textContent =
+            videos.length +
+            (
+                videos.length === 1
+                ? " video"
+                : " videos"
+            );
+
+    }else{
+
+        categoryCount.textContent =
+            videos.length +
+            (
+                videos.length === 1
+                ? " video"
+                : " videos"
+            ) +
+            " in " +
+            selectedCategory;
+
+    }
+
+
     /* NO DATA */
 
-    if(
-        !data ||
-        data.length === 0
-    ){
+    if(videos.length === 0){
 
         showStatus(
-            "Connected successfully — no videos found."
+            selectedCategory === "All"
+                ? "Connected successfully — no videos found."
+                : "No videos found in " +
+                  selectedCategory + "."
         );
 
 
         empty.style.display =
             "block";
 
+
+        empty.innerHTML = `
+
+            <div class="empty-icon">
+                🎬
+            </div>
+
+            <h2>
+                ${
+                    selectedCategory === "All"
+                    ? "No videos available"
+                    : "No videos in " +
+                      escapeHTML(selectedCategory)
+                }
+            </h2>
+
+            <p style="margin-top:8px;">
+                ${
+                    selectedCategory === "All"
+                    ? "Videos uploaded by the administrator will appear here."
+                    : "Try selecting another category."
+                }
+            </p>
+
+        `;
 
         return;
 
@@ -848,14 +1049,19 @@ async function loadVideos(){
     /* VIDEOS FOUND */
 
     showStatus(
-        "✓ Connected — " +
-        data.length +
-        " video(s) available.",
+        selectedCategory === "All"
+            ? "✓ Connected — " +
+              videos.length +
+              " video(s) available."
+            : "✓ Showing " +
+              videos.length +
+              " video(s) from " +
+              selectedCategory + ".",
         "success"
     );
 
 
-    data.forEach(
+    videos.forEach(
         video => {
 
             createVideoCard(
@@ -1100,6 +1306,20 @@ document.addEventListener(
             closePlayer();
 
         }
+
+    }
+);
+
+
+/* =====================================================
+   CATEGORY FILTER
+===================================================== */
+
+categoryFilter.addEventListener(
+    "change",
+    function(){
+
+        loadVideos();
 
     }
 );

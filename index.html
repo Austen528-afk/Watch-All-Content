@@ -720,59 +720,57 @@ body{
 
 <body>
 
-<body>
+<header class="header">
 
-<!-- =========================
-     AGE VERIFICATION GATE
-========================= -->
+    <div class="header-inner">
 
-<div class="age-gate" id="ageGate">
+        <div class="logo">
+            Stream<span>X</span>
+        </div>
 
-    <div class="age-box">
+        <div class="search-wrapper">
 
-        <h2>
-            Welcome to <span>StreamX</span>
-        </h2>
+            <span class="search-icon">🔎</span>
 
-        <p>
-            This website contains adult content.<br>
-            You must be 18 years or older to enter.
-        </p>
-
-        <div class="age-buttons">
+            <input
+                type="text"
+                id="searchInput"
+                class="search"
+                placeholder="Search videos or categories..."
+                autocomplete="off"
+            >
 
             <button
-                class="age-btn yes"
-                id="ageYes"
+                id="clearSearch"
+                class="clear-search"
                 type="button"
             >
-                I am 18+
+                ×
             </button>
 
-            <button
-                class="age-btn no"
-                id="ageNo"
-                type="button"
-            >
-                I am under 18
-            </button>
+            <div
+                id="categorySuggestions"
+                class="category-suggestions"
+            ></div>
 
         </div>
 
-        <div
-            class="age-blocked"
-            id="ageBlocked"
-        >
-            Access denied.<br>
-            You must be 18 or older to enter StreamX.
+        <div class="header-right">
+
+            <div class="online">
+
+                <span class="online-dot"></span>
+
+                Online
+
+            </div>
+
         </div>
 
     </div>
 
-</div>
+</header>
 
-
-<header class="header">
 
 <nav class="category-bar">
 
@@ -941,73 +939,6 @@ body{
 
 
 <script>
-
-/* =========================
-AGE VERIFICATION
-========================= */
-
-const ageGate =
-document.getElementById("ageGate");
-
-const ageYes =
-document.getElementById("ageYes");
-
-const ageNo =
-document.getElementById("ageNo");
-
-const ageBlocked =
-document.getElementById("ageBlocked");
-
-/*
-
-* AGE GATE BEHAVIOUR
-*
-* The verification is intentionally NOT
-* stored in localStorage or cookies.
-*
-* Therefore the gate appears again whenever
-* the website is opened or refreshed.
-  */
-
-/* =========================
-I AM 18+
-========================= */
-
-ageYes.addEventListener(
-"click",
-function(){
-
-
-    ageGate.classList.add("hidden");
-
-}
-
-
-);
-
-/* =========================
-UNDER 18
-========================= */
-
-ageNo.addEventListener(
-"click",
-function(){
-
-
-    ageBlocked.style.display =
-        "block";
-
-    ageYes.style.display =
-        "none";
-
-    ageNo.style.display =
-        "none";
-
-}
-
-
-);
-
 
 /* =========================
    SUPABASE

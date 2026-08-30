@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,11 +13,20 @@
 
 <title>StreamX</title>
 
-<!-- Telegram Mini App SDK -->
+
+<!-- =====================================================
+     TELEGRAM MINI APP
+===================================================== -->
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- Supabase -->
+
+<!-- =====================================================
+     SUPABASE
+===================================================== -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 
 <style>
 
@@ -30,16 +40,21 @@
     box-sizing: border-box;
 }
 
+
 html,
 body {
     width: 100%;
     min-height: 100%;
 }
 
+
 body {
     background: #080808;
     color: #ffffff;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 }
 
 
@@ -48,113 +63,145 @@ body {
 ===================================================== */
 
 .header {
+
     height: 64px;
+
     background: #111;
-    border-bottom: 1px solid #252525;
+
+    border-bottom:
+        1px solid #252525;
 
     display: flex;
+
     align-items: center;
-    justify-content: space-between;
 
-    padding: 0 16px;
+    justify-content: flex-start;
 
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    padding:
+        0 16px;
+
 }
+
+
+/* StreamX logo */
 
 .logo {
+
     font-size: 24px;
+
     font-weight: 900;
+
     letter-spacing: -1px;
+
 }
+
 
 .logo span {
+
     color: #ff1744;
-}
 
-.user {
-    max-width: 170px;
-    color: #999;
-    font-size: 12px;
-
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
 
 /* =====================================================
-   LOADING
+   LOADING SCREEN
 ===================================================== */
 
 #loadingScreen {
 
-    min-height: calc(100vh - 64px);
+    min-height:
+        calc(100vh - 64px);
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     text-align: center;
+
 }
+
 
 .spinner {
 
     width: 42px;
+
     height: 42px;
 
-    border: 4px solid #292929;
-    border-top: 4px solid #ff1744;
+    border:
+        4px solid #292929;
+
+    border-top:
+        4px solid #ff1744;
 
     border-radius: 50%;
 
-    animation: spin .8s linear infinite;
+    animation:
+        spin .8s linear infinite;
 
-    margin: 0 auto 15px;
+    margin:
+        0 auto 15px;
+
 }
+
 
 @keyframes spin {
 
     from {
-        transform: rotate(0deg);
+
+        transform:
+            rotate(0deg);
+
     }
 
     to {
-        transform: rotate(360deg);
+
+        transform:
+            rotate(360deg);
+
     }
 
 }
 
+
 .loading-text {
+
     color: #999;
+
 }
 
 
 /* =====================================================
-   AGE GATE
+   AGE VERIFICATION
 ===================================================== */
 
 #ageGate {
 
     display: none;
 
-    min-height: calc(100vh - 64px);
+    min-height:
+        calc(100vh - 64px);
 
     padding: 20px;
 
     align-items: center;
+
     justify-content: center;
+
 }
+
 
 .age-card {
 
     width: 100%;
+
     max-width: 420px;
 
     background: #111;
 
-    border: 1px solid #292929;
+    border:
+        1px solid #292929;
 
     border-radius: 18px;
 
@@ -163,22 +210,29 @@ body {
     text-align: center;
 
     box-shadow:
-        0 20px 50px rgba(0,0,0,.45);
+        0 20px 50px
+        rgba(0,0,0,.45);
+
 }
+
 
 .age-icon {
 
     font-size: 55px;
 
     margin-bottom: 15px;
+
 }
+
 
 .age-card h1 {
 
     font-size: 28px;
 
     margin-bottom: 15px;
+
 }
+
 
 .age-card p {
 
@@ -187,6 +241,7 @@ body {
     line-height: 1.6;
 
     margin-bottom: 25px;
+
 }
 
 
@@ -212,43 +267,62 @@ body {
 
     margin-top: 10px;
 
-    transition: .2s;
 }
+
 
 .age-button:active {
 
-    transform: scale(.98);
+    transform:
+        scale(.98);
+
 }
+
 
 .age-button:disabled {
 
     opacity: .5;
 
-    cursor: not-allowed;
+    cursor:
+        not-allowed;
+
 }
+
 
 .btn18 {
 
-    background: #ff1744;
+    background:
+        #ff1744;
 
-    color: white;
+    color:
+        white;
+
 }
+
 
 .btn18:hover {
 
-    background: #e9143e;
+    background:
+        #e9143e;
+
 }
+
 
 .btnUnder {
 
-    background: #292929;
+    background:
+        #292929;
 
-    color: white;
+    color:
+        white;
+
 }
+
 
 .btnUnder:hover {
 
-    background: #353535;
+    background:
+        #353535;
+
 }
 
 
@@ -264,31 +338,38 @@ body {
 
     max-width: 1100px;
 
-    margin: 0 auto;
+    margin:
+        0 auto;
 
     padding: 20px;
+
 }
 
 
 /* =====================================================
-   STREAM HEADER
+   STREAMX INTRO
 ===================================================== */
 
 .stream-header {
 
     margin-bottom: 20px;
+
 }
+
 
 .stream-header h1 {
 
     font-size: 28px;
 
     margin-bottom: 8px;
+
 }
+
 
 .stream-header p {
 
     color: #888;
+
 }
 
 
@@ -301,7 +382,9 @@ body {
     width: 100%;
 
     margin-bottom: 20px;
+
 }
+
 
 #searchInput {
 
@@ -311,27 +394,36 @@ body {
 
     background: #111;
 
-    border: 1px solid #292929;
+    border:
+        1px solid #292929;
 
     border-radius: 12px;
 
     color: white;
 
-    padding: 0 16px;
+    padding:
+        0 16px;
 
     font-size: 15px;
 
     outline: none;
+
 }
+
 
 #searchInput:focus {
 
-    border-color: #ff1744;
+    border-color:
+        #ff1744;
+
 }
+
 
 #searchInput::placeholder {
 
-    color: #666;
+    color:
+        #666;
+
 }
 
 
@@ -346,7 +438,9 @@ body {
     font-weight: bold;
 
     margin-bottom: 10px;
+
 }
+
 
 .categories {
 
@@ -361,66 +455,85 @@ body {
     margin-bottom: 20px;
 
     scrollbar-width: none;
+
 }
+
 
 .categories::-webkit-scrollbar {
 
     display: none;
+
 }
+
 
 .category-button {
 
-    flex: 0 0 auto;
+    flex:
+        0 0 auto;
 
-    background: #191919;
+    background:
+        #191919;
 
-    color: #ddd;
+    color:
+        #ddd;
 
-    border: 1px solid #303030;
+    border:
+        1px solid #303030;
 
     border-radius: 20px;
 
-    padding: 10px 16px;
+    padding:
+        10px 16px;
 
     font-size: 14px;
 
     cursor: pointer;
 
-    white-space: nowrap;
 }
+
 
 .category-button:hover {
 
-    background: #252525;
+    background:
+        #252525;
+
 }
+
 
 .category-button.active {
 
-    background: #ff1744;
+    background:
+        #ff1744;
 
-    border-color: #ff1744;
+    border-color:
+        #ff1744;
 
-    color: white;
+    color:
+        white;
+
 }
 
 
 /* =====================================================
-   VIDEO GRID
+   VIDEO AREA
 ===================================================== */
 
 .video-section {
 
     margin-top: 10px;
+
 }
+
 
 .video-grid {
 
     display: grid;
 
     grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+        repeat(2, 1fr);
 
-    gap: 14px;
+    gap: 12px;
+
 }
 
 
@@ -430,62 +543,27 @@ body {
 
 .video-card {
 
-    background: #111;
+    background:
+        #111;
 
-    border: 1px solid #222;
+    border:
+        1px solid #222;
 
     border-radius: 12px;
 
     overflow: hidden;
 
-    cursor: pointer;
-
-    transition:
-        transform .2s ease,
-        border-color .2s ease;
 }
 
-.video-card:hover {
-
-    transform: translateY(-2px);
-
-    border-color: #444;
-}
-
-
-/* =====================================================
-   THUMBNAIL
-===================================================== */
-
-.thumbnail-container {
-
-    position: relative;
-
-    width: 100%;
-
-    aspect-ratio: 16 / 9;
-
-    background: #191919;
-
-    overflow: hidden;
-}
 
 .video-thumbnail {
 
     width: 100%;
 
-    height: 100%;
+    aspect-ratio: 16 / 9;
 
-    object-fit: cover;
-
-    display: block;
-}
-
-.play-overlay {
-
-    position: absolute;
-
-    inset: 0;
+    background:
+        #191919;
 
     display: flex;
 
@@ -493,43 +571,18 @@ body {
 
     justify-content: center;
 
-    background:
-        rgba(0,0,0,.18);
+    color:
+        #666;
 
-    pointer-events: none;
 }
 
-.play-button {
-
-    width: 48px;
-
-    height: 48px;
-
-    border-radius: 50%;
-
-    background:
-        rgba(255,23,68,.95);
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    font-size: 20px;
-
-    padding-left: 3px;
-}
-
-
-/* =====================================================
-   VIDEO INFORMATION
-===================================================== */
 
 .video-info {
 
     padding: 12px;
+
 }
+
 
 .video-title {
 
@@ -537,10 +590,8 @@ body {
 
     font-weight: bold;
 
-    line-height: 1.4;
-
-    margin-bottom: 5px;
 }
+
 
 .video-category {
 
@@ -548,14 +599,8 @@ body {
 
     color: #777;
 
-    margin-bottom: 5px;
-}
+    margin-top: 5px;
 
-.video-views {
-
-    font-size: 11px;
-
-    color: #666;
 }
 
 
@@ -565,151 +610,49 @@ body {
 
 #noVideos {
 
-    display: none;
+    background:
+        #111;
 
-    background: #111;
-
-    border: 1px solid #222;
+    border:
+        1px solid #222;
 
     border-radius: 14px;
 
     padding: 35px 20px;
 
     text-align: center;
+
 }
+
 
 #noVideos h2 {
 
     font-size: 20px;
 
     margin-bottom: 10px;
+
 }
+
 
 #noVideos p {
 
     color: #777;
 
     line-height: 1.5;
+
 }
 
 
 /* =====================================================
-   VIDEO PLAYER MODAL
-===================================================== */
-
-#videoModal {
-
-    display: none;
-
-    position: fixed;
-
-    inset: 0;
-
-    z-index: 1000;
-
-    background:
-        rgba(0,0,0,.96);
-
-    padding: 15px;
-
-    overflow-y: auto;
-}
-
-.modal-content {
-
-    width: 100%;
-
-    max-width: 900px;
-
-    margin: 30px auto;
-
-    background: #111;
-
-    border: 1px solid #292929;
-
-    border-radius: 15px;
-
-    overflow: hidden;
-}
-
-.modal-video {
-
-    width: 100%;
-
-    display: block;
-
-    background: black;
-
-    max-height: 75vh;
-}
-
-.modal-info {
-
-    padding: 18px;
-}
-
-.modal-title {
-
-    font-size: 20px;
-
-    font-weight: bold;
-
-    margin-bottom: 8px;
-}
-
-.modal-category {
-
-    color: #ff1744;
-
-    font-size: 13px;
-
-    margin-bottom: 12px;
-}
-
-.modal-description {
-
-    color: #999;
-
-    line-height: 1.6;
-}
-
-.close-modal {
-
-    position: fixed;
-
-    top: 15px;
-
-    right: 15px;
-
-    width: 42px;
-
-    height: 42px;
-
-    border-radius: 50%;
-
-    border: none;
-
-    background: #292929;
-
-    color: white;
-
-    font-size: 22px;
-
-    cursor: pointer;
-
-    z-index: 1001;
-}
-
-
-/* =====================================================
-   DENIED
+   DENIED SCREEN
 ===================================================== */
 
 #deniedScreen {
 
     display: none;
 
-    min-height: calc(100vh - 64px);
+    min-height:
+        calc(100vh - 64px);
 
     align-items: center;
 
@@ -718,7 +661,9 @@ body {
     padding: 25px;
 
     text-align: center;
+
 }
+
 
 .denied-box {
 
@@ -726,32 +671,41 @@ body {
 
     max-width: 420px;
 
-    background: #111;
+    background:
+        #111;
 
-    border: 1px solid #292929;
+    border:
+        1px solid #292929;
 
     border-radius: 18px;
 
     padding: 30px;
+
 }
+
 
 .denied-icon {
 
     font-size: 50px;
 
     margin-bottom: 15px;
+
 }
+
 
 .denied-box h2 {
 
     margin-bottom: 12px;
+
 }
+
 
 .denied-box p {
 
     color: #888;
 
     line-height: 1.6;
+
 }
 
 
@@ -763,7 +717,8 @@ body {
 
     display: none;
 
-    min-height: calc(100vh - 64px);
+    min-height:
+        calc(100vh - 64px);
 
     align-items: center;
 
@@ -772,7 +727,9 @@ body {
     text-align: center;
 
     padding: 25px;
+
 }
+
 
 .error-box {
 
@@ -780,19 +737,25 @@ body {
 
     max-width: 420px;
 
-    background: #111;
+    background:
+        #111;
 
-    border: 1px solid #292929;
+    border:
+        1px solid #292929;
 
     border-radius: 18px;
 
     padding: 30px;
+
 }
+
 
 .error-box h2 {
 
     margin-bottom: 12px;
+
 }
+
 
 .error-box p {
 
@@ -801,23 +764,33 @@ body {
     line-height: 1.6;
 
     margin-bottom: 20px;
+
 }
+
 
 .retry-button {
 
-    background: #ff1744;
+    background:
+        #ff1744;
 
-    color: white;
+    color:
+        white;
 
-    border: none;
+    border:
+        none;
 
-    border-radius: 10px;
+    border-radius:
+        10px;
 
-    padding: 13px 25px;
+    padding:
+        13px 25px;
 
-    font-weight: bold;
+    font-weight:
+        bold;
 
-    cursor: pointer;
+    cursor:
+        pointer;
+
 }
 
 
@@ -829,50 +802,37 @@ body {
 
     .header {
 
-        padding: 0 13px;
+        padding:
+            0 13px;
+
     }
 
     .logo {
 
-        font-size: 22px;
-    }
+        font-size:
+            22px;
 
-    .user {
-
-        max-width: 130px;
     }
 
     #streamingPage {
 
-        padding: 15px;
+        padding:
+            15px;
+
     }
 
     .age-card {
 
-        padding: 25px 20px;
+        padding:
+            25px 20px;
+
     }
 
     .age-card h1 {
 
-        font-size: 25px;
-    }
+        font-size:
+            25px;
 
-    .video-grid {
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 10px;
-    }
-
-    .video-info {
-
-        padding: 9px;
-    }
-
-    .video-title {
-
-        font-size: 13px;
     }
 
 }
@@ -894,15 +854,6 @@ body {
     <div class="logo">
 
         Stream<span>X</span>
-
-    </div>
-
-    <div
-        class="user"
-        id="userName"
-    >
-
-        Telegram User
 
     </div>
 
@@ -946,11 +897,13 @@ body {
 
         </div>
 
+
         <h1>
 
             Age Verification
 
         </h1>
+
 
         <p>
 
@@ -998,6 +951,7 @@ body {
 
 <div id="streamingPage">
 
+
     <div class="stream-header">
 
         <h1>
@@ -1015,7 +969,10 @@ body {
     </div>
 
 
-    <!-- SEARCH -->
+
+    <!-- =================================================
+         SEARCH
+    ================================================== -->
 
     <div class="search-container">
 
@@ -1029,7 +986,10 @@ body {
     </div>
 
 
-    <!-- CATEGORIES -->
+
+    <!-- =================================================
+         CATEGORIES
+    ================================================== -->
 
     <div class="category-title">
 
@@ -1037,19 +997,109 @@ body {
 
     </div>
 
+
     <div
         class="categories"
         id="categories"
     >
 
-        <!-- Categories generated from Supabase -->
+        <button
+            type="button"
+            class="category-button active"
+            data-category="all"
+        >
+
+            All
+
+        </button>
+
+
+        <button
+            type="button"
+            class="category-button"
+            data-category="BackShots"
+        >
+
+            BackShots
+
+        </button>
+
+
+        <button
+            type="button"
+            class="category-button"
+            data-category="Masterbates"
+        >
+
+            Masterbates
+
+        </button>
+
+
+        <button
+            type="button"
+            class="category-button"
+            data-category="RoughX"
+        >
+
+            RoughX
+
+        </button>
+
+
+        <button
+            type="button"
+            class="category-button"
+            data-category="BBW"
+        >
+
+            BBW
+
+        </button>
+
+
+        <button
+            type="button"
+            class="category-button"
+            data-category="Africans"
+        >
+
+            Africans
+
+        </button>
+
+
+        <button
+            type="button"
+            class="category-button"
+            data-category="Cums"
+        >
+
+            Cums
+
+        </button>
+
+
+        <button
+            type="button"
+            class="category-button"
+            data-category="Close Friends"
+        >
+
+            Close Friends
+
+        </button>
 
     </div>
 
 
-    <!-- VIDEOS -->
+
+    <!-- =================================================
+         VIDEO SECTION
+    ================================================== -->
 
     <div class="video-section">
+
 
         <div
             class="video-grid"
@@ -1061,24 +1111,33 @@ body {
         <div id="noVideos">
 
             <h2>
-                No videos found
+
+                No videos loaded yet
+
             </h2>
 
             <p>
-                There are currently no videos
-                available in this category.
+
+                Your categories are working.
+
+                <br><br>
+
+                New StreamX content will appear here.
+
             </p>
 
         </div>
 
+
     </div>
+
 
 </div>
 
 
 
 <!-- =====================================================
-     DENIED SCREEN
+     ACCESS DENIED
 ===================================================== -->
 
 <div id="deniedScreen">
@@ -1091,11 +1150,13 @@ body {
 
         </div>
 
+
         <h2>
 
             Access Denied
 
         </h2>
+
 
         <p>
 
@@ -1111,7 +1172,7 @@ body {
 
 
 <!-- =====================================================
-     ERROR SCREEN
+     ERROR
 ===================================================== -->
 
 <div id="errorScreen">
@@ -1124,11 +1185,13 @@ body {
 
         </h2>
 
+
         <p id="errorMessage">
 
             Unable to connect to StreamX.
 
         </p>
+
 
         <button
             class="retry-button"
@@ -1145,63 +1208,6 @@ body {
 
 
 
-<!-- =====================================================
-     VIDEO MODAL
-===================================================== -->
-
-<div id="videoModal">
-
-    <button
-        class="close-modal"
-        id="closeModal"
-        type="button"
-    >
-
-        ×
-
-    </button>
-
-
-    <div class="modal-content">
-
-        <video
-            id="modalVideo"
-            class="modal-video"
-            controls
-            playsinline
-            preload="metadata"
-        >
-        </video>
-
-
-        <div class="modal-info">
-
-            <div
-                class="modal-title"
-                id="modalTitle"
-            >
-            </div>
-
-            <div
-                class="modal-category"
-                id="modalCategory"
-            >
-            </div>
-
-            <div
-                class="modal-description"
-                id="modalDescription"
-            >
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-
 <script>
 
 /* =====================================================
@@ -1210,6 +1216,7 @@ body {
 
 const SUPABASE_URL =
     "https://iojjmoywrlnzpyatahyh.supabase.co";
+
 
 const SUPABASE_KEY =
     "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
@@ -1231,106 +1238,74 @@ const loadingScreen =
         "loadingScreen"
     );
 
+
 const ageGate =
     document.getElementById(
         "ageGate"
     );
+
 
 const streamingPage =
     document.getElementById(
         "streamingPage"
     );
 
+
 const deniedScreen =
     document.getElementById(
         "deniedScreen"
     );
+
 
 const errorScreen =
     document.getElementById(
         "errorScreen"
     );
 
+
 const errorMessage =
     document.getElementById(
         "errorMessage"
     );
 
-const userName =
-    document.getElementById(
-        "userName"
-    );
 
 const btn18 =
     document.getElementById(
         "btn18"
     );
 
+
 const btnUnder18 =
     document.getElementById(
         "btnUnder18"
     );
+
 
 const searchInput =
     document.getElementById(
         "searchInput"
     );
 
-const categoriesContainer =
-    document.getElementById(
-        "categories"
-    );
 
-const videoGrid =
-    document.getElementById(
-        "videoGrid"
-    );
-
-const noVideos =
-    document.getElementById(
-        "noVideos"
-    );
-
-const videoModal =
-    document.getElementById(
-        "videoModal"
-    );
-
-const modalVideo =
-    document.getElementById(
-        "modalVideo"
-    );
-
-const modalTitle =
-    document.getElementById(
-        "modalTitle"
-    );
-
-const modalCategory =
-    document.getElementById(
-        "modalCategory"
-    );
-
-const modalDescription =
-    document.getElementById(
-        "modalDescription"
-    );
-
-const closeModal =
-    document.getElementById(
-        "closeModal"
+const categoryButtons =
+    document.querySelectorAll(
+        ".category-button"
     );
 
 
 /* =====================================================
-   GLOBAL VARIABLES
+   TELEGRAM USER
 ===================================================== */
 
 let telegramUser = null;
 
-let allVideos = [];
 
-let currentCategory = "all";
+/* =====================================================
+   CURRENT CATEGORY
+===================================================== */
+
+let currentCategory =
+    "all";
 
 
 /* =====================================================
@@ -1339,60 +1314,68 @@ let currentCategory = "all";
 
 function hideAllScreens() {
 
-    loadingScreen.style.display = "none";
+    loadingScreen.style.display =
+        "none";
 
-    ageGate.style.display = "none";
+    ageGate.style.display =
+        "none";
 
-    streamingPage.style.display = "none";
+    streamingPage.style.display =
+        "none";
 
-    deniedScreen.style.display = "none";
+    deniedScreen.style.display =
+        "none";
 
-    errorScreen.style.display = "none";
+    errorScreen.style.display =
+        "none";
 
 }
 
 
 /* =====================================================
-   AGE GATE
+   SHOW AGE GATE
 ===================================================== */
 
 function showAgeGate() {
 
     hideAllScreens();
 
-    ageGate.style.display = "flex";
+    ageGate.style.display =
+        "flex";
 
 }
 
 
 /* =====================================================
-   STREAMING PAGE
+   SHOW STREAMING CONTENT
 ===================================================== */
 
 function showStreamingPage() {
 
     hideAllScreens();
 
-    streamingPage.style.display = "block";
+    streamingPage.style.display =
+        "block";
 
 }
 
 
 /* =====================================================
-   DENIED
+   SHOW DENIED
 ===================================================== */
 
 function showDenied() {
 
     hideAllScreens();
 
-    deniedScreen.style.display = "flex";
+    deniedScreen.style.display =
+        "flex";
 
 }
 
 
 /* =====================================================
-   ERROR
+   SHOW ERROR
 ===================================================== */
 
 function showError(message) {
@@ -1409,7 +1392,7 @@ function showError(message) {
 
 
 /* =====================================================
-   TELEGRAM INITIALIZATION
+   INITIALIZE TELEGRAM
 ===================================================== */
 
 async function initializeTelegram() {
@@ -1421,6 +1404,10 @@ async function initializeTelegram() {
         loadingScreen.style.display =
             "flex";
 
+
+        /* ---------------------------------------------
+           Telegram SDK
+        --------------------------------------------- */
 
         const tg =
             window.Telegram?.WebApp;
@@ -1442,6 +1429,15 @@ async function initializeTelegram() {
         tg.expand();
 
 
+        /* ---------------------------------------------
+           Get Telegram user
+           
+           IMPORTANT:
+           The user information is still retrieved
+           and saved to Supabase, but it is NOT
+           displayed anywhere on the Mini App.
+        --------------------------------------------- */
+
         telegramUser =
             tg.initDataUnsafe?.user;
 
@@ -1457,25 +1453,9 @@ async function initializeTelegram() {
         }
 
 
-        let name =
-            telegramUser.first_name ||
-            "Telegram User";
-
-
-        if (telegramUser.last_name) {
-
-            name +=
-                " " +
-                telegramUser.last_name;
-
-        }
-
-
-        userName.textContent =
-            name;
-
-
-        /* Save user to existing users table */
+        /* ---------------------------------------------
+           Save/update user in Supabase
+        --------------------------------------------- */
 
         const saved =
             await saveTelegramUser();
@@ -1495,12 +1475,10 @@ async function initializeTelegram() {
         /*
            IMPORTANT:
 
-           Always show the age verification
-           page first.
+           The age verification screen is always
+           displayed first.
 
-           The user must press one of
-           the two buttons before the
-           streaming content becomes visible.
+           The Telegram user's name is NOT displayed.
         */
 
         showAgeGate();
@@ -1510,7 +1488,7 @@ async function initializeTelegram() {
     catch (error) {
 
         console.error(
-            "Telegram initialization error:",
+            "Initialization error:",
             error
         );
 
@@ -1581,7 +1559,7 @@ async function saveTelegramUser() {
     if (error) {
 
         console.error(
-            "User save error:",
+            "Supabase user error:",
             error
         );
 
@@ -1600,6 +1578,15 @@ async function saveTelegramUser() {
 ===================================================== */
 
 async function saveAdultDecision() {
+
+    if (!telegramUser) {
+
+        throw new Error(
+            "Telegram user not available."
+        );
+
+    }
+
 
     const telegramId =
         String(
@@ -1634,7 +1621,7 @@ async function saveAdultDecision() {
     if (error) {
 
         console.error(
-            "Adult decision error:",
+            "18+ save error:",
             error
         );
 
@@ -1691,7 +1678,7 @@ async function saveUnder18Decision() {
     if (error) {
 
         console.error(
-            "Under 18 decision error:",
+            "Under 18 save error:",
             error
         );
 
@@ -1707,6 +1694,7 @@ async function saveUnder18Decision() {
 btn18.addEventListener(
     "click",
     async function() {
+
 
         if (!telegramUser) {
 
@@ -1726,32 +1714,12 @@ btn18.addEventListener(
             true;
 
         btn18.textContent =
-            "Loading StreamX...";
+            "Verifying...";
 
 
         try {
 
-            /*
-               Save age verification first.
-            */
-
             await saveAdultDecision();
-
-
-            /*
-               Load videos directly from
-               the SAME Supabase videos table
-               used by your website.
-            */
-
-            await loadVideos();
-
-
-            /*
-               Only after successful database
-               connection and video loading,
-               display streaming page.
-            */
 
             showStreamingPage();
 
@@ -1760,7 +1728,6 @@ btn18.addEventListener(
         catch (error) {
 
             console.error(
-                "Opening StreamX error:",
                 error
             );
 
@@ -1775,8 +1742,8 @@ btn18.addEventListener(
                 "I Am 18+";
 
 
-            showError(
-                "Unable to load StreamX content. Please try again."
+            alert(
+                "Verification could not be saved. Please try again."
             );
 
         }
@@ -1793,6 +1760,7 @@ btnUnder18.addEventListener(
     "click",
     async function() {
 
+
         btn18.disabled =
             true;
 
@@ -1807,7 +1775,7 @@ btnUnder18.addEventListener(
 
 
         /*
-           Streaming page is NEVER shown.
+           NEVER show streaming page.
         */
 
         showDenied();
@@ -1817,212 +1785,23 @@ btnUnder18.addEventListener(
 
 
 /* =====================================================
-   LOAD VIDEOS FROM SUPABASE
+   CATEGORY BUTTONS
 ===================================================== */
 
-async function loadVideos() {
+categoryButtons.forEach(
+    function(button) {
 
-    /*
-       This reads the EXISTING videos table.
 
-       No second videos table is created.
+        button.addEventListener(
+            "click",
+            function() {
 
-       New uploads to the website will therefore
-       automatically become available here.
-    */
 
-    const { data, error } =
-        await supabaseClient
+                currentCategory =
+                    button.dataset.category;
 
-            .from("videos")
 
-            .select(
-                "id,title,description,category,video_url,thumbnail_url,created_at,views"
-            )
-
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
-
-    if (error) {
-
-        console.error(
-            "Video loading error:",
-            error
-        );
-
-        throw error;
-
-    }
-
-
-    allVideos =
-        data || [];
-
-
-    console.log(
-        "StreamX videos loaded:",
-        allVideos
-    );
-
-
-    buildCategories();
-
-    renderVideos();
-
-}
-
-
-/* =====================================================
-   BUILD CATEGORIES AUTOMATICALLY
-===================================================== */
-
-function buildCategories() {
-
-    categoriesContainer.innerHTML = "";
-
-
-    /*
-       Always create All category.
-    */
-
-    const allButton =
-        createCategoryButton(
-            "all",
-            "All"
-        );
-
-
-    allButton.classList.add(
-        "active"
-    );
-
-
-    categoriesContainer.appendChild(
-        allButton
-    );
-
-
-    /*
-       Extract unique categories
-       directly from videos table.
-    */
-
-    const categoryMap =
-        new Map();
-
-
-    allVideos.forEach(
-        function(video) {
-
-            if (
-                video.category &&
-                String(
-                    video.category
-                ).trim() !== ""
-            ) {
-
-                const original =
-                    String(
-                        video.category
-                    ).trim();
-
-
-                const key =
-                    original.toLowerCase();
-
-
-                if (
-                    !categoryMap.has(key)
-                ) {
-
-                    categoryMap.set(
-                        key,
-                        original
-                    );
-
-                }
-
-            }
-
-        }
-    );
-
-
-    /*
-       Add database categories.
-    */
-
-    categoryMap.forEach(
-        function(
-            originalCategory
-        ) {
-
-            const button =
-                createCategoryButton(
-                    originalCategory,
-                    originalCategory
-                );
-
-
-            categoriesContainer.appendChild(
-                button
-            );
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   CREATE CATEGORY BUTTON
-===================================================== */
-
-function createCategoryButton(
-    categoryValue,
-    categoryLabel
-) {
-
-    const button =
-        document.createElement(
-            "button"
-        );
-
-
-    button.type =
-        "button";
-
-
-    button.className =
-        "category-button";
-
-
-    button.dataset.category =
-        categoryValue;
-
-
-    button.textContent =
-        categoryLabel;
-
-
-    button.addEventListener(
-        "click",
-        function() {
-
-            currentCategory =
-                categoryValue;
-
-
-            document
-                .querySelectorAll(
-                    ".category-button"
-                )
-                .forEach(
+                categoryButtons.forEach(
                     function(item) {
 
                         item.classList.remove(
@@ -2033,647 +1812,21 @@ function createCategoryButton(
                 );
 
 
-            button.classList.add(
-                "active"
-            );
-
-
-            renderVideos();
-
-        }
-    );
-
-
-    return button;
-
-}
-
-
-/* =====================================================
-   RENDER VIDEOS
-===================================================== */
-
-function renderVideos() {
-
-    const searchTerm =
-        searchInput.value
-            .trim()
-            .toLowerCase();
-
-
-    let filteredVideos =
-        allVideos.filter(
-            function(video) {
-
-                /*
-                   CATEGORY FILTER
-                */
-
-                let categoryMatches =
-                    currentCategory ===
-                    "all";
-
-
-                if (!categoryMatches) {
-
-                    categoryMatches =
-                        String(
-                            video.category || ""
-                        ).toLowerCase() ===
-                        String(
-                            currentCategory
-                        ).toLowerCase();
-
-                }
-
-
-                if (!categoryMatches) {
-
-                    return false;
-
-                }
-
-
-                /*
-                   SEARCH FILTER
-
-                   Searches title,
-                   description and category.
-                */
-
-                if (!searchTerm) {
-
-                    return true;
-
-                }
-
-
-                const title =
-                    String(
-                        video.title || ""
-                    ).toLowerCase();
-
-
-                const description =
-                    String(
-                        video.description || ""
-                    ).toLowerCase();
-
-
-                const category =
-                    String(
-                        video.category || ""
-                    ).toLowerCase();
-
-
-                return (
-                    title.includes(
-                        searchTerm
-                    ) ||
-                    description.includes(
-                        searchTerm
-                    ) ||
-                    category.includes(
-                        searchTerm
-                    )
+                button.classList.add(
+                    "active"
                 );
 
-            }
-        );
-
-
-    videoGrid.innerHTML =
-        "";
-
-
-    if (
-        filteredVideos.length === 0
-    ) {
-
-        noVideos.style.display =
-            "block";
-
-        return;
-
-    }
-
-
-    noVideos.style.display =
-        "none";
-
-
-    filteredVideos.forEach(
-        function(video) {
-
-            const card =
-                createVideoCard(
-                    video
-                );
-
-
-            videoGrid.appendChild(
-                card
-            );
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   CREATE VIDEO CARD
-===================================================== */
-
-function createVideoCard(video) {
-
-    const card =
-        document.createElement(
-            "div"
-        );
-
-
-    card.className =
-        "video-card";
-
-
-    /*
-       Thumbnail container.
-    */
-
-    const thumbnailContainer =
-        document.createElement(
-            "div"
-        );
-
-
-    thumbnailContainer.className =
-        "thumbnail-container";
-
-
-    /*
-       Thumbnail.
-    */
-
-    if (
-        video.thumbnail_url
-    ) {
-
-        const image =
-            document.createElement(
-                "img"
-            );
-
-
-        image.className =
-            "video-thumbnail";
-
-
-        image.src =
-            video.thumbnail_url;
-
-
-        image.alt =
-            video.title ||
-            "StreamX video";
-
-
-        image.loading =
-            "lazy";
-
-
-        image.onerror =
-            function() {
-
-                this.style.display =
-                    "none";
-
-            };
-
-
-        thumbnailContainer.appendChild(
-            image
-        );
-
-    }
-
-
-    /*
-       Play overlay.
-    */
-
-    const overlay =
-        document.createElement(
-            "div"
-        );
-
-
-    overlay.className =
-        "play-overlay";
-
-
-    const playButton =
-        document.createElement(
-            "div"
-        );
-
-
-    playButton.className =
-        "play-button";
-
-
-    playButton.innerHTML =
-        "▶";
-
-
-    overlay.appendChild(
-        playButton
-    );
-
-
-    thumbnailContainer.appendChild(
-        overlay
-    );
-
-
-    /*
-       Information.
-    */
-
-    const info =
-        document.createElement(
-            "div"
-        );
-
-
-    info.className =
-        "video-info";
-
-
-    const title =
-        document.createElement(
-            "div"
-        );
-
-
-    title.className =
-        "video-title";
-
-
-    title.textContent =
-        video.title ||
-        "Untitled Video";
-
-
-    info.appendChild(
-        title
-    );
-
-
-    if (
-        video.category
-    ) {
-
-        const category =
-            document.createElement(
-                "div"
-            );
-
-
-        category.className =
-            "video-category";
-
-
-        category.textContent =
-            video.category;
-
-
-        info.appendChild(
-            category
-        );
-
-    }
-
-
-    const views =
-        document.createElement(
-            "div"
-        );
-
-
-    views.className =
-        "video-views";
-
-
-    views.textContent =
-        formatViews(
-            video.views
-        ) +
-        " views";
-
-
-    info.appendChild(
-        views
-    );
-
-
-    card.appendChild(
-        thumbnailContainer
-    );
-
-
-    card.appendChild(
-        info
-    );
-
-
-    /*
-       Open video when card is clicked.
-    */
-
-    card.addEventListener(
-        "click",
-        function() {
-
-            openVideo(
-                video
-            );
-
-        }
-    );
-
-
-    return card;
-
-}
-
-
-/* =====================================================
-   FORMAT VIEWS
-===================================================== */
-
-function formatViews(views) {
-
-    const number =
-        Number(
-            views || 0
-        );
-
-
-    if (
-        number >= 1000000
-    ) {
-
-        return (
-            number / 1000000
-        ).toFixed(1) + "M";
-
-    }
-
-
-    if (
-        number >= 1000
-    ) {
-
-        return (
-            number / 1000
-        ).toFixed(1) + "K";
-
-    }
-
-
-    return String(
-        number
-    );
-
-}
-
-
-/* =====================================================
-   OPEN VIDEO
-===================================================== */
-
-function openVideo(video) {
-
-    if (
-        !video.video_url
-    ) {
-
-        alert(
-            "This video does not have a valid video URL."
-        );
-
-        return;
-
-    }
-
-
-    modalTitle.textContent =
-        video.title ||
-        "StreamX Video";
-
-
-    modalCategory.textContent =
-        video.category
-            ? video.category
-            : "";
-
-
-    modalDescription.textContent =
-        video.description ||
-        "";
-
-
-    modalVideo.src =
-        video.video_url;
-
-
-    videoModal.style.display =
-        "block";
-
-
-    document.body.style.overflow =
-        "hidden";
-
-
-    /*
-       Start playback.
-
-       Browser/Telegram may require
-       the user to tap play.
-    */
-
-    modalVideo.play()
-        .catch(
-            function() {
 
                 console.log(
-                    "Playback requires user interaction."
+                    "Selected category:",
+                    currentCategory
                 );
 
             }
         );
 
-
-    /*
-       Increment views locally in
-       the database.
-    */
-
-    incrementViews(
-        video.id,
-        video.views
-    );
-
-}
-
-
-/* =====================================================
-   CLOSE VIDEO
-===================================================== */
-
-function closeVideoModal() {
-
-    modalVideo.pause();
-
-    modalVideo.removeAttribute(
-        "src"
-    );
-
-    modalVideo.load();
-
-
-    videoModal.style.display =
-        "none";
-
-
-    document.body.style.overflow =
-        "";
-
-}
-
-
-/* =====================================================
-   CLOSE BUTTON
-===================================================== */
-
-closeModal.addEventListener(
-    "click",
-    closeVideoModal
-);
-
-
-/* =====================================================
-   CLOSE WHEN CLICKING BACKGROUND
-===================================================== */
-
-videoModal.addEventListener(
-    "click",
-    function(event) {
-
-        if (
-            event.target ===
-            videoModal
-        ) {
-
-            closeVideoModal();
-
-        }
-
     }
 );
-
-
-/* =====================================================
-   ESCAPE KEY
-===================================================== */
-
-document.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (
-            event.key === "Escape"
-        ) {
-
-            closeVideoModal();
-
-        }
-
-    }
-);
-
-
-/* =====================================================
-   INCREMENT VIEWS
-===================================================== */
-
-async function incrementViews(
-    videoId,
-    currentViews
-) {
-
-    const newViews =
-        Number(
-            currentViews || 0
-        ) + 1;
-
-
-    const { error } =
-        await supabaseClient
-
-            .from("videos")
-
-            .update({
-
-                views:
-                    newViews
-
-            })
-
-            .eq(
-                "id",
-                videoId
-            );
-
-
-    if (error) {
-
-        console.error(
-            "View update error:",
-            error
-        );
-
-        return;
-
-    }
-
-
-    /*
-       Update local value too.
-    */
-
-    const video =
-        allVideos.find(
-            function(item) {
-
-                return (
-                    item.id ===
-                    videoId
-                );
-
-            }
-        );
-
-
-    if (video) {
-
-        video.views =
-            newViews;
-
-    }
-
-}
 
 
 /* =====================================================
@@ -2684,49 +1837,17 @@ searchInput.addEventListener(
     "input",
     function() {
 
-        renderVideos();
 
-    }
-);
+        const searchTerm =
+            searchInput.value
+                .trim()
+                .toLowerCase();
 
 
-/* =====================================================
-   OPTIONAL: REFRESH VIDEOS
-=====================================================
-
-   When the user returns to the Mini App,
-   refresh the video list so newly uploaded
-   content can appear.
-
-===================================================== */
-
-document.addEventListener(
-    "visibilitychange",
-    async function() {
-
-        if (
-            document.visibilityState ===
-            "visible" &&
-            streamingPage.style.display ===
-            "block"
-        ) {
-
-            try {
-
-                await loadVideos();
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Refresh error:",
-                    error
-                );
-
-            }
-
-        }
+        console.log(
+            "Searching StreamX:",
+            searchTerm
+        );
 
     }
 );
@@ -2743,3 +1864,4 @@ initializeTelegram();
 </body>
 
 </html>
+```

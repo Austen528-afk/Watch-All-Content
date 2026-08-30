@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>StreamX Admin Login</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-family:Arial, Helvetica, sans-serif;
+
+    background:
+        radial-gradient(circle at top left,#3a0010 0%,transparent 35%),
+        radial-gradient(circle at bottom right,#18000a 0%,transparent 40%),
+        #050505;
+
+    color:white;
+}
+
+.login-container{
+    width:100%;
+    max-width:420px;
+    padding:20px;
+}
+
+.login-box{
+    background:rgba(18,18,18,.95);
+
+    border:1px solid #292929;
+
+    border-radius:18px;
+
+    padding:40px 35px;
+
+    box-shadow:
+        0 25px 70px rgba(0,0,0,.7),
+        0 0 40px rgba(255,23,68,.08);
+
+    text-align:center;
+}
+
+.logo{
+    font-size:32px;
+    font-weight:900;
+    margin-bottom:8px;
+}
+
+.logo span{
+    color:#ff1744;
+}
+
+.subtitle{
+    color:#777;
+    font-size:13px;
+    margin-bottom:35px;
+}
+
+.lock{
+    width:65px;
+    height:65px;
+
+    margin:0 auto 20px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:50%;
+
+    background:#211015;
+
+    border:1px solid #49202b;
+
+    font-size:28px;
+}
+
+label{
+    display:block;
+
+    text-align:left;
+
+    color:#aaa;
+
+    font-size:12px;
+
+    margin-bottom:8px;
+}
+
+.password-wrapper{
+    position:relative;
+}
+
+input{
+    width:100%;
+
+    padding:15px 48px 15px 15px;
+
+    background:#0b0b0b;
+
+    border:1px solid #303030;
+
+    border-radius:9px;
+
+    color:white;
+
+    outline:none;
+
+    font-size:14px;
+
+    transition:.2s;
+}
+
+input:focus{
+    border-color:#ff1744;
+
+    box-shadow:
+        0 0 0 3px rgba(255,23,68,.08);
+}
+
+.toggle-password{
+    position:absolute;
+
+    right:12px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    background:none;
+
+    border:none;
+
+    color:#777;
+
+    cursor:pointer;
+
+    font-size:16px;
+}
+
+.toggle-password:hover{
+    color:white;
+}
+
+.login-button{
+    width:100%;
+
+    margin-top:20px;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:9px;
+
+    background:#ff1744;
+
+    color:white;
+
+    font-size:14px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.login-button:hover{
+    background:#e90035;
+
+    transform:translateY(-1px);
+}
+
+.login-button:active{
+    transform:translateY(0);
+}
+
+.error{
+    display:none;
+
+    margin-top:15px;
+
+    padding:11px;
+
+    border-radius:8px;
+
+    background:#281015;
+
+    border:1px solid #70283a;
+
+    color:#ff6b88;
+
+    font-size:12px;
+}
+
+.footer{
+    margin-top:25px;
+
+    color:#555;
+
+    font-size:11px;
+}
+
+@media(max-width:480px){
+
+    .login-box{
+        padding:35px 25px;
+    }
+
+    .logo{
+        font-size:28px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login-container">
+
+```
+<div class="login-box">
+
+    <div class="lock">
+        🔐
+    </div>
+
+    <div class="logo">
+        Stream<span>X</span>
+    </div>
+
+    <div class="subtitle">
+        Administrator access only
+    </div>
+
+    <form onsubmit="login(event)">
+
+        <label for="password">
+            ADMIN PASSWORD
+        </label>
+
+        <div class="password-wrapper">
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button
+                type="button"
+                class="toggle-password"
+                onclick="togglePassword()"
+            >
+                👁
+            </button>
+
+        </div>
+
+        <button
+            type="submit"
+            class="login-button"
+        >
+            Sign In
+        </button>
+
+        <div
+            class="error"
+            id="errorMessage"
+        >
+            Incorrect password. Please try again.
+        </div>
+
+    </form>
+
+    <div class="footer">
+        StreamX Content Management System
+    </div>
+
+</div>
+```
+
+</div>
+
+<script>
+
+function login(event){
+
+    event.preventDefault();
+
+    const password =
+        document.getElementById("password").value;
+
+    const error =
+        document.getElementById("errorMessage");
+
+    /*
+       ADMIN PASSWORD
+    */
+
+    const adminPassword = "123@Austin";
+
+    if(password === adminPassword){
+
+        /*
+           Store temporary login status.
+           This lasts only for the current browser session.
+        */
+
+        sessionStorage.setItem(
+            "streamx_admin_logged_in",
+            "true"
+        );
+
+        /*
+           Redirect to your actual admin dashboard.
+        */
+
+        window.location.href = "dashboard.html";
+
+    }else{
+
+        error.style.display = "block";
+
+        document.getElementById(
+            "password"
+        ).value = "";
+
+        document.getElementById(
+            "password"
+        ).focus();
+
+    }
+
+}
+
+
+function togglePassword(){
+
+    const password =
+        document.getElementById("password");
+
+    const button =
+        document.querySelector(".toggle-password");
+
+    if(password.type === "password"){
+
+        password.type = "text";
+
+        button.textContent = "🙈";
+
+    }else{
+
+        password.type = "password";
+
+        button.textContent = "👁";
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

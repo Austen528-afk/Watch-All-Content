@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -20,10 +19,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
-/* =====================================================
-   RESET
-===================================================== */
 
 * {
     margin: 0;
@@ -55,7 +50,7 @@ body {
 
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
 
     padding: 0 16px;
 
@@ -160,14 +155,12 @@ body {
 .age-icon {
 
     font-size: 55px;
-
     margin-bottom: 15px;
 }
 
 .age-card h1 {
 
     font-size: 28px;
-
     margin-bottom: 15px;
 }
 
@@ -207,38 +200,31 @@ body {
 }
 
 .age-button:active {
-
     transform: scale(.98);
 }
 
 .age-button:disabled {
-
     opacity: .5;
-
     cursor: not-allowed;
 }
 
 .btn18 {
 
     background: #ff1744;
-
     color: white;
 }
 
 .btn18:hover {
-
     background: #e9143e;
 }
 
 .btnUnder {
 
     background: #292929;
-
     color: white;
 }
 
 .btnUnder:hover {
-
     background: #353535;
 }
 
@@ -266,7 +252,6 @@ body {
 ===================================================== */
 
 .stream-header {
-
     margin-bottom: 20px;
 }
 
@@ -278,7 +263,6 @@ body {
 }
 
 .stream-header p {
-
     color: #888;
 }
 
@@ -316,18 +300,16 @@ body {
 }
 
 #searchInput:focus {
-
     border-color: #ff1744;
 }
 
 #searchInput::placeholder {
-
     color: #666;
 }
 
 
 /* =====================================================
-   CATEGORY SECTION
+   CATEGORIES
 ===================================================== */
 
 .category-title {
@@ -355,7 +337,6 @@ body {
 }
 
 .categories::-webkit-scrollbar {
-
     display: none;
 }
 
@@ -381,7 +362,6 @@ body {
 }
 
 .category-button:hover {
-
     background: #252525;
 }
 
@@ -400,7 +380,6 @@ body {
 ===================================================== */
 
 .video-section {
-
     margin-top: 10px;
 }
 
@@ -484,8 +463,7 @@ body {
 
     justify-content: center;
 
-    background:
-        rgba(0,0,0,.18);
+    background: rgba(0,0,0,.18);
 
     pointer-events: none;
 }
@@ -498,8 +476,7 @@ body {
 
     border-radius: 50%;
 
-    background:
-        rgba(255,23,68,.95);
+    background: rgba(255,23,68,.95);
 
     display: flex;
 
@@ -518,7 +495,6 @@ body {
 ===================================================== */
 
 .video-info {
-
     padding: 12px;
 }
 
@@ -577,15 +553,13 @@ body {
 }
 
 #noVideos p {
-
     color: #777;
-
     line-height: 1.5;
 }
 
 
 /* =====================================================
-   VIDEO PLAYER MODAL
+   VIDEO MODAL
 ===================================================== */
 
 #videoModal {
@@ -598,8 +572,7 @@ body {
 
     z-index: 1000;
 
-    background:
-        rgba(0,0,0,.96);
+    background: rgba(0,0,0,.96);
 
     padding: 15px;
 
@@ -635,7 +608,6 @@ body {
 }
 
 .modal-info {
-
     padding: 18px;
 }
 
@@ -734,7 +706,6 @@ body {
 }
 
 .denied-box h2 {
-
     margin-bottom: 12px;
 }
 
@@ -781,7 +752,6 @@ body {
 }
 
 .error-box h2 {
-
     margin-bottom: 12px;
 }
 
@@ -819,27 +789,22 @@ body {
 @media (max-width: 600px) {
 
     .header {
-
         padding: 0 13px;
     }
 
     .logo {
-
         font-size: 22px;
     }
 
     #streamingPage {
-
         padding: 15px;
     }
 
     .age-card {
-
         padding: 25px 20px;
     }
 
     .age-card h1 {
-
         font-size: 25px;
     }
 
@@ -852,12 +817,10 @@ body {
     }
 
     .video-info {
-
         padding: 9px;
     }
 
     .video-title {
-
         font-size: 13px;
     }
 
@@ -873,11 +836,6 @@ body {
 
 <!-- =====================================================
      HEADER
-     
-     USER NAME REMOVED FROM THE VISIBLE PAGE.
-     
-     Telegram user information is STILL saved to
-     Supabase in the background.
 ===================================================== -->
 
 <div class="header">
@@ -923,15 +881,11 @@ body {
     <div class="age-card">
 
         <div class="age-icon">
-
             🔞
-
         </div>
 
         <h1>
-
             Age Verification
-
         </h1>
 
         <p>
@@ -983,15 +937,11 @@ body {
     <div class="stream-header">
 
         <h1>
-
             StreamX
-
         </h1>
 
         <p>
-
             Browse available content.
-
         </p>
 
     </div>
@@ -1014,18 +964,14 @@ body {
     <!-- CATEGORIES -->
 
     <div class="category-title">
-
         Categories
-
     </div>
+
 
     <div
         class="categories"
         id="categories"
     >
-
-        <!-- Categories generated from Supabase -->
-
     </div>
 
 
@@ -1068,15 +1014,11 @@ body {
     <div class="denied-box">
 
         <div class="denied-icon">
-
             🔞
-
         </div>
 
         <h2>
-
             Access Denied
-
         </h2>
 
         <p>
@@ -1101,24 +1043,18 @@ body {
     <div class="error-box">
 
         <h2>
-
             Connection Error
-
         </h2>
 
         <p id="errorMessage">
-
             Unable to connect to StreamX.
-
         </p>
 
         <button
             class="retry-button"
             onclick="location.reload()"
         >
-
             Try Again
-
         </button>
 
     </div>
@@ -1138,9 +1074,7 @@ body {
         id="closeModal"
         type="button"
     >
-
         ×
-
     </button>
 
 
@@ -1189,7 +1123,8 @@ body {
 /* =====================================================
    SUPABASE CONFIGURATION
 
-   UNCHANGED
+   THIS IS THE SAME SUPABASE PROJECT
+   USED BY YOUR WEBSITE.
 ===================================================== */
 
 const SUPABASE_URL =
@@ -1211,94 +1146,58 @@ const supabaseClient =
 ===================================================== */
 
 const loadingScreen =
-    document.getElementById(
-        "loadingScreen"
-    );
+    document.getElementById("loadingScreen");
 
 const ageGate =
-    document.getElementById(
-        "ageGate"
-    );
+    document.getElementById("ageGate");
 
 const streamingPage =
-    document.getElementById(
-        "streamingPage"
-    );
+    document.getElementById("streamingPage");
 
 const deniedScreen =
-    document.getElementById(
-        "deniedScreen"
-    );
+    document.getElementById("deniedScreen");
 
 const errorScreen =
-    document.getElementById(
-        "errorScreen"
-    );
+    document.getElementById("errorScreen");
 
 const errorMessage =
-    document.getElementById(
-        "errorMessage"
-    );
+    document.getElementById("errorMessage");
 
 const btn18 =
-    document.getElementById(
-        "btn18"
-    );
+    document.getElementById("btn18");
 
 const btnUnder18 =
-    document.getElementById(
-        "btnUnder18"
-    );
+    document.getElementById("btnUnder18");
 
 const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
+    document.getElementById("searchInput");
 
 const categoriesContainer =
-    document.getElementById(
-        "categories"
-    );
+    document.getElementById("categories");
 
 const videoGrid =
-    document.getElementById(
-        "videoGrid"
-    );
+    document.getElementById("videoGrid");
 
 const noVideos =
-    document.getElementById(
-        "noVideos"
-    );
+    document.getElementById("noVideos");
 
 const videoModal =
-    document.getElementById(
-        "videoModal"
-    );
+    document.getElementById("videoModal");
 
 const modalVideo =
-    document.getElementById(
-        "modalVideo"
-    );
+    document.getElementById("modalVideo");
 
 const modalTitle =
-    document.getElementById(
-        "modalTitle"
-    );
+    document.getElementById("modalTitle");
 
 const modalCategory =
-    document.getElementById(
-        "modalCategory"
-    );
+    document.getElementById("modalCategory");
 
 const modalDescription =
-    document.getElementById(
-        "modalDescription"
-    );
+    document.getElementById("modalDescription");
 
 const closeModal =
-    document.getElementById(
-        "closeModal"
-    );
+    document.getElementById("closeModal");
 
 
 /* =====================================================
@@ -1439,12 +1338,12 @@ async function initializeTelegram() {
         /*
            IMPORTANT:
 
-           We DO NOT display the Telegram
-           user's name anywhere on the page.
+           The user's name is NOT displayed
+           on the Mini App.
 
-           The Telegram user information is
-           still kept in telegramUser and is
-           still saved to Supabase.
+           We still save the Telegram account
+           information to Supabase so YOU can
+           see it in the users table.
         */
 
 
@@ -1466,7 +1365,7 @@ async function initializeTelegram() {
 
 
         /*
-           Always show age verification first.
+           ALWAYS show age verification first.
         */
 
         showAgeGate();
@@ -1491,14 +1390,6 @@ async function initializeTelegram() {
 
 /* =====================================================
    SAVE TELEGRAM USER
-
-   UNCHANGED
-
-   The user's Telegram name and username
-   are STILL saved to Supabase.
-
-   They are simply NOT displayed on the
-   Mini App interface.
 ===================================================== */
 
 async function saveTelegramUser() {
@@ -1515,6 +1406,14 @@ async function saveTelegramUser() {
             telegramUser.id
         );
 
+
+    /*
+       The user information is still saved
+       to your Supabase users table.
+
+       It is simply NOT displayed on the
+       Mini App interface.
+    */
 
     const { error } =
         await supabaseClient
@@ -1706,24 +1605,26 @@ btn18.addEventListener(
         try {
 
             /*
-               Save age verification first.
+               Save age verification.
             */
 
             await saveAdultDecision();
 
 
             /*
-               Load videos from the SAME
-               Supabase videos table used
-               by the website.
+               THIS IS THE IMPORTANT CONNECTION.
+
+               Videos are loaded from the SAME
+               Supabase videos table used by
+               your website.
             */
 
             await loadVideos();
 
 
             /*
-               Only after successful loading
-               show the streaming page.
+               Only after the videos have been
+               retrieved do we show the content.
             */
 
             showStreamingPage();
@@ -1779,10 +1680,6 @@ btnUnder18.addEventListener(
         await saveUnder18Decision();
 
 
-        /*
-           Streaming page is NEVER shown.
-        */
-
         showDenied();
 
     }
@@ -1790,19 +1687,34 @@ btnUnder18.addEventListener(
 
 
 /* =====================================================
-   LOAD VIDEOS FROM SUPABASE
-
-   UNCHANGED
+   LOAD VIDEOS FROM EXISTING SUPABASE TABLE
 ===================================================== */
 
 async function loadVideos() {
 
     /*
-       Reads the EXISTING videos table.
+       IMPORTANT:
 
-       New uploads to the website automatically
-       become available in the Mini App.
+       This does NOT create another videos table.
+
+       It reads your EXISTING:
+
+       videos
+
+       table.
+
+       Expected columns:
+
+       id
+       title
+       description
+       category
+       video_url
+       thumbnail_url
+       created_at
+       views
     */
+
 
     const { data, error } =
         await supabaseClient
@@ -1833,6 +1745,11 @@ async function loadVideos() {
     }
 
 
+    /*
+       Store the videos retrieved from
+       your website's database.
+    */
+
     allVideos =
         data || [];
 
@@ -1843,7 +1760,17 @@ async function loadVideos() {
     );
 
 
+    /*
+       Build categories directly from
+       the database.
+    */
+
     buildCategories();
+
+
+    /*
+       Display videos.
+    */
 
     renderVideos();
 
@@ -1856,11 +1783,12 @@ async function loadVideos() {
 
 function buildCategories() {
 
-    categoriesContainer.innerHTML = "";
+    categoriesContainer.innerHTML =
+        "";
 
 
     /*
-       Always create All category.
+       ALL CATEGORY
     */
 
     const allButton =
@@ -1881,8 +1809,8 @@ function buildCategories() {
 
 
     /*
-       Extract unique categories
-       directly from videos table.
+       Find unique categories
+       from the existing videos.
     */
 
     const categoryMap =
@@ -1927,7 +1855,7 @@ function buildCategories() {
 
 
     /*
-       Add database categories.
+       Create buttons automatically.
     */
 
     categoryMap.forEach(
@@ -2037,6 +1965,7 @@ function renderVideos() {
     let filteredVideos =
         allVideos.filter(
             function(video) {
+
 
                 /*
                    CATEGORY FILTER
@@ -2168,7 +2097,7 @@ function createVideoCard(video) {
 
 
     /*
-       Thumbnail container.
+       THUMBNAIL
     */
 
     const thumbnailContainer =
@@ -2180,10 +2109,6 @@ function createVideoCard(video) {
     thumbnailContainer.className =
         "thumbnail-container";
 
-
-    /*
-       Thumbnail.
-    */
 
     if (
         video.thumbnail_url
@@ -2229,7 +2154,7 @@ function createVideoCard(video) {
 
 
     /*
-       Play overlay.
+       PLAY BUTTON
     */
 
     const overlay =
@@ -2267,7 +2192,7 @@ function createVideoCard(video) {
 
 
     /*
-       Information.
+       VIDEO INFORMATION
     */
 
     const info =
@@ -2358,7 +2283,7 @@ function createVideoCard(video) {
 
 
     /*
-       Open video when card is clicked.
+       OPEN VIDEO
     */
 
     card.addEventListener(
@@ -2444,15 +2369,18 @@ function openVideo(video) {
 
 
     modalCategory.textContent =
-        video.category
-            ? video.category
-            : "";
+        video.category ||
+        "";
 
 
     modalDescription.textContent =
         video.description ||
         "";
 
+
+    /*
+       USE THE VIDEO URL FROM SUPABASE.
+    */
 
     modalVideo.src =
         video.video_url;
@@ -2479,7 +2407,7 @@ function openVideo(video) {
 
 
     /*
-       Increment views.
+       UPDATE VIEW COUNT.
     */
 
     incrementViews(
@@ -2547,7 +2475,7 @@ videoModal.addEventListener(
 
 
 /* =====================================================
-   ESCAPE KEY
+   ESCAPE
 ===================================================== */
 
 document.addEventListener(
@@ -2612,7 +2540,7 @@ async function incrementViews(
 
 
     /*
-       Update local value.
+       Update local copy.
     */
 
     const video =
@@ -2653,7 +2581,8 @@ searchInput.addEventListener(
 
 
 /* =====================================================
-   REFRESH VIDEOS
+   REFRESH WHEN MINI APP
+   BECOMES VISIBLE
 ===================================================== */
 
 document.addEventListener(
@@ -2699,4 +2628,3 @@ initializeTelegram();
 </body>
 
 </html>
-```

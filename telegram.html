@@ -796,6 +796,7 @@ body{
 </footer>
 
 <script>
+
 /* =========================
    AGE GATE
 ========================= */
@@ -809,15 +810,30 @@ if (localStorage.getItem("streamx_age_verified") === "true") {
     ageGate.classList.add("hidden");
 }
 
+// User confirms they are 18+
 ageYes.addEventListener("click", function () {
     localStorage.setItem("streamx_age_verified", "true");
+
+    ageBlocked.style.display = "none";
+    ageYes.style.display = "";
+    ageNo.style.display = "";
+
     ageGate.classList.add("hidden");
 });
 
+// User selects under 18
 ageNo.addEventListener("click", function () {
+
+    // Do NOT save anything to localStorage.
+    // The user is not permanently blocked.
+
     ageBlocked.style.display = "block";
-    ageYes.style.display = "none";
-    ageNo.style.display = "none";
+
+    // Keep both choices available so the user can change
+    // their selection if they clicked by mistake.
+    ageYes.style.display = "";
+    ageNo.style.display = "";
+
 });
 
 /* =========================

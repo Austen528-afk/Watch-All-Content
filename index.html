@@ -1,25 +1,15 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>StreamX</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
-/* =====================================================
-   RESET
-===================================================== */
 
 *{
     margin:0;
@@ -34,56 +24,37 @@ html{
 body{
     background:#080808;
     color:#fff;
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     min-height:100vh;
 }
 
 
-/* =====================================================
+/* ==============================
    HEADER
-===================================================== */
+============================== */
 
 .header{
-
     position:sticky;
     top:0;
     z-index:1000;
-
-    width:100%;
-
     background:rgba(8,8,8,.96);
-
     backdrop-filter:blur(15px);
-
     border-bottom:1px solid #222;
 }
 
 .header-inner{
-
     max-width:1400px;
-
     margin:auto;
-
     padding:16px 25px;
-
     display:flex;
-
     align-items:center;
-
     gap:30px;
 }
 
 .logo{
-
     font-size:27px;
-
     font-weight:900;
-
     letter-spacing:-1px;
-
     white-space:nowrap;
 }
 
@@ -92,119 +63,130 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    SEARCH
-===================================================== */
+============================== */
 
 .search-wrapper{
-
     flex:1;
-
     max-width:600px;
-
     position:relative;
-
     margin:auto;
 }
 
 .search{
-
     width:100%;
-
-    height:44px;
+    height:46px;
 
     background:#151515;
 
     border:1px solid #303030;
 
-    border-radius:24px;
+    border-radius:25px;
 
-    color:#fff;
+    color:white;
 
-    padding:
-        0 20px 0 45px;
+    padding:0 45px;
 
     outline:none;
 
     font-size:14px;
+
+    transition:.2s;
+}
+
+.search::placeholder{
+    color:#666;
 }
 
 .search:focus{
     border-color:#ff1744;
+    box-shadow:0 0 0 3px rgba(255,23,68,.08);
 }
 
 .search-icon{
-
     position:absolute;
-
     left:17px;
-
     top:50%;
-
     transform:translateY(-50%);
-
     color:#777;
-
     font-size:17px;
 }
 
 
-/* =====================================================
-   HEADER RIGHT
-===================================================== */
+/* ==============================
+   SEARCH CLEAR
+============================== */
 
-.header-right{
+.clear-search{
+    position:absolute;
 
-    display:flex;
+    right:12px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    width:25px;
+    height:25px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:#292929;
+
+    color:#aaa;
+
+    cursor:pointer;
+
+    display:none;
 
     align-items:center;
+    justify-content:center;
 
-    gap:15px;
+    font-size:15px;
+}
 
+.clear-search:hover{
+    background:#ff1744;
+    color:white;
+}
+
+
+/* ==============================
+   ONLINE
+============================== */
+
+.header-right{
     white-space:nowrap;
 }
 
 .online{
-
     display:flex;
-
     align-items:center;
-
     gap:7px;
-
     color:#888;
-
     font-size:12px;
 }
 
 .online-dot{
-
     width:7px;
     height:7px;
-
     background:#21c477;
-
     border-radius:50%;
-
-    box-shadow:
-        0 0 10px #21c477;
+    box-shadow:0 0 10px #21c477;
 }
 
 
-/* =====================================================
+/* ==============================
    CATEGORY BAR
-===================================================== */
+============================== */
 
 .category-bar{
-
     width:100%;
-
     border-bottom:1px solid #1c1c1c;
-
     background:#0c0c0c;
-
     overflow-x:auto;
-
     scrollbar-width:none;
 }
 
@@ -213,22 +195,15 @@ body{
 }
 
 .categories{
-
     max-width:1400px;
-
     margin:auto;
-
     padding:12px 25px;
-
     display:flex;
-
     gap:9px;
-
     white-space:nowrap;
 }
 
 .category{
-
     border:none;
 
     background:#181818;
@@ -247,44 +222,34 @@ body{
 }
 
 .category:hover{
-
-    background:#252525;
-
-    color:#fff;
+    background:#292929;
+    color:white;
 }
 
 .category.active{
-
     background:#ff1744;
-
-    color:#fff;
-
+    color:white;
     font-weight:bold;
 }
 
 
-/* =====================================================
+/* ==============================
    MAIN
-===================================================== */
+============================== */
 
 .main{
-
     max-width:1400px;
-
     margin:auto;
-
-    padding:
-        30px 25px 70px;
+    padding:30px 25px 70px;
 }
 
 
-/* =====================================================
+/* ==============================
    HERO
-===================================================== */
+============================== */
 
 .hero{
-
-    margin-bottom:30px;
+    margin-bottom:32px;
 
     padding:35px;
 
@@ -305,7 +270,6 @@ body{
 }
 
 .hero::after{
-
     content:"";
 
     position:absolute;
@@ -326,13 +290,9 @@ body{
 }
 
 .hero h1{
-
     font-size:34px;
-
     margin-bottom:10px;
-
     position:relative;
-
     z-index:1;
 }
 
@@ -341,53 +301,60 @@ body{
 }
 
 .hero p{
-
     color:#888;
-
     font-size:14px;
-
     line-height:1.6;
-
     position:relative;
-
     z-index:1;
 }
 
 
-/* =====================================================
+/* ==============================
    SECTION HEADER
-===================================================== */
+============================== */
 
 .section-header{
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
     margin-bottom:20px;
 }
 
 .section-header h2{
-
     font-size:21px;
 }
 
 .result-count{
-
     color:#666;
-
     font-size:12px;
 }
 
 
-/* =====================================================
+/* ==============================
+   SEARCH STATUS
+============================== */
+
+.search-status{
+    display:none;
+
+    margin-top:-8px;
+    margin-bottom:18px;
+
+    color:#777;
+
+    font-size:12px;
+}
+
+.search-status strong{
+    color:#ff1744;
+}
+
+
+/* ==============================
    VIDEO GRID
-===================================================== */
+============================== */
 
 .video-grid{
-
     display:grid;
 
     grid-template-columns:
@@ -400,12 +367,11 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    VIDEO CARD
-===================================================== */
+============================== */
 
 .video-card{
-
     background:#111;
 
     border:1px solid #252525;
@@ -423,7 +389,6 @@ body{
 }
 
 .video-card:hover{
-
     transform:translateY(-4px);
 
     border-color:#3a3a3a;
@@ -432,12 +397,11 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    THUMBNAIL
-===================================================== */
+============================== */
 
 .thumbnail{
-
     width:100%;
 
     aspect-ratio:16/9;
@@ -450,29 +414,22 @@ body{
 }
 
 .thumbnail img{
-
     width:100%;
-
     height:100%;
 
     object-fit:cover;
 
     display:block;
 
-    transition:
-        transform .3s;
+    transition:transform .3s;
 }
 
-.video-card:hover
-.thumbnail img{
-
+.video-card:hover .thumbnail img{
     transform:scale(1.04);
 }
 
 .no-thumbnail{
-
     width:100%;
-
     height:100%;
 
     display:flex;
@@ -487,12 +444,11 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    PLAY OVERLAY
-===================================================== */
+============================== */
 
 .play-overlay{
-
     position:absolute;
 
     inset:0;
@@ -503,22 +459,18 @@ body{
 
     justify-content:center;
 
-    background:
-        rgba(0,0,0,.15);
+    background:rgba(0,0,0,.2);
 
     opacity:0;
 
     transition:.2s;
 }
 
-.video-card:hover
-.play-overlay{
-
+.video-card:hover .play-overlay{
     opacity:1;
 }
 
 .play-circle{
-
     width:52px;
     height:52px;
 
@@ -536,30 +488,25 @@ body{
 
     padding-left:3px;
 
-    box-shadow:
-        0 5px 25px rgba(0,0,0,.5);
+    box-shadow:0 5px 25px rgba(0,0,0,.5);
 }
 
 
-/* =====================================================
+/* ==============================
    CATEGORY TAG
-===================================================== */
+============================== */
 
 .category-tag{
-
     position:absolute;
 
     left:9px;
     top:9px;
 
-    background:
-        rgba(0,0,0,.78);
+    background:rgba(0,0,0,.78);
 
-    border:
-        1px solid
-        rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.1);
 
-    color:#fff;
+    color:white;
 
     padding:5px 8px;
 
@@ -571,17 +518,15 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    VIDEO INFO
-===================================================== */
+============================== */
 
 .video-info{
-
     padding:14px;
 }
 
 .video-title{
-
     font-size:14px;
 
     font-weight:bold;
@@ -600,7 +545,6 @@ body{
 }
 
 .video-description{
-
     color:#777;
 
     font-size:11px;
@@ -619,7 +563,6 @@ body{
 }
 
 .video-meta{
-
     display:flex;
 
     justify-content:space-between;
@@ -630,12 +573,11 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    LOADING
-===================================================== */
+============================== */
 
 .loading{
-
     grid-column:1/-1;
 
     min-height:300px;
@@ -654,36 +596,30 @@ body{
 }
 
 .spinner{
-
     width:35px;
     height:35px;
 
-    border:
-        3px solid #292929;
+    border:3px solid #292929;
 
     border-top-color:#ff1744;
 
     border-radius:50%;
 
-    animation:
-        spin .8s linear infinite;
+    animation:spin .8s linear infinite;
 }
 
 @keyframes spin{
-
     to{
         transform:rotate(360deg);
     }
-
 }
 
 
-/* =====================================================
+/* ==============================
    EMPTY
-===================================================== */
+============================== */
 
 .empty{
-
     grid-column:1/-1;
 
     text-align:center;
@@ -694,14 +630,12 @@ body{
 }
 
 .empty-icon{
-
     font-size:55px;
 
     margin-bottom:15px;
 }
 
 .empty h3{
-
     color:#aaa;
 
     font-size:18px;
@@ -710,25 +644,22 @@ body{
 }
 
 .empty p{
-
     font-size:12px;
 }
 
 
-/* =====================================================
+/* ==============================
    PLAYER MODAL
-===================================================== */
+============================== */
 
 .modal{
-
     position:fixed;
 
     inset:0;
 
     z-index:5000;
 
-    background:
-        rgba(0,0,0,.94);
+    background:rgba(0,0,0,.94);
 
     display:none;
 
@@ -740,20 +671,17 @@ body{
 }
 
 .modal.show{
-
     display:flex;
 }
 
 .player-container{
-
     width:min(1100px,100%);
 
     max-height:95vh;
 
     background:#101010;
 
-    border:
-        1px solid #292929;
+    border:1px solid #292929;
 
     border-radius:14px;
 
@@ -763,7 +691,6 @@ body{
 }
 
 .player-header{
-
     padding:15px 18px;
 
     display:flex;
@@ -776,7 +703,6 @@ body{
 }
 
 .player-title{
-
     font-size:15px;
 
     font-weight:bold;
@@ -785,7 +711,6 @@ body{
 }
 
 .close-button{
-
     width:34px;
     height:34px;
 
@@ -795,7 +720,7 @@ body{
 
     background:#222;
 
-    color:#fff;
+    color:white;
 
     cursor:pointer;
 
@@ -805,12 +730,10 @@ body{
 }
 
 .close-button:hover{
-
     background:#ff1744;
 }
 
 .player-video{
-
     width:100%;
 
     max-height:70vh;
@@ -821,12 +744,10 @@ body{
 }
 
 .player-info{
-
     padding:18px;
 }
 
 .player-category{
-
     display:inline-block;
 
     color:#ff1744;
@@ -837,7 +758,6 @@ body{
 }
 
 .player-description{
-
     color:#999;
 
     font-size:12px;
@@ -846,12 +766,11 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    FOOTER
-===================================================== */
+============================== */
 
 .footer{
-
     border-top:1px solid #1d1d1d;
 
     padding:25px;
@@ -864,140 +783,145 @@ body{
 }
 
 
-/* =====================================================
+/* ==============================
    RESPONSIVE
-===================================================== */
+============================== */
 
 @media(max-width:800px){
 
     .header-inner{
-
-        padding:
-            13px 15px;
-
+        padding:13px 15px;
         gap:15px;
-
         flex-wrap:wrap;
     }
 
     .logo{
-
         font-size:23px;
     }
 
     .header-right{
-
         display:none;
     }
 
     .search-wrapper{
-
         order:3;
-
         flex-basis:100%;
-
         max-width:none;
     }
 
     .categories{
-
-        padding:
-            10px 15px;
+        padding:10px 15px;
     }
 
     .main{
-
-        padding:
-            20px 15px 50px;
+        padding:20px 15px 50px;
     }
 
     .hero{
-
         padding:25px 20px;
     }
 
     .hero h1{
-
         font-size:27px;
     }
 
     .video-grid{
-
-        grid-template-columns:
-            repeat(
-                2,
-                minmax(0,1fr)
-            );
-
+        grid-template-columns:repeat(2,minmax(0,1fr));
         gap:12px;
     }
 
     .video-info{
-
         padding:11px;
     }
 
     .video-title{
-
         font-size:12px;
     }
 
     .video-description{
-
         display:none;
     }
 
     .video-meta{
-
         font-size:9px;
     }
 
 }
 
+
 @media(max-width:480px){
 
     .video-grid{
-
-        grid-template-columns:
-            repeat(2,1fr);
+        grid-template-columns:repeat(2,1fr);
     }
 
     .hero{
-
         margin-bottom:22px;
     }
 
     .hero p{
-
         font-size:12px;
     }
 
     .section-header h2{
-
         font-size:18px;
     }
 
 }
 
 
-/* =====================================================
-   AGE NOTICE
-===================================================== */
+/* ==============================
+   SEARCH CATEGORY SUGGESTIONS
+============================== */
 
-.notice{
+.category-suggestions{
+    position:absolute;
 
-    text-align:center;
+    top:52px;
 
-    color:#555;
+    left:0;
+    right:0;
 
-    font-size:10px;
+    background:#151515;
 
-    line-height:1.5;
+    border:1px solid #303030;
 
-    max-width:700px;
+    border-radius:10px;
 
-    margin:
-        25px auto 0;
+    overflow:hidden;
+
+    display:none;
+
+    z-index:2000;
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,.5);
+}
+
+.category-suggestion{
+    padding:12px 15px;
+
+    color:#aaa;
+
+    font-size:12px;
+
+    cursor:pointer;
+
+    border-bottom:1px solid #222;
+}
+
+.category-suggestion:last-child{
+    border-bottom:none;
+}
+
+.category-suggestion:hover{
+    background:#222;
+    color:white;
+}
+
+.category-suggestion span{
+    color:#ff1744;
+    margin-right:6px;
 }
 
 </style>
@@ -1018,9 +942,7 @@ body{
 
 
         <div class="logo">
-
             Stream<span>X</span>
-
         </div>
 
 
@@ -1030,13 +952,29 @@ body{
                 🔎
             </span>
 
+
             <input
                 type="text"
                 id="searchInput"
                 class="search"
-                placeholder="Search videos..."
+                placeholder="Search videos or categories..."
                 autocomplete="off"
             >
+
+
+            <button
+                id="clearSearch"
+                class="clear-search"
+                type="button"
+            >
+                ×
+            </button>
+
+
+            <div
+                id="categorySuggestions"
+                class="category-suggestions"
+            ></div>
 
         </div>
 
@@ -1052,7 +990,6 @@ body{
             </div>
 
         </div>
-
 
     </div>
 
@@ -1077,12 +1014,14 @@ body{
             All
         </button>
 
+
         <button
             class="category"
             data-category="BackShots"
         >
             BackShots
         </button>
+
 
         <button
             class="category"
@@ -1091,12 +1030,14 @@ body{
             Masterbates
         </button>
 
+
         <button
             class="category"
             data-category="RoughX"
         >
             RoughX
         </button>
+
 
         <button
             class="category"
@@ -1105,6 +1046,7 @@ body{
             BBW
         </button>
 
+
         <button
             class="category"
             data-category="Africans"
@@ -1112,12 +1054,14 @@ body{
             Africans
         </button>
 
+
         <button
             class="category"
             data-category="Cums"
         >
             Cums
         </button>
+
 
         <button
             class="category"
@@ -1138,8 +1082,6 @@ body{
 <main class="main">
 
 
-    <!-- HERO -->
-
     <section class="hero">
 
         <h1>
@@ -1148,20 +1090,19 @@ body{
         </h1>
 
         <p>
-            Browse the latest content and choose a
-            category to start watching.
+            Browse the latest content or search for a
+            video or category.
         </p>
 
     </section>
 
-
-    <!-- SECTION HEADER -->
 
     <div class="section-header">
 
         <h2 id="sectionTitle">
             All Videos
         </h2>
+
 
         <span
             class="result-count"
@@ -1173,7 +1114,11 @@ body{
     </div>
 
 
-    <!-- VIDEO GRID -->
+    <div
+        id="searchStatus"
+        class="search-status"
+    ></div>
+
 
     <div
         class="video-grid"
@@ -1192,19 +1137,11 @@ body{
 
     </div>
 
-
-    <div class="notice">
-
-        Content displayed on this website is provided
-        through the platform's content management system.
-
-    </div>
-
 </main>
 
 
 <!-- =====================================================
-     VIDEO PLAYER MODAL
+     VIDEO PLAYER
 ===================================================== -->
 
 <div
@@ -1228,6 +1165,7 @@ body{
             <button
                 class="close-button"
                 id="closePlayer"
+                type="button"
             >
                 ×
             </button>
@@ -1240,12 +1178,7 @@ body{
             id="playerVideo"
             controls
             playsinline
-        >
-
-            Your browser does not support
-            HTML5 video.
-
-        </video>
+        ></video>
 
 
         <div class="player-info">
@@ -1268,10 +1201,6 @@ body{
 </div>
 
 
-<!-- =====================================================
-     FOOTER
-===================================================== -->
-
 <footer class="footer">
 
     © 2026 StreamX
@@ -1282,7 +1211,7 @@ body{
 <script>
 
 /* =====================================================
-   SUPABASE CONFIGURATION
+   SUPABASE
 ===================================================== */
 
 const SUPABASE_URL =
@@ -1315,58 +1244,65 @@ let searchTerm = "";
 ===================================================== */
 
 const videoGrid =
-    document.getElementById(
-        "videoGrid"
-    );
+    document.getElementById("videoGrid");
 
 const resultCount =
-    document.getElementById(
-        "resultCount"
-    );
+    document.getElementById("resultCount");
 
 const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
+    document.getElementById("searchInput");
+
+const clearSearch =
+    document.getElementById("clearSearch");
 
 const sectionTitle =
+    document.getElementById("sectionTitle");
+
+const searchStatus =
+    document.getElementById("searchStatus");
+
+const categorySuggestions =
     document.getElementById(
-        "sectionTitle"
+        "categorySuggestions"
     );
 
 const videoModal =
-    document.getElementById(
-        "videoModal"
-    );
+    document.getElementById("videoModal");
 
 const playerVideo =
-    document.getElementById(
-        "playerVideo"
-    );
+    document.getElementById("playerVideo");
 
 const playerTitle =
-    document.getElementById(
-        "playerTitle"
-    );
+    document.getElementById("playerTitle");
 
 const playerCategory =
-    document.getElementById(
-        "playerCategory"
-    );
+    document.getElementById("playerCategory");
 
 const playerDescription =
-    document.getElementById(
-        "playerDescription"
-    );
+    document.getElementById("playerDescription");
 
 const closePlayer =
-    document.getElementById(
-        "closePlayer"
-    );
+    document.getElementById("closePlayer");
 
 
 /* =====================================================
-   LOAD VIDEOS FROM SUPABASE
+   AVAILABLE CATEGORIES
+===================================================== */
+
+const categories = [
+    "All",
+    "BackShots",
+    "Masterbates",
+    "RoughX",
+    "BBW",
+    "Africans",
+    "Cums",
+    "Close Friends"
+];
+
+
+/* =====================================================
+   LOAD VIDEOS
 ===================================================== */
 
 async function loadVideos(){
@@ -1394,7 +1330,7 @@ async function loadVideos(){
         );
 
         showError(
-            "Unable to load videos. Please try again later."
+            "Unable to load videos. Please try again."
         );
 
         return;
@@ -1420,14 +1356,25 @@ function getFilteredVideos(){
     return allVideos.filter(
         video => {
 
+            const videoCategory =
+                String(
+                    video.category || ""
+                );
+
+
+            /*
+               CATEGORY FILTER
+            */
 
             const categoryMatch =
                 currentCategory === "All" ||
-                String(
-                    video.category || ""
-                ).toLowerCase() ===
+                videoCategory.toLowerCase() ===
                 currentCategory.toLowerCase();
 
+
+            /*
+               SEARCH
+            */
 
             const title =
                 String(
@@ -1442,16 +1389,23 @@ function getFilteredVideos(){
 
 
             const category =
-                String(
-                    video.category || ""
-                ).toLowerCase();
+                videoCategory.toLowerCase();
 
 
             const searchMatch =
                 !searchTerm ||
-                title.includes(searchTerm) ||
-                description.includes(searchTerm) ||
-                category.includes(searchTerm);
+
+                title.includes(
+                    searchTerm
+                ) ||
+
+                description.includes(
+                    searchTerm
+                ) ||
+
+                category.includes(
+                    searchTerm
+                );
 
 
             return (
@@ -1479,33 +1433,51 @@ function renderVideos(){
         "";
 
 
-    /* SECTION TITLE */
+    /*
+       SECTION TITLE
+    */
 
-    if(
-        searchTerm
-    ){
+    if(searchTerm){
 
         sectionTitle.textContent =
             "Search Results";
 
-    }
-    else if(
-        currentCategory === "All"
-    ){
+        searchStatus.style.display =
+            "block";
 
-        sectionTitle.textContent =
-            "All Videos";
+        searchStatus.innerHTML =
+            "Searching for: <strong>" +
+            escapeHTML(searchInput.value) +
+            "</strong>";
 
     }
     else{
 
-        sectionTitle.textContent =
-            currentCategory;
+        searchStatus.style.display =
+            "none";
+
+
+        if(
+            currentCategory === "All"
+        ){
+
+            sectionTitle.textContent =
+                "All Videos";
+
+        }
+        else{
+
+            sectionTitle.textContent =
+                currentCategory;
+
+        }
 
     }
 
 
-    /* COUNT */
+    /*
+       RESULT COUNT
+    */
 
     resultCount.textContent =
         videos.length +
@@ -1516,11 +1488,11 @@ function renderVideos(){
         );
 
 
-    /* EMPTY */
+    /*
+       EMPTY
+    */
 
-    if(
-        videos.length === 0
-    ){
+    if(videos.length === 0){
 
         showEmpty();
 
@@ -1529,15 +1501,15 @@ function renderVideos(){
     }
 
 
-    /* CREATE CARDS */
+    /*
+       CREATE CARDS
+    */
 
     videos.forEach(
         video => {
 
             videoGrid.appendChild(
-                createVideoCard(
-                    video
-                )
+                createVideoCard(video)
             );
 
         }
@@ -1553,9 +1525,7 @@ function renderVideos(){
 function createVideoCard(video){
 
     const card =
-        document.createElement(
-            "article"
-        );
+        document.createElement("article");
 
 
     card.className =
@@ -1636,7 +1606,9 @@ function createVideoCard(video){
 
 
             <div class="category-tag">
+
                 ${escapeHTML(category)}
+
             </div>
 
         </div>
@@ -1645,7 +1617,9 @@ function createVideoCard(video){
         <div class="video-info">
 
             <div class="video-title">
+
                 ${escapeHTML(title)}
+
             </div>
 
 
@@ -1683,9 +1657,7 @@ function createVideoCard(video){
         "click",
         function(){
 
-            openPlayer(
-                video
-            );
+            openPlayer(video);
 
         }
     );
@@ -1710,17 +1682,12 @@ function getPublicURL(
 
 
     /*
-       If Supabase already stored a
-       complete URL, use it directly.
+       Existing public URL
     */
 
     if(
-        value.startsWith(
-            "http://"
-        ) ||
-        value.startsWith(
-            "https://"
-        )
+        value.startsWith("http://") ||
+        value.startsWith("https://")
     ){
 
         return value;
@@ -1729,16 +1696,13 @@ function getPublicURL(
 
 
     /*
-       Otherwise create the
-       Supabase public URL.
+       Storage path
     */
 
     return supabaseClient
         .storage
         .from(bucket)
-        .getPublicUrl(
-            value
-        )
+        .getPublicUrl(value)
         .data
         .publicUrl;
 
@@ -1746,7 +1710,7 @@ function getPublicURL(
 
 
 /* =====================================================
-   OPEN VIDEO PLAYER
+   OPEN PLAYER
 ===================================================== */
 
 async function openPlayer(video){
@@ -1804,11 +1768,6 @@ async function openPlayer(video){
     }
     catch(error){
 
-        /*
-           Autoplay can be blocked
-           by the browser.
-        */
-
         console.log(
             "Autoplay blocked."
         );
@@ -1817,16 +1776,10 @@ async function openPlayer(video){
 
 
     /*
-       Increment view count.
+       Update views
     */
 
-    if(video.id){
-
-        updateViews(
-            video
-        );
-
-    }
+    updateViews(video);
 
 }
 
@@ -1846,10 +1799,6 @@ async function updateViews(video){
     const newViews =
         currentViews + 1;
 
-
-    /*
-       Update local value immediately.
-    */
 
     video.views =
         newViews;
@@ -1904,10 +1853,6 @@ function closeVideoPlayer(){
 }
 
 
-/* =====================================================
-   CLOSE BUTTON
-===================================================== */
-
 closePlayer.addEventListener(
     "click",
     closeVideoPlayer
@@ -1915,7 +1860,7 @@ closePlayer.addEventListener(
 
 
 /* =====================================================
-   CLOSE WHEN CLICKING BACKGROUND
+   CLOSE MODAL BACKGROUND
 ===================================================== */
 
 videoModal.addEventListener(
@@ -1944,13 +1889,21 @@ document.addEventListener(
     function(event){
 
         if(
-            event.key === "Escape" &&
-            videoModal.classList.contains(
-                "show"
-            )
+            event.key === "Escape"
         ){
 
-            closeVideoPlayer();
+            if(
+                videoModal.classList.contains(
+                    "show"
+                )
+            ){
+
+                closeVideoPlayer();
+
+            }
+
+            categorySuggestions.style.display =
+                "none";
 
         }
 
@@ -1959,7 +1912,7 @@ document.addEventListener(
 
 
 /* =====================================================
-   CATEGORY SELECTION
+   CATEGORY BUTTONS
 ===================================================== */
 
 document
@@ -1978,11 +1931,6 @@ document
                 return;
 
 
-            /*
-               Remove active state
-               from every category.
-            */
-
             document
                 .querySelectorAll(
                     ".category"
@@ -1998,10 +1946,6 @@ document
                 );
 
 
-            /*
-               Activate selected category.
-            */
-
             button.classList.add(
                 "active"
             );
@@ -2012,8 +1956,8 @@ document
 
 
             /*
-               Clear search when changing
-               category.
+               Clear search when selecting
+               category manually.
             */
 
             searchInput.value =
@@ -2021,6 +1965,13 @@ document
 
             searchTerm =
                 "";
+
+            clearSearch.style.display =
+                "none";
+
+
+            categorySuggestions.style.display =
+                "none";
 
 
             renderVideos();
@@ -2037,10 +1988,106 @@ searchInput.addEventListener(
     "input",
     function(){
 
+        const value =
+            this.value.trim();
+
+
         searchTerm =
-            this.value
-                .trim()
-                .toLowerCase();
+            value.toLowerCase();
+
+
+        /*
+           Show/hide clear button
+        */
+
+        if(value){
+
+            clearSearch.style.display =
+                "flex";
+
+        }
+        else{
+
+            clearSearch.style.display =
+                "none";
+
+        }
+
+
+        /*
+           Search categories
+        */
+
+        showCategorySuggestions(
+            value
+        );
+
+
+        /*
+           If the user types a category,
+           automatically switch to that category.
+        */
+
+        const matchingCategory =
+            categories.find(
+                category =>
+                    category.toLowerCase() ===
+                    value.toLowerCase()
+            );
+
+
+        if(
+            matchingCategory &&
+            matchingCategory !== "All"
+        ){
+
+            currentCategory =
+                matchingCategory;
+
+
+            document
+                .querySelectorAll(
+                    ".category"
+                )
+                .forEach(
+                    button => {
+
+                        button.classList.toggle(
+                            "active",
+                            button.dataset.category
+                            .toLowerCase() ===
+                            matchingCategory.toLowerCase()
+                        );
+
+                    }
+                );
+
+        }
+        else if(
+            !value
+        ){
+
+            currentCategory =
+                "All";
+
+
+            document
+                .querySelectorAll(
+                    ".category"
+                )
+                .forEach(
+                    button => {
+
+                        button.classList.toggle(
+                            "active",
+                            button.dataset.category ===
+                            "All"
+                        );
+
+                    }
+                );
+
+        }
 
 
         renderVideos();
@@ -2050,7 +2097,206 @@ searchInput.addEventListener(
 
 
 /* =====================================================
-   LOADING STATE
+   CATEGORY SUGGESTIONS
+===================================================== */
+
+function showCategorySuggestions(
+    value
+){
+
+    if(!value){
+
+        categorySuggestions.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    const search =
+        value.toLowerCase();
+
+
+    const matches =
+        categories.filter(
+            category =>
+                category.toLowerCase()
+                    .includes(search)
+        );
+
+
+    if(matches.length === 0){
+
+        categorySuggestions.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    categorySuggestions.innerHTML =
+        "";
+
+
+    matches.forEach(
+        category => {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "category-suggestion";
+
+
+            item.innerHTML =
+                `
+                <span>●</span>
+                ${escapeHTML(category)}
+                `;
+
+
+            item.addEventListener(
+                "click",
+                function(){
+
+                    searchInput.value =
+                        category;
+
+
+                    searchTerm =
+                        category.toLowerCase();
+
+
+                    currentCategory =
+                        category;
+
+
+                    document
+                        .querySelectorAll(
+                            ".category"
+                        )
+                        .forEach(
+                            button => {
+
+                                button.classList.toggle(
+                                    "active",
+                                    button.dataset.category ===
+                                    category
+                                );
+
+                            }
+                        );
+
+
+                    categorySuggestions.style.display =
+                        "none";
+
+
+                    clearSearch.style.display =
+                        "flex";
+
+
+                    renderVideos();
+
+                }
+            );
+
+
+            categorySuggestions.appendChild(
+                item
+            );
+
+        }
+    );
+
+
+    categorySuggestions.style.display =
+        "block";
+
+}
+
+
+/* =====================================================
+   CLEAR SEARCH
+===================================================== */
+
+clearSearch.addEventListener(
+    "click",
+    function(){
+
+        searchInput.value =
+            "";
+
+        searchTerm =
+            "";
+
+        currentCategory =
+            "All";
+
+
+        clearSearch.style.display =
+            "none";
+
+
+        categorySuggestions.style.display =
+            "none";
+
+
+        document
+            .querySelectorAll(
+                ".category"
+            )
+            .forEach(
+                button => {
+
+                    button.classList.toggle(
+                        "active",
+                        button.dataset.category ===
+                        "All"
+                    );
+
+                }
+            );
+
+
+        renderVideos();
+
+        searchInput.focus();
+
+    }
+);
+
+
+/* =====================================================
+   CLICK OUTSIDE SEARCH
+===================================================== */
+
+document.addEventListener(
+    "click",
+    function(event){
+
+        if(
+            !event.target.closest(
+                ".search-wrapper"
+            )
+        ){
+
+            categorySuggestions.style.display =
+                "none";
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   LOADING
 ===================================================== */
 
 function showLoading(){
@@ -2073,7 +2319,7 @@ function showLoading(){
 
 
 /* =====================================================
-   EMPTY STATE
+   EMPTY
 ===================================================== */
 
 function showEmpty(){
@@ -2102,7 +2348,7 @@ function showEmpty(){
 
 
 /* =====================================================
-   ERROR STATE
+   ERROR
 ===================================================== */
 
 function showError(message){
@@ -2126,6 +2372,7 @@ function showError(message){
         </div>
 
     `;
+
 
     resultCount.textContent =
         "Error";
@@ -2172,15 +2419,13 @@ function escapeHTML(value){
 
 
 /* =====================================================
-   INITIALIZE
+   START
 ===================================================== */
 
 loadVideos();
-
 
 </script>
 
 </body>
 
 </html>
-```

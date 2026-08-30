@@ -1,5 +1,5 @@
-
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -27,6 +27,145 @@ body{
     color:#fff;
     font-family:Arial,Helvetica,sans-serif;
     min-height:100vh;
+}
+
+/* =========================
+   AGE VERIFICATION GATE
+========================= */
+
+.age-gate{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255,23,68,.12),
+            transparent 45%
+        ),
+        rgba(0,0,0,.98);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.age-gate.hidden{
+    display:none;
+}
+
+.age-gate-box{
+    width:min(440px,100%);
+    background:#111;
+    border:1px solid #292929;
+    border-radius:18px;
+    padding:35px 28px;
+    text-align:center;
+    box-shadow:0 25px 80px rgba(0,0,0,.7);
+}
+
+.age-gate-logo{
+    font-size:30px;
+    font-weight:900;
+    letter-spacing:-1px;
+    margin-bottom:22px;
+}
+
+.age-gate-logo span{
+    color:#ff1744;
+}
+
+.age-gate-icon{
+    width:70px;
+    height:70px;
+    margin:0 auto 20px;
+    border-radius:50%;
+    background:#1c1c1c;
+    border:1px solid #333;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+}
+
+.age-gate-box h1{
+    font-size:24px;
+    margin-bottom:12px;
+}
+
+.age-gate-box p{
+    color:#888;
+    font-size:13px;
+    line-height:1.7;
+    margin-bottom:25px;
+}
+
+.age-gate-buttons{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.age-button{
+    width:100%;
+    min-height:48px;
+    border:none;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.age-button.enter{
+    background:#ff1744;
+    color:white;
+}
+
+.age-button.enter:hover{
+    background:#e9143e;
+    transform:translateY(-1px);
+}
+
+.age-button.under{
+    background:#222;
+    color:#aaa;
+    border:1px solid #333;
+}
+
+.age-button.under:hover{
+    background:#292929;
+    color:white;
+}
+
+.age-message{
+    display:none;
+    margin-top:18px;
+    padding:12px;
+    background:#1a1a1a;
+    border:1px solid #333;
+    border-radius:8px;
+    color:#aaa;
+    font-size:12px;
+    line-height:1.5;
+}
+
+.age-message.show{
+    display:block;
+}
+
+.age-try-again{
+    margin-top:10px;
+    background:none;
+    border:none;
+    color:#ff1744;
+    font-size:12px;
+    cursor:pointer;
+    text-decoration:underline;
+}
+
+.age-try-again:hover{
+    color:#ff4d6d;
 }
 
 /* =========================
@@ -694,6 +833,11 @@ body{
     .video-meta{
         font-size:9px;
     }
+
+    .age-gate-box{
+        padding:30px 22px;
+    }
+
 }
 
 @media(max-width:480px){
@@ -713,239 +857,454 @@ body{
     .section-header h2{
         font-size:18px;
     }
+
 }
 
 </style>
+
 </head>
 
 <body>
 
-<header class="header">
-
-    <div class="header-inner">
-
-        <div class="logo">
-            Stream<span>X</span>
-        </div>
-
-        <div class="search-wrapper">
-
-            <span class="search-icon">🔎</span>
-
-            <input
-                type="text"
-                id="searchInput"
-                class="search"
-                placeholder="Search videos or categories..."
-                autocomplete="off"
-            >
-
-            <button
-                id="clearSearch"
-                class="clear-search"
-                type="button"
-            >
-                ×
-            </button>
-
-            <div
-                id="categorySuggestions"
-                class="category-suggestions"
-            ></div>
-
-        </div>
-
-        <div class="header-right">
-
-            <div class="online">
-
-                <span class="online-dot"></span>
-
-                Online
-
-            </div>
-
-        </div>
-
-    </div>
-
-</header>
-
-
-<nav class="category-bar">
-
-    <div
-        class="categories"
-        id="categories"
-    >
-
-        <button class="category active" data-category="All">
-            All
-        </button>
-
-        <button class="category" data-category="BackShots">
-            BackShots
-        </button>
-
-        <button class="category" data-category="Masterbates">
-            Masterbates
-        </button>
-
-        <button class="category" data-category="RoughX">
-            RoughX
-        </button>
-
-        <button class="category" data-category="BBW">
-            BBW
-        </button>
-
-        <button class="category" data-category="Africans">
-            Africans
-        </button>
-
-        <button class="category" data-category="Cums">
-            Cums
-        </button>
-
-        <button class="category" data-category="Close Friends">
-            Close Friends
-        </button>
-
-    </div>
-
-</nav>
-
-
-<main class="main">
-
-    <section class="hero">
-
-        <h1>
-            Welcome to
-            <span>StreamX</span>
-        </h1>
-
-        <p>
-            Browse the latest content or search for a video or category.
-        </p>
-
-    </section>
-
-
-    <div class="section-header">
-
-        <h2 id="sectionTitle">
-            All Videos
-        </h2>
-
-        <span
-            class="result-count"
-            id="resultCount"
-        >
-            Loading...
-        </span>
-
-    </div>
-
-
-    <div
-        id="searchStatus"
-        class="search-status"
-    ></div>
-
-
-    <div
-        id="videoGrid"
-        class="video-grid"
-    >
-
-        <div class="loading">
-
-            <div class="spinner"></div>
-
-            <span>
-                Loading videos...
-            </span>
-
-        </div>
-
-    </div>
-
-</main>
-
+<!-- =========================
+     AGE VERIFICATION
+========================= -->
 
 <div
-    class="modal"
-    id="videoModal"
+    id="ageGate"
+    class="age-gate"
 >
 
-    <div class="player-container">
+```
+<div class="age-gate-box">
 
-        <div class="player-header">
+    <div class="age-gate-logo">
+        Stream<span>X</span>
+    </div>
 
-            <div
-                class="player-title"
-                id="playerTitle"
-            >
-                Video
-            </div>
+    <div class="age-gate-icon">
+        🔞
+    </div>
 
-            <button
-                class="close-button"
-                id="closePlayer"
-                type="button"
-            >
-                ×
-            </button>
+    <h1>
+        Age Verification
+    </h1>
 
-        </div>
+    <p>
+        This website contains age-restricted content.
+        You must be 18 years or older to continue.
+    </p>
 
+    <div class="age-gate-buttons">
 
-        <video
-            class="player-video"
-            id="playerVideo"
-            controls
-            playsinline
-            controlsList="nodownload noplaybackrate"
-            disablePictureInPicture
-            preload="metadata"
-        ></video>
+        <button
+            type="button"
+            id="ageEnter"
+            class="age-button enter"
+        >
+            I am 18 or older
+        </button>
 
+        <button
+            type="button"
+            id="ageUnder"
+            class="age-button under"
+        >
+            I am under 18
+        </button>
 
-        <div class="player-info">
+    </div>
 
-            <div
-                class="player-category"
-                id="playerCategory"
-            ></div>
+    <div
+        id="ageMessage"
+        class="age-message"
+    >
+        You selected that you are under 18.
+        You can change your selection below if you
+        clicked this option by mistake.
 
-            <p
-                class="player-description"
-                id="playerDescription"
-            ></p>
+        <br>
+
+        <button
+            type="button"
+            id="ageTryAgain"
+            class="age-try-again"
+        >
+            Go back and choose again
+        </button>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<header class="header">
+
+```
+<div class="header-inner">
+
+    <div class="logo">
+        Stream<span>X</span>
+    </div>
+
+    <div class="search-wrapper">
+
+        <span class="search-icon">🔎</span>
+
+        <input
+            type="text"
+            id="searchInput"
+            class="search"
+            placeholder="Search videos or categories..."
+            autocomplete="off"
+        >
+
+        <button
+            id="clearSearch"
+            class="clear-search"
+            type="button"
+        >
+            ×
+        </button>
+
+        <div
+            id="categorySuggestions"
+            class="category-suggestions"
+        ></div>
+
+    </div>
+
+    <div class="header-right">
+
+        <div class="online">
+
+            <span class="online-dot"></span>
+
+            Online
 
         </div>
 
     </div>
 
 </div>
+```
 
+</header>
+
+<nav class="category-bar">
+
+```
+<div
+    class="categories"
+    id="categories"
+>
+
+    <button class="category active" data-category="All">
+        All
+    </button>
+
+    <button class="category" data-category="BackShots">
+        BackShots
+    </button>
+
+    <button class="category" data-category="Masterbates">
+        Masterbates
+    </button>
+
+    <button class="category" data-category="RoughX">
+        RoughX
+    </button>
+
+    <button class="category" data-category="BBW">
+        BBW
+    </button>
+
+    <button class="category" data-category="Africans">
+        Africans
+    </button>
+
+    <button class="category" data-category="Cums">
+        Cums
+    </button>
+
+    <button class="category" data-category="Close Friends">
+        Close Friends
+    </button>
+
+</div>
+```
+
+</nav>
+
+<main class="main">
+
+```
+<section class="hero">
+
+    <h1>
+        Welcome to
+        <span>StreamX</span>
+    </h1>
+
+    <p>
+        Browse the latest content or search for a video or category.
+    </p>
+
+</section>
+
+
+<div class="section-header">
+
+    <h2 id="sectionTitle">
+        All Videos
+    </h2>
+
+    <span
+        class="result-count"
+        id="resultCount"
+    >
+        Loading...
+    </span>
+
+</div>
+
+
+<div
+    id="searchStatus"
+    class="search-status"
+></div>
+
+
+<div
+    id="videoGrid"
+    class="video-grid"
+>
+
+    <div class="loading">
+
+        <div class="spinner"></div>
+
+        <span>
+            Loading videos...
+        </span>
+
+    </div>
+
+</div>
+```
+
+</main>
+
+<div
+    class="modal"
+    id="videoModal"
+>
+
+```
+<div class="player-container">
+
+    <div class="player-header">
+
+        <div
+            class="player-title"
+            id="playerTitle"
+        >
+            Video
+        </div>
+
+        <button
+            class="close-button"
+            id="closePlayer"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <video
+        class="player-video"
+        id="playerVideo"
+        controls
+        playsinline
+        controlsList="nodownload noplaybackrate"
+        disablePictureInPicture
+        preload="metadata"
+    ></video>
+
+
+    <div class="player-info">
+
+        <div
+            class="player-category"
+            id="playerCategory"
+        ></div>
+
+        <p
+            class="player-description"
+            id="playerDescription"
+        ></p>
+
+    </div>
+
+</div>
+```
+
+</div>
 
 <footer class="footer">
 
-    © 2026 StreamX
+```
+© 2026 StreamX
+```
 
 </footer>
 
-
 <script>
+
+/* =========================
+   AGE VERIFICATION
+========================= */
+
+const ageGate =
+    document.getElementById("ageGate");
+
+const ageEnter =
+    document.getElementById("ageEnter");
+
+const ageUnder =
+    document.getElementById("ageUnder");
+
+const ageMessage =
+    document.getElementById("ageMessage");
+
+const ageTryAgain =
+    document.getElementById("ageTryAgain");
+
+
+/*
+ * Check whether the visitor has
+ * already confirmed that they are 18+.
+ *
+ * Only a successful 18+ confirmation
+ * is saved.
+ */
+
+function checkAgeVerification(){
+
+    const verified =
+        localStorage.getItem(
+            "streamx_age_verified"
+        );
+
+
+    if(verified === "true"){
+
+        ageGate.classList.add(
+            "hidden"
+        );
+
+        document.body.style.overflow =
+            "";
+
+    }
+    else{
+
+        ageGate.classList.remove(
+            "hidden"
+        );
+
+        document.body.style.overflow =
+            "hidden";
+
+    }
+
+}
+
+
+/*
+ * User confirms they are 18+.
+ */
+
+ageEnter.addEventListener(
+    "click",
+    function(){
+
+        localStorage.setItem(
+            "streamx_age_verified",
+            "true"
+        );
+
+        ageMessage.classList.remove(
+            "show"
+        );
+
+        ageGate.classList.add(
+            "hidden"
+        );
+
+        document.body.style.overflow =
+            "";
+
+    }
+);
+
+
+/*
+ * User selects under 18.
+ *
+ * IMPORTANT:
+ * Nothing is permanently stored.
+ *
+ * This means the user can immediately
+ * choose again if they clicked by mistake.
+ */
+
+ageUnder.addEventListener(
+    "click",
+    function(){
+
+        ageMessage.classList.add(
+            "show"
+        );
+
+    }
+);
+
+
+/*
+ * Allow the user to return to
+ * the original choices.
+ */
+
+ageTryAgain.addEventListener(
+    "click",
+    function(){
+
+        ageMessage.classList.remove(
+            "show"
+        );
+
+    }
+);
+
+
+/*
+ * Start age verification.
+ */
+
+checkAgeVerification();
+
 
 /* =========================
    SUPABASE
 ========================= */
 
 const SUPABASE_URL =
-    "https://iojjmoywrlnzpyatahyh.supabase.co";
+    "https://iojjmoywrlnzpyatahy.supabase.co";
 
 const SUPABASE_KEY =
     "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
@@ -1585,6 +1944,31 @@ async function openPlayer(video){
     playerVideo.load();
 
 
+    /*
+     * Wait until the video actually
+     * starts playing before counting
+     * the view.
+     */
+
+    const countViewWhenPlaying =
+        function(){
+
+            console.log(
+                "VIDEO STARTED — COUNTING VIEW"
+            );
+
+            updateViews(video);
+
+        };
+
+
+    playerVideo.addEventListener(
+        "playing",
+        countViewWhenPlaying,
+        { once:true }
+    );
+
+
     try{
 
         await playerVideo.play();
@@ -1598,19 +1982,6 @@ async function openPlayer(video){
 
     }
 
-
-    /*
-     * COUNT THE VIEW
-     *
-     * The RPC function performs:
-     *
-     * views = views + 1
-     *
-     * directly inside Supabase.
-     */
-
-    updateViews(video);
-
 }
 
 
@@ -1619,19 +1990,6 @@ async function openPlayer(video){
 ========================= */
 
 async function updateViews(video){
-
-    /*
-     * IMPORTANT:
-     *
-     * Do NOT manually calculate:
-     *
-     * video.views + 1
-     *
-     * because multiple users can open
-     * the same video simultaneously.
-     *
-     * The database handles the increment.
-     */
 
     try{
 
@@ -1661,11 +2019,6 @@ async function updateViews(video){
         }
 
 
-        /*
-         * Supabase returns the new
-         * database view count.
-         */
-
         const newViewCount =
             Number(data || 0);
 
@@ -1676,21 +2029,9 @@ async function updateViews(video){
         );
 
 
-        /*
-         * Update the local JavaScript
-         * object so the next render uses
-         * the correct number.
-         */
-
         video.views =
             newViewCount;
 
-
-        /*
-         * Update the visible card
-         * immediately without reloading
-         * the entire page.
-         */
 
         const viewElement =
             document.querySelector(

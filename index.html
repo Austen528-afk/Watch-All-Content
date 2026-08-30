@@ -1,8 +1,15 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>StreamX</title>
 
@@ -14,21 +21,24 @@
    RESET
 ===================================================== */
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-html {
-    scroll-behavior: smooth;
+html{
+    scroll-behavior:smooth;
 }
 
-body {
-    background: #080808;
-    color: #fff;
-    font-family: Arial, Helvetica, sans-serif;
-    min-height: 100vh;
+body{
+    background:#080808;
+    color:#fff;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    min-height:100vh;
 }
 
 
@@ -36,34 +46,49 @@ body {
    HEADER
 ===================================================== */
 
-.header {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+.header{
 
-    height: 70px;
+    position:sticky;
+    top:0;
+    z-index:1000;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    width:100%;
 
-    padding: 0 35px;
+    background:rgba(8,8,8,.96);
 
-    background: rgba(8, 8, 8, 0.94);
+    backdrop-filter:blur(15px);
 
-    border-bottom: 1px solid #252525;
-
-    backdrop-filter: blur(12px);
+    border-bottom:1px solid #222;
 }
 
-.logo {
-    font-size: 27px;
-    font-weight: 900;
-    letter-spacing: -1px;
+.header-inner{
+
+    max-width:1400px;
+
+    margin:auto;
+
+    padding:16px 25px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:30px;
 }
 
-.logo span {
-    color: #ff1744;
+.logo{
+
+    font-size:27px;
+
+    font-weight:900;
+
+    letter-spacing:-1px;
+
+    white-space:nowrap;
+}
+
+.logo span{
+    color:#ff1744;
 }
 
 
@@ -71,35 +96,56 @@ body {
    SEARCH
 ===================================================== */
 
-.search-container {
-    width: 420px;
-    max-width: 45%;
+.search-wrapper{
+
+    flex:1;
+
+    max-width:600px;
+
+    position:relative;
+
+    margin:auto;
 }
 
-.search-box {
-    width: 100%;
+.search{
 
-    background: #151515;
+    width:100%;
 
-    border: 1px solid #292929;
+    height:44px;
 
-    border-radius: 25px;
+    background:#151515;
 
-    padding: 12px 18px;
+    border:1px solid #303030;
 
-    color: white;
+    border-radius:24px;
 
-    outline: none;
+    color:#fff;
 
-    font-size: 14px;
+    padding:
+        0 20px 0 45px;
+
+    outline:none;
+
+    font-size:14px;
 }
 
-.search-box::placeholder {
-    color: #666;
+.search:focus{
+    border-color:#ff1744;
 }
 
-.search-box:focus {
-    border-color: #ff1744;
+.search-icon{
+
+    position:absolute;
+
+    left:17px;
+
+    top:50%;
+
+    transform:translateY(-50%);
+
+    color:#777;
+
+    font-size:17px;
 }
 
 
@@ -107,26 +153,41 @@ body {
    HEADER RIGHT
 ===================================================== */
 
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.header-right{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    white-space:nowrap;
 }
 
-.online-dot {
-    width: 8px;
-    height: 8px;
+.online{
 
-    border-radius: 50%;
+    display:flex;
 
-    background: #21c477;
+    align-items:center;
 
-    box-shadow: 0 0 10px #21c477;
+    gap:7px;
+
+    color:#888;
+
+    font-size:12px;
 }
 
-.online-text {
-    color: #888;
-    font-size: 12px;
+.online-dot{
+
+    width:7px;
+    height:7px;
+
+    background:#21c477;
+
+    border-radius:50%;
+
+    box-shadow:
+        0 0 10px #21c477;
 }
 
 
@@ -134,63 +195,71 @@ body {
    CATEGORY BAR
 ===================================================== */
 
-.category-container {
-    position: sticky;
-    top: 70px;
-    z-index: 900;
+.category-bar{
 
-    background: #0b0b0b;
+    width:100%;
 
-    border-bottom: 1px solid #202020;
+    border-bottom:1px solid #1c1c1c;
 
-    overflow-x: auto;
+    background:#0c0c0c;
 
-    scrollbar-width: none;
+    overflow-x:auto;
+
+    scrollbar-width:none;
 }
 
-.category-container::-webkit-scrollbar {
-    display: none;
+.category-bar::-webkit-scrollbar{
+    display:none;
 }
 
-.categories {
-    display: flex;
+.categories{
 
-    gap: 9px;
+    max-width:1400px;
 
-    padding: 15px 35px;
+    margin:auto;
 
-    min-width: max-content;
+    padding:12px 25px;
+
+    display:flex;
+
+    gap:9px;
+
+    white-space:nowrap;
 }
 
-.category {
-    background: #171717;
+.category{
 
-    border: 1px solid #292929;
+    border:none;
 
-    color: #999;
+    background:#181818;
 
-    padding: 9px 16px;
+    color:#999;
 
-    border-radius: 20px;
+    padding:9px 16px;
 
-    font-size: 12px;
+    border-radius:20px;
 
-    cursor: pointer;
+    cursor:pointer;
 
-    transition: .2s;
+    font-size:12px;
 
-    white-space: nowrap;
+    transition:.2s;
 }
 
-.category:hover {
-    color: white;
-    border-color: #444;
+.category:hover{
+
+    background:#252525;
+
+    color:#fff;
 }
 
-.category.active {
-    background: #ff1744;
-    border-color: #ff1744;
-    color: white;
+.category.active{
+
+    background:#ff1744;
+
+    color:#fff;
+
+    font-weight:bold;
 }
 
 
@@ -198,12 +267,14 @@ body {
    MAIN
 ===================================================== */
 
-.main {
-    max-width: 1600px;
+.main{
 
-    margin: auto;
+    max-width:1400px;
 
-    padding: 35px;
+    margin:auto;
+
+    padding:
+        30px 25px 70px;
 }
 
 
@@ -211,20 +282,75 @@ body {
    HERO
 ===================================================== */
 
-.hero {
-    margin-bottom: 35px;
+.hero{
+
+    margin-bottom:30px;
+
+    padding:35px;
+
+    border-radius:16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #171717,
+            #0d0d0d
+        );
+
+    border:1px solid #262626;
+
+    position:relative;
+
+    overflow:hidden;
 }
 
-.hero h1 {
-    font-size: 34px;
+.hero::after{
 
-    margin-bottom: 8px;
+    content:"";
+
+    position:absolute;
+
+    width:250px;
+    height:250px;
+
+    right:-100px;
+    top:-100px;
+
+    background:#ff1744;
+
+    opacity:.08;
+
+    border-radius:50%;
+
+    filter:blur(30px);
 }
 
-.hero p {
-    color: #888;
+.hero h1{
 
-    font-size: 14px;
+    font-size:34px;
+
+    margin-bottom:10px;
+
+    position:relative;
+
+    z-index:1;
+}
+
+.hero h1 span{
+    color:#ff1744;
+}
+
+.hero p{
+
+    color:#888;
+
+    font-size:14px;
+
+    line-height:1.6;
+
+    position:relative;
+
+    z-index:1;
 }
 
 
@@ -232,24 +358,27 @@ body {
    SECTION HEADER
 ===================================================== */
 
-.section-header {
-    display: flex;
+.section-header{
 
-    align-items: center;
+    display:flex;
 
-    justify-content: space-between;
+    justify-content:space-between;
 
-    margin-bottom: 20px;
+    align-items:center;
+
+    margin-bottom:20px;
 }
 
-.section-header h2 {
-    font-size: 20px;
+.section-header h2{
+
+    font-size:21px;
 }
 
-.video-count {
-    color: #666;
+.result-count{
 
-    font-size: 12px;
+    color:#666;
+
+    font-size:12px;
 }
 
 
@@ -257,13 +386,17 @@ body {
    VIDEO GRID
 ===================================================== */
 
-.video-grid {
-    display: grid;
+.video-grid{
+
+    display:grid;
 
     grid-template-columns:
-        repeat(auto-fill, minmax(250px, 1fr));
+        repeat(
+            auto-fill,
+            minmax(250px,1fr)
+        );
 
-    gap: 20px;
+    gap:20px;
 }
 
 
@@ -271,16 +404,17 @@ body {
    VIDEO CARD
 ===================================================== */
 
-.video-card {
-    background: #111;
+.video-card{
 
-    border: 1px solid #252525;
+    background:#111;
 
-    border-radius: 12px;
+    border:1px solid #252525;
 
-    overflow: hidden;
+    border-radius:12px;
 
-    cursor: pointer;
+    overflow:hidden;
+
+    cursor:pointer;
 
     transition:
         transform .2s,
@@ -288,12 +422,13 @@ body {
         background .2s;
 }
 
-.video-card:hover {
-    transform: translateY(-4px);
+.video-card:hover{
 
-    border-color: #444;
+    transform:translateY(-4px);
 
-    background: #171717;
+    border-color:#3a3a3a;
+
+    background:#171717;
 }
 
 
@@ -301,81 +436,108 @@ body {
    THUMBNAIL
 ===================================================== */
 
-.thumbnail {
-    position: relative;
+.thumbnail{
 
-    width: 100%;
+    width:100%;
 
-    aspect-ratio: 16 / 9;
+    aspect-ratio:16/9;
 
-    background: #191919;
+    background:#1d1d1d;
 
-    overflow: hidden;
+    position:relative;
+
+    overflow:hidden;
 }
 
-.thumbnail img {
-    width: 100%;
-    height: 100%;
+.thumbnail img{
 
-    object-fit: cover;
+    width:100%;
 
-    display: block;
+    height:100%;
 
-    transition: transform .3s;
+    object-fit:cover;
+
+    display:block;
+
+    transition:
+        transform .3s;
 }
 
-.video-card:hover .thumbnail img {
-    transform: scale(1.04);
+.video-card:hover
+.thumbnail img{
+
+    transform:scale(1.04);
 }
 
-.thumbnail-placeholder {
-    width: 100%;
-    height: 100%;
+.no-thumbnail{
 
-    display: flex;
+    width:100%;
 
-    align-items: center;
-    justify-content: center;
+    height:100%;
 
-    font-size: 42px;
+    display:flex;
 
-    color: #444;
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:45px;
+
+    color:#444;
 }
 
 
 /* =====================================================
-   PLAY ICON
+   PLAY OVERLAY
 ===================================================== */
 
-.play-icon {
-    position: absolute;
+.play-overlay{
 
-    left: 50%;
-    top: 50%;
+    position:absolute;
 
-    transform: translate(-50%, -50%);
+    inset:0;
 
-    width: 48px;
-    height: 48px;
+    display:flex;
 
-    display: flex;
+    align-items:center;
 
-    align-items: center;
-    justify-content: center;
+    justify-content:center;
 
-    border-radius: 50%;
+    background:
+        rgba(0,0,0,.15);
 
-    background: rgba(0,0,0,.75);
+    opacity:0;
 
-    opacity: 0;
-
-    transition: .2s;
-
-    font-size: 18px;
+    transition:.2s;
 }
 
-.video-card:hover .play-icon {
-    opacity: 1;
+.video-card:hover
+.play-overlay{
+
+    opacity:1;
+}
+
+.play-circle{
+
+    width:52px;
+    height:52px;
+
+    border-radius:50%;
+
+    background:#ff1744;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:21px;
+
+    padding-left:3px;
+
+    box-shadow:
+        0 5px 25px rgba(0,0,0,.5);
 }
 
 
@@ -383,21 +545,29 @@ body {
    CATEGORY TAG
 ===================================================== */
 
-.category-tag {
-    position: absolute;
+.category-tag{
 
-    left: 10px;
-    top: 10px;
+    position:absolute;
 
-    background: rgba(0,0,0,.82);
+    left:9px;
+    top:9px;
 
-    border-radius: 5px;
+    background:
+        rgba(0,0,0,.78);
 
-    padding: 5px 8px;
+    border:
+        1px solid
+        rgba(255,255,255,.1);
 
-    color: white;
+    color:#fff;
 
-    font-size: 10px;
+    padding:5px 8px;
+
+    border-radius:5px;
+
+    font-size:10px;
+
+    backdrop-filter:blur(5px);
 }
 
 
@@ -405,48 +575,58 @@ body {
    VIDEO INFO
 ===================================================== */
 
-.video-info {
-    padding: 14px;
+.video-info{
+
+    padding:14px;
 }
 
-.video-title {
-    font-size: 14px;
+.video-title{
 
-    font-weight: bold;
+    font-size:14px;
 
-    line-height: 1.4;
+    font-weight:bold;
 
-    margin-bottom: 7px;
+    line-height:1.4;
 
-    white-space: nowrap;
+    margin-bottom:7px;
 
-    overflow: hidden;
+    display:-webkit-box;
 
-    text-overflow: ellipsis;
+    -webkit-line-clamp:2;
+
+    -webkit-box-orient:vertical;
+
+    overflow:hidden;
 }
 
-.video-description {
-    color: #777;
+.video-description{
 
-    font-size: 11px;
+    color:#777;
 
-    line-height: 1.5;
+    font-size:11px;
 
-    height: 32px;
+    line-height:1.5;
 
-    overflow: hidden;
+    margin-bottom:9px;
+
+    display:-webkit-box;
+
+    -webkit-line-clamp:2;
+
+    -webkit-box-orient:vertical;
+
+    overflow:hidden;
 }
 
-.video-meta {
-    display: flex;
+.video-meta{
 
-    justify-content: space-between;
+    display:flex;
 
-    margin-top: 12px;
+    justify-content:space-between;
 
-    color: #555;
+    color:#555;
 
-    font-size: 10px;
+    font-size:10px;
 }
 
 
@@ -454,39 +634,45 @@ body {
    LOADING
 ===================================================== */
 
-.loading {
-    min-height: 300px;
+.loading{
 
-    display: flex;
+    grid-column:1/-1;
 
-    flex-direction: column;
+    min-height:300px;
 
-    align-items: center;
+    display:flex;
 
-    justify-content: center;
+    align-items:center;
 
-    color: #666;
+    justify-content:center;
 
-    gap: 15px;
+    flex-direction:column;
+
+    color:#666;
+
+    gap:15px;
 }
 
-.spinner {
-    width: 35px;
-    height: 35px;
+.spinner{
 
-    border: 3px solid #292929;
+    width:35px;
+    height:35px;
 
-    border-top-color: #ff1744;
+    border:
+        3px solid #292929;
 
-    border-radius: 50%;
+    border-top-color:#ff1744;
 
-    animation: spin .8s linear infinite;
+    border-radius:50%;
+
+    animation:
+        spin .8s linear infinite;
 }
 
-@keyframes spin {
+@keyframes spin{
 
-    to {
-        transform: rotate(360deg);
+    to{
+        transform:rotate(360deg);
     }
 
 }
@@ -496,176 +682,167 @@ body {
    EMPTY
 ===================================================== */
 
-.empty {
-    display: none;
+.empty{
 
-    text-align: center;
+    grid-column:1/-1;
 
-    padding: 80px 20px;
+    text-align:center;
 
-    color: #666;
+    padding:70px 20px;
+
+    color:#666;
 }
 
-.empty-icon {
-    font-size: 50px;
+.empty-icon{
 
-    margin-bottom: 15px;
+    font-size:55px;
+
+    margin-bottom:15px;
 }
 
-.empty h3 {
-    color: #999;
+.empty h3{
 
-    font-size: 18px;
+    color:#aaa;
 
-    margin-bottom: 7px;
+    font-size:18px;
+
+    margin-bottom:8px;
 }
 
-.empty p {
-    font-size: 12px;
-}
+.empty p{
 
-
-/* =====================================================
-   ERROR
-===================================================== */
-
-.error-message {
-    display: none;
-
-    background: #281015;
-
-    border: 1px solid #70283a;
-
-    color: #ff6b88;
-
-    padding: 15px;
-
-    border-radius: 8px;
-
-    margin-bottom: 25px;
-
-    font-size: 13px;
+    font-size:12px;
 }
 
 
 /* =====================================================
-   VIDEO MODAL
+   PLAYER MODAL
 ===================================================== */
 
-.modal {
-    display: none;
+.modal{
 
-    position: fixed;
+    position:fixed;
 
-    inset: 0;
+    inset:0;
 
-    z-index: 5000;
+    z-index:5000;
 
-    background: rgba(0,0,0,.94);
+    background:
+        rgba(0,0,0,.94);
 
-    padding: 30px;
+    display:none;
 
-    overflow-y: auto;
+    align-items:center;
+
+    justify-content:center;
+
+    padding:20px;
 }
 
-.modal.show {
-    display: flex;
+.modal.show{
 
-    align-items: center;
-
-    justify-content: center;
+    display:flex;
 }
 
-.modal-content {
-    width: 100%;
+.player-container{
 
-    max-width: 1000px;
+    width:min(1100px,100%);
 
-    background: #101010;
+    max-height:95vh;
 
-    border: 1px solid #292929;
+    background:#101010;
 
-    border-radius: 14px;
+    border:
+        1px solid #292929;
 
-    overflow: hidden;
+    border-radius:14px;
 
-    position: relative;
+    overflow:hidden;
+
+    position:relative;
 }
 
-.close-modal {
-    position: absolute;
+.player-header{
 
-    right: 15px;
-    top: 15px;
+    padding:15px 18px;
 
-    z-index: 10;
+    display:flex;
 
-    width: 38px;
-    height: 38px;
+    justify-content:space-between;
 
-    border: none;
+    align-items:center;
 
-    border-radius: 50%;
-
-    background: rgba(0,0,0,.8);
-
-    color: white;
-
-    font-size: 24px;
-
-    cursor: pointer;
+    border-bottom:1px solid #242424;
 }
 
-.close-modal:hover {
-    background: #ff1744;
+.player-title{
+
+    font-size:15px;
+
+    font-weight:bold;
+
+    padding-right:30px;
 }
 
-.player-container {
-    width: 100%;
+.close-button{
 
-    background: black;
+    width:34px;
+    height:34px;
+
+    border:none;
+
+    border-radius:50%;
+
+    background:#222;
+
+    color:#fff;
+
+    cursor:pointer;
+
+    font-size:20px;
+
+    flex-shrink:0;
 }
 
-.player-container video {
-    display: block;
+.close-button:hover{
 
-    width: 100%;
-
-    max-height: 70vh;
-
-    background: black;
+    background:#ff1744;
 }
 
-.modal-info {
-    padding: 22px;
+.player-video{
+
+    width:100%;
+
+    max-height:70vh;
+
+    display:block;
+
+    background:#000;
 }
 
-.modal-title {
-    font-size: 22px;
+.player-info{
 
-    margin-bottom: 10px;
+    padding:18px;
 }
 
-.modal-category {
-    display: inline-block;
+.player-category{
 
-    background: #ff1744;
+    display:inline-block;
 
-    padding: 5px 9px;
+    color:#ff1744;
 
-    border-radius: 5px;
+    font-size:11px;
 
-    font-size: 10px;
-
-    margin-bottom: 13px;
+    margin-bottom:8px;
 }
 
-.modal-description {
-    color: #999;
+.player-description{
 
-    font-size: 13px;
+    color:#999;
 
-    line-height: 1.7;
+    font-size:12px;
+
+    line-height:1.6;
 }
 
 
@@ -673,130 +850,154 @@ body {
    FOOTER
 ===================================================== */
 
-.footer {
-    margin-top: 70px;
+.footer{
 
-    padding: 30px 0;
+    border-top:1px solid #1d1d1d;
 
-    border-top: 1px solid #202020;
+    padding:25px;
 
-    color: #555;
+    text-align:center;
 
-    font-size: 11px;
+    color:#555;
 
-    text-align: center;
+    font-size:11px;
 }
 
 
 /* =====================================================
-   MOBILE
+   RESPONSIVE
 ===================================================== */
 
-@media(max-width:850px) {
+@media(max-width:800px){
 
-    .header {
-        height: auto;
+    .header-inner{
 
-        min-height: 65px;
+        padding:
+            13px 15px;
 
-        padding: 12px 15px;
+        gap:15px;
 
-        gap: 12px;
-
-        flex-wrap: wrap;
+        flex-wrap:wrap;
     }
 
-    .logo {
-        font-size: 22px;
+    .logo{
+
+        font-size:23px;
     }
 
-    .search-container {
-        order: 3;
+    .header-right{
 
-        width: 100%;
-
-        max-width: none;
-
-        padding-bottom: 4px;
+        display:none;
     }
 
-    .header-right {
-        margin-left: auto;
+    .search-wrapper{
+
+        order:3;
+
+        flex-basis:100%;
+
+        max-width:none;
     }
 
-    .category-container {
-        top: 65px;
+    .categories{
+
+        padding:
+            10px 15px;
     }
 
-    .categories {
-        padding: 12px 15px;
+    .main{
+
+        padding:
+            20px 15px 50px;
     }
 
-    .main {
-        padding: 25px 15px 40px;
+    .hero{
+
+        padding:25px 20px;
     }
 
-    .hero h1 {
-        font-size: 27px;
+    .hero h1{
+
+        font-size:27px;
     }
 
-    .video-grid {
+    .video-grid{
+
         grid-template-columns:
-            repeat(2, minmax(0,1fr));
+            repeat(
+                2,
+                minmax(0,1fr)
+            );
 
-        gap: 12px;
+        gap:12px;
     }
 
-    .video-info {
-        padding: 11px;
+    .video-info{
+
+        padding:11px;
     }
 
-    .video-title {
-        font-size: 12px;
+    .video-title{
+
+        font-size:12px;
     }
 
-    .video-description {
-        font-size: 10px;
+    .video-description{
+
+        display:none;
     }
 
-    .online-text {
-        display: none;
-    }
+    .video-meta{
 
-    .modal {
-        padding: 10px;
+        font-size:9px;
     }
 
 }
 
+@media(max-width:480px){
 
-@media(max-width:500px) {
+    .video-grid{
 
-    .video-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            repeat(2,1fr);
     }
 
-    .thumbnail {
-        aspect-ratio: 16 / 9;
+    .hero{
+
+        margin-bottom:22px;
     }
 
-    .modal-title {
-        font-size: 18px;
+    .hero p{
+
+        font-size:12px;
+    }
+
+    .section-header h2{
+
+        font-size:18px;
     }
 
 }
 
 
 /* =====================================================
-   NO JAVASCRIPT MESSAGE
+   AGE NOTICE
 ===================================================== */
 
-.no-js {
-    padding: 30px;
+.notice{
 
-    text-align: center;
+    text-align:center;
 
-    color: #ff6b88;
+    color:#555;
+
+    font-size:10px;
+
+    line-height:1.5;
+
+    max-width:700px;
+
+    margin:
+        25px auto 0;
 }
 
 </style>
@@ -807,46 +1008,51 @@ body {
 <body>
 
 
-<noscript>
-
-    <div class="no-js">
-        JavaScript is required to use StreamX.
-    </div>
-
-</noscript>
-
-
 <!-- =====================================================
      HEADER
 ===================================================== -->
 
 <header class="header">
 
-    <div class="logo">
-        Stream<span>X</span>
-    </div>
+    <div class="header-inner">
 
 
-    <div class="search-container">
+        <div class="logo">
 
-        <input
-            type="search"
-            id="searchInput"
-            class="search-box"
-            placeholder="Search videos..."
-            autocomplete="off"
-        >
+            Stream<span>X</span>
 
-    </div>
+        </div>
 
 
-    <div class="header-right">
+        <div class="search-wrapper">
 
-        <div class="online-dot"></div>
+            <span class="search-icon">
+                🔎
+            </span>
 
-        <span class="online-text">
-            Online
-        </span>
+            <input
+                type="text"
+                id="searchInput"
+                class="search"
+                placeholder="Search videos..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="header-right">
+
+            <div class="online">
+
+                <span class="online-dot"></span>
+
+                Online
+
+            </div>
+
+        </div>
+
 
     </div>
 
@@ -854,17 +1060,71 @@ body {
 
 
 <!-- =====================================================
-     CATEGORIES
+     CATEGORY BAR
 ===================================================== -->
 
-<nav class="category-container">
+<nav class="category-bar">
 
     <div
         class="categories"
         id="categories"
     >
 
-        <!-- Categories generated by JavaScript -->
+        <button
+            class="category active"
+            data-category="All"
+        >
+            All
+        </button>
+
+        <button
+            class="category"
+            data-category="BackShots"
+        >
+            BackShots
+        </button>
+
+        <button
+            class="category"
+            data-category="Masterbates"
+        >
+            Masterbates
+        </button>
+
+        <button
+            class="category"
+            data-category="RoughX"
+        >
+            RoughX
+        </button>
+
+        <button
+            class="category"
+            data-category="BBW"
+        >
+            BBW
+        </button>
+
+        <button
+            class="category"
+            data-category="Africans"
+        >
+            Africans
+        </button>
+
+        <button
+            class="category"
+            data-category="Cums"
+        >
+            Cums
+        </button>
+
+        <button
+            class="category"
+            data-category="Close Friends"
+        >
+            Close Friends
+        </button>
 
     </div>
 
@@ -878,49 +1138,49 @@ body {
 <main class="main">
 
 
+    <!-- HERO -->
+
     <section class="hero">
 
         <h1>
-            Discover Videos
+            Welcome to
+            <span>StreamX</span>
         </h1>
 
         <p>
-            Browse and stream the latest content.
+            Browse the latest content and choose a
+            category to start watching.
         </p>
 
     </section>
 
 
-    <div
-        id="errorMessage"
-        class="error-message"
-    ></div>
+    <!-- SECTION HEADER -->
 
+    <div class="section-header">
 
-    <section>
+        <h2 id="sectionTitle">
+            All Videos
+        </h2>
 
-        <div class="section-header">
-
-            <h2 id="sectionTitle">
-                All Videos
-            </h2>
-
-            <span
-                id="videoCount"
-                class="video-count"
-            >
-                Loading...
-            </span>
-
-        </div>
-
-
-        <!-- LOADING -->
-
-        <div
-            id="loading"
-            class="loading"
+        <span
+            class="result-count"
+            id="resultCount"
         >
+            Loading...
+        </span>
+
+    </div>
+
+
+    <!-- VIDEO GRID -->
+
+    <div
+        class="video-grid"
+        id="videoGrid"
+    >
+
+        <div class="loading">
 
             <div class="spinner"></div>
 
@@ -930,100 +1190,75 @@ body {
 
         </div>
 
-
-        <!-- VIDEO GRID -->
-
-        <div
-            id="videoGrid"
-            class="video-grid"
-        ></div>
+    </div>
 
 
-        <!-- EMPTY -->
+    <div class="notice">
 
-        <div
-            id="emptyState"
-            class="empty"
-        >
+        Content displayed on this website is provided
+        through the platform's content management system.
 
-            <div class="empty-icon">
-                🎬
-            </div>
-
-            <h3>
-                No videos found
-            </h3>
-
-            <p>
-                Try another category or search term.
-            </p>
-
-        </div>
-
-    </section>
-
-
-    <footer class="footer">
-
-        StreamX © 2026
-
-    </footer>
+    </div>
 
 </main>
 
 
 <!-- =====================================================
-     VIDEO MODAL
+     VIDEO PLAYER MODAL
 ===================================================== -->
 
 <div
-    id="videoModal"
     class="modal"
+    id="videoModal"
 >
 
-    <div class="modal-content">
-
-        <button
-            class="close-modal"
-            onclick="closeVideo()"
-            aria-label="Close"
-        >
-            ×
-        </button>
+    <div class="player-container">
 
 
-        <div class="player-container">
+        <div class="player-header">
 
-            <video
-                id="videoPlayer"
-                controls
-                playsinline
-            ></video>
+            <div
+                class="player-title"
+                id="playerTitle"
+            >
+                Video
+            </div>
+
+
+            <button
+                class="close-button"
+                id="closePlayer"
+            >
+                ×
+            </button>
 
         </div>
 
 
-        <div class="modal-info">
+        <video
+            class="player-video"
+            id="playerVideo"
+            controls
+            playsinline
+        >
+
+            Your browser does not support
+            HTML5 video.
+
+        </video>
+
+
+        <div class="player-info">
 
             <div
-                id="modalCategory"
-                class="modal-category"
-            >
-                Category
-            </div>
-
-
-            <h2
-                id="modalTitle"
-                class="modal-title"
-            >
-                Video
-            </h2>
+                class="player-category"
+                id="playerCategory"
+            ></div>
 
 
             <p
-                id="modalDescription"
-                class="modal-description"
+                class="player-description"
+                id="playerDescription"
             ></p>
 
         </div>
@@ -1031,6 +1266,17 @@ body {
     </div>
 
 </div>
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer class="footer">
+
+    © 2026 StreamX
+
+</footer>
 
 
 <script>
@@ -1054,27 +1300,12 @@ const supabaseClient =
 
 
 /* =====================================================
-   CATEGORIES
-===================================================== */
-
-const categories = [
-    "All",
-    "Sports",
-    "Music",
-    "Comedy",
-    "Movies",
-    "Education",
-    "Lifestyle"
-];
-
-
-/* =====================================================
-   STATE
+   VARIABLES
 ===================================================== */
 
 let allVideos = [];
 
-let selectedCategory = "All";
+let currentCategory = "All";
 
 let searchTerm = "";
 
@@ -1084,97 +1315,95 @@ let searchTerm = "";
 ===================================================== */
 
 const videoGrid =
-    document.getElementById("videoGrid");
+    document.getElementById(
+        "videoGrid"
+    );
 
-const loading =
-    document.getElementById("loading");
-
-const emptyState =
-    document.getElementById("emptyState");
-
-const videoCount =
-    document.getElementById("videoCount");
-
-const sectionTitle =
-    document.getElementById("sectionTitle");
-
-const errorMessage =
-    document.getElementById("errorMessage");
-
-const categoriesContainer =
-    document.getElementById("categories");
+const resultCount =
+    document.getElementById(
+        "resultCount"
+    );
 
 const searchInput =
-    document.getElementById("searchInput");
+    document.getElementById(
+        "searchInput"
+    );
+
+const sectionTitle =
+    document.getElementById(
+        "sectionTitle"
+    );
+
+const videoModal =
+    document.getElementById(
+        "videoModal"
+    );
+
+const playerVideo =
+    document.getElementById(
+        "playerVideo"
+    );
+
+const playerTitle =
+    document.getElementById(
+        "playerTitle"
+    );
+
+const playerCategory =
+    document.getElementById(
+        "playerCategory"
+    );
+
+const playerDescription =
+    document.getElementById(
+        "playerDescription"
+    );
+
+const closePlayer =
+    document.getElementById(
+        "closePlayer"
+    );
 
 
 /* =====================================================
-   CREATE CATEGORY OPTIONS
+   LOAD VIDEOS FROM SUPABASE
 ===================================================== */
 
-function createCategories() {
+async function loadVideos(){
 
-    categoriesContainer.innerHTML = "";
-
-    categories.forEach(category => {
-
-        const option =
-            document.createElement("button");
-
-        option.type = "button";
-
-        option.className =
-            "category";
-
-        if(category === "All") {
-
-            option.classList.add("active");
-
-        }
-
-        option.textContent =
-            category;
-
-        option.addEventListener(
-            "click",
-            () => {
-
-                selectCategory(category);
-
-            }
-        );
-
-        categoriesContainer.appendChild(option);
-
-    });
-
-}
+    showLoading();
 
 
-/* =====================================================
-   SELECT CATEGORY
-===================================================== */
-
-function selectCategory(category) {
-
-    selectedCategory = category;
-
-    document
-        .querySelectorAll(".category")
-        .forEach(button => {
-
-            button.classList.toggle(
-                "active",
-                button.textContent === category
+    const result =
+        await supabaseClient
+            .from("videos")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending:false
+                }
             );
 
-        });
+
+    if(result.error){
+
+        console.error(
+            "Supabase error:",
+            result.error
+        );
+
+        showError(
+            "Unable to load videos. Please try again later."
+        );
+
+        return;
+
+    }
 
 
-    sectionTitle.textContent =
-        category === "All"
-            ? "All Videos"
-            : category;
+    allVideos =
+        result.data || [];
 
 
     renderVideos();
@@ -1183,225 +1412,55 @@ function selectCategory(category) {
 
 
 /* =====================================================
-   SEARCH
-===================================================== */
-
-searchInput.addEventListener(
-    "input",
-    function() {
-
-        searchTerm =
-            this.value
-                .trim()
-                .toLowerCase();
-
-        renderVideos();
-
-    }
-);
-
-
-/* =====================================================
-   GET PUBLIC URL
-===================================================== */
-
-function getPublicURL(
-    value,
-    bucket
-) {
-
-    if(!value) {
-
-        return null;
-
-    }
-
-
-    /*
-       If the database already contains
-       a complete URL, use it.
-    */
-
-    if(
-        value.startsWith("http://") ||
-        value.startsWith("https://")
-    ) {
-
-        return value;
-
-    }
-
-
-    /*
-       Otherwise treat it as a
-       Supabase storage path.
-    */
-
-    return supabaseClient
-        .storage
-        .from(bucket)
-        .getPublicUrl(value)
-        .data
-        .publicUrl;
-
-}
-
-
-/* =====================================================
-   ESCAPE HTML
-===================================================== */
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-
-        .replace(/&/g, "&amp;")
-
-        .replace(/</g, "&lt;")
-
-        .replace(/>/g, "&gt;")
-
-        .replace(/"/g, "&quot;")
-
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* =====================================================
-   LOAD VIDEOS FROM SUPABASE
-===================================================== */
-
-async function loadVideos() {
-
-    loading.style.display =
-        "flex";
-
-    videoGrid.innerHTML =
-        "";
-
-    emptyState.style.display =
-        "none";
-
-    errorMessage.style.display =
-        "none";
-
-
-    try {
-
-        const result =
-            await supabaseClient
-                .from("videos")
-                .select("*")
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
-
-
-        if(result.error) {
-
-            throw result.error;
-
-        }
-
-
-        allVideos =
-            result.data || [];
-
-
-        loading.style.display =
-            "none";
-
-
-        renderVideos();
-
-
-    } catch(error) {
-
-        console.error(
-            "Supabase error:",
-            error
-        );
-
-
-        loading.style.display =
-            "none";
-
-
-        errorMessage.textContent =
-            "Unable to load videos: " +
-            error.message;
-
-
-        errorMessage.style.display =
-            "block";
-
-
-        videoCount.textContent =
-            "Error";
-
-    }
-
-}
-
-
-/* =====================================================
    FILTER VIDEOS
 ===================================================== */
 
-function getFilteredVideos() {
+function getFilteredVideos(){
 
-    return allVideos.filter(video => {
-
-        const categoryMatch =
-            selectedCategory === "All" ||
-            String(video.category || "")
-                .toLowerCase() ===
-            selectedCategory.toLowerCase();
+    return allVideos.filter(
+        video => {
 
 
-        if(!categoryMatch) {
+            const categoryMatch =
+                currentCategory === "All" ||
+                String(
+                    video.category || ""
+                ).toLowerCase() ===
+                currentCategory.toLowerCase();
 
-            return false;
+
+            const title =
+                String(
+                    video.title || ""
+                ).toLowerCase();
+
+
+            const description =
+                String(
+                    video.description || ""
+                ).toLowerCase();
+
+
+            const category =
+                String(
+                    video.category || ""
+                ).toLowerCase();
+
+
+            const searchMatch =
+                !searchTerm ||
+                title.includes(searchTerm) ||
+                description.includes(searchTerm) ||
+                category.includes(searchTerm);
+
+
+            return (
+                categoryMatch &&
+                searchMatch
+            );
 
         }
-
-
-        if(!searchTerm) {
-
-            return true;
-
-        }
-
-
-        const title =
-            String(
-                video.title || ""
-            ).toLowerCase();
-
-
-        const description =
-            String(
-                video.description || ""
-            ).toLowerCase();
-
-
-        const category =
-            String(
-                video.category || ""
-            ).toLowerCase();
-
-
-        return (
-            title.includes(searchTerm) ||
-            description.includes(searchTerm) ||
-            category.includes(searchTerm)
-        );
-
-    });
+    );
 
 }
 
@@ -1410,7 +1469,7 @@ function getFilteredVideos() {
    RENDER VIDEOS
 ===================================================== */
 
-function renderVideos() {
+function renderVideos(){
 
     const videos =
         getFilteredVideos();
@@ -1420,34 +1479,69 @@ function renderVideos() {
         "";
 
 
-    videoCount.textContent =
+    /* SECTION TITLE */
+
+    if(
+        searchTerm
+    ){
+
+        sectionTitle.textContent =
+            "Search Results";
+
+    }
+    else if(
+        currentCategory === "All"
+    ){
+
+        sectionTitle.textContent =
+            "All Videos";
+
+    }
+    else{
+
+        sectionTitle.textContent =
+            currentCategory;
+
+    }
+
+
+    /* COUNT */
+
+    resultCount.textContent =
         videos.length +
         (
             videos.length === 1
-                ? " video"
-                : " videos"
+            ? " video"
+            : " videos"
         );
 
 
-    if(videos.length === 0) {
+    /* EMPTY */
 
-        emptyState.style.display =
-            "block";
+    if(
+        videos.length === 0
+    ){
+
+        showEmpty();
 
         return;
 
     }
 
 
-    emptyState.style.display =
-        "none";
+    /* CREATE CARDS */
 
+    videos.forEach(
+        video => {
 
-    videos.forEach(video => {
+            videoGrid.appendChild(
+                createVideoCard(
+                    video
+                )
+            );
 
-        createVideoCard(video);
-
-    });
+        }
+    );
 
 }
 
@@ -1456,16 +1550,19 @@ function renderVideos() {
    CREATE VIDEO CARD
 ===================================================== */
 
-function createVideoCard(video) {
+function createVideoCard(video){
 
     const card =
-        document.createElement("article");
+        document.createElement(
+            "article"
+        );
+
 
     card.className =
         "video-card";
 
 
-    const thumbnailURL =
+    const thumbnail =
         getPublicURL(
             video.thumbnail_url,
             "thumbnails"
@@ -1479,7 +1576,7 @@ function createVideoCard(video) {
 
     const description =
         video.description ||
-        "No description available.";
+        "";
 
 
     const category =
@@ -1488,15 +1585,22 @@ function createVideoCard(video) {
 
 
     const views =
-        Number(video.views || 0);
+        Number(
+            video.views || 0
+        ).toLocaleString();
 
 
-    const date =
-        video.created_at
-            ? new Date(
+    let date = "";
+
+
+    if(video.created_at){
+
+        date =
+            new Date(
                 video.created_at
-              ).toLocaleDateString()
-            : "";
+            ).toLocaleDateString();
+
+    }
 
 
     card.innerHTML = `
@@ -1504,36 +1608,35 @@ function createVideoCard(video) {
         <div class="thumbnail">
 
             ${
-                thumbnailURL
-
+                thumbnail
                 ?
-
                 `
                 <img
-                    src="${escapeHTML(thumbnailURL)}"
+                    src="${escapeHTML(thumbnail)}"
                     alt="${escapeHTML(title)}"
                     loading="lazy"
-                    onerror="this.style.display='none'"
                 >
                 `
-
                 :
-
                 `
-                <div class="thumbnail-placeholder">
+                <div class="no-thumbnail">
                     🎬
                 </div>
                 `
             }
 
 
-            <div class="category-tag">
-                ${escapeHTML(category)}
+            <div class="play-overlay">
+
+                <div class="play-circle">
+                    ▶
+                </div>
+
             </div>
 
 
-            <div class="play-icon">
-                ▶
+            <div class="category-tag">
+                ${escapeHTML(category)}
             </div>
 
         </div>
@@ -1546,15 +1649,23 @@ function createVideoCard(video) {
             </div>
 
 
-            <div class="video-description">
-                ${escapeHTML(description)}
-            </div>
+            ${
+                description
+                ?
+                `
+                <div class="video-description">
+                    ${escapeHTML(description)}
+                </div>
+                `
+                :
+                ""
+            }
 
 
             <div class="video-meta">
 
                 <span>
-                    ${views.toLocaleString()} views
+                    ${views} views
                 </span>
 
                 <span>
@@ -1570,24 +1681,75 @@ function createVideoCard(video) {
 
     card.addEventListener(
         "click",
-        () => {
+        function(){
 
-            openVideo(video);
+            openPlayer(
+                video
+            );
 
         }
     );
 
 
-    videoGrid.appendChild(card);
+    return card;
 
 }
 
 
 /* =====================================================
-   OPEN VIDEO
+   GET PUBLIC URL
 ===================================================== */
 
-function openVideo(video) {
+function getPublicURL(
+    value,
+    bucket
+){
+
+    if(!value)
+        return null;
+
+
+    /*
+       If Supabase already stored a
+       complete URL, use it directly.
+    */
+
+    if(
+        value.startsWith(
+            "http://"
+        ) ||
+        value.startsWith(
+            "https://"
+        )
+    ){
+
+        return value;
+
+    }
+
+
+    /*
+       Otherwise create the
+       Supabase public URL.
+    */
+
+    return supabaseClient
+        .storage
+        .from(bucket)
+        .getPublicUrl(
+            value
+        )
+        .data
+        .publicUrl;
+
+}
+
+
+/* =====================================================
+   OPEN VIDEO PLAYER
+===================================================== */
+
+async function openPlayer(video){
 
     const videoURL =
         getPublicURL(
@@ -1596,10 +1758,10 @@ function openVideo(video) {
         );
 
 
-    if(!videoURL) {
+    if(!videoURL){
 
         alert(
-            "The video file could not be found."
+            "This video does not have a valid video URL."
         );
 
         return;
@@ -1607,44 +1769,26 @@ function openVideo(video) {
     }
 
 
-    const player =
-        document.getElementById(
-            "videoPlayer"
-        );
-
-
-    const modal =
-        document.getElementById(
-            "videoModal"
-        );
-
-
-    document.getElementById(
-        "modalTitle"
-    ).textContent =
+    playerTitle.textContent =
         video.title ||
-        "Untitled Video";
+        "Video";
 
 
-    document.getElementById(
-        "modalDescription"
-    ).textContent =
+    playerCategory.textContent =
+        video.category ||
+        "";
+
+
+    playerDescription.textContent =
         video.description ||
         "";
 
 
-    document.getElementById(
-        "modalCategory"
-    ).textContent =
-        video.category ||
-        "General";
-
-
-    player.src =
+    playerVideo.src =
         videoURL;
 
 
-    modal.classList.add(
+    videoModal.classList.add(
         "show"
     );
 
@@ -1653,27 +1797,36 @@ function openVideo(video) {
         "hidden";
 
 
+    try{
+
+        await playerVideo.play();
+
+    }
+    catch(error){
+
+        /*
+           Autoplay can be blocked
+           by the browser.
+        */
+
+        console.log(
+            "Autoplay blocked."
+        );
+
+    }
+
+
     /*
-       Attempt to start playback.
-       The browser may block autoplay,
-       in which case the controls remain
-       available.
+       Increment view count.
     */
 
-    player.play().catch(() => {});
+    if(video.id){
 
+        updateViews(
+            video
+        );
 
-    /*
-       Update views.
-       This is intentionally done without
-       allowing a failed view update to
-       break video playback.
-    */
-
-    updateViews(
-        video.id,
-        Number(video.views || 0)
-    );
+    }
 
 }
 
@@ -1682,51 +1835,43 @@ function openVideo(video) {
    UPDATE VIEWS
 ===================================================== */
 
-async function updateViews(
-    videoID,
-    currentViews
-) {
+async function updateViews(video){
 
-    try {
+    const currentViews =
+        Number(
+            video.views || 0
+        );
 
-        const newViews =
-            currentViews + 1;
 
+    const newViews =
+        currentViews + 1;
+
+
+    /*
+       Update local value immediately.
+    */
+
+    video.views =
+        newViews;
+
+
+    try{
 
         await supabaseClient
             .from("videos")
             .update({
-                views: newViews
+                views:newViews
             })
             .eq(
                 "id",
-                videoID
+                video.id
             );
 
+    }
+    catch(error){
 
-        /*
-           Update local copy too.
-        */
-
-        const localVideo =
-            allVideos.find(
-                video =>
-                    String(video.id) ===
-                    String(videoID)
-            );
-
-
-        if(localVideo) {
-
-            localVideo.views =
-                newViews;
-
-        }
-
-    } catch(error) {
-
-        console.warn(
-            "Could not update views:",
+        console.error(
+            "View update error:",
             error
         );
 
@@ -1736,36 +1881,22 @@ async function updateViews(
 
 
 /* =====================================================
-   CLOSE VIDEO
+   CLOSE PLAYER
 ===================================================== */
 
-function closeVideo() {
+function closeVideoPlayer(){
 
-    const modal =
-        document.getElementById(
-            "videoModal"
-        );
+    playerVideo.pause();
 
-
-    const player =
-        document.getElementById(
-            "videoPlayer"
-        );
-
-
-    player.pause();
-
-    player.removeAttribute(
+    playerVideo.removeAttribute(
         "src"
     );
 
-    player.load();
+    playerVideo.load();
 
-
-    modal.classList.remove(
+    videoModal.classList.remove(
         "show"
     );
-
 
     document.body.style.overflow =
         "";
@@ -1774,41 +1905,29 @@ function closeVideo() {
 
 
 /* =====================================================
-   CLOSE WHEN CLICKING OUTSIDE
+   CLOSE BUTTON
 ===================================================== */
 
-document
-    .getElementById("videoModal")
-    .addEventListener(
-        "click",
-        function(event) {
-
-            if(
-                event.target ===
-                this
-            ) {
-
-                closeVideo();
-
-            }
-
-        }
-    );
+closePlayer.addEventListener(
+    "click",
+    closeVideoPlayer
+);
 
 
 /* =====================================================
-   ESC KEY
+   CLOSE WHEN CLICKING BACKGROUND
 ===================================================== */
 
-document.addEventListener(
-    "keydown",
-    function(event) {
+videoModal.addEventListener(
+    "click",
+    function(event){
 
         if(
-            event.key === "Escape"
-        ) {
+            event.target ===
+            videoModal
+        ){
 
-            closeVideo();
+            closeVideoPlayer();
 
         }
 
@@ -1817,14 +1936,251 @@ document.addEventListener(
 
 
 /* =====================================================
-   START APPLICATION
+   ESC KEY
 ===================================================== */
 
-createCategories();
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(
+            event.key === "Escape" &&
+            videoModal.classList.contains(
+                "show"
+            )
+        ){
+
+            closeVideoPlayer();
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   CATEGORY SELECTION
+===================================================== */
+
+document
+    .getElementById("categories")
+    .addEventListener(
+        "click",
+        function(event){
+
+            const button =
+                event.target.closest(
+                    ".category"
+                );
+
+
+            if(!button)
+                return;
+
+
+            /*
+               Remove active state
+               from every category.
+            */
+
+            document
+                .querySelectorAll(
+                    ".category"
+                )
+                .forEach(
+                    item => {
+
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+            /*
+               Activate selected category.
+            */
+
+            button.classList.add(
+                "active"
+            );
+
+
+            currentCategory =
+                button.dataset.category;
+
+
+            /*
+               Clear search when changing
+               category.
+            */
+
+            searchInput.value =
+                "";
+
+            searchTerm =
+                "";
+
+
+            renderVideos();
+
+        }
+    );
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+searchInput.addEventListener(
+    "input",
+    function(){
+
+        searchTerm =
+            this.value
+                .trim()
+                .toLowerCase();
+
+
+        renderVideos();
+
+    }
+);
+
+
+/* =====================================================
+   LOADING STATE
+===================================================== */
+
+function showLoading(){
+
+    videoGrid.innerHTML = `
+
+        <div class="loading">
+
+            <div class="spinner"></div>
+
+            <span>
+                Loading videos...
+            </span>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =====================================================
+   EMPTY STATE
+===================================================== */
+
+function showEmpty(){
+
+    videoGrid.innerHTML = `
+
+        <div class="empty">
+
+            <div class="empty-icon">
+                🎬
+            </div>
+
+            <h3>
+                No videos found
+            </h3>
+
+            <p>
+                Try another category or search term.
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =====================================================
+   ERROR STATE
+===================================================== */
+
+function showError(message){
+
+    videoGrid.innerHTML = `
+
+        <div class="empty">
+
+            <div class="empty-icon">
+                ⚠️
+            </div>
+
+            <h3>
+                Something went wrong
+            </h3>
+
+            <p>
+                ${escapeHTML(message)}
+            </p>
+
+        </div>
+
+    `;
+
+    resultCount.textContent =
+        "Error";
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(value){
+
+    return String(
+        value ?? ""
+    )
+
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+
+    .replace(
+        /</g,
+        "&lt;"
+    )
+
+    .replace(
+        />/g,
+        "&gt;"
+    )
+
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
 
 loadVideos();
+
 
 </script>
 
 </body>
+
 </html>
+```

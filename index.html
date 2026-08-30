@@ -694,7 +694,6 @@ body{
     .video-meta{
         font-size:9px;
     }
-
 }
 
 @media(max-width:480px){
@@ -714,11 +713,9 @@ body{
     .section-header h2{
         font-size:18px;
     }
-
 }
 
 </style>
-
 </head>
 
 <body>
@@ -935,7 +932,9 @@ body{
 
 
 <footer class="footer">
+
     © 2026 StreamX
+
 </footer>
 
 
@@ -963,7 +962,9 @@ const supabaseClient =
 ========================= */
 
 let allVideos = [];
+
 let currentCategory = "All";
+
 let searchTerm = "";
 
 
@@ -1016,6 +1017,7 @@ const closePlayer =
 ========================= */
 
 const categories = [
+
     "All",
     "BackShots",
     "Masterbates",
@@ -1024,6 +1026,7 @@ const categories = [
     "Africans",
     "Cums",
     "Close Friends"
+
 ];
 
 
@@ -1167,7 +1170,6 @@ function renderVideos(){
         showEmpty();
 
         return;
-
     }
 
 
@@ -1243,6 +1245,7 @@ function createVideoCard(video){
             ${
                 thumbnail
                 ?
+
                 `
                 <img
                     src="${escapeHTML(thumbnail)}"
@@ -1251,7 +1254,9 @@ function createVideoCard(video){
                     draggable="false"
                 >
                 `
+
                 :
+
                 `
                 <div class="no-thumbnail">
                     🎬
@@ -1273,6 +1278,7 @@ function createVideoCard(video){
 
         </div>
 
+
         <div class="video-info">
 
             <div class="video-title">
@@ -1282,18 +1288,21 @@ function createVideoCard(video){
             ${
                 description
                 ?
+
                 `
                 <div class="video-description">
                     ${escapeHTML(description)}
                 </div>
                 `
+
                 :
+
                 ""
             }
 
             <div class="video-meta">
 
-                <span>
+                <span class="view-count-${video.id}">
                     ${views} views
                 </span>
 
@@ -1319,7 +1328,6 @@ function createVideoCard(video){
 
 
     return card;
-
 }
 
 
@@ -1398,10 +1406,14 @@ function getStoragePath(
         if(publicIndex !== -1){
 
             return decodeURIComponent(
+
                 url.pathname.substring(
+
                     publicIndex +
                     publicMarker.length
+
                 )
+
             );
 
         }
@@ -1420,10 +1432,14 @@ function getStoragePath(
         if(signedIndex !== -1){
 
             return decodeURIComponent(
+
                 url.pathname.substring(
+
                     signedIndex +
                     signedMarker.length
+
                 )
+
             );
 
         }
@@ -1583,11 +1599,17 @@ async function openPlayer(video){
     }
 
 
-   playerVideo.addEventListener(
-    "play",
-    () => updateViews(video),
-    { once: true }
-);
+    /*
+     * COUNT THE VIEW
+     *
+     * The RPC function performs:
+     *
+     * views = views + 1
+     *
+     * directly inside Supabase.
+     */
+
+    updateViews(video);
 
 }
 
@@ -1597,6 +1619,9 @@ async function openPlayer(video){
 ========================= */
 
 async function updateViews(video){
+
+    console.log("updateViews called");
+    console.log("Video ID:", video.id);
 
     try{
 
@@ -1608,51 +1633,31 @@ async function updateViews(video){
                 }
             );
 
+        console.log("RPC DATA:", data);
+        console.log("RPC ERROR:", error);
+
         if(error){
-
-            console.error(
-                "View counter RPC error:",
-                error
-            );
-
             return;
         }
 
-        const newViewCount =
-            Number(data);
+        video.views = Number(data || 0);
 
-        if(!isNaN(newViewCount)){
-
-            video.views =
-                newViewCount;
-
-            const viewElement =
-                document.querySelector(
-                    `.view-count-${CSS.escape(String(video.id))}`
-                );
-
-            if(viewElement){
-
-                viewElement.textContent =
-                    newViewCount.toLocaleString() +
-                    " views";
-            }
-        }
+        renderVideos();
 
     }
-    catch(error){
+    catch(err){
 
         console.error(
-            "Unexpected view update error:",
-            error
+            "UPDATE VIEW ERROR:",
+            err
         );
 
     }
+
 }
 
-
 /* =========================
-   CLOSE PLAYER
+   CLOSE VIDEO PLAYER
 ========================= */
 
 function closeVideoPlayer(){
@@ -1727,6 +1732,7 @@ document.addEventListener(
                 closeVideoPlayer();
 
             }
+
 
             categorySuggestions.style.display =
                 "none";
@@ -1921,6 +1927,7 @@ searchInput.addEventListener(
                 );
 
         }
+
         else if(!value){
 
             currentCategory =
@@ -2285,4 +2292,3 @@ loadVideos();
 
 </body>
 </html>
-

@@ -1,323 +1,280 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <title>StreamX</title>
+<title>StreamX</title>
 
-    <!-- Telegram Mini App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<style>
 
-        html,
-        body {
-            width: 100%;
-            min-height: 100%;
-        }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
 
-        body {
-            background: #080808;
-            color: #ffffff;
-            font-family: Arial, Helvetica, sans-serif;
-            overflow-x: hidden;
-        }
+body{
+background:#080808;
+color:#fff;
+font-family:Arial,Helvetica,sans-serif;
+min-height:100vh;
+}
 
-        .app {
-            min-height: 100vh;
-            padding-bottom: 30px;
-        }
+.header{
+padding:16px;
+border-bottom:1px solid #222;
+background:#111;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
 
-        /* HEADER */
+.logo{
+font-size:24px;
+font-weight:900;
+}
 
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: rgba(8, 8, 8, 0.95);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid #222;
-        }
+.logo span{
+color:#ff1744;
+}
 
-        .header-inner {
-            padding: 15px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+.user{
+font-size:12px;
+color:#aaa;
+}
 
-        .logo {
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: -1px;
-        }
+.age-gate{
+min-height:calc(100vh - 70px);
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+}
 
-        .logo span {
-            color: #ff1744;
-        }
+.card{
+width:100%;
+max-width:420px;
+background:#111;
+border:1px solid #222;
+border-radius:18px;
+padding:30px;
+text-align:center;
+}
 
-        .telegram-user {
-            display: none;
-            align-items: center;
-            gap: 7px;
-            color: #aaa;
-            font-size: 11px;
-        }
+.card h1{
+margin-bottom:15px;
+font-size:28px;
+}
 
-        .user-dot {
-            width: 7px;
-            height: 7px;
-            background: #21c477;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #21c477;
-        }
+.card p{
+color:#999;
+line-height:1.6;
+margin-bottom:25px;
+}
 
-        /* HERO */
+.btn{
+width:100%;
+padding:15px;
+border:none;
+border-radius:12px;
+font-size:16px;
+font-weight:bold;
+cursor:pointer;
+margin-top:10px;
+}
 
-        .hero {
-            margin: 16px;
-            padding: 25px 20px;
-            border-radius: 16px;
-            background: linear-gradient(
-                135deg,
-                #171717,
-                #0d0d0d
-            );
-            border: 1px solid #262626;
-        }
+.btn18{
+background:#ff1744;
+color:white;
+}
 
-        .hero h1 {
-            font-size: 27px;
-            margin-bottom: 8px;
-        }
+.btn18:hover{
+opacity:.9;
+}
 
-        .hero h1 span {
-            color: #ff1744;
-        }
+.btnUnder{
+background:#222;
+color:white;
+}
 
-        .hero p {
-            color: #888;
-            font-size: 12px;
-            line-height: 1.6;
-        }
+.content{
+display:none;
+padding:20px;
+}
 
-        /* STATUS */
+.hero{
+background:#111;
+border:1px solid #222;
+padding:25px;
+border-radius:16px;
+margin-bottom:20px;
+}
 
-        .status {
-            margin: 20px 16px;
-            padding: 12px 15px;
-            background: #111;
-            border: 1px solid #252525;
-            border-radius: 10px;
-            color: #777;
-            font-size: 11px;
-        }
+.hero h2{
+margin-bottom:10px;
+}
 
-        .status strong {
-            color: #21c477;
-        }
+.hero p{
+color:#999;
+line-height:1.6;
+}
 
-        /* TEST BUTTON */
+.denied{
+display:flex;
+justify-content:center;
+align-items:center;
+height:80vh;
+text-align:center;
+padding:30px;
+font-size:20px;
+}
 
-        .test-button {
-            display: block;
-            width: calc(100% - 32px);
-            margin: 20px 16px;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            background: #ff1744;
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .test-button:active {
-            transform: scale(0.98);
-        }
-
-        /* FOOTER */
-
-        .footer {
-            margin-top: 40px;
-            padding: 20px;
-            text-align: center;
-            color: #555;
-            font-size: 10px;
-        }
-    </style>
+</style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="header">
 
-    <header class="header">
-        <div class="header-inner">
+<div class="logo">
+Stream<span>X</span>
+</div>
 
-            <div class="logo">
-                Stream<span>X</span>
-            </div>
+<div class="user" id="userName">
+Telegram User
+</div>
 
-            <div
-                class="telegram-user"
-                id="telegramUser"
-            >
-                <span class="user-dot"></span>
-                <span id="userName">Telegram</span>
-            </div>
-
-        </div>
-    </header>
+</div>
 
 
-    <section class="hero">
+<div class="age-gate" id="ageGate">
 
-        <h1>
-            Welcome to
-            <span>StreamX</span>
-        </h1>
+<div class="card">
 
-        <p>
-            Your StreamX Telegram Mini App is
-            connected and ready.
-        </p>
+<h1>🔞 Age Verification</h1>
 
-    </section>
+<p>
+This platform contains adult content.
+You must be 18 years or older to continue.
+</p>
 
+<button
+class="btn btn18"
+id="btn18">
+I Am 18+
+</button>
 
-    <div
-        class="status"
-        id="status"
-    >
-        Checking Telegram connection...
-    </div>
+<button
+class="btn btnUnder"
+id="btnUnder18">
+Under 18
+</button>
 
+</div>
 
-    <button
-        class="test-button"
-        id="testButton"
-        type="button"
-    >
-        Test Telegram Mini App
-    </button>
+</div>
 
 
-    <footer class="footer">
-        © 2026 StreamX
-    </footer>
+<div class="content" id="contentArea">
+
+<div class="hero">
+
+<h2>Welcome to StreamX</h2>
+
+<p>
+Age verification successful.
+Your streaming content will appear here.
+</p>
+
+</div>
+
+<!--
+YOUR STREAMX VIDEO GRID
+GOES HERE
+-->
 
 </div>
 
 
 <script>
 
-    /*
-    ========================================
-    TELEGRAM MINI APP
-    ========================================
-    */
+const tg = window.Telegram?.WebApp;
 
-    const tg = window.Telegram?.WebApp;
+if(tg){
 
-    const status =
-        document.getElementById("status");
+tg.ready();
+tg.expand();
 
-    const telegramUser =
-        document.getElementById("telegramUser");
+const user = tg.initDataUnsafe?.user;
 
-    const userName =
-        document.getElementById("userName");
+if(user){
 
-    const testButton =
-        document.getElementById("testButton");
+let name =
+user.first_name || "Telegram User";
 
+if(user.last_name){
 
-    /*
-    ========================================
-    INITIALIZE TELEGRAM
-    ========================================
-    */
+name += " " + user.last_name;
 
-    if (tg) {
+}
 
-        tg.ready();
+document.getElementById("userName")
+.textContent = name;
 
-        tg.expand();
+}
 
-        status.innerHTML =
-            "<strong>Connected</strong> — Telegram Mini App is working.";
-
-        /*
-        Telegram user information
-        */
-
-        const user =
-            tg.initDataUnsafe?.user;
-
-        if (user) {
-
-            telegramUser.style.display =
-                "flex";
-
-            let displayName =
-                user.first_name || "Telegram";
-
-            if (user.last_name) {
-
-                displayName +=
-                    " " + user.last_name;
-
-            }
-
-            userName.textContent =
-                displayName;
-        }
-
-    } else {
-
-        status.innerHTML =
-            "⚠️ Open this page inside Telegram to use the Mini App.";
-
-    }
+}
 
 
-    /*
-    ========================================
-    TEST BUTTON
-    ========================================
-    */
+const ageGate =
+document.getElementById("ageGate");
 
-    testButton.addEventListener(
-        "click",
-        function () {
+const contentArea =
+document.getElementById("contentArea");
 
-            if (!tg) {
+document
+.getElementById("btn18")
+.addEventListener("click",()=>{
 
-                alert(
-                    "This page is not running inside Telegram."
-                );
+ageGate.style.display="none";
 
-                return;
-            }
+contentArea.style.display="block";
 
-            tg.showAlert(
-                "StreamX Telegram Mini App is working!"
-            );
+});
 
-        }
-    );
+
+document
+.getElementById("btnUnder18")
+.addEventListener("click",()=>{
+
+document.body.innerHTML=`
+
+<div class="denied">
+
+<div>
+
+<h2>Access Denied</h2>
+
+<br>
+
+<p>
+This platform is available only
+to users aged 18 and above.
+</p>
+
+</div>
+
+</div>
+
+`;
+
+});
 
 </script>
 

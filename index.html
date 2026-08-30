@@ -3,7 +3,6 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -30,10 +29,9 @@ body{
     min-height:100vh;
 }
 
-
-/* ==============================
+/* =========================
    HEADER
-============================== */
+========================= */
 
 .header{
     position:sticky;
@@ -64,10 +62,9 @@ body{
     color:#ff1744;
 }
 
-
-/* ==============================
+/* =========================
    SEARCH
-============================== */
+========================= */
 
 .search-wrapper{
     flex:1;
@@ -79,22 +76,13 @@ body{
 .search{
     width:100%;
     height:46px;
-
     background:#151515;
-
     border:1px solid #303030;
-
     border-radius:25px;
-
     color:white;
-
     padding:0 45px;
-
     outline:none;
-
     font-size:14px;
-
-    transition:.2s;
 }
 
 .search::placeholder{
@@ -115,37 +103,21 @@ body{
     font-size:17px;
 }
 
-
-/* ==============================
-   SEARCH CLEAR
-============================== */
-
 .clear-search{
     position:absolute;
-
     right:12px;
     top:50%;
-
     transform:translateY(-50%);
-
     width:25px;
     height:25px;
-
     border:none;
-
     border-radius:50%;
-
     background:#292929;
-
     color:#aaa;
-
     cursor:pointer;
-
     display:none;
-
     align-items:center;
     justify-content:center;
-
     font-size:15px;
 }
 
@@ -154,10 +126,9 @@ body{
     color:white;
 }
 
-
-/* ==============================
+/* =========================
    ONLINE
-============================== */
+========================= */
 
 .header-right{
     white-space:nowrap;
@@ -179,10 +150,9 @@ body{
     box-shadow:0 0 10px #21c477;
 }
 
-
-/* ==============================
+/* =========================
    CATEGORY BAR
-============================== */
+========================= */
 
 .category-bar{
     width:100%;
@@ -207,19 +177,12 @@ body{
 
 .category{
     border:none;
-
     background:#181818;
-
     color:#999;
-
     padding:9px 16px;
-
     border-radius:20px;
-
     cursor:pointer;
-
     font-size:12px;
-
     transition:.2s;
 }
 
@@ -234,10 +197,9 @@ body{
     font-weight:bold;
 }
 
-
-/* ==============================
+/* =========================
    MAIN
-============================== */
+========================= */
 
 .main{
     max-width:1400px;
@@ -245,49 +207,30 @@ body{
     padding:30px 25px 70px;
 }
 
-
-/* ==============================
+/* =========================
    HERO
-============================== */
+========================= */
 
 .hero{
     margin-bottom:32px;
-
     padding:35px;
-
     border-radius:16px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #171717,
-            #0d0d0d
-        );
-
+    background:linear-gradient(135deg,#171717,#0d0d0d);
     border:1px solid #262626;
-
     position:relative;
-
     overflow:hidden;
 }
 
 .hero::after{
     content:"";
-
     position:absolute;
-
     width:250px;
     height:250px;
-
     right:-100px;
     top:-100px;
-
     background:#ff1744;
-
     opacity:.08;
-
     border-radius:50%;
-
     filter:blur(30px);
 }
 
@@ -310,10 +253,9 @@ body{
     z-index:1;
 }
 
-
-/* ==============================
+/* =========================
    SECTION HEADER
-============================== */
+========================= */
 
 .section-header{
     display:flex;
@@ -331,19 +273,11 @@ body{
     font-size:12px;
 }
 
-
-/* ==============================
-   SEARCH STATUS
-============================== */
-
 .search-status{
     display:none;
-
     margin-top:-8px;
     margin-bottom:18px;
-
     color:#777;
-
     font-size:12px;
 }
 
@@ -351,39 +285,26 @@ body{
     color:#ff1744;
 }
 
-
-/* ==============================
+/* =========================
    VIDEO GRID
-============================== */
+========================= */
 
 .video-grid{
     display:grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(250px,1fr)
-        );
-
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
     gap:20px;
 }
 
-
-/* ==============================
+/* =========================
    VIDEO CARD
-============================== */
+========================= */
 
 .video-card{
     background:#111;
-
     border:1px solid #252525;
-
     border-radius:12px;
-
     overflow:hidden;
-
     cursor:pointer;
-
     transition:
         transform .2s,
         border-color .2s,
@@ -392,38 +313,30 @@ body{
 
 .video-card:hover{
     transform:translateY(-4px);
-
     border-color:#3a3a3a;
-
     background:#171717;
 }
 
-
-/* ==============================
+/* =========================
    THUMBNAIL
-============================== */
+========================= */
 
 .thumbnail{
     width:100%;
-
     aspect-ratio:16/9;
-
     background:#1d1d1d;
-
     position:relative;
-
     overflow:hidden;
 }
 
 .thumbnail img{
     width:100%;
     height:100%;
-
     object-fit:cover;
-
     display:block;
-
     transition:transform .3s;
+    user-select:none;
+    -webkit-user-select:none;
 }
 
 .video-card:hover .thumbnail img{
@@ -433,38 +346,25 @@ body{
 .no-thumbnail{
     width:100%;
     height:100%;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     font-size:45px;
-
     color:#444;
 }
 
-
-/* ==============================
+/* =========================
    PLAY OVERLAY
-============================== */
+========================= */
 
 .play-overlay{
     position:absolute;
-
     inset:0;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     background:rgba(0,0,0,.2);
-
     opacity:0;
-
     transition:.2s;
 }
 
@@ -475,54 +375,36 @@ body{
 .play-circle{
     width:52px;
     height:52px;
-
     border-radius:50%;
-
     background:#ff1744;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     font-size:21px;
-
     padding-left:3px;
-
     box-shadow:0 5px 25px rgba(0,0,0,.5);
 }
 
-
-/* ==============================
+/* =========================
    CATEGORY TAG
-============================== */
+========================= */
 
 .category-tag{
     position:absolute;
-
     left:9px;
     top:9px;
-
     background:rgba(0,0,0,.78);
-
     border:1px solid rgba(255,255,255,.1);
-
     color:white;
-
     padding:5px 8px;
-
     border-radius:5px;
-
     font-size:10px;
-
     backdrop-filter:blur(5px);
 }
 
-
-/* ==============================
+/* =========================
    VIDEO INFO
-============================== */
+========================= */
 
 .video-info{
     padding:14px;
@@ -530,83 +412,54 @@ body{
 
 .video-title{
     font-size:14px;
-
     font-weight:bold;
-
     line-height:1.4;
-
     margin-bottom:7px;
-
     display:-webkit-box;
-
     -webkit-line-clamp:2;
-
     -webkit-box-orient:vertical;
-
     overflow:hidden;
 }
 
 .video-description{
     color:#777;
-
     font-size:11px;
-
     line-height:1.5;
-
     margin-bottom:9px;
-
     display:-webkit-box;
-
     -webkit-line-clamp:2;
-
     -webkit-box-orient:vertical;
-
     overflow:hidden;
 }
 
 .video-meta{
     display:flex;
-
     justify-content:space-between;
-
     color:#555;
-
     font-size:10px;
 }
 
-
-/* ==============================
+/* =========================
    LOADING
-============================== */
+========================= */
 
 .loading{
     grid-column:1/-1;
-
     min-height:300px;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     flex-direction:column;
-
     color:#666;
-
     gap:15px;
 }
 
 .spinner{
     width:35px;
     height:35px;
-
     border:3px solid #292929;
-
     border-top-color:#ff1744;
-
     border-radius:50%;
-
     animation:spin .8s linear infinite;
 }
 
@@ -616,32 +469,25 @@ body{
     }
 }
 
-
-/* ==============================
+/* =========================
    EMPTY
-============================== */
+========================= */
 
 .empty{
     grid-column:1/-1;
-
     text-align:center;
-
     padding:70px 20px;
-
     color:#666;
 }
 
 .empty-icon{
     font-size:55px;
-
     margin-bottom:15px;
 }
 
 .empty h3{
     color:#aaa;
-
     font-size:18px;
-
     margin-bottom:8px;
 }
 
@@ -649,26 +495,18 @@ body{
     font-size:12px;
 }
 
-
-/* ==============================
+/* =========================
    PLAYER MODAL
-============================== */
+========================= */
 
 .modal{
     position:fixed;
-
     inset:0;
-
     z-index:5000;
-
     background:rgba(0,0,0,.94);
-
     display:none;
-
     align-items:center;
-
     justify-content:center;
-
     padding:20px;
 }
 
@@ -678,56 +516,37 @@ body{
 
 .player-container{
     width:min(1100px,100%);
-
     max-height:95vh;
-
     background:#101010;
-
     border:1px solid #292929;
-
     border-radius:14px;
-
     overflow:hidden;
-
     position:relative;
 }
 
 .player-header{
     padding:15px 18px;
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
     border-bottom:1px solid #242424;
 }
 
 .player-title{
     font-size:15px;
-
     font-weight:bold;
-
     padding-right:30px;
 }
 
 .close-button{
     width:34px;
     height:34px;
-
     border:none;
-
     border-radius:50%;
-
     background:#222;
-
     color:white;
-
     cursor:pointer;
-
     font-size:20px;
-
     flex-shrink:0;
 }
 
@@ -737,16 +556,9 @@ body{
 
 .player-video{
     width:100%;
-
     max-height:70vh;
-
     display:block;
-
     background:#000;
-
-    /*
-       Download protection
-    */
     user-select:none;
     -webkit-user-select:none;
 }
@@ -757,43 +569,72 @@ body{
 
 .player-category{
     display:inline-block;
-
     color:#ff1744;
-
     font-size:11px;
-
     margin-bottom:8px;
 }
 
 .player-description{
     color:#999;
-
     font-size:12px;
-
     line-height:1.6;
 }
 
-
-/* ==============================
+/* =========================
    FOOTER
-============================== */
+========================= */
 
 .footer{
     border-top:1px solid #1d1d1d;
-
     padding:25px;
-
     text-align:center;
-
     color:#555;
-
     font-size:11px;
 }
 
+/* =========================
+   CATEGORY SUGGESTIONS
+========================= */
 
-/* ==============================
+.category-suggestions{
+    position:absolute;
+    top:52px;
+    left:0;
+    right:0;
+    background:#151515;
+    border:1px solid #303030;
+    border-radius:10px;
+    overflow:hidden;
+    display:none;
+    z-index:2000;
+    box-shadow:0 15px 40px rgba(0,0,0,.5);
+}
+
+.category-suggestion{
+    padding:12px 15px;
+    color:#aaa;
+    font-size:12px;
+    cursor:pointer;
+    border-bottom:1px solid #222;
+}
+
+.category-suggestion:last-child{
+    border-bottom:none;
+}
+
+.category-suggestion:hover{
+    background:#222;
+    color:white;
+}
+
+.category-suggestion span{
+    color:#ff1744;
+    margin-right:6px;
+}
+
+/* =========================
    RESPONSIVE
-============================== */
+========================= */
 
 @media(max-width:800px){
 
@@ -856,7 +697,6 @@ body{
 
 }
 
-
 @media(max-width:480px){
 
     .video-grid{
@@ -877,89 +717,23 @@ body{
 
 }
 
-
-/* ==============================
-   SEARCH CATEGORY SUGGESTIONS
-============================== */
-
-.category-suggestions{
-    position:absolute;
-
-    top:52px;
-
-    left:0;
-    right:0;
-
-    background:#151515;
-
-    border:1px solid #303030;
-
-    border-radius:10px;
-
-    overflow:hidden;
-
-    display:none;
-
-    z-index:2000;
-
-    box-shadow:
-        0 15px 40px rgba(0,0,0,.5);
-}
-
-.category-suggestion{
-    padding:12px 15px;
-
-    color:#aaa;
-
-    font-size:12px;
-
-    cursor:pointer;
-
-    border-bottom:1px solid #222;
-}
-
-.category-suggestion:last-child{
-    border-bottom:none;
-}
-
-.category-suggestion:hover{
-    background:#222;
-    color:white;
-}
-
-.category-suggestion span{
-    color:#ff1744;
-    margin-right:6px;
-}
-
 </style>
 
 </head>
 
-
 <body>
-
-
-<!-- =====================================================
-     HEADER
-===================================================== -->
 
 <header class="header">
 
     <div class="header-inner">
 
-
         <div class="logo">
             Stream<span>X</span>
         </div>
 
-
         <div class="search-wrapper">
 
-            <span class="search-icon">
-                🔎
-            </span>
-
+            <span class="search-icon">🔎</span>
 
             <input
                 type="text"
@@ -969,7 +743,6 @@ body{
                 autocomplete="off"
             >
 
-
             <button
                 id="clearSearch"
                 class="clear-search"
@@ -978,14 +751,12 @@ body{
                 ×
             </button>
 
-
             <div
                 id="categorySuggestions"
                 class="category-suggestions"
             ></div>
 
         </div>
-
 
         <div class="header-right">
 
@@ -1004,10 +775,6 @@ body{
 </header>
 
 
-<!-- =====================================================
-     CATEGORY BAR
-===================================================== -->
-
 <nav class="category-bar">
 
     <div
@@ -1015,66 +782,35 @@ body{
         id="categories"
     >
 
-        <button
-            class="category active"
-            data-category="All"
-        >
+        <button class="category active" data-category="All">
             All
         </button>
 
-
-        <button
-            class="category"
-            data-category="BackShots"
-        >
+        <button class="category" data-category="BackShots">
             BackShots
         </button>
 
-
-        <button
-            class="category"
-            data-category="Masterbates"
-        >
+        <button class="category" data-category="Masterbates">
             Masterbates
         </button>
 
-
-        <button
-            class="category"
-            data-category="RoughX"
-        >
+        <button class="category" data-category="RoughX">
             RoughX
         </button>
 
-
-        <button
-            class="category"
-            data-category="BBW"
-        >
+        <button class="category" data-category="BBW">
             BBW
         </button>
 
-
-        <button
-            class="category"
-            data-category="Africans"
-        >
+        <button class="category" data-category="Africans">
             Africans
         </button>
 
-
-        <button
-            class="category"
-            data-category="Cums"
-        >
+        <button class="category" data-category="Cums">
             Cums
         </button>
 
-
-        <button
-            class="category"
-            data-category="Close Friends"
-        >
+        <button class="category" data-category="Close Friends">
             Close Friends
         </button>
 
@@ -1083,12 +819,7 @@ body{
 </nav>
 
 
-<!-- =====================================================
-     MAIN
-===================================================== -->
-
 <main class="main">
-
 
     <section class="hero">
 
@@ -1098,8 +829,7 @@ body{
         </h1>
 
         <p>
-            Browse the latest content or search for a
-            video or category.
+            Browse the latest content or search for a video or category.
         </p>
 
     </section>
@@ -1110,7 +840,6 @@ body{
         <h2 id="sectionTitle">
             All Videos
         </h2>
-
 
         <span
             class="result-count"
@@ -1148,17 +877,12 @@ body{
 </main>
 
 
-<!-- =====================================================
-     VIDEO PLAYER
-===================================================== -->
-
 <div
     class="modal"
     id="videoModal"
 >
 
     <div class="player-container">
-
 
         <div class="player-header">
 
@@ -1168,7 +892,6 @@ body{
             >
                 Video
             </div>
-
 
             <button
                 class="close-button"
@@ -1180,18 +903,6 @@ body{
 
         </div>
 
-
-        <!--
-            IMPORTANT:
-            controlsList="nodownload"
-            removes the browser's download button
-            where supported.
-
-            noplaybackrate removes playback speed control
-            where supported.
-
-            disablePictureInPicture prevents PiP.
-        -->
 
         <video
             class="player-video"
@@ -1211,7 +922,6 @@ body{
                 id="playerCategory"
             ></div>
 
-
             <p
                 class="player-description"
                 id="playerDescription"
@@ -1225,24 +935,21 @@ body{
 
 
 <footer class="footer">
-
     © 2026 StreamX
-
 </footer>
 
 
 <script>
 
-/* =====================================================
+/* =========================
    SUPABASE
-===================================================== */
+========================= */
 
 const SUPABASE_URL =
     "https://iojjmoywrlnzpyatahyh.supabase.co";
 
 const SUPABASE_KEY =
     "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
-
 
 const supabaseClient =
     window.supabase.createClient(
@@ -1251,20 +958,18 @@ const supabaseClient =
     );
 
 
-/* =====================================================
+/* =========================
    VARIABLES
-===================================================== */
+========================= */
 
 let allVideos = [];
-
 let currentCategory = "All";
-
 let searchTerm = "";
 
 
-/* =====================================================
+/* =========================
    ELEMENTS
-===================================================== */
+========================= */
 
 const videoGrid =
     document.getElementById("videoGrid");
@@ -1285,9 +990,7 @@ const searchStatus =
     document.getElementById("searchStatus");
 
 const categorySuggestions =
-    document.getElementById(
-        "categorySuggestions"
-    );
+    document.getElementById("categorySuggestions");
 
 const videoModal =
     document.getElementById("videoModal");
@@ -1308,9 +1011,9 @@ const closePlayer =
     document.getElementById("closePlayer");
 
 
-/* =====================================================
-   AVAILABLE CATEGORIES
-===================================================== */
+/* =========================
+   CATEGORIES
+========================= */
 
 const categories = [
     "All",
@@ -1324,14 +1027,13 @@ const categories = [
 ];
 
 
-/* =====================================================
+/* =========================
    LOAD VIDEOS
-===================================================== */
+========================= */
 
 async function loadVideos(){
 
     showLoading();
-
 
     const result =
         await supabaseClient
@@ -1343,7 +1045,6 @@ async function loadVideos(){
                     ascending:false
                 }
             );
-
 
     if(result.error){
 
@@ -1357,108 +1058,73 @@ async function loadVideos(){
         );
 
         return;
-
     }
-
 
     allVideos =
         result.data || [];
 
-
     renderVideos();
-
 }
 
 
-/* =====================================================
-   FILTER VIDEOS
-===================================================== */
+/* =========================
+   FILTER
+========================= */
 
 function getFilteredVideos(){
 
-    return allVideos.filter(
-        video => {
+    return allVideos.filter(video => {
 
-            const videoCategory =
-                String(
-                    video.category || ""
-                );
-
-
-            /*
-               CATEGORY FILTER
-            */
-
-            const categoryMatch =
-                currentCategory === "All" ||
-                videoCategory.toLowerCase() ===
-                currentCategory.toLowerCase();
-
-
-            /*
-               SEARCH
-            */
-
-            const title =
-                String(
-                    video.title || ""
-                ).toLowerCase();
-
-
-            const description =
-                String(
-                    video.description || ""
-                ).toLowerCase();
-
-
-            const category =
-                videoCategory.toLowerCase();
-
-
-            const searchMatch =
-                !searchTerm ||
-
-                title.includes(
-                    searchTerm
-                ) ||
-
-                description.includes(
-                    searchTerm
-                ) ||
-
-                category.includes(
-                    searchTerm
-                );
-
-
-            return (
-                categoryMatch &&
-                searchMatch
+        const videoCategory =
+            String(
+                video.category || ""
             );
 
-        }
-    );
+        const categoryMatch =
+            currentCategory === "All" ||
+            videoCategory.toLowerCase() ===
+            currentCategory.toLowerCase();
+
+        const title =
+            String(
+                video.title || ""
+            ).toLowerCase();
+
+        const description =
+            String(
+                video.description || ""
+            ).toLowerCase();
+
+        const category =
+            videoCategory.toLowerCase();
+
+        const searchMatch =
+            !searchTerm ||
+            title.includes(searchTerm) ||
+            description.includes(searchTerm) ||
+            category.includes(searchTerm);
+
+        return (
+            categoryMatch &&
+            searchMatch
+        );
+
+    });
 
 }
 
 
-/* =====================================================
-   RENDER VIDEOS
-===================================================== */
+/* =========================
+   RENDER
+========================= */
 
 function renderVideos(){
 
     const videos =
         getFilteredVideos();
 
+    videoGrid.innerHTML = "";
 
-    videoGrid.innerHTML =
-        "";
-
-
-    /*
-       SECTION TITLE
-    */
 
     if(searchTerm){
 
@@ -1479,28 +1145,13 @@ function renderVideos(){
         searchStatus.style.display =
             "none";
 
-
-        if(
+        sectionTitle.textContent =
             currentCategory === "All"
-        ){
-
-            sectionTitle.textContent =
-                "All Videos";
-
-        }
-        else{
-
-            sectionTitle.textContent =
-                currentCategory;
-
-        }
+            ? "All Videos"
+            : currentCategory;
 
     }
 
-
-    /*
-       RESULT COUNT
-    */
 
     resultCount.textContent =
         videos.length +
@@ -1511,10 +1162,6 @@ function renderVideos(){
         );
 
 
-    /*
-       EMPTY
-    */
-
     if(videos.length === 0){
 
         showEmpty();
@@ -1524,32 +1171,25 @@ function renderVideos(){
     }
 
 
-    /*
-       CREATE CARDS
-    */
+    videos.forEach(video => {
 
-    videos.forEach(
-        video => {
+        videoGrid.appendChild(
+            createVideoCard(video)
+        );
 
-            videoGrid.appendChild(
-                createVideoCard(video)
-            );
-
-        }
-    );
+    });
 
 }
 
 
-/* =====================================================
-   CREATE VIDEO CARD
-===================================================== */
+/* =========================
+   CREATE CARD
+========================= */
 
 function createVideoCard(video){
 
     const card =
         document.createElement("article");
-
 
     card.className =
         "video-card";
@@ -1619,7 +1259,6 @@ function createVideoCard(video){
                 `
             }
 
-
             <div class="play-overlay">
 
                 <div class="play-circle">
@@ -1628,24 +1267,17 @@ function createVideoCard(video){
 
             </div>
 
-
             <div class="category-tag">
-
                 ${escapeHTML(category)}
-
             </div>
 
         </div>
 
-
         <div class="video-info">
 
             <div class="video-title">
-
                 ${escapeHTML(title)}
-
             </div>
-
 
             ${
                 description
@@ -1658,7 +1290,6 @@ function createVideoCard(video){
                 :
                 ""
             }
-
 
             <div class="video-meta">
 
@@ -1692,10 +1323,9 @@ function createVideoCard(video){
 }
 
 
-/* =====================================================
-   GET PUBLIC URL
-   Used for thumbnails.
-===================================================== */
+/* =========================
+   PUBLIC URL
+========================= */
 
 function getPublicURL(
     value,
@@ -1705,10 +1335,6 @@ function getPublicURL(
     if(!value)
         return null;
 
-
-    /*
-       Existing public URL
-    */
 
     if(
         value.startsWith("http://") ||
@@ -1720,10 +1346,6 @@ function getPublicURL(
     }
 
 
-    /*
-       Storage path
-    */
-
     return supabaseClient
         .storage
         .from(bucket)
@@ -1734,10 +1356,9 @@ function getPublicURL(
 }
 
 
-/* =====================================================
-   GET STORAGE PATH
-   Used for signed video URLs.
-===================================================== */
+/* =========================
+   STORAGE PATH
+========================= */
 
 function getStoragePath(
     value,
@@ -1747,19 +1368,6 @@ function getStoragePath(
     if(!value)
         return null;
 
-
-    /*
-       If the database already contains
-       a storage path such as:
-
-       video.mp4
-
-       or:
-
-       folder/video.mp4
-
-       return it directly.
-    */
 
     if(
         !value.startsWith("http://") &&
@@ -1771,50 +1379,33 @@ function getStoragePath(
     }
 
 
-    /*
-       If the database contains a Supabase
-       public storage URL, extract the path.
-
-       Example:
-
-       /storage/v1/object/public/videos/file.mp4
-
-       becomes:
-
-       file.mp4
-    */
-
     try{
 
         const url =
             new URL(value);
 
 
-        const marker =
+        const publicMarker =
             `/storage/v1/object/public/${bucket}/`;
 
 
-        const markerIndex =
+        const publicIndex =
             url.pathname.indexOf(
-                marker
+                publicMarker
             );
 
 
-        if(markerIndex !== -1){
+        if(publicIndex !== -1){
 
             return decodeURIComponent(
                 url.pathname.substring(
-                    markerIndex +
-                    marker.length
+                    publicIndex +
+                    publicMarker.length
                 )
             );
 
         }
 
-
-        /*
-           Also support signed URLs.
-        */
 
         const signedMarker =
             `/storage/v1/object/sign/${bucket}/`;
@@ -1844,7 +1435,7 @@ function getStoragePath(
     catch(error){
 
         console.error(
-            "Unable to extract storage path:",
+            "Storage path error:",
             error
         );
 
@@ -1855,9 +1446,9 @@ function getStoragePath(
 }
 
 
-/* =====================================================
-   CREATE SIGNED VIDEO URL
-===================================================== */
+/* =========================
+   SIGNED VIDEO URL
+========================= */
 
 async function getVideoURL(video){
 
@@ -1872,11 +1463,6 @@ async function getVideoURL(video){
     }
 
 
-    /*
-       Get the actual Supabase
-       Storage path.
-    */
-
     const storagePath =
         getStoragePath(
             rawValue,
@@ -1887,7 +1473,7 @@ async function getVideoURL(video){
     if(!storagePath){
 
         console.error(
-            "Invalid video storage path:",
+            "Invalid video path:",
             rawValue
         );
 
@@ -1895,12 +1481,6 @@ async function getVideoURL(video){
 
     }
 
-
-    /*
-       Create a temporary signed URL.
-
-       1 hour = 3600 seconds.
-    */
 
     const result =
         await supabaseClient
@@ -1929,15 +1509,11 @@ async function getVideoURL(video){
 }
 
 
-/* =====================================================
+/* =========================
    OPEN PLAYER
-===================================================== */
+========================= */
 
 async function openPlayer(video){
-
-    /*
-       Show loading state in player.
-    */
 
     playerTitle.textContent =
         video.title ||
@@ -1958,7 +1534,6 @@ async function openPlayer(video){
         "src"
     );
 
-
     playerVideo.load();
 
 
@@ -1971,10 +1546,6 @@ async function openPlayer(video){
         "hidden";
 
 
-    /*
-       Get temporary signed URL.
-    */
-
     const videoURL =
         await getVideoURL(video);
 
@@ -1982,7 +1553,6 @@ async function openPlayer(video){
     if(!videoURL){
 
         closeVideoPlayer();
-
 
         alert(
             "Unable to load this video."
@@ -1993,20 +1563,11 @@ async function openPlayer(video){
     }
 
 
-    /*
-       Set signed video URL.
-    */
-
     playerVideo.src =
         videoURL;
 
-
     playerVideo.load();
 
-
-    /*
-       Attempt autoplay.
-    */
 
     try{
 
@@ -2022,18 +1583,14 @@ async function openPlayer(video){
     }
 
 
-    /*
-       Update views.
-    */
-
     updateViews(video);
 
 }
 
 
-/* =====================================================
+/* =========================
    UPDATE VIEWS
-===================================================== */
+========================= */
 
 async function updateViews(video){
 
@@ -2076,27 +1633,23 @@ async function updateViews(video){
 }
 
 
-/* =====================================================
+/* =========================
    CLOSE PLAYER
-===================================================== */
+========================= */
 
 function closeVideoPlayer(){
 
     playerVideo.pause();
 
-
     playerVideo.removeAttribute(
         "src"
     );
 
-
     playerVideo.load();
-
 
     videoModal.classList.remove(
         "show"
     );
-
 
     document.body.style.overflow =
         "";
@@ -2104,9 +1657,9 @@ function closeVideoPlayer(){
 }
 
 
-/* =====================================================
-   CLOSE PLAYER BUTTON
-===================================================== */
+/* =========================
+   CLOSE BUTTON
+========================= */
 
 closePlayer.addEventListener(
     "click",
@@ -2114,9 +1667,9 @@ closePlayer.addEventListener(
 );
 
 
-/* =====================================================
-   CLOSE MODAL BACKGROUND
-===================================================== */
+/* =========================
+   MODAL BACKGROUND
+========================= */
 
 videoModal.addEventListener(
     "click",
@@ -2135,9 +1688,9 @@ videoModal.addEventListener(
 );
 
 
-/* =====================================================
-   ESC KEY
-===================================================== */
+/* =========================
+   ESCAPE KEY
+========================= */
 
 document.addEventListener(
     "keydown",
@@ -2157,7 +1710,6 @@ document.addEventListener(
 
             }
 
-
             categorySuggestions.style.display =
                 "none";
 
@@ -2167,9 +1719,9 @@ document.addEventListener(
 );
 
 
-/* =====================================================
-   VIDEO RIGHT CLICK
-===================================================== */
+/* =========================
+   DISABLE VIDEO RIGHT CLICK
+========================= */
 
 playerVideo.addEventListener(
     "contextmenu",
@@ -2181,9 +1733,29 @@ playerVideo.addEventListener(
 );
 
 
-/* =====================================================
-   VIDEO DRAGGING
-===================================================== */
+/* =========================
+   DISABLE IMAGE RIGHT CLICK
+========================= */
+
+document.addEventListener(
+    "contextmenu",
+    function(event){
+
+        if(
+            event.target.tagName === "IMG"
+        ){
+
+            event.preventDefault();
+
+        }
+
+    }
+);
+
+
+/* =========================
+   DISABLE VIDEO DRAG
+========================= */
 
 playerVideo.addEventListener(
     "dragstart",
@@ -2195,24 +1767,9 @@ playerVideo.addEventListener(
 );
 
 
-/* =====================================================
-   DISABLE PICTURE-IN-PICTURE
-===================================================== */
-
-if(
-    "disablePictureInPicture" in
-    playerVideo
-){
-
-    playerVideo.disablePictureInPicture =
-        true;
-
-}
-
-
-/* =====================================================
+/* =========================
    CATEGORY BUTTONS
-===================================================== */
+========================= */
 
 document
     .getElementById("categories")
@@ -2254,16 +1811,12 @@ document
                 button.dataset.category;
 
 
-            /*
-               Clear search when selecting
-               category manually.
-            */
-
             searchInput.value =
                 "";
 
             searchTerm =
                 "";
+
 
             clearSearch.style.display =
                 "none";
@@ -2279,9 +1832,9 @@ document
     );
 
 
-/* =====================================================
+/* =========================
    SEARCH
-===================================================== */
+========================= */
 
 searchInput.addEventListener(
     "input",
@@ -2294,10 +1847,6 @@ searchInput.addEventListener(
         searchTerm =
             value.toLowerCase();
 
-
-        /*
-           Show/hide clear button
-        */
 
         if(value){
 
@@ -2313,19 +1862,10 @@ searchInput.addEventListener(
         }
 
 
-        /*
-           Search categories
-        */
-
         showCategorySuggestions(
             value
         );
 
-
-        /*
-           If the user types a category,
-           automatically switch to that category.
-        */
 
         const matchingCategory =
             categories.find(
@@ -2363,9 +1903,7 @@ searchInput.addEventListener(
                 );
 
         }
-        else if(
-            !value
-        ){
+        else if(!value){
 
             currentCategory =
                 "All";
@@ -2396,9 +1934,9 @@ searchInput.addEventListener(
 );
 
 
-/* =====================================================
+/* =========================
    CATEGORY SUGGESTIONS
-===================================================== */
+========================= */
 
 function showCategorySuggestions(
     value
@@ -2421,7 +1959,8 @@ function showCategorySuggestions(
     const matches =
         categories.filter(
             category =>
-                category.toLowerCase()
+                category
+                    .toLowerCase()
                     .includes(search)
         );
 
@@ -2521,9 +2060,9 @@ function showCategorySuggestions(
 }
 
 
-/* =====================================================
+/* =========================
    CLEAR SEARCH
-===================================================== */
+========================= */
 
 clearSearch.addEventListener(
     "click",
@@ -2572,9 +2111,9 @@ clearSearch.addEventListener(
 );
 
 
-/* =====================================================
+/* =========================
    CLICK OUTSIDE SEARCH
-===================================================== */
+========================= */
 
 document.addEventListener(
     "click",
@@ -2595,9 +2134,9 @@ document.addEventListener(
 );
 
 
-/* =====================================================
+/* =========================
    LOADING
-===================================================== */
+========================= */
 
 function showLoading(){
 
@@ -2618,9 +2157,9 @@ function showLoading(){
 }
 
 
-/* =====================================================
+/* =========================
    EMPTY
-===================================================== */
+========================= */
 
 function showEmpty(){
 
@@ -2647,9 +2186,9 @@ function showEmpty(){
 }
 
 
-/* =====================================================
+/* =========================
    ERROR
-===================================================== */
+========================= */
 
 function showError(message){
 
@@ -2680,9 +2219,9 @@ function showError(message){
 }
 
 
-/* =====================================================
+/* =========================
    ESCAPE HTML
-===================================================== */
+========================= */
 
 function escapeHTML(value){
 
@@ -2718,15 +2257,14 @@ function escapeHTML(value){
 }
 
 
-/* =====================================================
+/* =========================
    START
-===================================================== */
+========================= */
 
 loadVideos();
 
 </script>
 
 </body>
-
 </html>
 ```

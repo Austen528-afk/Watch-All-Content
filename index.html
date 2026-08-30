@@ -1,10 +1,16 @@
-
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+
+>
 
 <title>StreamX</title>
 
@@ -716,213 +722,53 @@ body{
 }
 
 </style>
+
 </head>
 
 <body>
 
 <header class="header">
 
-    <div class="header-inner">
+<div class="header-inner">
 
-        <div class="logo">
-            Stream<span>X</span>
-        </div>
-
-        <div class="search-wrapper">
-
-            <span class="search-icon">🔎</span>
-
-            <input
-                type="text"
-                id="searchInput"
-                class="search"
-                placeholder="Search videos or categories..."
-                autocomplete="off"
-            >
-
-            <button
-                id="clearSearch"
-                class="clear-search"
-                type="button"
-            >
-                ×
-            </button>
-
-            <div
-                id="categorySuggestions"
-                class="category-suggestions"
-            ></div>
-
-        </div>
-
-        <div class="header-right">
-
-            <div class="online">
-
-                <span class="online-dot"></span>
-
-                Online
-
-            </div>
-
-        </div>
-
+    <div class="logo">
+        Stream<span>X</span>
     </div>
 
-</header>
+    <div class="search-wrapper">
 
+        <span class="search-icon">🔎</span>
 
-<nav class="category-bar">
-
-    <div
-        class="categories"
-        id="categories"
-    >
-
-        <button class="category active" data-category="All">
-            All
-        </button>
-
-        <button class="category" data-category="BackShots">
-            BackShots
-        </button>
-
-        <button class="category" data-category="Masterbates">
-            Masterbates
-        </button>
-
-        <button class="category" data-category="RoughX">
-            RoughX
-        </button>
-
-        <button class="category" data-category="BBW">
-            BBW
-        </button>
-
-        <button class="category" data-category="Africans">
-            Africans
-        </button>
-
-        <button class="category" data-category="Cums">
-            Cums
-        </button>
-
-        <button class="category" data-category="Close Friends">
-            Close Friends
-        </button>
-
-    </div>
-
-</nav>
-
-
-<main class="main">
-
-    <section class="hero">
-
-        <h1>
-            Welcome to
-            <span>StreamX</span>
-        </h1>
-
-        <p>
-            Browse the latest content or search for a video or category.
-        </p>
-
-    </section>
-
-
-    <div class="section-header">
-
-        <h2 id="sectionTitle">
-            All Videos
-        </h2>
-
-        <span
-            class="result-count"
-            id="resultCount"
+        <input
+            type="text"
+            id="searchInput"
+            class="search"
+            placeholder="Search videos or categories..."
+            autocomplete="off"
         >
-            Loading...
-        </span>
+
+        <button
+            id="clearSearch"
+            class="clear-search"
+            type="button"
+        >
+            ×
+        </button>
+
+        <div
+            id="categorySuggestions"
+            class="category-suggestions"
+        ></div>
 
     </div>
 
+    <div class="header-right">
 
-    <div
-        id="searchStatus"
-        class="search-status"
-    ></div>
+        <div class="online">
 
+            <span class="online-dot"></span>
 
-    <div
-        id="videoGrid"
-        class="video-grid"
-    >
-
-        <div class="loading">
-
-            <div class="spinner"></div>
-
-            <span>
-                Loading videos...
-            </span>
-
-        </div>
-
-    </div>
-
-</main>
-
-
-<div
-    class="modal"
-    id="videoModal"
->
-
-    <div class="player-container">
-
-        <div class="player-header">
-
-            <div
-                class="player-title"
-                id="playerTitle"
-            >
-                Video
-            </div>
-
-            <button
-                class="close-button"
-                id="closePlayer"
-                type="button"
-            >
-                ×
-            </button>
-
-        </div>
-
-
-        <video
-            class="player-video"
-            id="playerVideo"
-            controls
-            playsinline
-            controlsList="nodownload noplaybackrate"
-            disablePictureInPicture
-            preload="metadata"
-        ></video>
-
-
-        <div class="player-info">
-
-            <div
-                class="player-category"
-                id="playerCategory"
-            ></div>
-
-            <p
-                class="player-description"
-                id="playerDescription"
-            ></p>
+            Online
 
         </div>
 
@@ -931,12 +777,177 @@ body{
 </div>
 
 
+</header>
+
+<nav class="category-bar">
+
+
+<div
+    class="categories"
+    id="categories"
+>
+
+    <button class="category active" data-category="All">
+        All
+    </button>
+
+    <button class="category" data-category="BackShots">
+        BackShots
+    </button>
+
+    <button class="category" data-category="Masterbates">
+        Masterbates
+    </button>
+
+    <button class="category" data-category="RoughX">
+        RoughX
+    </button>
+
+    <button class="category" data-category="BBW">
+        BBW
+    </button>
+
+    <button class="category" data-category="Africans">
+        Africans
+    </button>
+
+    <button class="category" data-category="Cums">
+        Cums
+    </button>
+
+    <button class="category" data-category="Close Friends">
+        Close Friends
+    </button>
+
+</div>
+
+
+</nav>
+
+<main class="main">
+
+
+<section class="hero">
+
+    <h1>
+        Welcome to
+        <span>StreamX</span>
+    </h1>
+
+    <p>
+        Browse the latest content or search for a video or category.
+    </p>
+
+</section>
+
+
+<div class="section-header">
+
+    <h2 id="sectionTitle">
+        All Videos
+    </h2>
+
+    <span
+        class="result-count"
+        id="resultCount"
+    >
+        Loading...
+    </span>
+
+</div>
+
+
+<div
+    id="searchStatus"
+    class="search-status"
+></div>
+
+
+<div
+    id="videoGrid"
+    class="video-grid"
+>
+
+    <div class="loading">
+
+        <div class="spinner"></div>
+
+        <span>
+            Loading videos...
+        </span>
+
+    </div>
+
+</div>
+
+
+</main>
+
+<div
+    class="modal"
+    id="videoModal"
+>
+
+
+<div class="player-container">
+
+    <div class="player-header">
+
+        <div
+            class="player-title"
+            id="playerTitle"
+        >
+            Video
+        </div>
+
+        <button
+            class="close-button"
+            id="closePlayer"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <video
+        class="player-video"
+        id="playerVideo"
+        controls
+        playsinline
+        controlsList="nodownload noplaybackrate"
+        disablePictureInPicture
+        preload="metadata"
+    ></video>
+
+
+    <div class="player-info">
+
+        <div
+            class="player-category"
+            id="playerCategory"
+        ></div>
+
+        <p
+            class="player-description"
+            id="playerDescription"
+        ></p>
+
+    </div>
+
+</div>
+```
+
+</div>
+
 <footer class="footer">
 
-    © 2026 StreamX
+
+© 2026 StreamX
+
 
 </footer>
-
 
 <script>
 
@@ -966,6 +977,20 @@ let allVideos = [];
 let currentCategory = "All";
 
 let searchTerm = "";
+
+
+/*
+ * Keeps track of the video whose
+ * current playback session is being
+ * counted.
+ *
+ * This prevents the same opening
+ * from being counted multiple times.
+ */
+
+let currentViewVideoId = null;
+
+let viewCountedForCurrentVideo = false;
 
 
 /* =========================
@@ -1038,35 +1063,56 @@ async function loadVideos(){
 
     showLoading();
 
-    const result =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending:false
-                }
+    try{
+
+        const result =
+            await supabaseClient
+                .from("videos")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending:false
+                    }
+                );
+
+
+        if(result.error){
+
+            console.error(
+                "Supabase error:",
+                result.error
             );
 
-    if(result.error){
+            showError(
+                "Unable to load videos. Please try again."
+            );
+
+            return;
+
+        }
+
+
+        allVideos =
+            result.data || [];
+
+
+        renderVideos();
+
+    }
+    catch(error){
 
         console.error(
-            "Supabase error:",
-            result.error
+            "Unexpected load error:",
+            error
         );
 
         showError(
             "Unable to load videos. Please try again."
         );
 
-        return;
     }
 
-    allVideos =
-        result.data || [];
-
-    renderVideos();
 }
 
 
@@ -1083,29 +1129,35 @@ function getFilteredVideos(){
                 video.category || ""
             );
 
+
         const categoryMatch =
             currentCategory === "All" ||
             videoCategory.toLowerCase() ===
             currentCategory.toLowerCase();
+
 
         const title =
             String(
                 video.title || ""
             ).toLowerCase();
 
+
         const description =
             String(
                 video.description || ""
             ).toLowerCase();
 
+
         const category =
             videoCategory.toLowerCase();
+
 
         const searchMatch =
             !searchTerm ||
             title.includes(searchTerm) ||
             description.includes(searchTerm) ||
             category.includes(searchTerm);
+
 
         return (
             categoryMatch &&
@@ -1126,7 +1178,9 @@ function renderVideos(){
     const videos =
         getFilteredVideos();
 
-    videoGrid.innerHTML = "";
+
+    videoGrid.innerHTML =
+        "";
 
 
     if(searchTerm){
@@ -1134,8 +1188,10 @@ function renderVideos(){
         sectionTitle.textContent =
             "Search Results";
 
+
         searchStatus.style.display =
             "block";
+
 
         searchStatus.innerHTML =
             "Searching for: <strong>" +
@@ -1147,6 +1203,7 @@ function renderVideos(){
 
         searchStatus.style.display =
             "none";
+
 
         sectionTitle.textContent =
             currentCategory === "All"
@@ -1170,6 +1227,7 @@ function renderVideos(){
         showEmpty();
 
         return;
+
     }
 
 
@@ -1192,6 +1250,7 @@ function createVideoCard(video){
 
     const card =
         document.createElement("article");
+
 
     card.className =
         "video-card";
@@ -1264,6 +1323,7 @@ function createVideoCard(video){
                 `
             }
 
+
             <div class="play-overlay">
 
                 <div class="play-circle">
@@ -1271,6 +1331,7 @@ function createVideoCard(video){
                 </div>
 
             </div>
+
 
             <div class="category-tag">
                 ${escapeHTML(category)}
@@ -1284,6 +1345,7 @@ function createVideoCard(video){
             <div class="video-title">
                 ${escapeHTML(title)}
             </div>
+
 
             ${
                 description
@@ -1300,11 +1362,15 @@ function createVideoCard(video){
                 ""
             }
 
+
             <div class="video-meta">
 
-                <span class="view-count-${video.id}">
+                <span
+                    class="view-count-${escapeHTML(String(video.id))}"
+                >
                     ${views} views
                 </span>
+
 
                 <span>
                     ${escapeHTML(date)}
@@ -1328,6 +1394,7 @@ function createVideoCard(video){
 
 
     return card;
+
 }
 
 
@@ -1340,8 +1407,11 @@ function getPublicURL(
     bucket
 ){
 
-    if(!value)
+    if(!value){
+
         return null;
+
+    }
 
 
     if(
@@ -1373,8 +1443,11 @@ function getStoragePath(
     bucket
 ){
 
-    if(!value)
+    if(!value){
+
         return null;
+
+    }
 
 
     if(
@@ -1463,7 +1536,7 @@ function getStoragePath(
 
 
 /* =========================
-   SIGNED VIDEO URL
+   GET VIDEO URL
 ========================= */
 
 async function getVideoURL(video){
@@ -1498,29 +1571,43 @@ async function getVideoURL(video){
     }
 
 
-    const result =
-        await supabaseClient
-            .storage
-            .from("videos")
-            .createSignedUrl(
-                storagePath,
-                3600
+    try{
+
+        const result =
+            await supabaseClient
+                .storage
+                .from("videos")
+                .createSignedUrl(
+                    storagePath,
+                    3600
+                );
+
+
+        if(result.error){
+
+            console.error(
+                "Signed URL error:",
+                result.error
             );
 
+            return null;
 
-    if(result.error){
+        }
+
+
+        return result.data.signedUrl;
+
+    }
+    catch(error){
 
         console.error(
-            "Signed URL error:",
-            result.error
+            "Video URL error:",
+            error
         );
 
         return null;
 
     }
-
-
-    return result.data.signedUrl;
 
 }
 
@@ -1530,6 +1617,18 @@ async function getVideoURL(video){
 ========================= */
 
 async function openPlayer(video){
+
+    /*
+     * Reset the view-count state
+     * for this new video opening.
+     */
+
+    currentViewVideoId =
+        video.id;
+
+    viewCountedForCurrentVideo =
+        false;
+
 
     playerTitle.textContent =
         video.title ||
@@ -1545,6 +1644,12 @@ async function openPlayer(video){
         video.description ||
         "";
 
+
+    /*
+     * Completely reset the player.
+     */
+
+    playerVideo.pause();
 
     playerVideo.removeAttribute(
         "src"
@@ -1562,28 +1667,110 @@ async function openPlayer(video){
         "hidden";
 
 
+    /*
+     * IMPORTANT:
+     *
+     * The playing event is registered
+     * BEFORE play() is called.
+     *
+     * This fixes the problem where the
+     * Mini App could miss the event.
+     */
+
+    playerVideo.onplaying =
+        function(){
+
+            console.log(
+                "VIDEO STARTED — COUNTING VIEW"
+            );
+
+
+            if(
+                currentViewVideoId !==
+                video.id
+            ){
+
+                return;
+
+            }
+
+
+            if(
+                viewCountedForCurrentVideo
+            ){
+
+                return;
+
+            }
+
+
+            viewCountedForCurrentVideo =
+                true;
+
+
+            updateViews(video);
+
+        };
+
+
+    /*
+     * Get the secure video URL.
+     */
+
     const videoURL =
         await getVideoURL(video);
 
 
-    if(!videoURL){
+    /*
+     * Make sure the player wasn't
+     * closed while the URL was loading.
+     */
 
-        closeVideoPlayer();
-
-        alert(
-            "Unable to load this video."
-        );
+    if(
+        currentViewVideoId !==
+        video.id
+    ){
 
         return;
 
     }
 
 
+    if(!videoURL){
+
+        closeVideoPlayer();
+
+
+        alert(
+            "Unable to load this video."
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+     * Set the video source.
+     */
+
     playerVideo.src =
         videoURL;
 
+
     playerVideo.load();
 
+
+    /*
+     * Try autoplay.
+     *
+     * If autoplay is blocked,
+     * the user can press Play.
+     *
+     * The "playing" event above will
+     * still count the view.
+     */
 
     try{
 
@@ -1593,23 +1780,10 @@ async function openPlayer(video){
     catch(error){
 
         console.log(
-            "Autoplay blocked."
+            "Autoplay blocked. User can press Play."
         );
 
     }
-
-
-    /*
-     * COUNT THE VIEW
-     *
-     * The RPC function performs:
-     *
-     * views = views + 1
-     *
-     * directly inside Supabase.
-     */
-
-    updateViews(video);
 
 }
 
@@ -1621,17 +1795,16 @@ async function openPlayer(video){
 async function updateViews(video){
 
     /*
-     * IMPORTANT:
-     *
-     * Do NOT manually calculate:
-     *
-     * video.views + 1
-     *
-     * because multiple users can open
-     * the same video simultaneously.
-     *
-     * The database handles the increment.
+     * Prevent duplicate requests
+     * for the same opening.
      */
+
+    if(!video || !video.id){
+
+        return;
+
+    }
+
 
     try{
 
@@ -1657,12 +1830,21 @@ async function updateViews(video){
                 error
             );
 
+            /*
+             * Allow another attempt if
+             * the database request failed.
+             */
+
+            viewCountedForCurrentVideo =
+                false;
+
             return;
+
         }
 
 
         /*
-         * Supabase returns the new
+         * Supabase RPC returns the new
          * database view count.
          */
 
@@ -1677,9 +1859,7 @@ async function updateViews(video){
 
 
         /*
-         * Update the local JavaScript
-         * object so the next render uses
-         * the correct number.
+         * Update the local object.
          */
 
         video.views =
@@ -1687,9 +1867,7 @@ async function updateViews(video){
 
 
         /*
-         * Update the visible card
-         * immediately without reloading
-         * the entire page.
+         * Update the visible card.
          */
 
         const viewElement =
@@ -1706,7 +1884,6 @@ async function updateViews(video){
 
         }
 
-
     }
     catch(error){
 
@@ -1714,6 +1891,16 @@ async function updateViews(video){
             "Unexpected view update error:",
             error
         );
+
+
+        /*
+         * If something unexpected happened,
+         * allow another playback attempt
+         * to count the view.
+         */
+
+        viewCountedForCurrentVideo =
+            false;
 
     }
 
@@ -1726,17 +1913,49 @@ async function updateViews(video){
 
 function closeVideoPlayer(){
 
+    /*
+     * Stop any future view-count
+     * callbacks for the closed video.
+     */
+
+    currentViewVideoId =
+        null;
+
+    viewCountedForCurrentVideo =
+        false;
+
+
+    /*
+     * Remove the playing handler.
+     */
+
+    playerVideo.onplaying =
+        null;
+
+
+    /*
+     * Stop video.
+     */
+
     playerVideo.pause();
+
 
     playerVideo.removeAttribute(
         "src"
     );
 
+
     playerVideo.load();
+
+
+    /*
+     * Close modal.
+     */
 
     videoModal.classList.remove(
         "show"
     );
+
 
     document.body.style.overflow =
         "";
@@ -1871,8 +2090,11 @@ document
                 );
 
 
-            if(!button)
+            if(!button){
+
                 return;
+
+            }
 
 
             document
@@ -2355,4 +2577,5 @@ loadVideos();
 </script>
 
 </body>
+
 </html>

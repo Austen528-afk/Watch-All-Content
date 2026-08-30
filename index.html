@@ -1609,7 +1609,14 @@ async function openPlayer(video){
      * directly inside Supabase.
      */
 
-    updateViews(video);
+    playerVideo.addEventListener(
+    "playing",
+    function(){
+        console.log("VIDEO STARTED — COUNTING VIEW");
+        updateViews(video);
+    },
+    { once: true }
+);
 
 }
 

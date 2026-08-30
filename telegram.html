@@ -20,6 +20,10 @@
 
 <style>
 
+/* =====================================================
+   RESET
+===================================================== */
+
 * {
     margin: 0;
     padding: 0;
@@ -44,28 +48,39 @@ body {
 ===================================================== */
 
 .header {
+
     height: 64px;
+
     background: #111;
+
     border-bottom: 1px solid #252525;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     padding: 0 16px;
 
     position: sticky;
+
     top: 0;
+
     z-index: 100;
 }
 
 .logo {
+
     font-size: 24px;
+
     font-weight: 900;
+
     letter-spacing: -1px;
 }
 
 .logo span {
+
     color: #ff1744;
 }
 
@@ -79,7 +94,9 @@ body {
     min-height: calc(100vh - 64px);
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     text-align: center;
@@ -88,9 +105,11 @@ body {
 .spinner {
 
     width: 42px;
+
     height: 42px;
 
     border: 4px solid #292929;
+
     border-top: 4px solid #ff1744;
 
     border-radius: 50%;
@@ -113,6 +132,7 @@ body {
 }
 
 .loading-text {
+
     color: #999;
 }
 
@@ -130,12 +150,14 @@ body {
     padding: 20px;
 
     align-items: center;
+
     justify-content: center;
 }
 
 .age-card {
 
     width: 100%;
+
     max-width: 420px;
 
     background: #111;
@@ -155,12 +177,14 @@ body {
 .age-icon {
 
     font-size: 55px;
+
     margin-bottom: 15px;
 }
 
 .age-card h1 {
 
     font-size: 28px;
+
     margin-bottom: 15px;
 }
 
@@ -200,31 +224,38 @@ body {
 }
 
 .age-button:active {
+
     transform: scale(.98);
 }
 
 .age-button:disabled {
+
     opacity: .5;
+
     cursor: not-allowed;
 }
 
 .btn18 {
 
     background: #ff1744;
+
     color: white;
 }
 
 .btn18:hover {
+
     background: #e9143e;
 }
 
 .btnUnder {
 
     background: #292929;
+
     color: white;
 }
 
 .btnUnder:hover {
+
     background: #353535;
 }
 
@@ -252,6 +283,7 @@ body {
 ===================================================== */
 
 .stream-header {
+
     margin-bottom: 20px;
 }
 
@@ -263,6 +295,7 @@ body {
 }
 
 .stream-header p {
+
     color: #888;
 }
 
@@ -300,10 +333,12 @@ body {
 }
 
 #searchInput:focus {
+
     border-color: #ff1744;
 }
 
 #searchInput::placeholder {
+
     color: #666;
 }
 
@@ -337,6 +372,7 @@ body {
 }
 
 .categories::-webkit-scrollbar {
+
     display: none;
 }
 
@@ -362,6 +398,7 @@ body {
 }
 
 .category-button:hover {
+
     background: #252525;
 }
 
@@ -380,6 +417,7 @@ body {
 ===================================================== */
 
 .video-section {
+
     margin-top: 10px;
 }
 
@@ -495,6 +533,7 @@ body {
 ===================================================== */
 
 .video-info {
+
     padding: 12px;
 }
 
@@ -553,7 +592,9 @@ body {
 }
 
 #noVideos p {
+
     color: #777;
+
     line-height: 1.5;
 }
 
@@ -608,6 +649,7 @@ body {
 }
 
 .modal-info {
+
     padding: 18px;
 }
 
@@ -706,6 +748,7 @@ body {
 }
 
 .denied-box h2 {
+
     margin-bottom: 12px;
 }
 
@@ -752,6 +795,7 @@ body {
 }
 
 .error-box h2 {
+
     margin-bottom: 12px;
 }
 
@@ -789,22 +833,27 @@ body {
 @media (max-width: 600px) {
 
     .header {
+
         padding: 0 13px;
     }
 
     .logo {
+
         font-size: 22px;
     }
 
     #streamingPage {
+
         padding: 15px;
     }
 
     .age-card {
+
         padding: 25px 20px;
     }
 
     .age-card h1 {
+
         font-size: 25px;
     }
 
@@ -817,10 +866,12 @@ body {
     }
 
     .video-info {
+
         padding: 9px;
     }
 
     .video-title {
+
         font-size: 13px;
     }
 
@@ -881,11 +932,15 @@ body {
     <div class="age-card">
 
         <div class="age-icon">
+
             🔞
+
         </div>
 
         <h1>
+
             Age Verification
+
         </h1>
 
         <p>
@@ -937,11 +992,15 @@ body {
     <div class="stream-header">
 
         <h1>
+
             StreamX
+
         </h1>
 
         <p>
+
             Browse available content.
+
         </p>
 
     </div>
@@ -964,7 +1023,9 @@ body {
     <!-- CATEGORIES -->
 
     <div class="category-title">
+
         Categories
+
     </div>
 
 
@@ -989,12 +1050,16 @@ body {
         <div id="noVideos">
 
             <h2>
+
                 No videos found
+
             </h2>
 
             <p>
+
                 There are currently no videos
                 available in this category.
+
             </p>
 
         </div>
@@ -1014,11 +1079,15 @@ body {
     <div class="denied-box">
 
         <div class="denied-icon">
+
             🔞
+
         </div>
 
         <h2>
+
             Access Denied
+
         </h2>
 
         <p>
@@ -1043,18 +1112,24 @@ body {
     <div class="error-box">
 
         <h2>
+
             Connection Error
+
         </h2>
 
         <p id="errorMessage">
+
             Unable to connect to StreamX.
+
         </p>
 
         <button
             class="retry-button"
             onclick="location.reload()"
         >
+
             Try Again
+
         </button>
 
     </div>
@@ -1074,7 +1149,9 @@ body {
         id="closeModal"
         type="button"
     >
+
         ×
+
     </button>
 
 
@@ -1123,8 +1200,7 @@ body {
 /* =====================================================
    SUPABASE CONFIGURATION
 
-   THIS IS THE SAME SUPABASE PROJECT
-   USED BY YOUR WEBSITE.
+   SAME SUPABASE PROJECT AS YOUR WEBSITE
 ===================================================== */
 
 const SUPABASE_URL =
@@ -1146,58 +1222,94 @@ const supabaseClient =
 ===================================================== */
 
 const loadingScreen =
-    document.getElementById("loadingScreen");
+    document.getElementById(
+        "loadingScreen"
+    );
 
 const ageGate =
-    document.getElementById("ageGate");
+    document.getElementById(
+        "ageGate"
+    );
 
 const streamingPage =
-    document.getElementById("streamingPage");
+    document.getElementById(
+        "streamingPage"
+    );
 
 const deniedScreen =
-    document.getElementById("deniedScreen");
+    document.getElementById(
+        "deniedScreen"
+    );
 
 const errorScreen =
-    document.getElementById("errorScreen");
+    document.getElementById(
+        "errorScreen"
+    );
 
 const errorMessage =
-    document.getElementById("errorMessage");
+    document.getElementById(
+        "errorMessage"
+    );
 
 const btn18 =
-    document.getElementById("btn18");
+    document.getElementById(
+        "btn18"
+    );
 
 const btnUnder18 =
-    document.getElementById("btnUnder18");
+    document.getElementById(
+        "btnUnder18"
+    );
 
 const searchInput =
-    document.getElementById("searchInput");
+    document.getElementById(
+        "searchInput"
+    );
 
 const categoriesContainer =
-    document.getElementById("categories");
+    document.getElementById(
+        "categories"
+    );
 
 const videoGrid =
-    document.getElementById("videoGrid");
+    document.getElementById(
+        "videoGrid"
+    );
 
 const noVideos =
-    document.getElementById("noVideos");
+    document.getElementById(
+        "noVideos"
+    );
 
 const videoModal =
-    document.getElementById("videoModal");
+    document.getElementById(
+        "videoModal"
+    );
 
 const modalVideo =
-    document.getElementById("modalVideo");
+    document.getElementById(
+        "modalVideo"
+    );
 
 const modalTitle =
-    document.getElementById("modalTitle");
+    document.getElementById(
+        "modalTitle"
+    );
 
 const modalCategory =
-    document.getElementById("modalCategory");
+    document.getElementById(
+        "modalCategory"
+    );
 
 const modalDescription =
-    document.getElementById("modalDescription");
+    document.getElementById(
+        "modalDescription"
+    );
 
 const closeModal =
-    document.getElementById("closeModal");
+    document.getElementById(
+        "closeModal"
+    );
 
 
 /* =====================================================
@@ -1336,18 +1448,13 @@ async function initializeTelegram() {
 
 
         /*
-           IMPORTANT:
+           Telegram username/name is NOT
+           displayed on the Mini App.
 
-           The user's name is NOT displayed
-           on the Mini App.
-
-           We still save the Telegram account
-           information to Supabase so YOU can
-           see it in the users table.
+           The account information is still
+           saved to your Supabase users table.
         */
 
-
-        /* Save user to existing users table */
 
         const saved =
             await saveTelegramUser();
@@ -1365,7 +1472,7 @@ async function initializeTelegram() {
 
 
         /*
-           ALWAYS show age verification first.
+           ALWAYS SHOW AGE VERIFICATION FIRST
         */
 
         showAgeGate();
@@ -1408,11 +1515,9 @@ async function saveTelegramUser() {
 
 
     /*
-       The user information is still saved
-       to your Supabase users table.
-
-       It is simply NOT displayed on the
-       Mini App interface.
+       The user's information is stored
+       in Supabase but never displayed
+       on the Mini App.
     */
 
     const { error } =
@@ -1612,19 +1717,17 @@ btn18.addEventListener(
 
 
             /*
-               THIS IS THE IMPORTANT CONNECTION.
-
-               Videos are loaded from the SAME
-               Supabase videos table used by
-               your website.
+               Load videos from the SAME
+               Supabase videos table used
+               by your main website.
             */
 
             await loadVideos();
 
 
             /*
-               Only after the videos have been
-               retrieved do we show the content.
+               Only show streaming page
+               after videos have loaded.
             */
 
             showStreamingPage();
@@ -1695,26 +1798,11 @@ async function loadVideos() {
     /*
        IMPORTANT:
 
-       This does NOT create another videos table.
+       This reads the EXISTING videos table
+       shared with your main website.
 
-       It reads your EXISTING:
-
-       videos
-
-       table.
-
-       Expected columns:
-
-       id
-       title
-       description
-       category
-       video_url
-       thumbnail_url
-       created_at
-       views
+       No new videos table is created.
     */
-
 
     const { data, error } =
         await supabaseClient
@@ -1746,8 +1834,8 @@ async function loadVideos() {
 
 
     /*
-       Store the videos retrieved from
-       your website's database.
+       Store videos retrieved from
+       the shared database.
     */
 
     allVideos =
@@ -1760,17 +1848,7 @@ async function loadVideos() {
     );
 
 
-    /*
-       Build categories directly from
-       the database.
-    */
-
     buildCategories();
-
-
-    /*
-       Display videos.
-    */
 
     renderVideos();
 
@@ -1786,10 +1864,6 @@ function buildCategories() {
     categoriesContainer.innerHTML =
         "";
 
-
-    /*
-       ALL CATEGORY
-    */
 
     const allButton =
         createCategoryButton(
@@ -1807,11 +1881,6 @@ function buildCategories() {
         allButton
     );
 
-
-    /*
-       Find unique categories
-       from the existing videos.
-    */
 
     const categoryMap =
         new Map();
@@ -1853,10 +1922,6 @@ function buildCategories() {
         }
     );
 
-
-    /*
-       Create buttons automatically.
-    */
 
     categoryMap.forEach(
         function(
@@ -1966,11 +2031,6 @@ function renderVideos() {
         allVideos.filter(
             function(video) {
 
-
-                /*
-                   CATEGORY FILTER
-                */
-
                 let categoryMatches =
                     currentCategory ===
                     "all";
@@ -1995,10 +2055,6 @@ function renderVideos() {
 
                 }
 
-
-                /*
-                   SEARCH FILTER
-                */
 
                 if (!searchTerm) {
 
@@ -2379,7 +2435,8 @@ function openVideo(video) {
 
 
     /*
-       USE THE VIDEO URL FROM SUPABASE.
+       USE VIDEO URL FROM THE SHARED
+       SUPABASE VIDEOS TABLE.
     */
 
     modalVideo.src =
@@ -2407,12 +2464,18 @@ function openVideo(video) {
 
 
     /*
-       UPDATE VIEW COUNT.
+       RECORD A VIEW USING THE SUPABASE
+       DATABASE FUNCTION.
+
+       This is the important change.
+
+       The database increments the existing
+       counter instead of the Mini App
+       calculating and overwriting it.
     */
 
     incrementViews(
-        video.id,
-        video.views
+        video.id
     );
 
 }
@@ -2496,70 +2559,103 @@ document.addEventListener(
 
 /* =====================================================
    INCREMENT VIEWS
+   DATABASE RPC VERSION
 ===================================================== */
 
-async function incrementViews(
-    videoId,
-    currentViews
-) {
+async function incrementViews(videoId) {
 
-    const newViews =
-        Number(
-            currentViews || 0
-        ) + 1;
+    try {
 
+        /*
+           Call the Supabase PostgreSQL
+           function created in Step 3.
 
-    const { error } =
-        await supabaseClient
+           It increments the existing
+           views value directly inside
+           the database.
 
-            .from("videos")
+           This prevents the website and
+           Mini App from overwriting each
+           other's view counts.
+        */
 
-            .update({
-
-                views:
-                    newViews
-
-            })
-
-            .eq(
-                "id",
-                videoId
+        const { data, error } =
+            await supabaseClient.rpc(
+                "increment_video_views",
+                {
+                    video_id: videoId
+                }
             );
 
 
-    if (error) {
+        if (error) {
 
-        console.error(
-            "View update error:",
-            error
+            console.error(
+                "View increment RPC error:",
+                error
+            );
+
+            return;
+
+        }
+
+
+        /*
+           Find the local video.
+        */
+
+        const video =
+            allVideos.find(
+                function(item) {
+
+                    return (
+                        item.id ===
+                        videoId
+                    );
+
+                }
+            );
+
+
+        /*
+           If the RPC returns the new
+           number of views, update the
+           local copy immediately.
+        */
+
+        if (
+            video &&
+            data !== null &&
+            data !== undefined
+        ) {
+
+            video.views =
+                Number(data);
+
+        }
+
+
+        /*
+           Update the displayed view count.
+        */
+
+        renderVideos();
+
+
+        console.log(
+            "View successfully recorded:",
+            videoId,
+            data
         );
-
-        return;
 
     }
 
+    catch (error) {
 
-    /*
-       Update local copy.
-    */
-
-    const video =
-        allVideos.find(
-            function(item) {
-
-                return (
-                    item.id ===
-                    videoId
-                );
-
-            }
+        console.error(
+            "View increment error:",
+            error
         );
-
-
-    if (video) {
-
-        video.views =
-            newViews;
 
     }
 

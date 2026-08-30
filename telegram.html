@@ -13,8 +13,10 @@
 
 <title>StreamX</title>
 
+
 <!-- Telegram Mini App SDK -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 
 <!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,9 +24,9 @@
 
 <style>
 
-/* ==================================================
+/* =====================================================
    RESET
-================================================== */
+===================================================== */
 
 * {
     margin: 0;
@@ -33,18 +35,23 @@
 }
 
 
-/* ==================================================
+/* =====================================================
    BODY
-================================================== */
+===================================================== */
 
 html,
 body {
+
     width: 100%;
+
     min-height: 100%;
+
 }
 
 body {
+
     background: #080808;
+
     color: #ffffff;
 
     font-family:
@@ -53,389 +60,101 @@ body {
         sans-serif;
 
     min-height: 100vh;
+
 }
 
 
-/* ==================================================
+/* =====================================================
    HEADER
-================================================== */
+===================================================== */
 
 .header {
 
     height: 64px;
 
-    padding: 0 16px;
+    padding:
+        0 16px;
 
-    background: #111111;
+    background:
+        #111111;
 
     border-bottom:
         1px solid #222222;
 
-    display: flex;
-
-    justify-content:
-        space-between;
+    display:
+        flex;
 
     align-items:
         center;
 
-    position: sticky;
+    justify-content:
+        space-between;
 
-    top: 0;
+    position:
+        sticky;
 
-    z-index: 1000;
+    top:
+        0;
+
+    z-index:
+        1000;
+
 }
 
 
 .logo {
 
-    font-size: 24px;
+    font-size:
+        24px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    letter-spacing: -1px;
+    letter-spacing:
+        -1px;
+
 }
 
 
 .logo span {
 
-    color: #ff1744;
+    color:
+        #ff1744;
+
 }
 
 
 .user {
 
-    max-width: 160px;
+    max-width:
+        160px;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    color: #aaaaaa;
+    color:
+        #aaaaaa;
 
-    white-space: nowrap;
+    white-space:
+        nowrap;
 
-    overflow: hidden;
+    overflow:
+        hidden;
 
-    text-overflow: ellipsis;
+    text-overflow:
+        ellipsis;
+
 }
 
 
-/* ==================================================
+/* =====================================================
    LOADING
-================================================== */
+===================================================== */
 
 .loading {
 
     min-height:
         calc(100vh - 64px);
-
-    display: flex;
-
-    justify-content:
-        center;
-
-    align-items:
-        center;
-
-    text-align: center;
-
-    padding: 30px;
-}
-
-
-.loading-box {
-
-    color: #999999;
-}
-
-
-.spinner {
-
-    width: 42px;
-
-    height: 42px;
-
-    border:
-        4px solid #292929;
-
-    border-top:
-        4px solid #ff1744;
-
-    border-radius: 50%;
-
-    animation:
-        spin 0.8s linear infinite;
-
-    margin:
-        0 auto 15px;
-}
-
-
-@keyframes spin {
-
-    from {
-        transform:
-            rotate(0deg);
-    }
-
-    to {
-        transform:
-            rotate(360deg);
-    }
-
-}
-
-
-/* ==================================================
-   AGE VERIFICATION
-================================================== */
-
-.age-gate {
-
-    min-height:
-        calc(100vh - 64px);
-
-    display: flex;
-
-    justify-content:
-        center;
-
-    align-items:
-        center;
-
-    padding: 20px;
-}
-
-
-.card {
-
-    width: 100%;
-
-    max-width: 420px;
-
-    background: #111111;
-
-    border:
-        1px solid #292929;
-
-    border-radius: 18px;
-
-    padding: 30px;
-
-    text-align: center;
-
-    box-shadow:
-        0 15px 40px
-        rgba(0,0,0,0.35);
-}
-
-
-.age-icon {
-
-    font-size: 52px;
-
-    margin-bottom: 15px;
-}
-
-
-.card h1 {
-
-    font-size: 28px;
-
-    margin-bottom: 15px;
-}
-
-
-.card p {
-
-    color: #999999;
-
-    line-height: 1.6;
-
-    margin-bottom: 25px;
-}
-
-
-/* ==================================================
-   VERIFICATION BUTTONS
-================================================== */
-
-.btn {
-
-    width: 100%;
-
-    padding: 15px;
-
-    border: none;
-
-    border-radius: 12px;
-
-    font-size: 16px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-    margin-top: 10px;
-
-    transition:
-        opacity 0.2s ease,
-        transform 0.1s ease;
-}
-
-
-.btn:active {
-
-    transform:
-        scale(0.98);
-}
-
-
-.btn:disabled {
-
-    opacity: 0.6;
-
-    cursor:
-        not-allowed;
-}
-
-
-.btn18 {
-
-    background:
-        #ff1744;
-
-    color:
-        #ffffff;
-}
-
-
-.btn18:hover {
-
-    opacity:
-        0.9;
-}
-
-
-.btnUnder {
-
-    background:
-        #252525;
-
-    color:
-        #ffffff;
-}
-
-
-.btnUnder:hover {
-
-    background:
-        #303030;
-}
-
-
-/* ==================================================
-   STREAMX CONTENT
-================================================== */
-
-.content {
-
-    display: none;
-
-    padding:
-        20px;
-
-    max-width:
-        1100px;
-
-    margin:
-        0 auto;
-}
-
-
-.hero {
-
-    background:
-        #111111;
-
-    border:
-        1px solid #222222;
-
-    border-radius:
-        16px;
-
-    padding:
-        25px;
-
-    margin-bottom:
-        20px;
-}
-
-
-.hero h2 {
-
-    margin-bottom:
-        10px;
-}
-
-
-.hero p {
-
-    color:
-        #999999;
-
-    line-height:
-        1.6;
-}
-
-
-/* ==================================================
-   CONTENT PLACEHOLDER
-================================================== */
-
-.content-placeholder {
-
-    background:
-        #111111;
-
-    border:
-        1px solid #222222;
-
-    border-radius:
-        16px;
-
-    padding:
-        25px;
-
-    text-align:
-        center;
-}
-
-
-.content-placeholder h3 {
-
-    margin-bottom:
-        10px;
-}
-
-
-.content-placeholder p {
-
-    color:
-        #888888;
-
-    line-height:
-        1.6;
-}
-
-
-/* ==================================================
-   ACCESS DENIED
-================================================== */
-
-.denied {
-
-    min-height:
-        100vh;
 
     display:
         flex;
@@ -452,8 +171,367 @@ body {
     padding:
         30px;
 
+}
+
+
+.loading-box {
+
+    color:
+        #999999;
+
+}
+
+
+.spinner {
+
+    width:
+        42px;
+
+    height:
+        42px;
+
+    border:
+        4px solid #292929;
+
+    border-top:
+        4px solid #ff1744;
+
+    border-radius:
+        50%;
+
+    animation:
+        spin 0.8s linear infinite;
+
+    margin:
+        0 auto 15px;
+
+}
+
+
+@keyframes spin {
+
+    from {
+
+        transform:
+            rotate(0deg);
+
+    }
+
+    to {
+
+        transform:
+            rotate(360deg);
+
+    }
+
+}
+
+
+/* =====================================================
+   AGE VERIFICATION
+===================================================== */
+
+.age-gate {
+
+    min-height:
+        calc(100vh - 64px);
+
+    display:
+        none;
+
+    justify-content:
+        center;
+
+    align-items:
+        center;
+
+    padding:
+        20px;
+
+}
+
+
+.age-card {
+
+    width:
+        100%;
+
+    max-width:
+        420px;
+
+    background:
+        #111111;
+
+    border:
+        1px solid #292929;
+
+    border-radius:
+        20px;
+
+    padding:
+        30px;
+
+    text-align:
+        center;
+
+    box-shadow:
+        0 15px 40px
+        rgba(0,0,0,0.4);
+
+}
+
+
+.age-icon {
+
+    font-size:
+        55px;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+.age-card h1 {
+
+    font-size:
+        28px;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+.age-card p {
+
+    color:
+        #999999;
+
+    line-height:
+        1.6;
+
+    margin-bottom:
+        25px;
+
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.verify-btn {
+
+    width:
+        100%;
+
+    padding:
+        15px;
+
+    margin-top:
+        10px;
+
+    border:
+        none;
+
+    border-radius:
+        12px;
+
+    font-size:
+        16px;
+
+    font-weight:
+        bold;
+
+    cursor:
+        pointer;
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.1s ease;
+
+}
+
+
+.verify-btn:active {
+
+    transform:
+        scale(0.98);
+
+}
+
+
+.verify-btn:disabled {
+
+    opacity:
+        0.5;
+
+    cursor:
+        not-allowed;
+
+}
+
+
+.btn18 {
+
+    background:
+        #ff1744;
+
+    color:
+        #ffffff;
+
+}
+
+
+.btn18:hover {
+
+    opacity:
+        0.9;
+
+}
+
+
+.btnUnder {
+
+    background:
+        #292929;
+
+    color:
+        #ffffff;
+
+}
+
+
+.btnUnder:hover {
+
+    background:
+        #353535;
+
+}
+
+
+/* =====================================================
+   STREAMING AREA
+===================================================== */
+
+.streaming-area {
+
+    display:
+        none;
+
+    padding:
+        20px;
+
+    max-width:
+        1100px;
+
+    margin:
+        0 auto;
+
+}
+
+
+/*
+   This is intentionally only a shell.
+
+   Your actual categories and videos
+   will be loaded here in the next step.
+*/
+
+.streaming-header {
+
+    margin-bottom:
+        20px;
+
+}
+
+
+.streaming-header h1 {
+
+    font-size:
+        25px;
+
+    margin-bottom:
+        8px;
+
+}
+
+
+.streaming-header p {
+
+    color:
+        #888888;
+
+    font-size:
+        14px;
+
+}
+
+
+.library-box {
+
+    background:
+        #111111;
+
+    border:
+        1px solid #222222;
+
+    border-radius:
+        16px;
+
+    padding:
+        25px;
+
+}
+
+
+.library-box h2 {
+
+    margin-bottom:
+        10px;
+
+}
+
+
+.library-box p {
+
+    color:
+        #888888;
+
+    line-height:
+        1.6;
+
+}
+
+
+/* =====================================================
+   DENIED
+===================================================== */
+
+.denied {
+
+    min-height:
+        100vh;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    text-align:
+        center;
+
+    padding:
+        25px;
+
     background:
         #080808;
+
 }
 
 
@@ -469,13 +547,14 @@ body {
         #111111;
 
     border:
-        1px solid #222222;
+        1px solid #292929;
 
     border-radius:
-        18px;
+        20px;
 
     padding:
         30px;
+
 }
 
 
@@ -486,29 +565,32 @@ body {
 
     margin-bottom:
         15px;
+
 }
 
 
-.denied h2 {
+.denied-box h2 {
 
     margin-bottom:
         12px;
+
 }
 
 
-.denied p {
+.denied-box p {
 
     color:
         #999999;
 
     line-height:
         1.6;
+
 }
 
 
-/* ==================================================
+/* =====================================================
    ERROR
-================================================== */
+===================================================== */
 
 .error-screen {
 
@@ -518,10 +600,10 @@ body {
     display:
         flex;
 
-    justify-content:
+    align-items:
         center;
 
-    align-items:
+    justify-content:
         center;
 
     padding:
@@ -529,10 +611,14 @@ body {
 
     text-align:
         center;
+
 }
 
 
 .error-box {
+
+    width:
+        100%;
 
     max-width:
         420px;
@@ -541,13 +627,14 @@ body {
         #111111;
 
     border:
-        1px solid #222222;
+        1px solid #292929;
 
     border-radius:
-        18px;
+        20px;
 
     padding:
         30px;
+
 }
 
 
@@ -555,6 +642,7 @@ body {
 
     margin-bottom:
         12px;
+
 }
 
 
@@ -568,6 +656,7 @@ body {
 
     margin-bottom:
         20px;
+
 }
 
 
@@ -593,12 +682,13 @@ body {
 
     cursor:
         pointer;
+
 }
 
 
-/* ==================================================
+/* =====================================================
    MOBILE
-================================================== */
+===================================================== */
 
 @media (max-width: 500px) {
 
@@ -606,6 +696,7 @@ body {
 
         padding:
             0 13px;
+
     }
 
 
@@ -613,6 +704,7 @@ body {
 
         font-size:
             22px;
+
     }
 
 
@@ -620,6 +712,7 @@ body {
 
         max-width:
             130px;
+
     }
 
 
@@ -627,27 +720,31 @@ body {
 
         padding:
             15px;
+
     }
 
 
-    .card {
+    .age-card {
 
         padding:
             25px 20px;
+
     }
 
 
-    .card h1 {
+    .age-card h1 {
 
         font-size:
             25px;
+
     }
 
 
-    .content {
+    .streaming-area {
 
         padding:
             15px;
+
     }
 
 }
@@ -660,9 +757,9 @@ body {
 <body>
 
 
-<!-- ==================================================
+<!-- =====================================================
      HEADER
-================================================== -->
+===================================================== -->
 
 <div class="header">
 
@@ -686,9 +783,9 @@ body {
 
 
 
-<!-- ==================================================
-     LOADING SCREEN
-================================================== -->
+<!-- =====================================================
+     LOADING
+===================================================== -->
 
 <div
     class="loading"
@@ -700,7 +797,9 @@ body {
         <div class="spinner"></div>
 
         <p>
+
             Connecting to StreamX...
+
         </p>
 
     </div>
@@ -709,17 +808,17 @@ body {
 
 
 
-<!-- ==================================================
+<!-- =====================================================
      AGE VERIFICATION
-================================================== -->
+===================================================== -->
 
 <div
     class="age-gate"
     id="ageGate"
-    style="display:none;"
 >
 
-    <div class="card">
+
+    <div class="age-card">
 
 
         <div class="age-icon">
@@ -738,17 +837,25 @@ body {
 
         <p>
 
-            This platform contains adult content.
-            You must be 18 years or older to continue.
+            This streaming platform contains
+            adult content.
+
+            <br><br>
+
+            You must confirm that you are
+            18 years or older before accessing
+            StreamX.
 
         </p>
 
 
-        <!-- 18+ -->
+        <!-- =============================================
+             18+
+        ============================================== -->
 
         <button
             type="button"
-            class="btn btn18"
+            class="verify-btn btn18"
             id="btn18"
         >
 
@@ -757,11 +864,13 @@ body {
         </button>
 
 
-        <!-- UNDER 18 -->
+        <!-- =============================================
+             UNDER 18
+        ============================================== -->
 
         <button
             type="button"
-            class="btn btnUnder"
+            class="verify-btn btnUnder"
             id="btnUnder18"
         >
 
@@ -776,48 +885,51 @@ body {
 
 
 
-<!-- ==================================================
-     STREAMX CONTENT
-================================================== -->
+<!-- =====================================================
+     STREAMING AREA
+
+     IMPORTANT:
+     This remains hidden until access_granted
+     AND age_verified are both TRUE.
+===================================================== -->
 
 <div
-    class="content"
-    id="contentArea"
+    class="streaming-area"
+    id="streamingArea"
 >
 
 
-    <div class="hero">
+    <div class="streaming-header">
 
-        <h2>
+        <h1>
 
-            Welcome to StreamX
+            StreamX
 
-        </h2>
+        </h1>
 
 
         <p>
 
-            Your age has been verified.
-            StreamX content is now available.
+            Welcome to your streaming library.
 
         </p>
 
     </div>
 
 
+    <div class="library-box">
 
-    <div class="content-placeholder">
+        <h2>
 
-        <h3>
+            Your Content
 
-            StreamX Library
-
-        </h3>
+        </h2>
 
 
         <p>
 
-            Categories and videos will load here.
+            Your available categories and
+            videos will appear here.
 
         </p>
 
@@ -830,10 +942,9 @@ body {
 
 <script>
 
-
-/* ==================================================
+/* =====================================================
    SUPABASE CONFIGURATION
-================================================== */
+===================================================== */
 
 const SUPABASE_URL =
     "https://iojjmoywrlnzpyatahyh.supabase.co";
@@ -843,30 +954,37 @@ const SUPABASE_KEY =
     "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 
 
-/* ==================================================
+/* =====================================================
    CREATE SUPABASE CLIENT
-================================================== */
+===================================================== */
 
 const supabaseClient =
     window.supabase.createClient(
-
         SUPABASE_URL,
-
         SUPABASE_KEY
-
     );
 
 
-/* ==================================================
+/* =====================================================
    GLOBAL VARIABLES
-================================================== */
+===================================================== */
 
 let telegramUser = null;
 
 
-/* ==================================================
+/*
+   IMPORTANT SECURITY STATE
+
+   The streaming interface is locked
+   until this variable becomes true.
+*/
+
+let verifiedAccess = false;
+
+
+/* =====================================================
    PAGE ELEMENTS
-================================================== */
+===================================================== */
 
 const loadingScreen =
     document.getElementById(
@@ -880,9 +998,9 @@ const ageGate =
     );
 
 
-const contentArea =
+const streamingArea =
     document.getElementById(
-        "contentArea"
+        "streamingArea"
     );
 
 
@@ -904,11 +1022,23 @@ const btnUnder18 =
     );
 
 
-/* ==================================================
-   SHOW AGE GATE
-================================================== */
+/* =====================================================
+   SHOW AGE VERIFICATION
+===================================================== */
 
 function showAgeGate() {
+
+
+    /*
+       LOCK STREAMING
+    */
+
+    verifiedAccess = false;
+
+
+    streamingArea.style.display =
+        "none";
+
 
     loadingScreen.style.display =
         "none";
@@ -918,17 +1048,23 @@ function showAgeGate() {
         "flex";
 
 
-    contentArea.style.display =
-        "none";
-
 }
 
 
-/* ==================================================
-   SHOW CONTENT
-================================================== */
+/* =====================================================
+   SHOW STREAMING CONTENT
+===================================================== */
 
-function showContent() {
+function showStreamingArea() {
+
+
+    /*
+       Only this function is allowed
+       to unlock the streaming area.
+    */
+
+    verifiedAccess = true;
+
 
     loadingScreen.style.display =
         "none";
@@ -938,17 +1074,21 @@ function showContent() {
         "none";
 
 
-    contentArea.style.display =
+    streamingArea.style.display =
         "block";
 
 }
 
 
-/* ==================================================
+/* =====================================================
    SHOW ACCESS DENIED
-================================================== */
+===================================================== */
 
 function showAccessDenied() {
+
+
+    verifiedAccess = false;
+
 
     document.body.innerHTML = `
 
@@ -965,8 +1105,9 @@ function showAccessDenied() {
                 </h2>
 
                 <p>
-                    This platform is available only
-                    to users aged 18 and above.
+                    This streaming platform is
+                    available only to users aged
+                    18 and above.
                 </p>
 
             </div>
@@ -978,11 +1119,15 @@ function showAccessDenied() {
 }
 
 
-/* ==================================================
+/* =====================================================
    SHOW ERROR
-================================================== */
+===================================================== */
 
 function showError(message) {
+
+
+    verifiedAccess = false;
+
 
     loadingScreen.style.display =
         "none";
@@ -992,85 +1137,49 @@ function showError(message) {
         "none";
 
 
-    contentArea.style.display =
+    streamingArea.style.display =
         "none";
 
 
-    let existing =
-        document.getElementById(
-            "errorScreen"
-        );
+    document.body.insertAdjacentHTML(
 
+        "beforeend",
 
-    if (existing) {
+        `
 
-        existing.remove();
+        <div class="error-screen">
 
-    }
+            <div class="error-box">
 
+                <h2>
+                    Something went wrong
+                </h2>
 
-    const errorScreen =
-        document.createElement(
-            "div"
-        );
+                <p>
+                    ${escapeHtml(message)}
+                </p>
 
+                <button
+                    class="retry-btn"
+                    onclick="location.reload()"
+                >
+                    Try Again
+                </button>
 
-    errorScreen.className =
-        "error-screen";
-
-
-    errorScreen.id =
-        "errorScreen";
-
-
-    errorScreen.innerHTML = `
-
-        <div class="error-box">
-
-            <h2>
-                Something went wrong
-            </h2>
-
-            <p>
-                ${escapeHtml(message)}
-            </p>
-
-            <button
-                class="retry-btn"
-                id="retryButton"
-            >
-                Try Again
-            </button>
+            </div>
 
         </div>
 
-    `;
+        `
 
-
-    document.body.appendChild(
-        errorScreen
     );
-
-
-    document
-        .getElementById(
-            "retryButton"
-        )
-        .addEventListener(
-            "click",
-            function() {
-
-                location.reload();
-
-            }
-        );
 
 }
 
 
-/* ==================================================
+/* =====================================================
    ESCAPE HTML
-================================================== */
+===================================================== */
 
 function escapeHtml(value) {
 
@@ -1104,11 +1213,12 @@ function escapeHtml(value) {
 }
 
 
-/* ==================================================
+/* =====================================================
    INITIALIZE TELEGRAM
-================================================== */
+===================================================== */
 
 async function initializeTelegram() {
+
 
     try {
 
@@ -1117,12 +1227,15 @@ async function initializeTelegram() {
             window.Telegram?.WebApp;
 
 
-        /* Telegram check */
+        /*
+           Make sure the app is being
+           opened from Telegram.
+        */
 
         if (!tg) {
 
             showError(
-                "This application must be opened inside Telegram."
+                "Please open StreamX from inside Telegram."
             );
 
             return;
@@ -1130,14 +1243,18 @@ async function initializeTelegram() {
         }
 
 
-        /* Initialize Telegram */
+        /*
+           Initialize Telegram.
+        */
 
         tg.ready();
 
         tg.expand();
 
 
-        /* Get user */
+        /*
+           Get Telegram account.
+        */
 
         telegramUser =
             tg.initDataUnsafe?.user;
@@ -1154,7 +1271,9 @@ async function initializeTelegram() {
         }
 
 
-        /* Build display name */
+        /*
+           Display Telegram name.
+        */
 
         let name =
             telegramUser.first_name ||
@@ -1176,7 +1295,9 @@ async function initializeTelegram() {
             name;
 
 
-        /* Save user */
+        /*
+           Create/update user.
+        */
 
         const saved =
             await saveTelegramUser();
@@ -1193,13 +1314,17 @@ async function initializeTelegram() {
         }
 
 
-        /* Check access */
+        /*
+           Check existing verification.
+        */
 
-        await checkAccess();
+        await checkUserAccess();
+
 
     }
 
     catch (error) {
+
 
         console.error(
             "Initialization error:",
@@ -1216,11 +1341,12 @@ async function initializeTelegram() {
 }
 
 
-/* ==================================================
+/* =====================================================
    SAVE TELEGRAM USER
-================================================== */
+===================================================== */
 
 async function saveTelegramUser() {
+
 
     if (!telegramUser) {
 
@@ -1275,7 +1401,7 @@ async function saveTelegramUser() {
         if (error) {
 
             console.error(
-                "Supabase save error:",
+                "Save user error:",
                 error
             );
 
@@ -1286,14 +1412,17 @@ async function saveTelegramUser() {
 
         return true;
 
+
     }
 
     catch (error) {
 
+
         console.error(
-            "Save user error:",
+            "Save user exception:",
             error
         );
+
 
         return false;
 
@@ -1302,19 +1431,33 @@ async function saveTelegramUser() {
 }
 
 
-/* ==================================================
+/* =====================================================
    CHECK USER ACCESS
-================================================== */
+===================================================== */
 
-async function checkAccess() {
+async function checkUserAccess() {
 
-    if (!telegramUser) {
 
-        showAgeGate();
+    /*
+       ALWAYS start locked.
+    */
 
-        return;
+    verifiedAccess = false;
 
-    }
+    streamingArea.style.display =
+        "none";
+
+
+    /*
+       Show loading while we check
+       the existing account.
+    */
+
+    loadingScreen.style.display =
+        "flex";
+
+    ageGate.style.display =
+        "none";
 
 
     try {
@@ -1360,8 +1503,11 @@ async function checkAccess() {
 
 
         /*
-         * VERIFIED USER
-         */
+           EXISTING VERIFIED USER
+
+           Only unlock if BOTH fields
+           are true.
+        */
 
         if (
 
@@ -1373,7 +1519,9 @@ async function checkAccess() {
 
         ) {
 
-            showContent();
+
+            showStreamingArea();
+
 
             return;
 
@@ -1381,17 +1529,20 @@ async function checkAccess() {
 
 
         /*
-         * UNVERIFIED USER
-         */
+           EVERY OTHER USER MUST
+           SEE THE AGE VERIFICATION.
+        */
 
         showAgeGate();
+
 
     }
 
     catch (error) {
 
+
         console.error(
-            "Check access error:",
+            "Access check exception:",
             error
         );
 
@@ -1405,9 +1556,9 @@ async function checkAccess() {
 }
 
 
-/* ==================================================
+/* =====================================================
    18+ BUTTON
-================================================== */
+===================================================== */
 
 btn18.addEventListener(
 
@@ -1416,10 +1567,14 @@ btn18.addEventListener(
     async function() {
 
 
+        /*
+           User must be identified.
+        */
+
         if (!telegramUser) {
 
             alert(
-                "Telegram user could not be identified."
+                "Telegram account could not be identified."
             );
 
             return;
@@ -1428,8 +1583,9 @@ btn18.addEventListener(
 
 
         /*
-         * Disable buttons
-         */
+           Disable both buttons while
+           the database is being updated.
+        */
 
         btn18.disabled =
             true;
@@ -1438,7 +1594,7 @@ btn18.addEventListener(
             true;
 
         btn18.textContent =
-            "Saving...";
+            "Verifying...";
 
 
         try {
@@ -1447,6 +1603,10 @@ btn18.addEventListener(
             const telegramId =
                 telegramUser.id.toString();
 
+
+            /*
+               Update verification.
+            */
 
             const { error } =
                 await supabaseClient
@@ -1476,6 +1636,10 @@ btn18.addEventListener(
                     );
 
 
+            /*
+               Database error.
+            */
+
             if (error) {
 
                 console.error(
@@ -1490,18 +1654,61 @@ btn18.addEventListener(
 
 
             /*
-             * Verification successful.
-             */
+               Verify again from database.
 
-            showContent();
+               This prevents the app from
+               opening the streaming area
+               unless Supabase confirms it.
+            */
+
+            const { data:
+                verifiedUser,
+                error:
+                verificationCheckError
+            } = await supabaseClient
+
+                .from("users")
+
+                .select(
+                    "age_verified, access_granted"
+                )
+
+                .eq(
+                    "telegram_id",
+                    telegramId
+                )
+
+                .single();
+
+
+            if (
+                verificationCheckError ||
+                !verifiedUser ||
+                verifiedUser.age_verified !== true ||
+                verifiedUser.access_granted !== true
+            ) {
+
+                throw new Error(
+                    "Verification could not be confirmed."
+                );
+
+            }
+
+
+            /*
+               NOW unlock streaming.
+            */
+
+            showStreamingArea();
 
 
         }
 
         catch (error) {
 
+
             console.error(
-                "18+ verification error:",
+                "18+ verification failed:",
                 error
             );
 
@@ -1509,17 +1716,15 @@ btn18.addEventListener(
             btn18.disabled =
                 false;
 
-
             btnUnder18.disabled =
                 false;
-
 
             btn18.textContent =
                 "I Am 18+";
 
 
             alert(
-                "Your verification could not be saved. Please try again."
+                "Your age verification could not be completed. Please try again."
             );
 
         }
@@ -1529,9 +1734,9 @@ btn18.addEventListener(
 );
 
 
-/* ==================================================
+/* =====================================================
    UNDER 18 BUTTON
-================================================== */
+===================================================== */
 
 btnUnder18.addEventListener(
 
@@ -1541,16 +1746,17 @@ btnUnder18.addEventListener(
 
 
         /*
-         * Disable buttons
-         */
+           Immediately lock access.
+        */
+
+        verifiedAccess = false;
+
 
         btn18.disabled =
             true;
 
-
         btnUnder18.disabled =
             true;
-
 
         btnUnder18.textContent =
             "Saving...";
@@ -1597,7 +1803,7 @@ btnUnder18.addEventListener(
                 if (error) {
 
                     console.error(
-                        "Under 18 save error:",
+                        "Under 18 database error:",
                         error
                     );
 
@@ -1607,27 +1813,23 @@ btnUnder18.addEventListener(
 
 
             /*
-             * Never provide access
-             * to an under-18 selection.
-             */
+               Regardless of database result,
+               DO NOT give access.
+            */
 
             showAccessDenied();
+
 
         }
 
         catch (error) {
+
 
             console.error(
                 "Under 18 error:",
                 error
             );
 
-
-            /*
-             * Even if the database
-             * update fails, access
-             * remains denied.
-             */
 
             showAccessDenied();
 
@@ -1638,9 +1840,9 @@ btnUnder18.addEventListener(
 );
 
 
-/* ==================================================
-   START STREAMX
-================================================== */
+/* =====================================================
+   START APPLICATION
+===================================================== */
 
 initializeTelegram();
 

@@ -1,797 +1,802 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>StreamX Admin</title>
+<title>StreamX</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
+/* =====================================================
+   RESET
+===================================================== */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-body{
-    background:#080808;
-    color:#fff;
-    font-family:Arial,Helvetica,sans-serif;
-    min-height:100vh;
+html {
+    scroll-behavior: smooth;
 }
 
-/* =========================
-   SIDEBAR
-========================= */
-
-.sidebar{
-    position:fixed;
-    left:0;
-    top:0;
-    bottom:0;
-    width:240px;
-
-    background:#101010;
-    border-right:1px solid #292929;
-
-    padding:25px 15px;
-}
-
-.logo{
-    font-size:27px;
-    font-weight:900;
-    padding:0 12px 35px;
-}
-
-.logo span{
-    color:#ff1744;
-}
-
-.admin-label{
-    color:#666;
-    font-size:10px;
-    text-transform:uppercase;
-    letter-spacing:1.5px;
-    padding:0 12px 10px;
-}
-
-.nav-button{
-    width:100%;
-
-    display:flex;
-    align-items:center;
-    gap:12px;
-
-    padding:13px 12px;
-
-    border:none;
-    border-radius:8px;
-
-    background:transparent;
-
-    color:#aaa;
-
-    cursor:pointer;
-
-    font-size:14px;
-    text-align:left;
-
-    margin-bottom:5px;
-}
-
-.nav-button:hover,
-.nav-button.active{
-    background:#1d1d1d;
-    color:white;
-}
-
-.nav-button.active{
-    border-left:3px solid #ff1744;
-}
-
-.sidebar-bottom{
-    position:absolute;
-    left:15px;
-    right:15px;
-    bottom:25px;
-}
-
-.status-box{
-    background:#161616;
-    border:1px solid #292929;
-    border-radius:8px;
-    padding:13px;
-
-    color:#777;
-    font-size:11px;
-    line-height:1.7;
-}
-
-.status-box span{
-    color:#21c477;
+body {
+    background: #080808;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
 }
 
 
-/* =========================
+/* =====================================================
+   HEADER
+===================================================== */
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 35px;
+
+    background: rgba(8, 8, 8, 0.94);
+
+    border-bottom: 1px solid #252525;
+
+    backdrop-filter: blur(12px);
+}
+
+.logo {
+    font-size: 27px;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.logo span {
+    color: #ff1744;
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+.search-container {
+    width: 420px;
+    max-width: 45%;
+}
+
+.search-box {
+    width: 100%;
+
+    background: #151515;
+
+    border: 1px solid #292929;
+
+    border-radius: 25px;
+
+    padding: 12px 18px;
+
+    color: white;
+
+    outline: none;
+
+    font-size: 14px;
+}
+
+.search-box::placeholder {
+    color: #666;
+}
+
+.search-box:focus {
+    border-color: #ff1744;
+}
+
+
+/* =====================================================
+   HEADER RIGHT
+===================================================== */
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #21c477;
+
+    box-shadow: 0 0 10px #21c477;
+}
+
+.online-text {
+    color: #888;
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   CATEGORY BAR
+===================================================== */
+
+.category-container {
+    position: sticky;
+    top: 70px;
+    z-index: 900;
+
+    background: #0b0b0b;
+
+    border-bottom: 1px solid #202020;
+
+    overflow-x: auto;
+
+    scrollbar-width: none;
+}
+
+.category-container::-webkit-scrollbar {
+    display: none;
+}
+
+.categories {
+    display: flex;
+
+    gap: 9px;
+
+    padding: 15px 35px;
+
+    min-width: max-content;
+}
+
+.category {
+    background: #171717;
+
+    border: 1px solid #292929;
+
+    color: #999;
+
+    padding: 9px 16px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+    white-space: nowrap;
+}
+
+.category:hover {
+    color: white;
+    border-color: #444;
+}
+
+.category.active {
+    background: #ff1744;
+    border-color: #ff1744;
+    color: white;
+}
+
+
+/* =====================================================
    MAIN
-========================= */
+===================================================== */
 
-.main{
-    margin-left:240px;
-    padding:30px;
-    max-width:1600px;
+.main {
+    max-width: 1600px;
+
+    margin: auto;
+
+    padding: 35px;
 }
 
 
-/* =========================
-   MOBILE HEADER
-========================= */
+/* =====================================================
+   HERO
+===================================================== */
 
-.mobile-header{
-    display:none;
+.hero {
+    margin-bottom: 35px;
+}
+
+.hero h1 {
+    font-size: 34px;
+
+    margin-bottom: 8px;
+}
+
+.hero p {
+    color: #888;
+
+    font-size: 14px;
 }
 
 
-/* =========================
-   TOP BAR
-========================= */
+/* =====================================================
+   SECTION HEADER
+===================================================== */
 
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+.section-header {
+    display: flex;
 
-    margin-bottom:30px;
+    align-items: center;
+
+    justify-content: space-between;
+
+    margin-bottom: 20px;
 }
 
-.topbar h1{
-    font-size:30px;
+.section-header h2 {
+    font-size: 20px;
 }
 
-.topbar p{
-    color:#999;
-    font-size:13px;
-    margin-top:6px;
-}
+.video-count {
+    color: #666;
 
-.user-button{
-    background:#151515;
-    border:1px solid #292929;
-
-    color:#fff;
-
-    padding:11px 16px;
-
-    border-radius:8px;
-
-    text-decoration:none;
-
-    font-size:13px;
-}
-
-.user-button:hover{
-    border-color:#ff1744;
+    font-size: 12px;
 }
 
 
-/* =========================
-   STATISTICS
-========================= */
-
-.stats{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:18px;
-    margin-bottom:25px;
-}
-
-.stat{
-    background:#151515;
-
-    border:1px solid #292929;
-
-    border-radius:12px;
-
-    padding:20px;
-}
-
-.stat-icon{
-    font-size:25px;
-    margin-bottom:12px;
-}
-
-.stat-label{
-    color:#999;
-    font-size:12px;
-    margin-bottom:7px;
-}
-
-.stat-number{
-    font-size:28px;
-    font-weight:bold;
-}
-
-
-/* =========================
-   SECTION
-========================= */
-
-.section{
-    background:#151515;
-
-    border:1px solid #292929;
-
-    border-radius:14px;
-
-    padding:25px;
-
-    margin-bottom:25px;
-}
-
-.section-heading{
-    margin-bottom:22px;
-}
-
-.section-heading h2{
-    font-size:20px;
-}
-
-.section-heading p{
-    color:#999;
-    font-size:12px;
-    margin-top:5px;
-}
-
-
-/* =========================
-   FORM
-========================= */
-
-.form-grid{
-    display:grid;
-
-    grid-template-columns:1fr 1fr;
-
-    gap:18px;
-}
-
-.form-group.full{
-    grid-column:1/-1;
-}
-
-label{
-    display:block;
-
-    color:#ccc;
-
-    font-size:13px;
-
-    margin-bottom:8px;
-}
-
-input[type="text"],
-textarea,
-select{
-
-    width:100%;
-
-    background:#0f0f0f;
-
-    border:1px solid #303030;
-
-    color:white;
-
-    border-radius:8px;
-
-    padding:13px;
-
-    outline:none;
-
-    font-size:14px;
-
-    font-family:inherit;
-}
-
-input[type="text"]:focus,
-textarea:focus,
-select:focus{
-    border-color:#ff1744;
-}
-
-textarea{
-    min-height:100px;
-    resize:vertical;
-}
-
-
-/* =========================
-   FILE BOX
-========================= */
-
-.upload-box{
-
-    min-height:180px;
-
-    border:1px dashed #444;
-
-    background:#101010;
-
-    border-radius:10px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    justify-content:center;
-
-    text-align:center;
-
-    cursor:pointer;
-
-    padding:20px;
-
-    transition:.2s;
-
-}
-
-.upload-box:hover{
-    border-color:#ff1744;
-    background:#151515;
-}
-
-.upload-box input{
-    display:none;
-}
-
-.upload-icon{
-    font-size:40px;
-    margin-bottom:10px;
-}
-
-.upload-box strong{
-    font-size:14px;
-    margin-bottom:6px;
-}
-
-.upload-box small{
-    color:#666;
-    font-size:11px;
-}
-
-.file-name{
-    color:#21c477;
-    font-size:12px;
-    margin-top:10px;
-
-    max-width:100%;
-
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-
-/* =========================
-   THUMBNAIL PREVIEW
-========================= */
-
-.thumbnail-preview{
-    display:none;
-
-    width:100%;
-    height:180px;
-
-    border-radius:8px;
-
-    overflow:hidden;
-
-    position:relative;
-
-    background:#111;
-}
-
-.thumbnail-preview img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-}
-
-.remove-thumbnail{
-    position:absolute;
-
-    top:8px;
-    right:8px;
-
-    width:30px;
-    height:30px;
-
-    border:none;
-
-    border-radius:50%;
-
-    background:rgba(0,0,0,.8);
-
-    color:#fff;
-
-    font-size:20px;
-
-    cursor:pointer;
-}
-
-
-/* =========================
-   BUTTONS
-========================= */
-
-.upload-actions{
-    display:flex;
-    gap:12px;
-    margin-top:20px;
-}
-
-.upload-button{
-    background:#ff1744;
-
-    border:none;
-
-    color:#fff;
-
-    padding:13px 25px;
-
-    border-radius:8px;
-
-    font-weight:bold;
-
-    cursor:pointer;
-}
-
-.upload-button:hover{
-    background:#e90035;
-}
-
-.upload-button:disabled{
-    opacity:.5;
-    cursor:not-allowed;
-}
-
-.clear-button{
-    background:#222;
-
-    border:1px solid #333;
-
-    color:#aaa;
-
-    padding:12px 20px;
-
-    border-radius:8px;
-
-    cursor:pointer;
-}
-
-.clear-button:hover{
-    color:#fff;
-}
-
-
-/* =========================
-   PROGRESS
-========================= */
-
-.progress-wrapper{
-    display:none;
-    margin-top:20px;
-}
-
-.progress-top{
-    display:flex;
-    justify-content:space-between;
-
-    color:#999;
-
-    font-size:12px;
-
-    margin-bottom:8px;
-}
-
-.progress{
-    width:100%;
-    height:8px;
-
-    background:#292929;
-
-    border-radius:10px;
-
-    overflow:hidden;
-}
-
-.progress-bar{
-    width:0%;
-    height:100%;
-
-    background:#ff1744;
-
-    transition:.2s;
-}
-
-
-/* =========================
-   MESSAGE
-========================= */
-
-.message{
-    display:none;
-
-    padding:13px 15px;
-
-    border-radius:8px;
-
-    margin-top:18px;
-
-    font-size:13px;
-
-    line-height:1.5;
-}
-
-.message.success{
-    display:block;
-
-    background:#10251d;
-
-    border:1px solid #1d5b42;
-
-    color:#50d69a;
-}
-
-.message.error{
-    display:block;
-
-    background:#281015;
-
-    border:1px solid #70283a;
-
-    color:#ff6b88;
-}
-
-
-/* =========================
-   VIDEO LIBRARY
-========================= */
-
-.section-top{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:20px;
-}
-
-.section-top h2{
-    font-size:20px;
-}
-
-.video-count{
-    color:#777;
-    font-size:12px;
-}
-
-.video-grid{
-
-    display:grid;
+/* =====================================================
+   VIDEO GRID
+===================================================== */
+
+.video-grid {
+    display: grid;
 
     grid-template-columns:
-        repeat(auto-fill,minmax(260px,1fr));
+        repeat(auto-fill, minmax(250px, 1fr));
 
-    gap:18px;
-}
-
-.video-card{
-
-    background:#101010;
-
-    border:1px solid #292929;
-
-    border-radius:10px;
-
-    overflow:hidden;
-
-    transition:.2s;
-}
-
-.video-card:hover{
-    transform:translateY(-3px);
-    background:#1b1b1b;
-}
-
-.video-image{
-
-    height:150px;
-
-    background:#222;
-
-    position:relative;
-
-    overflow:hidden;
-}
-
-.video-image img{
-
-    width:100%;
-    height:100%;
-
-    object-fit:cover;
-}
-
-.category-tag{
-
-    position:absolute;
-
-    top:8px;
-    left:8px;
-
-    background:rgba(0,0,0,.8);
-
-    padding:5px 8px;
-
-    border-radius:5px;
-
-    font-size:10px;
-}
-
-.video-content{
-    padding:14px;
-}
-
-.video-content h3{
-    font-size:14px;
-    margin-bottom:7px;
-}
-
-.video-content p{
-    color:#777;
-    font-size:11px;
-    line-height:1.5;
-}
-
-.video-actions{
-
-    display:flex;
-
-    gap:7px;
-
-    margin-top:13px;
-}
-
-.card-button{
-
-    flex:1;
-
-    padding:8px;
-
-    background:#222;
-
-    border:none;
-
-    color:white;
-
-    border-radius:6px;
-
-    cursor:pointer;
-
-    font-size:11px;
-}
-
-.card-button:hover{
-    background:#333;
-}
-
-.delete-button:hover{
-    background:#a90025;
+    gap: 20px;
 }
 
 
-/* =========================
+/* =====================================================
+   VIDEO CARD
+===================================================== */
+
+.video-card {
+    background: #111;
+
+    border: 1px solid #252525;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    cursor: pointer;
+
+    transition:
+        transform .2s,
+        border-color .2s,
+        background .2s;
+}
+
+.video-card:hover {
+    transform: translateY(-4px);
+
+    border-color: #444;
+
+    background: #171717;
+}
+
+
+/* =====================================================
+   THUMBNAIL
+===================================================== */
+
+.thumbnail {
+    position: relative;
+
+    width: 100%;
+
+    aspect-ratio: 16 / 9;
+
+    background: #191919;
+
+    overflow: hidden;
+}
+
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+
+    transition: transform .3s;
+}
+
+.video-card:hover .thumbnail img {
+    transform: scale(1.04);
+}
+
+.thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 42px;
+
+    color: #444;
+}
+
+
+/* =====================================================
+   PLAY ICON
+===================================================== */
+
+.play-icon {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(0,0,0,.75);
+
+    opacity: 0;
+
+    transition: .2s;
+
+    font-size: 18px;
+}
+
+.video-card:hover .play-icon {
+    opacity: 1;
+}
+
+
+/* =====================================================
+   CATEGORY TAG
+===================================================== */
+
+.category-tag {
+    position: absolute;
+
+    left: 10px;
+    top: 10px;
+
+    background: rgba(0,0,0,.82);
+
+    border-radius: 5px;
+
+    padding: 5px 8px;
+
+    color: white;
+
+    font-size: 10px;
+}
+
+
+/* =====================================================
+   VIDEO INFO
+===================================================== */
+
+.video-info {
+    padding: 14px;
+}
+
+.video-title {
+    font-size: 14px;
+
+    font-weight: bold;
+
+    line-height: 1.4;
+
+    margin-bottom: 7px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.video-description {
+    color: #777;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+
+    height: 32px;
+
+    overflow: hidden;
+}
+
+.video-meta {
+    display: flex;
+
+    justify-content: space-between;
+
+    margin-top: 12px;
+
+    color: #555;
+
+    font-size: 10px;
+}
+
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+.loading {
+    min-height: 300px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: #666;
+
+    gap: 15px;
+}
+
+.spinner {
+    width: 35px;
+    height: 35px;
+
+    border: 3px solid #292929;
+
+    border-top-color: #ff1744;
+
+    border-radius: 50%;
+
+    animation: spin .8s linear infinite;
+}
+
+@keyframes spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =====================================================
    EMPTY
-========================= */
+===================================================== */
 
-.empty{
+.empty {
+    display: none;
 
-    text-align:center;
+    text-align: center;
 
-    padding:55px 20px;
+    padding: 80px 20px;
 
-    color:#666;
+    color: #666;
 }
 
-.empty-icon{
-    font-size:45px;
-    margin-bottom:10px;
+.empty-icon {
+    font-size: 50px;
+
+    margin-bottom: 15px;
+}
+
+.empty h3 {
+    color: #999;
+
+    font-size: 18px;
+
+    margin-bottom: 7px;
+}
+
+.empty p {
+    font-size: 12px;
 }
 
 
-/* =========================
+/* =====================================================
+   ERROR
+===================================================== */
+
+.error-message {
+    display: none;
+
+    background: #281015;
+
+    border: 1px solid #70283a;
+
+    color: #ff6b88;
+
+    padding: 15px;
+
+    border-radius: 8px;
+
+    margin-bottom: 25px;
+
+    font-size: 13px;
+}
+
+
+/* =====================================================
+   VIDEO MODAL
+===================================================== */
+
+.modal {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 5000;
+
+    background: rgba(0,0,0,.94);
+
+    padding: 30px;
+
+    overflow-y: auto;
+}
+
+.modal.show {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+.modal-content {
+    width: 100%;
+
+    max-width: 1000px;
+
+    background: #101010;
+
+    border: 1px solid #292929;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+
+    right: 15px;
+    top: 15px;
+
+    z-index: 10;
+
+    width: 38px;
+    height: 38px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: rgba(0,0,0,.8);
+
+    color: white;
+
+    font-size: 24px;
+
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    background: #ff1744;
+}
+
+.player-container {
+    width: 100%;
+
+    background: black;
+}
+
+.player-container video {
+    display: block;
+
+    width: 100%;
+
+    max-height: 70vh;
+
+    background: black;
+}
+
+.modal-info {
+    padding: 22px;
+}
+
+.modal-title {
+    font-size: 22px;
+
+    margin-bottom: 10px;
+}
+
+.modal-category {
+    display: inline-block;
+
+    background: #ff1744;
+
+    padding: 5px 9px;
+
+    border-radius: 5px;
+
+    font-size: 10px;
+
+    margin-bottom: 13px;
+}
+
+.modal-description {
+    color: #999;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+}
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.footer {
+    margin-top: 70px;
+
+    padding: 30px 0;
+
+    border-top: 1px solid #202020;
+
+    color: #555;
+
+    font-size: 11px;
+
+    text-align: center;
+}
+
+
+/* =====================================================
    MOBILE
-========================= */
+===================================================== */
 
-@media(max-width:850px){
+@media(max-width:850px) {
 
-    .sidebar{
-        display:none;
+    .header {
+        height: auto;
+
+        min-height: 65px;
+
+        padding: 12px 15px;
+
+        gap: 12px;
+
+        flex-wrap: wrap;
     }
 
-    .main{
-        margin-left:0;
-        padding:20px 15px 50px;
+    .logo {
+        font-size: 22px;
     }
 
-    .mobile-header{
+    .search-container {
+        order: 3;
 
-        display:flex;
+        width: 100%;
 
-        justify-content:space-between;
+        max-width: none;
 
-        align-items:center;
-
-        margin:-20px -15px 25px;
-
-        padding:15px;
-
-        background:#101010;
-
-        border-bottom:1px solid #292929;
+        padding-bottom: 4px;
     }
 
-    .mobile-logo{
-        font-size:21px;
-        font-weight:900;
+    .header-right {
+        margin-left: auto;
     }
 
-    .mobile-logo span{
-        color:#ff1744;
+    .category-container {
+        top: 65px;
     }
 
-    .stats{
-        grid-template-columns:1fr;
+    .categories {
+        padding: 12px 15px;
     }
 
-    .form-grid{
-        grid-template-columns:1fr;
+    .main {
+        padding: 25px 15px 40px;
     }
 
-    .form-group.full{
-        grid-column:auto;
+    .hero h1 {
+        font-size: 27px;
     }
 
-    .topbar .user-button{
-        display:none;
+    .video-grid {
+        grid-template-columns:
+            repeat(2, minmax(0,1fr));
+
+        gap: 12px;
+    }
+
+    .video-info {
+        padding: 11px;
+    }
+
+    .video-title {
+        font-size: 12px;
+    }
+
+    .video-description {
+        font-size: 10px;
+    }
+
+    .online-text {
+        display: none;
+    }
+
+    .modal {
+        padding: 10px;
     }
 
 }
 
-@media(max-width:500px){
 
-    .section{
-        padding:18px;
+@media(max-width:500px) {
+
+    .video-grid {
+        grid-template-columns: 1fr;
     }
 
-    .video-grid{
-        grid-template-columns:1fr;
+    .thumbnail {
+        aspect-ratio: 16 / 9;
     }
 
-    .upload-actions{
-        flex-direction:column;
+    .modal-title {
+        font-size: 18px;
     }
 
+}
+
+
+/* =====================================================
+   NO JAVASCRIPT MESSAGE
+===================================================== */
+
+.no-js {
+    padding: 30px;
+
+    text-align: center;
+
+    color: #ff6b88;
 }
 
 </style>
@@ -802,488 +807,139 @@ textarea{
 <body>
 
 
-<!-- =========================
-     SIDEBAR
-========================= -->
+<noscript>
 
-<aside class="sidebar">
+    <div class="no-js">
+        JavaScript is required to use StreamX.
+    </div>
+
+</noscript>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="header">
 
     <div class="logo">
         Stream<span>X</span>
     </div>
 
-    <div class="admin-label">
-        Administration
-    </div>
 
+    <div class="search-container">
 
-    <button
-        class="nav-button active"
-        onclick="goToUpload()"
-    >
-        ⬆️ Upload Content
-    </button>
-
-
-    <button
-        class="nav-button"
-        onclick="goToVideos()"
-    >
-        🎬 Video Library
-    </button>
-
-
-    <a
-        href="index.html"
-        class="nav-button"
-        style="text-decoration:none;"
-    >
-        🌐 User Website
-    </a>
-
-
-    <div class="sidebar-bottom">
-
-        <div class="status-box">
-
-            ● <span>Supabase Connected</span>
-
-            <br>
-
-            Content management enabled
-
-        </div>
+        <input
+            type="search"
+            id="searchInput"
+            class="search-box"
+            placeholder="Search videos..."
+            autocomplete="off"
+        >
 
     </div>
 
-</aside>
+
+    <div class="header-right">
+
+        <div class="online-dot"></div>
+
+        <span class="online-text">
+            Online
+        </span>
+
+    </div>
+
+</header>
 
 
-<!-- =========================
+<!-- =====================================================
+     CATEGORIES
+===================================================== -->
+
+<nav class="category-container">
+
+    <div
+        class="categories"
+        id="categories"
+    >
+
+        <!-- Categories generated by JavaScript -->
+
+    </div>
+
+</nav>
+
+
+<!-- =====================================================
      MAIN
-========================= -->
+===================================================== -->
 
 <main class="main">
 
 
-    <!-- MOBILE HEADER -->
-
-    <div class="mobile-header">
-
-        <div class="mobile-logo">
-            Stream<span>X</span>
-        </div>
-
-        <a
-            href="index.html"
-            class="user-button"
-        >
-            User Site
-        </a>
-
-    </div>
-
-
-    <!-- TOP BAR -->
-
-    <div class="topbar">
-
-        <div>
-
-            <h1>
-                Content Dashboard
-            </h1>
-
-            <p>
-                Upload and manage your StreamX videos.
-            </p>
-
-        </div>
-
-
-        <a
-            href="index.html"
-            class="user-button"
-        >
-            🌐 Open User Website
-        </a>
-
-    </div>
-
-
-    <!-- =========================
-         STATISTICS
-    ========================= -->
-
-    <div class="stats">
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                🎬
-            </div>
-
-            <div class="stat-label">
-                Uploaded Videos
-            </div>
-
-            <div
-                class="stat-number"
-                id="totalVideos"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                👁️
-            </div>
-
-            <div class="stat-label">
-                Total Views
-            </div>
-
-            <div
-                class="stat-number"
-                id="totalViews"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                📡
-            </div>
-
-            <div class="stat-label">
-                Platform
-            </div>
-
-            <div
-                class="stat-number"
-                style="font-size:20px"
-            >
-                Online
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================
-         UPLOAD
-    ========================= -->
-
-    <section
-        class="section"
-        id="uploadSection"
-    >
-
-        <div class="section-heading">
-
-            <h2>
-                Upload New Video
-            </h2>
-
-            <p>
-                Uploaded content will be stored in Supabase
-                and appear on the public website.
-            </p>
-
-        </div>
-
-
-        <div class="form-grid">
-
-
-            <!-- TITLE -->
-
-            <div class="form-group">
-
-                <label>
-                    Video Title
-                </label>
-
-                <input
-                    type="text"
-                    id="videoTitle"
-                    placeholder="Enter video title"
-                >
-
-            </div>
-
-
-            <!-- CATEGORY -->
-
-            <div class="form-group">
-
-                <label>
-                    Category
-                </label>
-
-                <select id="videoCategory">
-
-<option value="">Select category</option>
-
-    <option value="All">All</option>
-
-    <option value="BackShots">
-        BackShots
-    </option>
-
-    <option value="Masterbates">
-        Masterbates
-    </option>
-
-    <option value="RoughX">
-        RoughX
-    </option>
-
-    <option value="BBW">
-        BBW
-    </option>
-
-    <option value="Africans">
-        Africans
-    </option>
-
-    <option value="Cums">
-        Cums
-    </option>
-
-    <option value="Close Friends">
-        Close Friends
-    </option>
-
-
-                </select>
-
-            </div>
-
-
-            <!-- DESCRIPTION -->
-
-            <div class="form-group full">
-
-                <label>
-                    Description
-                </label>
-
-                <textarea
-                    id="videoDescription"
-                    placeholder="Write a description for your video..."
-                ></textarea>
-
-            </div>
-
-
-            <!-- VIDEO FILE -->
-
-            <div class="form-group">
-
-                <label>
-                    Video File
-                </label>
-
-                <label class="upload-box">
-
-                    <input
-                        type="file"
-                        id="videoFile"
-                        accept="video/*"
-                    >
-
-                    <div class="upload-icon">
-                        🎬
-                    </div>
-
-                    <strong>
-                        Choose Video
-                    </strong>
-
-                    <small>
-                        MP4, WebM, MOV
-                    </small>
-
-                    <div
-                        class="file-name"
-                        id="videoFileName"
-                    ></div>
-
-                </label>
-
-            </div>
-
-
-            <!-- THUMBNAIL -->
-
-            <div class="form-group">
-
-                <label>
-                    Thumbnail
-                </label>
-
-
-                <label
-                    class="upload-box"
-                    id="thumbnailUploadBox"
-                >
-
-                    <input
-                        type="file"
-                        id="thumbnailFile"
-                        accept="image/*"
-                    >
-
-                    <div class="upload-icon">
-                        🖼️
-                    </div>
-
-                    <strong>
-                        Choose Thumbnail
-                    </strong>
-
-                    <small>
-                        JPG, PNG, WebP
-                    </small>
-
-                    <div
-                        class="file-name"
-                        id="thumbnailFileName"
-                    ></div>
-
-                </label>
-
-
-                <div
-                    class="thumbnail-preview"
-                    id="thumbnailPreview"
-                >
-
-                    <img
-                        id="thumbnailImage"
-                        alt="Thumbnail"
-                    >
-
-                    <button
-                        type="button"
-                        class="remove-thumbnail"
-                        onclick="removeThumbnail(event)"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- BUTTONS -->
-
-        <div class="upload-actions">
-
-            <button
-                id="uploadButton"
-                class="upload-button"
-                onclick="uploadVideo()"
-            >
-                ⬆ Upload Video
-            </button>
-
-
-            <button
-                class="clear-button"
-                onclick="clearForm()"
-            >
-                Clear
-            </button>
-
-        </div>
-
-
-        <!-- PROGRESS -->
-
-        <div
-            class="progress-wrapper"
-            id="progressWrapper"
-        >
-
-            <div class="progress-top">
-
-                <span id="progressText">
-                    Preparing upload...
-                </span>
-
-                <span id="progressPercent">
-                    0%
-                </span>
-
-            </div>
-
-
-            <div class="progress">
-
-                <div
-                    class="progress-bar"
-                    id="progressBar"
-                ></div>
-
-            </div>
-
-        </div>
-
-
-        <!-- MESSAGE -->
-
-        <div
-            id="message"
-            class="message"
-        ></div>
+    <section class="hero">
+
+        <h1>
+            Discover Videos
+        </h1>
+
+        <p>
+            Browse and stream the latest content.
+        </p>
 
     </section>
 
 
-    <!-- =========================
-         VIDEO LIBRARY
-    ========================= -->
+    <div
+        id="errorMessage"
+        class="error-message"
+    ></div>
 
-    <section
-        class="section"
-        id="videosSection"
-    >
 
-        <div class="section-top">
+    <section>
 
-            <h2>
-                Video Library
+        <div class="section-header">
+
+            <h2 id="sectionTitle">
+                All Videos
             </h2>
 
             <span
-                class="video-count"
                 id="videoCount"
+                class="video-count"
             >
-                0 videos
+                Loading...
             </span>
 
         </div>
 
+
+        <!-- LOADING -->
+
+        <div
+            id="loading"
+            class="loading"
+        >
+
+            <div class="spinner"></div>
+
+            <span>
+                Loading videos...
+            </span>
+
+        </div>
+
+
+        <!-- VIDEO GRID -->
 
         <div
             id="videoGrid"
             class="video-grid"
         ></div>
 
+
+        <!-- EMPTY -->
 
         <div
             id="emptyState"
@@ -1295,11 +951,11 @@ textarea{
             </div>
 
             <h3>
-                No videos yet
+                No videos found
             </h3>
 
-            <p style="margin-top:8px;">
-                Upload your first video above.
+            <p>
+                Try another category or search term.
             </p>
 
         </div>
@@ -1307,723 +963,242 @@ textarea{
     </section>
 
 
+    <footer class="footer">
+
+        StreamX © 2026
+
+    </footer>
+
 </main>
+
+
+<!-- =====================================================
+     VIDEO MODAL
+===================================================== -->
+
+<div
+    id="videoModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <button
+            class="close-modal"
+            onclick="closeVideo()"
+            aria-label="Close"
+        >
+            ×
+        </button>
+
+
+        <div class="player-container">
+
+            <video
+                id="videoPlayer"
+                controls
+                playsinline
+            ></video>
+
+        </div>
+
+
+        <div class="modal-info">
+
+            <div
+                id="modalCategory"
+                class="modal-category"
+            >
+                Category
+            </div>
+
+
+            <h2
+                id="modalTitle"
+                class="modal-title"
+            >
+                Video
+            </h2>
+
+
+            <p
+                id="modalDescription"
+                class="modal-description"
+            ></p>
+
+        </div>
+
+    </div>
+
+</div>
 
 
 <script>
 
 /* =====================================================
-   STREAMX ADMIN
    SUPABASE CONFIGURATION
 ===================================================== */
 
 const SUPABASE_URL =
-"https://iojjmoywrlnzpyatahyh.supabase.co";
+    "https://iojjmoywrlnzpyatahyh.supabase.co";
 
 const SUPABASE_KEY =
-"sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
+    "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 
 
 const supabaseClient =
-window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
 
 
 /* =====================================================
-   FILE VARIABLES
+   CATEGORIES
 ===================================================== */
+
+const categories = [
+    "All",
+    "Sports",
+    "Music",
+    "Comedy",
+    "Movies",
+    "Education",
+    "Lifestyle"
+];
+
 
 /* =====================================================
-   ADMIN PASSWORD PROTECTION
+   STATE
 ===================================================== */
 
-const ADMIN_PASSWORD = "123@Austin";
+let allVideos = [];
 
-const enteredPassword = prompt("Enter Admin Password:");
+let selectedCategory = "All";
 
-if (enteredPassword !== ADMIN_PASSWORD) {
-    alert("Access Denied!");
-    window.location.href = "index.html";
-    throw new Error("Unauthorized access");
-}
-
-let selectedVideoFile = null;
-
-let selectedThumbnailFile = null;
+let searchTerm = "";
 
 
 /* =====================================================
    ELEMENTS
 ===================================================== */
 
-const videoFile =
-document.getElementById(
-    "videoFile"
-);
+const videoGrid =
+    document.getElementById("videoGrid");
 
-const thumbnailFile =
-document.getElementById(
-    "thumbnailFile"
-);
+const loading =
+    document.getElementById("loading");
+
+const emptyState =
+    document.getElementById("emptyState");
+
+const videoCount =
+    document.getElementById("videoCount");
+
+const sectionTitle =
+    document.getElementById("sectionTitle");
+
+const errorMessage =
+    document.getElementById("errorMessage");
+
+const categoriesContainer =
+    document.getElementById("categories");
+
+const searchInput =
+    document.getElementById("searchInput");
 
 
 /* =====================================================
-   VIDEO FILE SELECTED
+   CREATE CATEGORY OPTIONS
 ===================================================== */
 
-videoFile.addEventListener(
-    "change",
-    function(){
+function createCategories() {
 
-        selectedVideoFile =
-            this.files[0] || null;
+    categoriesContainer.innerHTML = "";
 
+    categories.forEach(category => {
 
-        if(selectedVideoFile){
+        const option =
+            document.createElement("button");
 
-            document.getElementById(
-                "videoFileName"
-            ).textContent =
-                "✓ " +
-                selectedVideoFile.name;
+        option.type = "button";
+
+        option.className =
+            "category";
+
+        if(category === "All") {
+
+            option.classList.add("active");
 
         }
 
-    }
-);
+        option.textContent =
+            category;
 
+        option.addEventListener(
+            "click",
+            () => {
 
-/* =====================================================
-   THUMBNAIL SELECTED
-===================================================== */
-
-thumbnailFile.addEventListener(
-    "change",
-    function(){
-
-        selectedThumbnailFile =
-            this.files[0] || null;
-
-
-        if(!selectedThumbnailFile)
-            return;
-
-
-        document.getElementById(
-            "thumbnailFileName"
-        ).textContent =
-            "✓ " +
-            selectedThumbnailFile.name;
-
-
-        const reader =
-            new FileReader();
-
-
-        reader.onload =
-            function(event){
-
-                document.getElementById(
-                    "thumbnailImage"
-                ).src =
-                    event.target.result;
-
-
-                document.getElementById(
-                    "thumbnailPreview"
-                ).style.display =
-                    "block";
-
-
-                document.getElementById(
-                    "thumbnailUploadBox"
-                ).style.display =
-                    "none";
-
-            };
-
-
-        reader.readAsDataURL(
-            selectedThumbnailFile
-        );
-
-    }
-);
-
-
-/* =====================================================
-   REMOVE THUMBNAIL
-===================================================== */
-
-function removeThumbnail(event){
-
-    event.preventDefault();
-
-    event.stopPropagation();
-
-
-    selectedThumbnailFile =
-        null;
-
-
-    thumbnailFile.value =
-        "";
-
-
-    document.getElementById(
-        "thumbnailPreview"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "thumbnailUploadBox"
-    ).style.display =
-        "flex";
-
-
-    document.getElementById(
-        "thumbnailFileName"
-    ).textContent =
-        "";
-
-}
-
-
-/* =====================================================
-   MESSAGE
-===================================================== */
-
-function showMessage(
-    text,
-    type
-){
-
-    const message =
-        document.getElementById(
-            "message"
-        );
-
-
-    message.textContent =
-        text;
-
-
-    message.className =
-        "message " +
-        type;
-
-
-    message.style.display =
-        "block";
-
-}
-
-
-function hideMessage(){
-
-    const message =
-        document.getElementById(
-            "message"
-        );
-
-
-    message.style.display =
-        "none";
-
-}
-
-
-/* =====================================================
-   CREATE SAFE FILE NAME
-===================================================== */
-
-function cleanFileName(
-    name
-){
-
-    return name
-
-        .toLowerCase()
-
-        .replace(
-            /[^a-z0-9.]+/g,
-            "-"
-        )
-
-        .replace(
-            /^-+|-+$/g,
-            ""
-        );
-
-}
-
-
-/* =====================================================
-   UPLOAD VIDEO
-===================================================== */
-
-async function uploadVideo(){
-
-    hideMessage();
-
-
-    const title =
-        document.getElementById(
-            "videoTitle"
-        ).value.trim();
-
-
-    const category =
-        document.getElementById(
-            "videoCategory"
-        ).value;
-
-
-    const description =
-        document.getElementById(
-            "videoDescription"
-        ).value.trim();
-
-
-    const uploadButton =
-        document.getElementById(
-            "uploadButton"
-        );
-
-
-    /* VALIDATION */
-
-    if(!title){
-
-        showMessage(
-            "Please enter a video title.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if(!category){
-
-        showMessage(
-            "Please select a category.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if(!selectedVideoFile){
-
-        showMessage(
-            "Please select a video file.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    uploadButton.disabled =
-        true;
-
-
-    document.getElementById(
-        "progressWrapper"
-    ).style.display =
-        "block";
-
-
-    updateProgress(
-        5,
-        "Preparing upload..."
-    );
-
-
-    /*
-       Generate unique file names.
-
-       This prevents files with the same
-       name from overwriting each other.
-    */
-
-    const uniqueID =
-        Date.now() +
-        "-" +
-        Math.random()
-            .toString(36)
-            .substring(2,8);
-
-
-    const videoName =
-        cleanFileName(
-            selectedVideoFile.name
-        );
-
-
-    const videoPath =
-        uniqueID +
-        "-" +
-        videoName;
-
-
-    let thumbnailPath =
-        null;
-
-
-    try{
-
-        /* =========================================
-           UPLOAD VIDEO
-        ========================================= */
-
-        updateProgress(
-            10,
-            "Uploading video..."
-        );
-
-
-        const videoUpload =
-            await supabaseClient
-                .storage
-                .from("videos")
-                .upload(
-                    videoPath,
-                    selectedVideoFile,
-                    {
-                        cacheControl:"3600",
-                        upsert:false,
-                        contentType:
-                            selectedVideoFile.type
-                    }
-                );
-
-
-        if(videoUpload.error){
-
-            throw new Error(
-                "Video upload failed: " +
-                videoUpload.error.message
-            );
-
-        }
-
-
-        updateProgress(
-            70,
-            "Video uploaded. Processing thumbnail..."
-        );
-
-
-        /* =========================================
-           UPLOAD THUMBNAIL
-        ========================================= */
-
-        if(selectedThumbnailFile){
-
-            const thumbnailName =
-                cleanFileName(
-                    selectedThumbnailFile.name
-                );
-
-
-            thumbnailPath =
-                uniqueID +
-                "-" +
-                thumbnailName;
-
-
-            const thumbnailUpload =
-                await supabaseClient
-                    .storage
-                    .from("thumbnails")
-                    .upload(
-                        thumbnailPath,
-                        selectedThumbnailFile,
-                        {
-                            cacheControl:"3600",
-                            upsert:false,
-                            contentType:
-                                selectedThumbnailFile.type
-                        }
-                    );
-
-
-            if(thumbnailUpload.error){
-
-                /*
-                   If thumbnail upload fails,
-                   remove the video that was
-                   already uploaded.
-                */
-
-                await supabaseClient
-                    .storage
-                    .from("videos")
-                    .remove([
-                        videoPath
-                    ]);
-
-
-                throw new Error(
-                    "Thumbnail upload failed: " +
-                    thumbnailUpload.error.message
-                );
+                selectCategory(category);
 
             }
-
-        }
-
-
-        updateProgress(
-            85,
-            "Creating database record..."
         );
 
+        categoriesContainer.appendChild(option);
 
-        /* =========================================
-           GET PUBLIC URLS
-        ========================================= */
+    });
 
-        const videoURL =
-            supabaseClient
-                .storage
-                .from("videos")
-                .getPublicUrl(
-                    videoPath
-                )
-                .data
-                .publicUrl;
+}
 
 
-        let thumbnailURL =
-            null;
+/* =====================================================
+   SELECT CATEGORY
+===================================================== */
 
+function selectCategory(category) {
 
-        if(thumbnailPath){
+    selectedCategory = category;
 
-            thumbnailURL =
-                supabaseClient
-                    .storage
-                    .from("thumbnails")
-                    .getPublicUrl(
-                        thumbnailPath
-                    )
-                    .data
-                    .publicUrl;
+    document
+        .querySelectorAll(".category")
+        .forEach(button => {
 
-        }
-
-
-        /* =========================================
-           DATABASE INSERT
-        ========================================= */
-
-        const databaseInsert =
-            await supabaseClient
-                .from("videos")
-                .insert({
-
-                    title:title,
-
-                    description:
-                        description,
-
-                    category:
-                        category,
-
-                    video_url:
-                        videoURL,
-
-                    thumbnail_url:
-                        thumbnailURL,
-
-                    views:0
-
-                })
-                .select();
-
-
-        if(databaseInsert.error){
-
-            /*
-               If database insert fails,
-               clean up uploaded files.
-            */
-
-            await supabaseClient
-                .storage
-                .from("videos")
-                .remove([
-                    videoPath
-                ]);
-
-
-            if(thumbnailPath){
-
-                await supabaseClient
-                    .storage
-                    .from("thumbnails")
-                    .remove([
-                        thumbnailPath
-                    ]);
-
-            }
-
-
-            throw new Error(
-                "Database insert failed: " +
-                databaseInsert.error.message
+            button.classList.toggle(
+                "active",
+                button.textContent === category
             );
 
-        }
+        });
 
 
-        updateProgress(
-            100,
-            "Upload complete!"
-        );
+    sectionTitle.textContent =
+        category === "All"
+            ? "All Videos"
+            : category;
 
 
-        showMessage(
-            "✓ Video uploaded successfully and is now available on the user website.",
-            "success"
-        );
-
-
-        clearForm();
-
-
-        await loadVideos();
-
-
-    }catch(error){
-
-        console.error(
-            "StreamX upload error:",
-            error
-        );
-
-
-        showMessage(
-            "❌ " + error.message,
-            "error"
-        );
-
-
-        updateProgress(
-            0,
-            "Upload failed"
-        );
-
-
-    }finally{
-
-        uploadButton.disabled =
-            false;
-
-    }
+    renderVideos();
 
 }
 
 
 /* =====================================================
-   PROGRESS
+   SEARCH
 ===================================================== */
 
-function updateProgress(
-    percent,
-    text
-){
+searchInput.addEventListener(
+    "input",
+    function() {
 
-    document.getElementById(
-        "progressBar"
-    ).style.width =
-        percent + "%";
+        searchTerm =
+            this.value
+                .trim()
+                .toLowerCase();
 
-
-    document.getElementById(
-        "progressPercent"
-    ).textContent =
-        percent + "%";
-
-
-    document.getElementById(
-        "progressText"
-    ).textContent =
-        text;
-
-}
-
-
-/* =====================================================
-   GET VIDEO STORAGE PATH
-===================================================== */
-
-function getStoragePath(
-    value,
-    bucket
-){
-
-    if(!value)
-        return null;
-
-
-    /*
-       If the database stores only
-       the storage path, use it.
-    */
-
-    if(
-        !value.startsWith(
-            "http://"
-        ) &&
-        !value.startsWith(
-            "https://"
-        )
-    ){
-
-        return value;
+        renderVideos();
 
     }
-
-
-    /*
-       If the database stores a complete
-       public URL, extract the path.
-    */
-
-    const marker =
-        "/storage/v1/object/public/" +
-        bucket +
-        "/";
-
-
-    const index =
-        value.indexOf(
-            marker
-        );
-
-
-    if(index === -1)
-        return null;
-
-
-    return decodeURIComponent(
-        value.substring(
-            index + marker.length
-        )
-    );
-
-}
+);
 
 
 /* =====================================================
@@ -2033,32 +1208,39 @@ function getStoragePath(
 function getPublicURL(
     value,
     bucket
-){
+) {
 
-    if(!value)
+    if(!value) {
+
         return null;
 
+    }
+
+
+    /*
+       If the database already contains
+       a complete URL, use it.
+    */
 
     if(
-        value.startsWith(
-            "http://"
-        ) ||
-        value.startsWith(
-            "https://"
-        )
-    ){
+        value.startsWith("http://") ||
+        value.startsWith("https://")
+    ) {
 
         return value;
 
     }
 
 
+    /*
+       Otherwise treat it as a
+       Supabase storage path.
+    */
+
     return supabaseClient
         .storage
         .from(bucket)
-        .getPublicUrl(
-            value
-        )
+        .getPublicUrl(value)
         .data
         .publicUrl;
 
@@ -2066,103 +1248,190 @@ function getPublicURL(
 
 
 /* =====================================================
-   LOAD VIDEOS
+   ESCAPE HTML
 ===================================================== */
 
-async function loadVideos(){
+function escapeHTML(value) {
 
-    const grid =
-        document.getElementById(
-            "videoGrid"
-        );
+    return String(value ?? "")
+
+        .replace(/&/g, "&amp;")
+
+        .replace(/</g, "&lt;")
+
+        .replace(/>/g, "&gt;")
+
+        .replace(/"/g, "&quot;")
+
+        .replace(/'/g, "&#039;");
+
+}
 
 
-    const empty =
-        document.getElementById(
-            "emptyState"
-        );
+/* =====================================================
+   LOAD VIDEOS FROM SUPABASE
+===================================================== */
 
+async function loadVideos() {
 
-    grid.innerHTML =
+    loading.style.display =
+        "flex";
+
+    videoGrid.innerHTML =
         "";
 
+    emptyState.style.display =
+        "none";
 
-    const result =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending:false
-                }
-            );
+    errorMessage.style.display =
+        "none";
 
 
-    if(result.error){
+    try {
+
+        const result =
+            await supabaseClient
+                .from("videos")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
+
+        if(result.error) {
+
+            throw result.error;
+
+        }
+
+
+        allVideos =
+            result.data || [];
+
+
+        loading.style.display =
+            "none";
+
+
+        renderVideos();
+
+
+    } catch(error) {
 
         console.error(
-            result.error
+            "Supabase error:",
+            error
         );
 
 
-        showMessage(
-            "Could not load video library: " +
-            result.error.message,
-            "error"
-        );
+        loading.style.display =
+            "none";
 
 
-        return;
+        errorMessage.textContent =
+            "Unable to load videos: " +
+            error.message;
+
+
+        errorMessage.style.display =
+            "block";
+
+
+        videoCount.textContent =
+            "Error";
 
     }
 
+}
+
+
+/* =====================================================
+   FILTER VIDEOS
+===================================================== */
+
+function getFilteredVideos() {
+
+    return allVideos.filter(video => {
+
+        const categoryMatch =
+            selectedCategory === "All" ||
+            String(video.category || "")
+                .toLowerCase() ===
+            selectedCategory.toLowerCase();
+
+
+        if(!categoryMatch) {
+
+            return false;
+
+        }
+
+
+        if(!searchTerm) {
+
+            return true;
+
+        }
+
+
+        const title =
+            String(
+                video.title || ""
+            ).toLowerCase();
+
+
+        const description =
+            String(
+                video.description || ""
+            ).toLowerCase();
+
+
+        const category =
+            String(
+                video.category || ""
+            ).toLowerCase();
+
+
+        return (
+            title.includes(searchTerm) ||
+            description.includes(searchTerm) ||
+            category.includes(searchTerm)
+        );
+
+    });
+
+}
+
+
+/* =====================================================
+   RENDER VIDEOS
+===================================================== */
+
+function renderVideos() {
 
     const videos =
-        result.data || [];
+        getFilteredVideos();
 
 
-    document.getElementById(
-        "totalVideos"
-    ).textContent =
-        videos.length;
+    videoGrid.innerHTML =
+        "";
 
 
-    document.getElementById(
-        "videoCount"
-    ).textContent =
+    videoCount.textContent =
         videos.length +
         (
             videos.length === 1
-            ? " video"
-            : " videos"
+                ? " video"
+                : " videos"
         );
 
 
-    let totalViews = 0;
+    if(videos.length === 0) {
 
-
-    videos.forEach(
-        video => {
-
-            totalViews +=
-                Number(
-                    video.views || 0
-                );
-
-        }
-    );
-
-
-    document.getElementById(
-        "totalViews"
-    ).textContent =
-        totalViews.toLocaleString();
-
-
-    if(videos.length === 0){
-
-        empty.style.display =
+        emptyState.style.display =
             "block";
 
         return;
@@ -2170,36 +1439,27 @@ async function loadVideos(){
     }
 
 
-    empty.style.display =
+    emptyState.style.display =
         "none";
 
 
-    videos.forEach(
-        video => {
+    videos.forEach(video => {
 
-            createVideoCard(
-                video
-            );
+        createVideoCard(video);
 
-        }
-    );
+    });
 
 }
 
 
 /* =====================================================
-   CREATE CARD
+   CREATE VIDEO CARD
 ===================================================== */
 
-function createVideoCard(
-    video
-){
+function createVideoCard(video) {
 
     const card =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("article");
 
     card.className =
         "video-card";
@@ -2214,7 +1474,12 @@ function createVideoCard(
 
     const title =
         video.title ||
-        "Untitled";
+        "Untitled Video";
+
+
+    const description =
+        video.description ||
+        "No description available.";
 
 
     const category =
@@ -2222,43 +1487,40 @@ function createVideoCard(
         "General";
 
 
-    const description =
-        video.description ||
-        "No description";
+    const views =
+        Number(video.views || 0);
 
 
-    const uploaded =
+    const date =
         video.created_at
-        ?
-        new Date(
-            video.created_at
-        ).toLocaleDateString()
-        :
-        "";
+            ? new Date(
+                video.created_at
+              ).toLocaleDateString()
+            : "";
 
 
     card.innerHTML = `
 
-        <div class="video-image">
+        <div class="thumbnail">
 
             ${
                 thumbnailURL
+
                 ?
+
                 `
                 <img
                     src="${escapeHTML(thumbnailURL)}"
                     alt="${escapeHTML(title)}"
+                    loading="lazy"
+                    onerror="this.style.display='none'"
                 >
                 `
+
                 :
+
                 `
-                <div style="
-                    height:100%;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:45px;
-                ">
+                <div class="thumbnail-placeholder">
                     🎬
                 </div>
                 `
@@ -2269,49 +1531,35 @@ function createVideoCard(
                 ${escapeHTML(category)}
             </div>
 
+
+            <div class="play-icon">
+                ▶
+            </div>
+
         </div>
 
 
-        <div class="video-content">
+        <div class="video-info">
 
-            <h3>
+            <div class="video-title">
                 ${escapeHTML(title)}
-            </h3>
+            </div>
 
 
-            <p>
+            <div class="video-description">
                 ${escapeHTML(description)}
-            </p>
+            </div>
 
 
-            <p style="margin-top:7px;">
-                Uploaded:
-                ${escapeHTML(uploaded)}
-            </p>
+            <div class="video-meta">
 
+                <span>
+                    ${views.toLocaleString()} views
+                </span>
 
-            <p style="margin-top:5px;">
-                Views:
-                ${Number(video.views || 0).toLocaleString()}
-            </p>
-
-
-            <div class="video-actions">
-
-                <button
-                    class="card-button"
-                    onclick="previewVideo(${JSON.stringify(video.id)})"
-                >
-                    ▶ Preview
-                </button>
-
-
-                <button
-                    class="card-button delete-button"
-                    onclick="deleteVideo(${JSON.stringify(video.id)})"
-                >
-                    🗑 Delete
-                </button>
+                <span>
+                    ${escapeHTML(date)}
+                </span>
 
             </div>
 
@@ -2320,60 +1568,26 @@ function createVideoCard(
     `;
 
 
-    document.getElementById(
-        "videoGrid"
-    ).appendChild(
-        card
+    card.addEventListener(
+        "click",
+        () => {
+
+            openVideo(video);
+
+        }
     );
+
+
+    videoGrid.appendChild(card);
 
 }
 
 
 /* =====================================================
-   PREVIEW
+   OPEN VIDEO
 ===================================================== */
 
-function previewVideo(
-    id
-){
-
-    loadSingleVideo(
-        id
-    );
-
-}
-
-
-async function loadSingleVideo(
-    id
-){
-
-    const result =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .eq(
-                "id",
-                id
-            )
-            .single();
-
-
-    if(result.error){
-
-        alert(
-            "Could not load video: " +
-            result.error.message
-        );
-
-        return;
-
-    }
-
-
-    const video =
-        result.data;
-
+function openVideo(video) {
 
     const videoURL =
         getPublicURL(
@@ -2382,10 +1596,10 @@ async function loadSingleVideo(
         );
 
 
-    if(!videoURL){
+    if(!videoURL) {
 
         alert(
-            "No video URL was found for this video."
+            "The video file could not be found."
         );
 
         return;
@@ -2393,434 +1607,224 @@ async function loadSingleVideo(
     }
 
 
-    const preview =
-        window.open(
-            "",
-            "_blank"
+    const player =
+        document.getElementById(
+            "videoPlayer"
         );
 
 
-    preview.document.write(`
-
-        <!DOCTYPE html>
-
-        <html>
-
-        <head>
-
-            <title>
-                ${escapeHTML(video.title)}
-            </title>
-
-            <style>
-
-                body{
-                    margin:0;
-                    background:#000;
-                    color:#fff;
-                    font-family:Arial;
-                }
-
-                video{
-                    width:100%;
-                    max-height:80vh;
-                    display:block;
-                    background:#000;
-                }
-
-                .info{
-                    padding:20px;
-                }
-
-                h1{
-                    font-size:24px;
-                }
-
-                p{
-                    color:#999;
-                    line-height:1.6;
-                }
-
-            </style>
-
-        </head>
+    const modal =
+        document.getElementById(
+            "videoModal"
+        );
 
 
-        <body>
-
-            <video
-                controls
-                autoplay
-            >
-
-                <source
-                    src="${escapeHTML(videoURL)}"
-                >
-
-            </video>
+    document.getElementById(
+        "modalTitle"
+    ).textContent =
+        video.title ||
+        "Untitled Video";
 
 
-            <div class="info">
-
-                <h1>
-                    ${escapeHTML(video.title)}
-                </h1>
-
-                <p>
-                    ${escapeHTML(
-                        video.description || ""
-                    )}
-                </p>
-
-            </div>
-
-        </body>
-
-        </html>
-
-    `);
+    document.getElementById(
+        "modalDescription"
+    ).textContent =
+        video.description ||
+        "";
 
 
-    preview.document.close();
+    document.getElementById(
+        "modalCategory"
+    ).textContent =
+        video.category ||
+        "General";
+
+
+    player.src =
+        videoURL;
+
+
+    modal.classList.add(
+        "show"
+    );
+
+
+    document.body.style.overflow =
+        "hidden";
+
+
+    /*
+       Attempt to start playback.
+       The browser may block autoplay,
+       in which case the controls remain
+       available.
+    */
+
+    player.play().catch(() => {});
+
+
+    /*
+       Update views.
+       This is intentionally done without
+       allowing a failed view update to
+       break video playback.
+    */
+
+    updateViews(
+        video.id,
+        Number(video.views || 0)
+    );
 
 }
 
 
 /* =====================================================
-   DELETE VIDEO
+   UPDATE VIEWS
 ===================================================== */
 
-async function deleteVideo(
-    id
-){
+async function updateViews(
+    videoID,
+    currentViews
+) {
 
-    const confirmed =
-        confirm(
-            "Delete this video permanently?\n\n" +
-            "This will remove the database record, " +
-            "video file and thumbnail."
-        );
+    try {
 
-
-    if(!confirmed)
-        return;
+        const newViews =
+            currentViews + 1;
 
 
-    showMessage(
-        "Deleting video...",
-        "success"
-    );
+        await supabaseClient
+            .from("videos")
+            .update({
+                views: newViews
+            })
+            .eq(
+                "id",
+                videoID
+            );
 
-
-    try{
 
         /*
-           First get the database record
-           so we know the Storage paths.
+           Update local copy too.
         */
 
-        const result =
-            await supabaseClient
-                .from("videos")
-                .select("*")
-                .eq(
-                    "id",
-                    id
-                )
-                .single();
-
-
-        if(result.error){
-
-            throw new Error(
-                "Could not find video: " +
-                result.error.message
-            );
-
-        }
-
-
-        const video =
-            result.data;
-
-
-        const videoPath =
-            getStoragePath(
-                video.video_url,
-                "videos"
+        const localVideo =
+            allVideos.find(
+                video =>
+                    String(video.id) ===
+                    String(videoID)
             );
 
 
-        const thumbnailPath =
-            getStoragePath(
-                video.thumbnail_url,
-                "thumbnails"
-            );
+        if(localVideo) {
 
-
-        /* =========================================
-           DELETE VIDEO FILE
-        ========================================= */
-
-        if(videoPath){
-
-            const deleteVideoFile =
-                await supabaseClient
-                    .storage
-                    .from("videos")
-                    .remove([
-                        videoPath
-                    ]);
-
-
-            if(deleteVideoFile.error){
-
-                throw new Error(
-                    "Could not delete video file: " +
-                    deleteVideoFile.error.message
-                );
-
-            }
+            localVideo.views =
+                newViews;
 
         }
 
+    } catch(error) {
 
-        /* =========================================
-           DELETE THUMBNAIL
-        ========================================= */
-
-        if(thumbnailPath){
-
-            const deleteThumbnail =
-                await supabaseClient
-                    .storage
-                    .from("thumbnails")
-                    .remove([
-                        thumbnailPath
-                    ]);
-
-
-            if(deleteThumbnail.error){
-
-                console.warn(
-                    "Thumbnail deletion warning:",
-                    deleteThumbnail.error
-                );
-
-            }
-
-        }
-
-
-        /* =========================================
-           DELETE DATABASE RECORD
-        ========================================= */
-
-        const deleteRecord =
-            await supabaseClient
-                .from("videos")
-                .delete()
-                .eq(
-                    "id",
-                    id
-                );
-
-
-        if(deleteRecord.error){
-
-            throw new Error(
-                "Files deleted but database record could not be deleted: " +
-                deleteRecord.error.message
-            );
-
-        }
-
-
-        showMessage(
-            "✓ Video deleted successfully.",
-            "success"
-        );
-
-
-        await loadVideos();
-
-
-    }catch(error){
-
-        console.error(
-            "Delete error:",
+        console.warn(
+            "Could not update views:",
             error
         );
 
-
-        showMessage(
-            "❌ Delete failed: " +
-            error.message,
-            "error"
-        );
-
     }
 
 }
 
 
 /* =====================================================
-   CLEAR FORM
+   CLOSE VIDEO
 ===================================================== */
 
-function clearForm(){
+function closeVideo() {
 
-    document.getElementById(
-        "videoTitle"
-    ).value =
-        "";
-
-
-    document.getElementById(
-        "videoCategory"
-    ).value =
-        "";
+    const modal =
+        document.getElementById(
+            "videoModal"
+        );
 
 
-    document.getElementById(
-        "videoDescription"
-    ).value =
-        "";
+    const player =
+        document.getElementById(
+            "videoPlayer"
+        );
 
 
-    videoFile.value =
-        "";
+    player.pause();
 
-
-    thumbnailFile.value =
-        "";
-
-
-    selectedVideoFile =
-        null;
-
-
-    selectedThumbnailFile =
-        null;
-
-
-    document.getElementById(
-        "videoFileName"
-    ).textContent =
-        "";
-
-
-    document.getElementById(
-        "thumbnailFileName"
-    ).textContent =
-        "";
-
-
-    document.getElementById(
-        "thumbnailPreview"
-    ).style.display =
-        "none";
-
-
-    document.getElementById(
-        "thumbnailUploadBox"
-    ).style.display =
-        "flex";
-
-
-    document.getElementById(
-        "progressWrapper"
-    ).style.display =
-        "none";
-
-
-    updateProgress(
-        0,
-        "Preparing upload..."
+    player.removeAttribute(
+        "src"
     );
 
-}
+    player.load();
 
 
-/* =====================================================
-   NAVIGATION
-===================================================== */
-
-function goToUpload(){
-
-    document
-        .getElementById(
-            "uploadSection"
-        )
-        .scrollIntoView({
-            behavior:"smooth"
-        });
-
-}
-
-
-function goToVideos(){
-
-    document
-        .getElementById(
-            "videosSection"
-        )
-        .scrollIntoView({
-            behavior:"smooth"
-        });
-
-}
-
-
-/* =====================================================
-   ESCAPE HTML
-===================================================== */
-
-function escapeHTML(
-    value
-){
-
-    return String(
-        value ?? ""
-    )
-
-    .replace(
-        /&/g,
-        "&amp;"
-    )
-
-    .replace(
-        /</g,
-        "&lt;"
-    )
-
-    .replace(
-        />/g,
-        "&gt;"
-    )
-
-    .replace(
-        /"/g,
-        "&quot;"
-    )
-
-    .replace(
-        /'/g,
-        "&#039;"
+    modal.classList.remove(
+        "show"
     );
 
+
+    document.body.style.overflow =
+        "";
+
 }
 
 
 /* =====================================================
-   START
+   CLOSE WHEN CLICKING OUTSIDE
 ===================================================== */
+
+document
+    .getElementById("videoModal")
+    .addEventListener(
+        "click",
+        function(event) {
+
+            if(
+                event.target ===
+                this
+            ) {
+
+                closeVideo();
+
+            }
+
+        }
+    );
+
+
+/* =====================================================
+   ESC KEY
+===================================================== */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if(
+            event.key === "Escape"
+        ) {
+
+            closeVideo();
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   START APPLICATION
+===================================================== */
+
+createCategories();
 
 loadVideos();
 
 </script>
 
 </body>
-
 </html>
-```

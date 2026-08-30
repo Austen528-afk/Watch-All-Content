@@ -1,7 +1,9 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -741,6 +743,12 @@ body{
     display:block;
 
     background:#000;
+
+    /*
+       Download protection
+    */
+    user-select:none;
+    -webkit-user-select:none;
 }
 
 .player-info{
@@ -1121,8 +1129,8 @@ body{
 
 
     <div
-        class="video-grid"
         id="videoGrid"
+        class="video-grid"
     >
 
         <div class="loading">
@@ -1173,11 +1181,26 @@ body{
         </div>
 
 
+        <!--
+            IMPORTANT:
+            controlsList="nodownload"
+            removes the browser's download button
+            where supported.
+
+            noplaybackrate removes playback speed control
+            where supported.
+
+            disablePictureInPicture prevents PiP.
+        -->
+
         <video
             class="player-video"
             id="playerVideo"
             controls
             playsinline
+            controlsList="nodownload noplaybackrate"
+            disablePictureInPicture
+            preload="metadata"
         ></video>
 
 
@@ -1585,6 +1608,7 @@ function createVideoCard(video){
                     src="${escapeHTML(thumbnail)}"
                     alt="${escapeHTML(title)}"
                     loading="lazy"
+                    draggable="false"
                 >
                 `
                 :
@@ -1670,6 +1694,7 @@ function createVideoCard(video){
 
 /* =====================================================
    GET PUBLIC URL
+   Used for thumbnails.
 ===================================================== */
 
 function getPublicURL(
@@ -1710,28 +1735,209 @@ function getPublicURL(
 
 
 /* =====================================================
+   GET STORAGE PATH
+   Used for signed video URLs.
+===================================================== */
+
+function getStoragePath(
+    value,
+    bucket
+){
+
+    if(!value)
+        return null;
+
+
+    /*
+       If the database already contains
+       a storage path such as:
+
+       video.mp4
+
+       or:
+
+       folder/video.mp4
+
+       return it directly.
+    */
+
+    if(
+        !value.startsWith("http://") &&
+        !value.startsWith("https://")
+    ){
+
+        return value;
+
+    }
+
+
+    /*
+       If the database contains a Supabase
+       public storage URL, extract the path.
+
+       Example:
+
+       /storage/v1/object/public/videos/file.mp4
+
+       becomes:
+
+       file.mp4
+    */
+
+    try{
+
+        const url =
+            new URL(value);
+
+
+        const marker =
+            `/storage/v1/object/public/${bucket}/`;
+
+
+        const markerIndex =
+            url.pathname.indexOf(
+                marker
+            );
+
+
+        if(markerIndex !== -1){
+
+            return decodeURIComponent(
+                url.pathname.substring(
+                    markerIndex +
+                    marker.length
+                )
+            );
+
+        }
+
+
+        /*
+           Also support signed URLs.
+        */
+
+        const signedMarker =
+            `/storage/v1/object/sign/${bucket}/`;
+
+
+        const signedIndex =
+            url.pathname.indexOf(
+                signedMarker
+            );
+
+
+        if(signedIndex !== -1){
+
+            return decodeURIComponent(
+                url.pathname.substring(
+                    signedIndex +
+                    signedMarker.length
+                )
+            );
+
+        }
+
+
+        return null;
+
+    }
+    catch(error){
+
+        console.error(
+            "Unable to extract storage path:",
+            error
+        );
+
+        return null;
+
+    }
+
+}
+
+
+/* =====================================================
+   CREATE SIGNED VIDEO URL
+===================================================== */
+
+async function getVideoURL(video){
+
+    const rawValue =
+        video.video_url;
+
+
+    if(!rawValue){
+
+        return null;
+
+    }
+
+
+    /*
+       Get the actual Supabase
+       Storage path.
+    */
+
+    const storagePath =
+        getStoragePath(
+            rawValue,
+            "videos"
+        );
+
+
+    if(!storagePath){
+
+        console.error(
+            "Invalid video storage path:",
+            rawValue
+        );
+
+        return null;
+
+    }
+
+
+    /*
+       Create a temporary signed URL.
+
+       1 hour = 3600 seconds.
+    */
+
+    const result =
+        await supabaseClient
+            .storage
+            .from("videos")
+            .createSignedUrl(
+                storagePath,
+                3600
+            );
+
+
+    if(result.error){
+
+        console.error(
+            "Signed URL error:",
+            result.error
+        );
+
+        return null;
+
+    }
+
+
+    return result.data.signedUrl;
+
+}
+
+
+/* =====================================================
    OPEN PLAYER
 ===================================================== */
 
 async function openPlayer(video){
 
-    const videoURL =
-        getPublicURL(
-            video.video_url,
-            "videos"
-        );
-
-
-    if(!videoURL){
-
-        alert(
-            "This video does not have a valid video URL."
-        );
-
-        return;
-
-    }
-
+    /*
+       Show loading state in player.
+    */
 
     playerTitle.textContent =
         video.title ||
@@ -1748,8 +1954,12 @@ async function openPlayer(video){
         "";
 
 
-    playerVideo.src =
-        videoURL;
+    playerVideo.removeAttribute(
+        "src"
+    );
+
+
+    playerVideo.load();
 
 
     videoModal.classList.add(
@@ -1760,6 +1970,43 @@ async function openPlayer(video){
     document.body.style.overflow =
         "hidden";
 
+
+    /*
+       Get temporary signed URL.
+    */
+
+    const videoURL =
+        await getVideoURL(video);
+
+
+    if(!videoURL){
+
+        closeVideoPlayer();
+
+
+        alert(
+            "Unable to load this video."
+        );
+
+        return;
+
+    }
+
+
+    /*
+       Set signed video URL.
+    */
+
+    playerVideo.src =
+        videoURL;
+
+
+    playerVideo.load();
+
+
+    /*
+       Attempt autoplay.
+    */
 
     try{
 
@@ -1776,7 +2023,7 @@ async function openPlayer(video){
 
 
     /*
-       Update views
+       Update views.
     */
 
     updateViews(video);
@@ -1837,21 +2084,29 @@ function closeVideoPlayer(){
 
     playerVideo.pause();
 
+
     playerVideo.removeAttribute(
         "src"
     );
 
+
     playerVideo.load();
+
 
     videoModal.classList.remove(
         "show"
     );
+
 
     document.body.style.overflow =
         "";
 
 }
 
+
+/* =====================================================
+   CLOSE PLAYER BUTTON
+===================================================== */
 
 closePlayer.addEventListener(
     "click",
@@ -1902,6 +2157,7 @@ document.addEventListener(
 
             }
 
+
             categorySuggestions.style.display =
                 "none";
 
@@ -1909,6 +2165,49 @@ document.addEventListener(
 
     }
 );
+
+
+/* =====================================================
+   VIDEO RIGHT CLICK
+===================================================== */
+
+playerVideo.addEventListener(
+    "contextmenu",
+    function(event){
+
+        event.preventDefault();
+
+    }
+);
+
+
+/* =====================================================
+   VIDEO DRAGGING
+===================================================== */
+
+playerVideo.addEventListener(
+    "dragstart",
+    function(event){
+
+        event.preventDefault();
+
+    }
+);
+
+
+/* =====================================================
+   DISABLE PICTURE-IN-PICTURE
+===================================================== */
+
+if(
+    "disablePictureInPicture" in
+    playerVideo
+){
+
+    playerVideo.disablePictureInPicture =
+        true;
+
+}
 
 
 /* =====================================================
@@ -2055,8 +2354,9 @@ searchInput.addEventListener(
                         button.classList.toggle(
                             "active",
                             button.dataset.category
-                            .toLowerCase() ===
-                            matchingCategory.toLowerCase()
+                                .toLowerCase() ===
+                            matchingCategory
+                                .toLowerCase()
                         );
 
                     }
@@ -2429,3 +2729,4 @@ loadVideos();
 </body>
 
 </html>
+```

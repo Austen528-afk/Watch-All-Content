@@ -1804,51 +1804,14 @@ if(likeButton){
 
             await toggleLike(video.id);
 
-            const userId =
-                getLikeUserId();
-
-            const { data, error } =
-                await supabaseClient
-                    .from("video_likes")
-                    .select("id")
-                    .eq("video_id", video.id)
-                    .eq("user_id", userId)
-                    .maybeSingle();
-
-            if(error){
-
-                console.error(
-                    "Like status error:",
-                    error
-                );
-
-                return;
-
-            }
-
-            if(data){
-
-                likeButton.textContent =
-                    "♥";
-
-                likeButton.classList.add(
-                    "liked"
-                );
-
-            }
-            else{
-
-                likeButton.textContent =
-                    "♡";
-
-                likeButton.classList.remove(
-                    "liked"
-                );
-
-            }
-
         }
     );
+
+    /*
+       Check whether this user already
+       liked the video when the card loads.
+    */
+    updateLikeButton(video.id);
 
 }
 

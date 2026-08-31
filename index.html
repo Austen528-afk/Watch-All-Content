@@ -2137,7 +2137,177 @@ async function updateViews(video){
     }
 
 }
+/* =========================
+   LIKE / UNLIKE
+========================= */
 
+async function toggleLike(videoId){
+
+    console.log("Like clicked:", videoId);
+
+    try{
+
+        const userId =
+            getLikeUserId();
+
+        const { data: existingLike, error: checkError } =
+            await supabaseClient
+                .from("video_likes")
+                .select("id")
+                .eq("video_id", videoId)
+                .eq("user_id", userId)
+                .maybeSingle();
+
+        if(checkError){
+
+            console.error(
+                "Like check error:",
+                checkError
+            );
+
+            alert(
+                "Unable to check like status."
+            );
+
+            return;
+
+        }
+
+
+        if(existingLike){
+
+            const { error } =
+                await supabaseClient
+                    .from("video_likes")
+                    .delete()
+                    .eq("id", existingLike.id);
+
+            if(error){
+
+                console.error(
+                    "Unlike error:",
+                    error
+                );
+
+                alert(
+                    "Unable to remove like."
+                );
+
+                return;
+
+            }
+
+        }
+        else{
+
+            const { error } =
+                await supabaseClient
+                    .from("video_likes")
+                    .insert({
+                        video_id: videoId,
+                        user_id: userId
+                    });
+
+            if(error){
+
+                console.error(
+                    "Like insert error:",
+                    error
+                );
+
+                alert(
+                    "Unable to like this video."
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        await updateLikeCount(videoId);
+
+    }
+    catch(error){
+
+        console.error(
+            "Unexpected like error:",
+            error
+        );
+
+    }
+
+}
+
+function getLikeUserId(){
+
+    let userId =
+        localStorage.getItem(
+            "streamx_like_user_id"
+        );
+
+    if(!userId){
+
+        userId =
+            crypto.randomUUID();
+
+        localStorage.setItem(
+            "streamx_like_user_id",
+            userId
+        );
+
+    }
+
+    return userId;
+
+}
+
+async function updateLikeCount(videoId){
+
+    const { count, error } =
+        await supabaseClient
+            .from("video_likes")
+            .select(
+                "*",
+                {
+                    count:"exact",
+                    head:true
+                }
+            )
+            .eq(
+                "video_id",
+                videoId
+            );
+
+    if(error){
+
+        console.error(
+            "Like count error:",
+            error
+        );
+
+        return;
+
+    }
+
+    const video =
+        allVideos.find(
+            item =>
+                String(item.id) ===
+                String(videoId)
+        );
+
+    if(video){
+
+        video.likes_count =
+            count || 0;
+
+    }
+
+    renderVideos();
+
+}
 
 /* =========================
    CLOSE VIDEO PLAYER

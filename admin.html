@@ -3056,29 +3056,9 @@ async function loadVideos(){
             totalViews.toLocaleString();
 
 
-        /* =========================================
-           LOAD LIKES FOR EACH VIDEO
-        ========================================= */
-
-        for(
-            const video of videos
-        ){
-
-            const likesResult =
-                await supabaseClient
-                    .from("video_likes")
-                    .select(
-                        "id",
-                        {
-                            count:"exact",
-                            head:true
-                        }
-                    )
-                    .eq(
-                        "video_id",
-                        video.id
-                    );
-
+/* =========================================
+   LOAD LIKES FOR EACH VIDEO
+========================================= */
 
 for (const video of videos) {
 

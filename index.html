@@ -2348,7 +2348,72 @@ async function updateLikeCount(videoId){
 
     }
 
-    renderVideos();
+    updateLikeButton(videoId);
+
+}
+
+async function updateLikeButton(videoId){
+
+    const userId =
+        getLikeUserId();
+
+    const { data, error } =
+        await supabaseClient
+            .from("video_likes")
+            .select("id")
+            .eq(
+                "video_id",
+                videoId
+            )
+            .eq(
+                "user_id",
+                userId
+            )
+            .maybeSingle();
+
+
+    if(error){
+
+        console.error(
+            "Unable to check like button:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        document.querySelector(
+            `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
+        );
+
+
+    if(!button)
+        return;
+
+
+    if(data){
+
+        button.textContent =
+            "♥";
+
+        button.classList.add(
+            "liked"
+        );
+
+    }
+    else{
+
+        button.textContent =
+            "♡";
+
+        button.classList.remove(
+            "liked"
+        );
+
+    }
 
 }
 

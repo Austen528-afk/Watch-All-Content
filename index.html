@@ -29,6 +29,122 @@ body{
 }
 
 /* =========================
+   AGE GATE
+========================= */
+
+.age-gate{
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:rgba(0,0,0,.97);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.age-gate.hidden{
+    display:none;
+}
+
+.age-box{
+    width:min(440px,100%);
+    background:#111;
+    border:1px solid #292929;
+    border-radius:18px;
+    padding:35px 28px;
+    text-align:center;
+    box-shadow:0 25px 80px rgba(0,0,0,.7);
+}
+
+.age-icon{
+    width:70px;
+    height:70px;
+    margin:0 auto 20px;
+    border-radius:50%;
+    background:#ff1744;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    font-weight:bold;
+    box-shadow:0 0 30px rgba(255,23,68,.25);
+}
+
+.age-box h1{
+    font-size:25px;
+    margin-bottom:12px;
+}
+
+.age-box p{
+    color:#888;
+    font-size:13px;
+    line-height:1.7;
+    margin-bottom:25px;
+}
+
+.age-warning{
+    color:#aaa;
+    font-size:11px;
+    line-height:1.5;
+    margin-bottom:22px;
+}
+
+.age-buttons{
+    display:flex;
+    gap:10px;
+}
+
+.age-button{
+    flex:1;
+    height:48px;
+    border:none;
+    border-radius:9px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:bold;
+    transition:.2s;
+}
+
+.age-yes{
+    background:#ff1744;
+    color:white;
+}
+
+.age-yes:hover{
+    background:#e9143d;
+    transform:translateY(-1px);
+}
+
+.age-no{
+    background:#252525;
+    color:#aaa;
+}
+
+.age-no:hover{
+    background:#333;
+    color:white;
+}
+
+.age-blocked{
+    display:none;
+}
+
+.age-blocked.show{
+    display:block;
+}
+
+.age-blocked h2{
+    color:#ff1744;
+    font-size:20px;
+    margin-bottom:10px;
+}
+
+.age-blocked p{
+    margin-bottom:0;
+}
+
+/* =========================
    HEADER
 ========================= */
 
@@ -495,126 +611,6 @@ body{
 }
 
 /* =========================
-   AGE GATE
-========================= */
-
-.age-gate{
-    position:fixed;
-    inset:0;
-    z-index:10000;
-    background:#080808;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-}
-
-.age-gate.hidden{
-    display:none;
-}
-
-.age-gate-box{
-    width:min(480px,100%);
-    background:#111;
-    border:1px solid #292929;
-    border-radius:18px;
-    padding:35px 30px;
-    text-align:center;
-    box-shadow:0 25px 80px rgba(0,0,0,.7);
-}
-
-.age-gate-logo{
-    font-size:30px;
-    font-weight:900;
-    letter-spacing:-1px;
-    margin-bottom:25px;
-}
-
-.age-gate-logo span{
-    color:#ff1744;
-}
-
-.age-gate-icon{
-    font-size:55px;
-    margin-bottom:20px;
-}
-
-.age-gate h2{
-    font-size:25px;
-    margin-bottom:12px;
-}
-
-.age-gate p{
-    color:#888;
-    font-size:13px;
-    line-height:1.6;
-    margin-bottom:25px;
-}
-
-.age-gate-warning{
-    background:#1a1012;
-    border:1px solid rgba(255,23,68,.25);
-    color:#aaa;
-    border-radius:10px;
-    padding:12px;
-    margin-bottom:25px;
-    font-size:11px;
-    line-height:1.5;
-}
-
-.age-gate-buttons{
-    display:flex;
-    gap:10px;
-}
-
-.age-gate-button{
-    flex:1;
-    height:46px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:13px;
-    font-weight:bold;
-    transition:.2s;
-}
-
-.age-gate-yes{
-    background:#ff1744;
-    color:white;
-}
-
-.age-gate-yes:hover{
-    background:#e9143d;
-    transform:translateY(-1px);
-}
-
-.age-gate-no{
-    background:#242424;
-    color:#aaa;
-}
-
-.age-gate-no:hover{
-    background:#303030;
-    color:white;
-}
-
-@media(max-width:480px){
-
-    .age-gate-box{
-        padding:30px 20px;
-    }
-
-    .age-gate h2{
-        font-size:22px;
-    }
-
-    .age-gate-buttons{
-        flex-direction:column;
-    }
-
-}
-
-/* =========================
    PLAYER MODAL
 ========================= */
 
@@ -813,6 +809,14 @@ body{
     .video-meta{
         font-size:9px;
     }
+
+    .age-box{
+        padding:30px 20px;
+    }
+
+    .age-box h1{
+        font-size:22px;
+    }
 }
 
 @media(max-width:480px){
@@ -832,12 +836,91 @@ body{
     .section-header h2{
         font-size:18px;
     }
+
+    .age-buttons{
+        flex-direction:column;
+    }
+
+    .age-button{
+        width:100%;
+    }
 }
 
 </style>
 </head>
 
 <body>
+
+<!-- =========================
+     AGE VERIFICATION
+========================= -->
+
+<div
+    id="ageGate"
+    class="age-gate"
+>
+
+    <div class="age-box">
+
+        <div class="age-icon">
+            18+
+        </div>
+
+        <h1>
+            Age Verification
+        </h1>
+
+        <p id="ageMessage">
+            You must be 18 years or older to enter StreamX.
+        </p>
+
+        <div class="age-warning">
+            By selecting YES, you confirm that you are at least
+            18 years old and agree to continue.
+        </div>
+
+        <div
+            id="ageButtons"
+            class="age-buttons"
+        >
+
+            <button
+                id="ageYes"
+                class="age-button age-yes"
+                type="button"
+            >
+                YES, I AM 18+
+            </button>
+
+            <button
+                id="ageNo"
+                class="age-button age-no"
+                type="button"
+            >
+                NO, I AM UNDER 18
+            </button>
+
+        </div>
+
+        <div
+            id="ageBlocked"
+            class="age-blocked"
+        >
+
+            <h2>
+                Access Denied
+            </h2>
+
+            <p>
+                You must be 18 or older to access this website.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
 
 <header class="header">
 
@@ -961,7 +1044,7 @@ body{
             class="result-count"
             id="resultCount"
         >
-            Loading...
+            Waiting for age verification...
         </span>
 
     </div>
@@ -983,7 +1066,7 @@ body{
             <div class="spinner"></div>
 
             <span>
-                Loading videos...
+                Waiting for age verification...
             </span>
 
         </div>
@@ -992,75 +1075,6 @@ body{
 
 </main>
 
-
-<footer class="footer">
-
-    © 2026 StreamX
-
-</footer>
-
-
-<!-- =========================
-     AGE GATE
-========================= -->
-
-<div
-    id="ageGate"
-    class="age-gate"
->
-
-    <div class="age-gate-box">
-
-        <div class="age-gate-logo">
-            Stream<span>X</span>
-        </div>
-
-        <div class="age-gate-icon">
-            🔞
-        </div>
-
-        <h2>
-            Age Verification
-        </h2>
-
-        <p>
-            You must be 18 years or older to enter this website.
-            Please confirm your age before continuing.
-        </p>
-
-        <div class="age-gate-warning">
-            By selecting "I am 18+", you confirm that you are
-            at least 18 years old and agree to continue.
-        </div>
-
-        <div class="age-gate-buttons">
-
-            <button
-                id="ageYes"
-                class="age-gate-button age-gate-yes"
-                type="button"
-            >
-                I am 18+
-            </button>
-
-            <button
-                id="ageNo"
-                class="age-gate-button age-gate-no"
-                type="button"
-            >
-                I am under 18
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =========================
-     PLAYER MODAL
-========================= -->
 
 <div
     class="modal"
@@ -1119,6 +1133,13 @@ body{
 </div>
 
 
+<footer class="footer">
+
+    © 2026 StreamX
+
+</footer>
+
+
 <script>
 
 /* =========================
@@ -1139,6 +1160,35 @@ const supabaseClient =
 
 
 /* =========================
+   AGE GATE
+========================= */
+
+const ageGate =
+    document.getElementById("ageGate");
+
+const ageYes =
+    document.getElementById("ageYes");
+
+const ageNo =
+    document.getElementById("ageNo");
+
+const ageButtons =
+    document.getElementById("ageButtons");
+
+const ageBlocked =
+    document.getElementById("ageBlocked");
+
+
+/*
+ * The age gate is intentionally NOT
+ * saved in localStorage or cookies.
+ *
+ * Therefore it appears every time
+ * the website is opened or refreshed.
+ */
+
+
+/* =========================
    VARIABLES
 ========================= */
 
@@ -1147,6 +1197,8 @@ let allVideos = [];
 let currentCategory = "All";
 
 let searchTerm = "";
+
+let ageVerified = false;
 
 
 /* =========================
@@ -1194,17 +1246,75 @@ const closePlayer =
 
 
 /* =========================
-   AGE GATE ELEMENTS
+   AGE YES
 ========================= */
 
-const ageGate =
-    document.getElementById("ageGate");
+ageYes.addEventListener(
+    "click",
+    function(){
 
-const ageYes =
-    document.getElementById("ageYes");
+        ageVerified = true;
 
-const ageNo =
-    document.getElementById("ageNo");
+        ageGate.classList.add(
+            "hidden"
+        );
+
+        document.body.style.overflow =
+            "";
+
+        loadVideos();
+
+    }
+);
+
+
+/* =========================
+   AGE NO
+========================= */
+
+ageNo.addEventListener(
+    "click",
+    function(){
+
+        ageVerified = false;
+
+        ageButtons.style.display =
+            "none";
+
+        ageBlocked.classList.add(
+            "show"
+        );
+
+        videoGrid.innerHTML = `
+
+            <div class="empty">
+
+                <div class="empty-icon">
+                    🔒
+                </div>
+
+                <h3>
+                    Age Verification Required
+                </h3>
+
+                <p>
+                    Please confirm that you are 18 or older to view content.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+);
+
+
+/* =========================
+   INITIAL AGE LOCK
+========================= */
+
+document.body.style.overflow =
+    "hidden";
 
 
 /* =========================
@@ -1230,6 +1340,10 @@ const categories = [
 ========================= */
 
 async function loadVideos(){
+
+    if(!ageVerified){
+        return;
+    }
 
     showLoading();
 
@@ -1317,6 +1431,10 @@ function getFilteredVideos(){
 ========================= */
 
 function renderVideos(){
+
+    if(!ageVerified){
+        return;
+    }
 
     const videos =
         getFilteredVideos();
@@ -1726,6 +1844,10 @@ async function getVideoURL(video){
 
 async function openPlayer(video){
 
+    if(!ageVerified){
+        return;
+    }
+
     playerTitle.textContent =
         video.title ||
         "Video";
@@ -2083,6 +2205,10 @@ searchInput.addEventListener(
     "input",
     function(){
 
+        if(!ageVerified){
+            return;
+        }
+
         const value =
             this.value.trim();
 
@@ -2185,6 +2311,10 @@ searchInput.addEventListener(
 function showCategorySuggestions(
     value
 ){
+
+    if(!ageVerified){
+        return;
+    }
 
     if(!value){
 
@@ -2311,6 +2441,10 @@ function showCategorySuggestions(
 clearSearch.addEventListener(
     "click",
     function(){
+
+        if(!ageVerified){
+            return;
+        }
 
         searchInput.value =
             "";
@@ -2502,110 +2636,16 @@ function escapeHTML(value){
 
 
 /* =========================
-   AGE GATE
+   IMPORTANT
 ========================= */
 
-function lockPage(){
-
-    ageGate.classList.remove(
-        "hidden"
-    );
-
-    document.body.style.overflow =
-        "hidden";
-
-}
-
-
-function allowEntry(){
-
-    ageGate.classList.add(
-        "hidden"
-    );
-
-    document.body.style.overflow =
-        "";
-
-}
-
-
-/* =========================
-   I AM 18+
-========================= */
-
-ageYes.addEventListener(
-    "click",
-    function(){
-
-        allowEntry();
-
-    }
-);
-
-
-/* =========================
-   I AM UNDER 18
-========================= */
-
-ageNo.addEventListener(
-    "click",
-    function(){
-
-        document.body.innerHTML = `
-
-            <div style="
-                min-height:100vh;
-                background:#080808;
-                color:white;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                text-align:center;
-                padding:30px;
-                font-family:Arial,Helvetica,sans-serif;
-            ">
-
-                <div>
-
-                    <div style="
-                        font-size:55px;
-                        margin-bottom:20px;
-                    ">
-                        🔞
-                    </div>
-
-                    <h2 style="
-                        margin-bottom:12px;
-                    ">
-                        Access Denied
-                    </h2>
-
-                    <p style="
-                        color:#777;
-                        font-size:13px;
-                        line-height:1.6;
-                    ">
-                        You must be 18 years or older
-                        to access this website.
-                    </p>
-
-                </div>
-
-            </div>
-
-        `;
-
-    }
-);
-
-
-/* =========================
-   START
-========================= */
-
-lockPage();
-
-loadVideos();
+/*
+ * DO NOT call loadVideos() here.
+ *
+ * The age verification button
+ * calls loadVideos() after the
+ * user confirms they are 18+.
+ */
 
 </script>
 

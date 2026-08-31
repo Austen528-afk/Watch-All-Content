@@ -1457,11 +1457,48 @@ async function loadVideos(){
         }
 
 
-        allVideos =
-            result.data || [];
+allVideos =
+    result.data || [];
 
+// Load the real like count for every video
+await Promise.all(
+    allVideos.map(async video => {
 
-        renderVideos();
+        const { count, error } =
+            await supabaseClient
+                .from("video_likes")
+                .select(
+                    "*",
+                    {
+                        count:"exact",
+                        head:true
+                    }
+                )
+                .eq(
+                    "video_id",
+                    video.id
+                );
+
+        if(error){
+
+            console.error(
+                "Initial like count error for video:",
+                video.id,
+                error
+            );
+
+            video.likes_count = 0;
+
+        }
+        else{
+
+            video.likes_count =
+                count || 0;
+        }
+    })
+);
+
+renderVideos();
 
     }
     catch(error){
@@ -2331,9 +2368,12 @@ async function updateLikeCount(videoId){
         );
 
         return;
-
     }
 
+    const newLikeCount =
+        count || 0;
+
+    // Update the video object
     const video =
         allVideos.find(
             item =>
@@ -2344,12 +2384,31 @@ async function updateLikeCount(videoId){
     if(video){
 
         video.likes_count =
-            count || 0;
-
+            newLikeCount;
     }
 
-    updateLikeButton(videoId);
+    // Update the number displayed on the card
+    const button =
+        document.querySelector(
+            `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
+        );
 
+    if(button){
+
+        const likeCount =
+            button.parentElement.querySelector(
+                ".like-count"
+            );
+
+        if(likeCount){
+
+            likeCount.textContent =
+                newLikeCount;
+        }
+    }
+
+    // Update heart color/status
+    await updateLikeButton(videoId);
 }
 
 async function updateLikeButton(videoId){

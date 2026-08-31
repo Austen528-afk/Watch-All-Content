@@ -3080,26 +3080,38 @@ async function loadVideos(){
                     );
 
 
-            if(likesResult.error){
+for (const video of videos) {
 
-                console.error(
-                    "Could not load likes for video:",
-                    video.id,
-                    likesResult.error
-                );
+    const likesResult =
+        await supabaseClient
+            .from("video_likes")
+            .select(
+                "id",
+                {
+                    count: "exact",
+                    head: true
+                }
+            )
+            .eq("video_id", video.id);
 
+    if (likesResult.error) {
 
-            video.likes =
+        console.error(
+            "Could not load likes for video:",
+            video.id,
+            likesResult.error
+        );
+
+        video.likes = 0;
+
+    } else {
+
+        video.likes =
             likesResult.count || 0;
 
-            }else{
+    }
 
-                video.like_count =
-                    likesResult.count || 0;
-
-            }
-
-        }
+}
 
 
         /* =========================================

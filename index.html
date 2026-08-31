@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -496,6 +495,126 @@ body{
 }
 
 /* =========================
+   AGE GATE
+========================= */
+
+.age-gate{
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    background:#080808;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+}
+
+.age-gate.hidden{
+    display:none;
+}
+
+.age-gate-box{
+    width:min(480px,100%);
+    background:#111;
+    border:1px solid #292929;
+    border-radius:18px;
+    padding:35px 30px;
+    text-align:center;
+    box-shadow:0 25px 80px rgba(0,0,0,.7);
+}
+
+.age-gate-logo{
+    font-size:30px;
+    font-weight:900;
+    letter-spacing:-1px;
+    margin-bottom:25px;
+}
+
+.age-gate-logo span{
+    color:#ff1744;
+}
+
+.age-gate-icon{
+    font-size:55px;
+    margin-bottom:20px;
+}
+
+.age-gate h2{
+    font-size:25px;
+    margin-bottom:12px;
+}
+
+.age-gate p{
+    color:#888;
+    font-size:13px;
+    line-height:1.6;
+    margin-bottom:25px;
+}
+
+.age-gate-warning{
+    background:#1a1012;
+    border:1px solid rgba(255,23,68,.25);
+    color:#aaa;
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:25px;
+    font-size:11px;
+    line-height:1.5;
+}
+
+.age-gate-buttons{
+    display:flex;
+    gap:10px;
+}
+
+.age-gate-button{
+    flex:1;
+    height:46px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:bold;
+    transition:.2s;
+}
+
+.age-gate-yes{
+    background:#ff1744;
+    color:white;
+}
+
+.age-gate-yes:hover{
+    background:#e9143d;
+    transform:translateY(-1px);
+}
+
+.age-gate-no{
+    background:#242424;
+    color:#aaa;
+}
+
+.age-gate-no:hover{
+    background:#303030;
+    color:white;
+}
+
+@media(max-width:480px){
+
+    .age-gate-box{
+        padding:30px 20px;
+    }
+
+    .age-gate h2{
+        font-size:22px;
+    }
+
+    .age-gate-buttons{
+        flex-direction:column;
+    }
+
+}
+
+/* =========================
    PLAYER MODAL
 ========================= */
 
@@ -874,6 +993,75 @@ body{
 </main>
 
 
+<footer class="footer">
+
+    © 2026 StreamX
+
+</footer>
+
+
+<!-- =========================
+     AGE GATE
+========================= -->
+
+<div
+    id="ageGate"
+    class="age-gate"
+>
+
+    <div class="age-gate-box">
+
+        <div class="age-gate-logo">
+            Stream<span>X</span>
+        </div>
+
+        <div class="age-gate-icon">
+            🔞
+        </div>
+
+        <h2>
+            Age Verification
+        </h2>
+
+        <p>
+            You must be 18 years or older to enter this website.
+            Please confirm your age before continuing.
+        </p>
+
+        <div class="age-gate-warning">
+            By selecting "I am 18+", you confirm that you are
+            at least 18 years old and agree to continue.
+        </div>
+
+        <div class="age-gate-buttons">
+
+            <button
+                id="ageYes"
+                class="age-gate-button age-gate-yes"
+                type="button"
+            >
+                I am 18+
+            </button>
+
+            <button
+                id="ageNo"
+                class="age-gate-button age-gate-no"
+                type="button"
+            >
+                I am under 18
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     PLAYER MODAL
+========================= -->
+
 <div
     class="modal"
     id="videoModal"
@@ -931,13 +1119,6 @@ body{
 </div>
 
 
-<footer class="footer">
-
-    © 2026 StreamX
-
-</footer>
-
-
 <script>
 
 /* =========================
@@ -945,7 +1126,7 @@ body{
 ========================= */
 
 const SUPABASE_URL =
-    "https://iojjmoywrlnzpyatahyh.supabase.co";
+    "https://iojjmoywrlnzpyatahy.supabase.co";
 
 const SUPABASE_KEY =
     "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
@@ -1010,6 +1191,20 @@ const playerDescription =
 
 const closePlayer =
     document.getElementById("closePlayer");
+
+
+/* =========================
+   AGE GATE ELEMENTS
+========================= */
+
+const ageGate =
+    document.getElementById("ageGate");
+
+const ageYes =
+    document.getElementById("ageYes");
+
+const ageNo =
+    document.getElementById("ageNo");
 
 
 /* =========================
@@ -1599,16 +1794,6 @@ async function openPlayer(video){
     }
 
 
-    /*
-     * COUNT THE VIEW
-     *
-     * The RPC function performs:
-     *
-     * views = views + 1
-     *
-     * directly inside Supabase.
-     */
-
     updateViews(video);
 
 }
@@ -1619,19 +1804,6 @@ async function openPlayer(video){
 ========================= */
 
 async function updateViews(video){
-
-    /*
-     * IMPORTANT:
-     *
-     * Do NOT manually calculate:
-     *
-     * video.views + 1
-     *
-     * because multiple users can open
-     * the same video simultaneously.
-     *
-     * The database handles the increment.
-     */
 
     try{
 
@@ -1661,11 +1833,6 @@ async function updateViews(video){
         }
 
 
-        /*
-         * Supabase returns the new
-         * database view count.
-         */
-
         const newViewCount =
             Number(data || 0);
 
@@ -1676,21 +1843,9 @@ async function updateViews(video){
         );
 
 
-        /*
-         * Update the local JavaScript
-         * object so the next render uses
-         * the correct number.
-         */
-
         video.views =
             newViewCount;
 
-
-        /*
-         * Update the visible card
-         * immediately without reloading
-         * the entire page.
-         */
 
         const viewElement =
             document.querySelector(
@@ -2347,8 +2502,108 @@ function escapeHTML(value){
 
 
 /* =========================
+   AGE GATE
+========================= */
+
+function lockPage(){
+
+    ageGate.classList.remove(
+        "hidden"
+    );
+
+    document.body.style.overflow =
+        "hidden";
+
+}
+
+
+function allowEntry(){
+
+    ageGate.classList.add(
+        "hidden"
+    );
+
+    document.body.style.overflow =
+        "";
+
+}
+
+
+/* =========================
+   I AM 18+
+========================= */
+
+ageYes.addEventListener(
+    "click",
+    function(){
+
+        allowEntry();
+
+    }
+);
+
+
+/* =========================
+   I AM UNDER 18
+========================= */
+
+ageNo.addEventListener(
+    "click",
+    function(){
+
+        document.body.innerHTML = `
+
+            <div style="
+                min-height:100vh;
+                background:#080808;
+                color:white;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                text-align:center;
+                padding:30px;
+                font-family:Arial,Helvetica,sans-serif;
+            ">
+
+                <div>
+
+                    <div style="
+                        font-size:55px;
+                        margin-bottom:20px;
+                    ">
+                        🔞
+                    </div>
+
+                    <h2 style="
+                        margin-bottom:12px;
+                    ">
+                        Access Denied
+                    </h2>
+
+                    <p style="
+                        color:#777;
+                        font-size:13px;
+                        line-height:1.6;
+                    ">
+                        You must be 18 years or older
+                        to access this website.
+                    </p>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+);
+
+
+/* =========================
    START
 ========================= */
+
+lockPage();
 
 loadVideos();
 

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -26,27 +25,233 @@ body{
     min-height:100vh;
 }
 
-/* =========================
+/* =====================================================
+   LOGIN SCREEN
+===================================================== */
+
+#loginScreen{
+
+    position:fixed;
+
+    inset:0;
+
+    background:#080808;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    z-index:9999;
+
+    padding:20px;
+}
+
+.login-box{
+
+    width:100%;
+
+    max-width:420px;
+
+    background:#151515;
+
+    border:1px solid #292929;
+
+    border-radius:15px;
+
+    padding:30px;
+
+    box-shadow:0 20px 70px rgba(0,0,0,.5);
+
+}
+
+.login-logo{
+
+    text-align:center;
+
+    font-size:32px;
+
+    font-weight:900;
+
+    margin-bottom:8px;
+
+}
+
+.login-logo span{
+    color:#ff1744;
+}
+
+.login-subtitle{
+
+    text-align:center;
+
+    color:#777;
+
+    font-size:13px;
+
+    margin-bottom:28px;
+
+}
+
+.login-group{
+
+    margin-bottom:17px;
+
+}
+
+.login-group label{
+
+    display:block;
+
+    color:#ccc;
+
+    font-size:13px;
+
+    margin-bottom:8px;
+
+}
+
+.login-group input{
+
+    width:100%;
+
+    padding:13px;
+
+    background:#0f0f0f;
+
+    border:1px solid #303030;
+
+    color:#fff;
+
+    border-radius:8px;
+
+    outline:none;
+
+    font-size:14px;
+
+}
+
+.login-group input:focus{
+
+    border-color:#ff1744;
+
+}
+
+.login-button{
+
+    width:100%;
+
+    padding:13px;
+
+    background:#ff1744;
+
+    border:none;
+
+    color:#fff;
+
+    border-radius:8px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+}
+
+.login-button:hover{
+    background:#e90035;
+}
+
+.login-button:disabled{
+
+    opacity:.5;
+
+    cursor:not-allowed;
+
+}
+
+.login-error{
+
+    display:none;
+
+    background:#281015;
+
+    border:1px solid #70283a;
+
+    color:#ff6b88;
+
+    border-radius:8px;
+
+    padding:12px;
+
+    margin-bottom:17px;
+
+    font-size:12px;
+
+    line-height:1.5;
+
+}
+
+.login-info{
+
+    margin-top:18px;
+
+    text-align:center;
+
+    color:#555;
+
+    font-size:11px;
+
+    line-height:1.5;
+
+}
+
+
+/* =====================================================
+   APPLICATION
+===================================================== */
+
+#app{
+
+    display:none;
+
+}
+
+
+/* =====================================================
    SIDEBAR
-========================= */
+===================================================== */
 
 .sidebar{
+
     position:fixed;
+
     left:0;
+
     top:0;
+
     bottom:0;
+
     width:240px;
 
     background:#101010;
+
     border-right:1px solid #292929;
 
     padding:25px 15px;
+
 }
 
 .logo{
+
     font-size:27px;
+
     font-weight:900;
+
     padding:0 12px 35px;
+
 }
 
 .logo span{
@@ -54,23 +259,33 @@ body{
 }
 
 .admin-label{
+
     color:#666;
+
     font-size:10px;
+
     text-transform:uppercase;
+
     letter-spacing:1.5px;
+
     padding:0 12px 10px;
+
 }
 
 .nav-button{
+
     width:100%;
 
     display:flex;
+
     align-items:center;
+
     gap:12px;
 
     padding:13px 12px;
 
     border:none;
+
     border-radius:8px;
 
     background:transparent;
@@ -80,37 +295,56 @@ body{
     cursor:pointer;
 
     font-size:14px;
+
     text-align:left;
 
     margin-bottom:5px;
+
 }
 
 .nav-button:hover,
 .nav-button.active{
+
     background:#1d1d1d;
+
     color:white;
+
 }
 
 .nav-button.active{
+
     border-left:3px solid #ff1744;
+
 }
 
 .sidebar-bottom{
+
     position:absolute;
+
     left:15px;
+
     right:15px;
+
     bottom:25px;
+
 }
 
 .status-box{
+
     background:#161616;
+
     border:1px solid #292929;
+
     border-radius:8px;
+
     padding:13px;
 
     color:#777;
+
     font-size:11px;
+
     line-height:1.7;
+
 }
 
 .status-box span{
@@ -118,36 +352,46 @@ body{
 }
 
 
-/* =========================
+/* =====================================================
    MAIN
-========================= */
+===================================================== */
 
 .main{
+
     margin-left:240px;
+
     padding:30px;
+
     max-width:1600px;
+
 }
 
 
-/* =========================
+/* =====================================================
    MOBILE HEADER
-========================= */
+===================================================== */
 
 .mobile-header{
+
     display:none;
+
 }
 
 
-/* =========================
+/* =====================================================
    TOP BAR
-========================= */
+===================================================== */
 
 .topbar{
+
     display:flex;
+
     justify-content:space-between;
+
     align-items:center;
 
     margin-bottom:30px;
+
 }
 
 .topbar h1{
@@ -155,13 +399,37 @@ body{
 }
 
 .topbar p{
+
     color:#999;
+
     font-size:13px;
+
     margin-top:6px;
+
+}
+
+.user-area{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+.user-email{
+
+    color:#777;
+
+    font-size:11px;
+
 }
 
 .user-button{
+
     background:#151515;
+
     border:1px solid #292929;
 
     color:#fff;
@@ -173,6 +441,9 @@ body{
     text-decoration:none;
 
     font-size:13px;
+
+    cursor:pointer;
+
 }
 
 .user-button:hover{
@@ -180,18 +451,24 @@ body{
 }
 
 
-/* =========================
+/* =====================================================
    STATISTICS
-========================= */
+===================================================== */
 
 .stats{
+
     display:grid;
+
     grid-template-columns:repeat(3,1fr);
+
     gap:18px;
+
     margin-bottom:25px;
+
 }
 
 .stat{
+
     background:#151515;
 
     border:1px solid #292929;
@@ -199,30 +476,42 @@ body{
     border-radius:12px;
 
     padding:20px;
+
 }
 
 .stat-icon{
+
     font-size:25px;
+
     margin-bottom:12px;
+
 }
 
 .stat-label{
+
     color:#999;
+
     font-size:12px;
+
     margin-bottom:7px;
+
 }
 
 .stat-number{
+
     font-size:28px;
+
     font-weight:bold;
+
 }
 
 
-/* =========================
+/* =====================================================
    SECTION
-========================= */
+===================================================== */
 
 .section{
+
     background:#151515;
 
     border:1px solid #292929;
@@ -232,40 +521,54 @@ body{
     padding:25px;
 
     margin-bottom:25px;
+
 }
 
 .section-heading{
+
     margin-bottom:22px;
+
 }
 
 .section-heading h2{
+
     font-size:20px;
+
 }
 
 .section-heading p{
+
     color:#999;
+
     font-size:12px;
+
     margin-top:5px;
+
 }
 
 
-/* =========================
+/* =====================================================
    FORM
-========================= */
+===================================================== */
 
 .form-grid{
+
     display:grid;
 
     grid-template-columns:1fr 1fr;
 
     gap:18px;
+
 }
 
 .form-group.full{
+
     grid-column:1/-1;
+
 }
 
 label{
+
     display:block;
 
     color:#ccc;
@@ -273,6 +576,7 @@ label{
     font-size:13px;
 
     margin-bottom:8px;
+
 }
 
 input[type="text"],
@@ -296,23 +600,29 @@ select{
     font-size:14px;
 
     font-family:inherit;
+
 }
 
 input[type="text"]:focus,
 textarea:focus,
 select:focus{
+
     border-color:#ff1744;
+
 }
 
 textarea{
+
     min-height:100px;
+
     resize:vertical;
+
 }
 
 
-/* =========================
+/* =====================================================
    FILE BOX
-========================= */
+===================================================== */
 
 .upload-box{
 
@@ -343,8 +653,11 @@ textarea{
 }
 
 .upload-box:hover{
+
     border-color:#ff1744;
+
     background:#151515;
+
 }
 
 .upload-box input{
@@ -352,41 +665,58 @@ textarea{
 }
 
 .upload-icon{
+
     font-size:40px;
+
     margin-bottom:10px;
+
 }
 
 .upload-box strong{
+
     font-size:14px;
+
     margin-bottom:6px;
+
 }
 
 .upload-box small{
+
     color:#666;
+
     font-size:11px;
+
 }
 
 .file-name{
+
     color:#21c477;
+
     font-size:12px;
+
     margin-top:10px;
 
     max-width:100%;
 
     overflow:hidden;
+
     text-overflow:ellipsis;
+
     white-space:nowrap;
+
 }
 
 
-/* =========================
-   THUMBNAIL PREVIEW
-========================= */
+/* =====================================================
+   THUMBNAIL
+===================================================== */
 
 .thumbnail-preview{
+
     display:none;
 
     width:100%;
+
     height:180px;
 
     border-radius:8px;
@@ -396,21 +726,29 @@ textarea{
     position:relative;
 
     background:#111;
+
 }
 
 .thumbnail-preview img{
+
     width:100%;
+
     height:100%;
+
     object-fit:cover;
+
 }
 
 .remove-thumbnail{
+
     position:absolute;
 
     top:8px;
+
     right:8px;
 
     width:30px;
+
     height:30px;
 
     border:none;
@@ -424,20 +762,26 @@ textarea{
     font-size:20px;
 
     cursor:pointer;
+
 }
 
 
-/* =========================
+/* =====================================================
    BUTTONS
-========================= */
+===================================================== */
 
 .upload-actions{
+
     display:flex;
+
     gap:12px;
+
     margin-top:20px;
+
 }
 
 .upload-button{
+
     background:#ff1744;
 
     border:none;
@@ -451,6 +795,7 @@ textarea{
     font-weight:bold;
 
     cursor:pointer;
+
 }
 
 .upload-button:hover{
@@ -458,11 +803,15 @@ textarea{
 }
 
 .upload-button:disabled{
+
     opacity:.5;
+
     cursor:not-allowed;
+
 }
 
 .clear-button{
+
     background:#222;
 
     border:1px solid #333;
@@ -474,6 +823,7 @@ textarea{
     border-radius:8px;
 
     cursor:pointer;
+
 }
 
 .clear-button:hover{
@@ -481,17 +831,22 @@ textarea{
 }
 
 
-/* =========================
+/* =====================================================
    PROGRESS
-========================= */
+===================================================== */
 
 .progress-wrapper{
+
     display:none;
+
     margin-top:20px;
+
 }
 
 .progress-top{
+
     display:flex;
+
     justify-content:space-between;
 
     color:#999;
@@ -499,10 +854,13 @@ textarea{
     font-size:12px;
 
     margin-bottom:8px;
+
 }
 
 .progress{
+
     width:100%;
+
     height:8px;
 
     background:#292929;
@@ -510,23 +868,28 @@ textarea{
     border-radius:10px;
 
     overflow:hidden;
+
 }
 
 .progress-bar{
+
     width:0%;
+
     height:100%;
 
     background:#ff1744;
 
     transition:.2s;
+
 }
 
 
-/* =========================
+/* =====================================================
    MESSAGE
-========================= */
+===================================================== */
 
 .message{
+
     display:none;
 
     padding:13px 15px;
@@ -538,9 +901,11 @@ textarea{
     font-size:13px;
 
     line-height:1.5;
+
 }
 
 .message.success{
+
     display:block;
 
     background:#10251d;
@@ -548,9 +913,11 @@ textarea{
     border:1px solid #1d5b42;
 
     color:#50d69a;
+
 }
 
 .message.error{
+
     display:block;
 
     background:#281015;
@@ -558,12 +925,13 @@ textarea{
     border:1px solid #70283a;
 
     color:#ff6b88;
+
 }
 
 
-/* =========================
+/* =====================================================
    VIDEO LIBRARY
-========================= */
+===================================================== */
 
 .section-top{
 
@@ -574,6 +942,7 @@ textarea{
     align-items:center;
 
     margin-bottom:20px;
+
 }
 
 .section-top h2{
@@ -581,8 +950,11 @@ textarea{
 }
 
 .video-count{
+
     color:#777;
+
     font-size:12px;
+
 }
 
 .video-grid{
@@ -593,6 +965,7 @@ textarea{
         repeat(auto-fill,minmax(260px,1fr));
 
     gap:18px;
+
 }
 
 .video-card{
@@ -606,11 +979,15 @@ textarea{
     overflow:hidden;
 
     transition:.2s;
+
 }
 
 .video-card:hover{
+
     transform:translateY(-3px);
+
     background:#1b1b1b;
+
 }
 
 .video-image{
@@ -622,14 +999,17 @@ textarea{
     position:relative;
 
     overflow:hidden;
+
 }
 
 .video-image img{
 
     width:100%;
+
     height:100%;
 
     object-fit:cover;
+
 }
 
 .category-tag{
@@ -637,6 +1017,7 @@ textarea{
     position:absolute;
 
     top:8px;
+
     left:8px;
 
     background:rgba(0,0,0,.8);
@@ -646,21 +1027,31 @@ textarea{
     border-radius:5px;
 
     font-size:10px;
+
 }
 
 .video-content{
+
     padding:14px;
+
 }
 
 .video-content h3{
+
     font-size:14px;
+
     margin-bottom:7px;
+
 }
 
 .video-content p{
+
     color:#777;
+
     font-size:11px;
+
     line-height:1.5;
+
 }
 
 .video-actions{
@@ -670,6 +1061,7 @@ textarea{
     gap:7px;
 
     margin-top:13px;
+
 }
 
 .card-button{
@@ -689,6 +1081,7 @@ textarea{
     cursor:pointer;
 
     font-size:11px;
+
 }
 
 .card-button:hover{
@@ -700,9 +1093,9 @@ textarea{
 }
 
 
-/* =========================
+/* =====================================================
    EMPTY
-========================= */
+===================================================== */
 
 .empty{
 
@@ -711,17 +1104,21 @@ textarea{
     padding:55px 20px;
 
     color:#666;
+
 }
 
 .empty-icon{
+
     font-size:45px;
+
     margin-bottom:10px;
+
 }
 
 
-/* =========================
+/* =====================================================
    MOBILE
-========================= */
+===================================================== */
 
 @media(max-width:850px){
 
@@ -730,8 +1127,11 @@ textarea{
     }
 
     .main{
+
         margin-left:0;
+
         padding:20px 15px 50px;
+
     }
 
     .mobile-header{
@@ -749,11 +1149,15 @@ textarea{
         background:#101010;
 
         border-bottom:1px solid #292929;
+
     }
 
     .mobile-logo{
+
         font-size:21px;
+
         font-weight:900;
+
     }
 
     .mobile-logo span{
@@ -761,19 +1165,27 @@ textarea{
     }
 
     .stats{
+
         grid-template-columns:1fr;
+
     }
 
     .form-grid{
+
         grid-template-columns:1fr;
+
     }
 
     .form-group.full{
+
         grid-column:auto;
+
     }
 
-    .topbar .user-button{
+    .topbar .user-area{
+
         display:none;
+
     }
 
 }
@@ -802,9 +1214,101 @@ textarea{
 <body>
 
 
-<!-- =========================
+<!-- =====================================================
+     LOGIN SCREEN
+===================================================== -->
+
+<div id="loginScreen">
+
+    <div class="login-box">
+
+        <div class="login-logo">
+            Stream<span>X</span>
+        </div>
+
+        <div class="login-subtitle">
+            Administrator Login
+        </div>
+
+
+        <div
+            id="loginError"
+            class="login-error"
+        ></div>
+
+
+        <form id="loginForm">
+
+
+            <div class="login-group">
+
+                <label>
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="Admin email"
+                    autocomplete="username"
+                    required
+                >
+
+            </div>
+
+
+            <div class="login-group">
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Password"
+                    autocomplete="current-password"
+                    required
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="login-button"
+                id="loginButton"
+            >
+                Login to Admin Panel
+            </button>
+
+
+        </form>
+
+
+        <div class="login-info">
+
+            Your login is handled securely through
+            Supabase Authentication.
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     APPLICATION
+===================================================== -->
+
+<div id="app">
+
+
+<!-- =====================================================
      SIDEBAR
-========================= -->
+===================================================== -->
 
 <aside class="sidebar">
 
@@ -850,7 +1354,7 @@ textarea{
 
             <br>
 
-            Content management enabled
+            Authenticated administrator
 
         </div>
 
@@ -859,9 +1363,10 @@ textarea{
 </aside>
 
 
-<!-- =========================
+
+<!-- =====================================================
      MAIN
-========================= -->
+===================================================== -->
 
 <main class="main">
 
@@ -874,14 +1379,15 @@ textarea{
             Stream<span>X</span>
         </div>
 
-        <a
-            href="index.html"
+        <button
             class="user-button"
+            onclick="logout()"
         >
-            User Site
-        </a>
+            Logout
+        </button>
 
     </div>
+
 
 
     <!-- TOP BAR -->
@@ -901,21 +1407,32 @@ textarea{
         </div>
 
 
-        <a
-            href="index.html"
-            class="user-button"
-        >
-            🌐 Open User Website
-        </a>
+        <div class="user-area">
+
+            <span
+                class="user-email"
+                id="loggedInEmail"
+            ></span>
+
+            <button
+                class="user-button"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
 
     </div>
 
 
-    <!-- =========================
+
+    <!-- =================================================
          STATISTICS
-    ========================= -->
+    ================================================= -->
 
     <div class="stats">
+
 
         <div class="stat">
 
@@ -976,17 +1493,20 @@ textarea{
 
         </div>
 
+
     </div>
 
 
-    <!-- =========================
+
+    <!-- =================================================
          UPLOAD
-    ========================= -->
+    ================================================= -->
 
     <section
         class="section"
         id="uploadSection"
     >
+
 
         <div class="section-heading">
 
@@ -1000,6 +1520,7 @@ textarea{
             </p>
 
         </div>
+
 
 
         <div class="form-grid">
@@ -1022,6 +1543,7 @@ textarea{
             </div>
 
 
+
             <!-- CATEGORY -->
 
             <div class="form-group">
@@ -1032,19 +1554,42 @@ textarea{
 
                 <select id="videoCategory">
 
-<option value="">Select category</option>
-<option value="BackShots">BackShots</option>
-<option value="Masterbates">Masterbates</option>
-<option value="RoughX">RoughX</option>
-<option value="BBW">BBW</option>
-<option value="Africans">Africans</option>
-<option value="Cums">Cums</option>
-<option value="Close Friends">Close Friends</option>
+                    <option value="">
+                        Select category
+                    </option>
 
+                    <option value="BackShots">
+                        BackShots
+                    </option>
+
+                    <option value="Masterbates">
+                        Masterbates
+                    </option>
+
+                    <option value="RoughX">
+                        RoughX
+                    </option>
+
+                    <option value="BBW">
+                        BBW
+                    </option>
+
+                    <option value="Africans">
+                        Africans
+                    </option>
+
+                    <option value="Cums">
+                        Cums
+                    </option>
+
+                    <option value="Close Friends">
+                        Close Friends
+                    </option>
 
                 </select>
 
             </div>
+
 
 
             <!-- DESCRIPTION -->
@@ -1061,6 +1606,7 @@ textarea{
                 ></textarea>
 
             </div>
+
 
 
             <!-- VIDEO FILE -->
@@ -1099,6 +1645,7 @@ textarea{
                 </label>
 
             </div>
+
 
 
             <!-- THUMBNAIL -->
@@ -1163,7 +1710,9 @@ textarea{
 
             </div>
 
+
         </div>
+
 
 
         <!-- BUTTONS -->
@@ -1187,6 +1736,7 @@ textarea{
             </button>
 
         </div>
+
 
 
         <!-- PROGRESS -->
@@ -1221,6 +1771,7 @@ textarea{
         </div>
 
 
+
         <!-- MESSAGE -->
 
         <div
@@ -1228,17 +1779,20 @@ textarea{
             class="message"
         ></div>
 
+
     </section>
 
 
-    <!-- =========================
+
+    <!-- =================================================
          VIDEO LIBRARY
-    ========================= -->
+    ================================================= -->
 
     <section
         class="section"
         id="videosSection"
     >
+
 
         <div class="section-top">
 
@@ -1281,93 +1835,381 @@ textarea{
 
         </div>
 
+
     </section>
 
 
 </main>
 
+</div>
+
+
 
 <script>
 
 /* =====================================================
-   STREAMX ADMIN
-   SUPABASE CONFIGURATION
+   STREAMX SUPABASE CONFIGURATION
 ===================================================== */
 
 const SUPABASE_URL =
-"https://iojjmoywrlnzpyatahyh.supabase.co";
+    "https://iojjmoywrlnzpyatahyh.supabase.co";
 
 const SUPABASE_KEY =
-"sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
+    "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 
 
 const supabaseClient =
-window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
-
-/* =====================================================
-   CHECK SUPABASE LOGIN
-===================================================== */
-
-async function checkAdminSession(){
-
-    const {
-        data: { session },
-        error
-    } = await supabaseClient.auth.getSession();
-
-
-    if(error){
-
-        console.error(
-            "Session error:",
-            error
-        );
-
-        alert(
-            "Could not verify your login."
-        );
-
-        return false;
-
-    }
-
-
-    if(!session){
-
-        alert(
-            "You are not logged in. Please log in first."
-        );
-
-        return false;
-
-    }
-
-
-    console.log(
-        "Logged in as:",
-        session.user.email
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
     );
 
 
-    return true;
+/* =====================================================
+   VARIABLES
+===================================================== */
 
-}
+let selectedVideoFile = null;
+
+let selectedThumbnailFile = null;
+
 
 /* =====================================================
    ELEMENTS
 ===================================================== */
 
 const videoFile =
-document.getElementById(
-    "videoFile"
-);
+    document.getElementById("videoFile");
 
 const thumbnailFile =
-document.getElementById(
-    "thumbnailFile"
+    document.getElementById("thumbnailFile");
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+document
+    .getElementById("loginForm")
+    .addEventListener(
+        "submit",
+        async function(event){
+
+            event.preventDefault();
+
+            await login();
+
+        }
+    );
+
+
+async function login(){
+
+    const email =
+        document
+            .getElementById("loginEmail")
+            .value
+            .trim();
+
+
+    const password =
+        document
+            .getElementById("loginPassword")
+            .value;
+
+
+    const loginButton =
+        document.getElementById(
+            "loginButton"
+        );
+
+
+    const loginError =
+        document.getElementById(
+            "loginError"
+        );
+
+
+    loginError.style.display =
+        "none";
+
+
+    if(!email || !password){
+
+        loginError.textContent =
+            "Please enter your email and password.";
+
+        loginError.style.display =
+            "block";
+
+        return;
+
+    }
+
+
+    loginButton.disabled =
+        true;
+
+    loginButton.textContent =
+        "Logging in...";
+
+
+    try{
+
+        const result =
+            await supabaseClient.auth.signInWithPassword({
+
+                email:email,
+
+                password:password
+
+            });
+
+
+        if(result.error){
+
+            throw new Error(
+                result.error.message
+            );
+
+        }
+
+
+        if(!result.data.session){
+
+            throw new Error(
+                "Login succeeded but no Supabase session was created."
+            );
+
+        }
+
+
+        console.log(
+            "Supabase authentication successful:",
+            result.data.user.email
+        );
+
+
+        showApplication(
+            result.data.session
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Login error:",
+            error
+        );
+
+
+        loginError.textContent =
+            "Login failed: " +
+            error.message;
+
+
+        loginError.style.display =
+            "block";
+
+
+    }finally{
+
+        loginButton.disabled =
+            false;
+
+        loginButton.textContent =
+            "Login to Admin Panel";
+
+    }
+
+}
+
+
+/* =====================================================
+   CHECK EXISTING SESSION
+===================================================== */
+
+async function checkSession(){
+
+    try{
+
+        const result =
+            await supabaseClient.auth.getSession();
+
+
+        if(result.error){
+
+            console.error(
+                "Session error:",
+                result.error
+            );
+
+            return;
+
+        }
+
+
+        const session =
+            result.data.session;
+
+
+        if(session){
+
+            console.log(
+                "Existing Supabase session found:",
+                session.user.email
+            );
+
+
+            showApplication(
+                session
+            );
+
+        }else{
+
+            showLogin();
+
+        }
+
+
+    }catch(error){
+
+        console.error(
+            "Could not check session:",
+            error
+        );
+
+        showLogin();
+
+    }
+
+}
+
+
+/* =====================================================
+   SHOW APPLICATION
+===================================================== */
+
+async function showApplication(
+    session
+){
+
+    if(!session){
+
+        showLogin();
+
+        return;
+
+    }
+
+
+    document
+        .getElementById("loginScreen")
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById("app")
+        .style.display =
+        "block";
+
+
+    document
+        .getElementById("loggedInEmail")
+        .textContent =
+        session.user.email;
+
+
+    await loadVideos();
+
+}
+
+
+/* =====================================================
+   SHOW LOGIN
+===================================================== */
+
+function showLogin(){
+
+    document
+        .getElementById("loginScreen")
+        .style.display =
+        "flex";
+
+
+    document
+        .getElementById("app")
+        .style.display =
+        "none";
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+async function logout(){
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to log out?"
+        );
+
+
+    if(!confirmed)
+        return;
+
+
+    const result =
+        await supabaseClient.auth.signOut();
+
+
+    if(result.error){
+
+        console.error(
+            "Logout error:",
+            result.error
+        );
+
+        alert(
+            "Could not log out: " +
+            result.error.message
+        );
+
+        return;
+
+    }
+
+
+    showLogin();
+
+}
+
+
+/* =====================================================
+   AUTH STATE CHANGES
+===================================================== */
+
+supabaseClient.auth.onAuthStateChange(
+    function(event, session){
+
+        console.log(
+            "Auth event:",
+            event
+        );
+
+
+        if(
+            event === "SIGNED_OUT"
+        ){
+
+            showLogin();
+
+        }
+
+    }
 );
 
 
@@ -1390,6 +2232,13 @@ videoFile.addEventListener(
             ).textContent =
                 "✓ " +
                 selectedVideoFile.name;
+
+        }else{
+
+            document.getElementById(
+                "videoFileName"
+            ).textContent =
+                "";
 
         }
 
@@ -1539,7 +2388,7 @@ function hideMessage(){
 
 
 /* =====================================================
-   CREATE SAFE FILE NAME
+   SAFE FILE NAME
 ===================================================== */
 
 function cleanFileName(
@@ -1564,6 +2413,52 @@ function cleanFileName(
 
 
 /* =====================================================
+   CHECK AUTHENTICATION BEFORE UPLOAD
+===================================================== */
+
+async function requireAuthenticatedUser(){
+
+    const result =
+        await supabaseClient.auth.getSession();
+
+
+    if(result.error){
+
+        throw new Error(
+            "Could not verify your login: " +
+            result.error.message
+        );
+
+    }
+
+
+    const session =
+        result.data.session;
+
+
+    if(!session){
+
+        showLogin();
+
+        throw new Error(
+            "Your login session has expired. Please log in again."
+        );
+
+    }
+
+
+    console.log(
+        "Upload authenticated as:",
+        session.user.email
+    );
+
+
+    return session;
+
+}
+
+
+/* =====================================================
    UPLOAD VIDEO
 ===================================================== */
 
@@ -1572,116 +2467,124 @@ async function uploadVideo(){
     hideMessage();
 
 
-    const title =
-        document.getElementById(
-            "videoTitle"
-        ).value.trim();
-
-
-    const category =
-        document.getElementById(
-            "videoCategory"
-        ).value;
-
-
-    const description =
-        document.getElementById(
-            "videoDescription"
-        ).value.trim();
-
-
     const uploadButton =
         document.getElementById(
             "uploadButton"
         );
 
 
-    /* VALIDATION */
-
-    if(!title){
-
-        showMessage(
-            "Please enter a video title.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if(!category){
-
-        showMessage(
-            "Please select a category.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if(!selectedVideoFile){
-
-        showMessage(
-            "Please select a video file.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    uploadButton.disabled =
-        true;
-
-
-    document.getElementById(
-        "progressWrapper"
-    ).style.display =
-        "block";
-
-
-    updateProgress(
-        5,
-        "Preparing upload..."
-    );
-
-
-    /*
-       Generate unique file names.
-
-       This prevents files with the same
-       name from overwriting each other.
-    */
-
-    const uniqueID =
-        Date.now() +
-        "-" +
-        Math.random()
-            .toString(36)
-            .substring(2,8);
-
-
-    const videoName =
-        cleanFileName(
-            selectedVideoFile.name
-        );
-
-
-    const videoPath =
-        uniqueID +
-        "-" +
-        videoName;
-
-
-    let thumbnailPath =
-        null;
-
-
     try{
+
+        /* =========================================
+           VERIFY AUTHENTICATION
+        ========================================= */
+
+        const session =
+            await requireAuthenticatedUser();
+
+
+        console.log(
+            "Authenticated user:",
+            session.user.email
+        );
+
+
+        /* =========================================
+           FORM DATA
+        ========================================= */
+
+        const title =
+            document.getElementById(
+                "videoTitle"
+            ).value.trim();
+
+
+        const category =
+            document.getElementById(
+                "videoCategory"
+            ).value;
+
+
+        const description =
+            document.getElementById(
+                "videoDescription"
+            ).value.trim();
+
+
+        /* =========================================
+           VALIDATION
+        ========================================= */
+
+        if(!title){
+
+            throw new Error(
+                "Please enter a video title."
+            );
+
+        }
+
+
+        if(!category){
+
+            throw new Error(
+                "Please select a category."
+            );
+
+        }
+
+
+        if(!selectedVideoFile){
+
+            throw new Error(
+                "Please select a video file."
+            );
+
+        }
+
+
+        uploadButton.disabled =
+            true;
+
+
+        document.getElementById(
+            "progressWrapper"
+        ).style.display =
+            "block";
+
+
+        updateProgress(
+            5,
+            "Preparing upload..."
+        );
+
+
+        /* =========================================
+           UNIQUE FILE NAME
+        ========================================= */
+
+        const uniqueID =
+            Date.now() +
+            "-" +
+            Math.random()
+                .toString(36)
+                .substring(2,8);
+
+
+        const videoName =
+            cleanFileName(
+                selectedVideoFile.name
+            );
+
+
+        const videoPath =
+            uniqueID +
+            "-" +
+            videoName;
+
+
+        let thumbnailPath =
+            null;
+
 
         /* =========================================
            UPLOAD VIDEO
@@ -1761,12 +2664,6 @@ async function uploadVideo(){
 
             if(thumbnailUpload.error){
 
-                /*
-                   If thumbnail upload fails,
-                   remove the video that was
-                   already uploaded.
-                */
-
                 await supabaseClient
                     .storage
                     .from("videos")
@@ -1792,7 +2689,7 @@ async function uploadVideo(){
 
 
         /* =========================================
-           GET PUBLIC URLS
+           GET PUBLIC VIDEO URL
         ========================================= */
 
         const videoURL =
@@ -1829,6 +2726,11 @@ async function uploadVideo(){
            DATABASE INSERT
         ========================================= */
 
+        console.log(
+            "Attempting database insert..."
+        );
+
+
         const databaseInsert =
             await supabaseClient
                 .from("videos")
@@ -1850,16 +2752,22 @@ async function uploadVideo(){
 
                     views:0
 
-                })
-                .select();
+                });
 
+
+        /* =========================================
+           DATABASE ERROR
+        ========================================= */
 
         if(databaseInsert.error){
 
-            /*
-               If database insert fails,
-               clean up uploaded files.
-            */
+            console.error(
+                "DATABASE INSERT ERROR:",
+                databaseInsert.error
+            );
+
+
+            /* CLEAN VIDEO */
 
             await supabaseClient
                 .storage
@@ -1868,6 +2776,8 @@ async function uploadVideo(){
                     videoPath
                 ]);
 
+
+            /* CLEAN THUMBNAIL */
 
             if(thumbnailPath){
 
@@ -1888,6 +2798,10 @@ async function uploadVideo(){
 
         }
 
+
+        /* =========================================
+           SUCCESS
+        ========================================= */
 
         updateProgress(
             100,
@@ -1967,7 +2881,7 @@ function updateProgress(
 
 
 /* =====================================================
-   GET VIDEO STORAGE PATH
+   GET STORAGE PATH
 ===================================================== */
 
 function getStoragePath(
@@ -1979,29 +2893,15 @@ function getStoragePath(
         return null;
 
 
-    /*
-       If the database stores only
-       the storage path, use it.
-    */
-
     if(
-        !value.startsWith(
-            "http://"
-        ) &&
-        !value.startsWith(
-            "https://"
-        )
+        !value.startsWith("http://") &&
+        !value.startsWith("https://")
     ){
 
         return value;
 
     }
 
-
-    /*
-       If the database stores a complete
-       public URL, extract the path.
-    */
 
     const marker =
         "/storage/v1/object/public/" +
@@ -2010,9 +2910,7 @@ function getStoragePath(
 
 
     const index =
-        value.indexOf(
-            marker
-        );
+        value.indexOf(marker);
 
 
     if(index === -1)
@@ -2042,12 +2940,8 @@ function getPublicURL(
 
 
     if(
-        value.startsWith(
-            "http://"
-        ) ||
-        value.startsWith(
-            "https://"
-        )
+        value.startsWith("http://") ||
+        value.startsWith("https://")
     ){
 
         return value;
@@ -2058,9 +2952,7 @@ function getPublicURL(
     return supabaseClient
         .storage
         .from(bucket)
-        .getPublicUrl(
-            value
-        )
+        .getPublicUrl(value)
         .data
         .publicUrl;
 
@@ -2073,124 +2965,136 @@ function getPublicURL(
 
 async function loadVideos(){
 
-    const grid =
-        document.getElementById(
-            "videoGrid"
-        );
+    try{
+
+        await requireAuthenticatedUser();
 
 
-    const empty =
-        document.getElementById(
-            "emptyState"
-        );
-
-
-    grid.innerHTML =
-        "";
-
-
-    const result =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending:false
-                }
+        const grid =
+            document.getElementById(
+                "videoGrid"
             );
 
 
-    if(result.error){
+        const empty =
+            document.getElementById(
+                "emptyState"
+            );
+
+
+        grid.innerHTML =
+            "";
+
+
+        const result =
+            await supabaseClient
+                .from("videos")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending:false
+                    }
+                );
+
+
+        if(result.error){
+
+            throw new Error(
+                result.error.message
+            );
+
+        }
+
+
+        const videos =
+            result.data || [];
+
+
+        document.getElementById(
+            "totalVideos"
+        ).textContent =
+            videos.length;
+
+
+        document.getElementById(
+            "videoCount"
+        ).textContent =
+            videos.length +
+            (
+                videos.length === 1
+                ? " video"
+                : " videos"
+            );
+
+
+        let totalViews = 0;
+
+
+        videos.forEach(
+            video => {
+
+                totalViews +=
+                    Number(
+                        video.views || 0
+                    );
+
+            }
+        );
+
+
+        document.getElementById(
+            "totalViews"
+        ).textContent =
+            totalViews.toLocaleString();
+
+
+        if(videos.length === 0){
+
+            empty.style.display =
+                "block";
+
+            return;
+
+        }
+
+
+        empty.style.display =
+            "none";
+
+
+        videos.forEach(
+            video => {
+
+                createVideoCard(
+                    video
+                );
+
+            }
+        );
+
+
+    }catch(error){
 
         console.error(
-            result.error
+            "Load videos error:",
+            error
         );
 
 
         showMessage(
             "Could not load video library: " +
-            result.error.message,
+            error.message,
             "error"
         );
 
-
-        return;
-
     }
-
-
-    const videos =
-        result.data || [];
-
-
-    document.getElementById(
-        "totalVideos"
-    ).textContent =
-        videos.length;
-
-
-    document.getElementById(
-        "videoCount"
-    ).textContent =
-        videos.length +
-        (
-            videos.length === 1
-            ? " video"
-            : " videos"
-        );
-
-
-    let totalViews = 0;
-
-
-    videos.forEach(
-        video => {
-
-            totalViews +=
-                Number(
-                    video.views || 0
-                );
-
-        }
-    );
-
-
-    document.getElementById(
-        "totalViews"
-    ).textContent =
-        totalViews.toLocaleString();
-
-
-    if(videos.length === 0){
-
-        empty.style.display =
-            "block";
-
-        return;
-
-    }
-
-
-    empty.style.display =
-        "none";
-
-
-    videos.forEach(
-        video => {
-
-            createVideoCard(
-                video
-            );
-
-        }
-    );
 
 }
 
 
 /* =====================================================
-   CREATE CARD
+   CREATE VIDEO CARD
 ===================================================== */
 
 function createVideoCard(
@@ -2266,7 +3170,6 @@ function createVideoCard(
                 `
             }
 
-
             <div class="category-tag">
                 ${escapeHTML(category)}
             </div>
@@ -2322,168 +3225,199 @@ function createVideoCard(
     `;
 
 
-    document.getElementById(
-        "videoGrid"
-    ).appendChild(
-        card
-    );
+    document
+        .getElementById("videoGrid")
+        .appendChild(card);
 
 }
 
 
 /* =====================================================
-   PREVIEW
+   PREVIEW VIDEO
 ===================================================== */
 
-function previewVideo(
-    id
-){
+function previewVideo(id){
 
-    loadSingleVideo(
-        id
-    );
+    loadSingleVideo(id);
 
 }
 
 
-async function loadSingleVideo(
-    id
-){
+async function loadSingleVideo(id){
 
-    const result =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .eq(
-                "id",
-                id
-            )
-            .single();
+    try{
+
+        await requireAuthenticatedUser();
 
 
-    if(result.error){
-
-        alert(
-            "Could not load video: " +
-            result.error.message
-        );
-
-        return;
-
-    }
+        const result =
+            await supabaseClient
+                .from("videos")
+                .select("*")
+                .eq("id",id)
+                .single();
 
 
-    const video =
-        result.data;
+        if(result.error){
+
+            throw new Error(
+                result.error.message
+            );
+
+        }
 
 
-    const videoURL =
-        getPublicURL(
-            video.video_url,
-            "videos"
-        );
+        const video =
+            result.data;
 
 
-    if(!videoURL){
-
-        alert(
-            "No video URL was found for this video."
-        );
-
-        return;
-
-    }
+        const videoURL =
+            getPublicURL(
+                video.video_url,
+                "videos"
+            );
 
 
-    const preview =
-        window.open(
-            "",
-            "_blank"
-        );
+        if(!videoURL){
+
+            throw new Error(
+                "No video URL was found for this video."
+            );
+
+        }
 
 
-    preview.document.write(`
-
-        <!DOCTYPE html>
-
-        <html>
-
-        <head>
-
-            <title>
-                ${escapeHTML(video.title)}
-            </title>
-
-            <style>
-
-                body{
-                    margin:0;
-                    background:#000;
-                    color:#fff;
-                    font-family:Arial;
-                }
-
-                video{
-                    width:100%;
-                    max-height:80vh;
-                    display:block;
-                    background:#000;
-                }
-
-                .info{
-                    padding:20px;
-                }
-
-                h1{
-                    font-size:24px;
-                }
-
-                p{
-                    color:#999;
-                    line-height:1.6;
-                }
-
-            </style>
-
-        </head>
+        const preview =
+            window.open(
+                "",
+                "_blank"
+            );
 
 
-        <body>
+        if(!preview){
 
-            <video
-                controls
-                autoplay
-            >
+            throw new Error(
+                "Popup was blocked by your browser."
+            );
 
-                <source
-                    src="${escapeHTML(videoURL)}"
+        }
+
+
+        preview.document.write(`
+
+            <!DOCTYPE html>
+
+            <html>
+
+            <head>
+
+                <title>
+                    ${escapeHTML(video.title)}
+                </title>
+
+                <style>
+
+                    body{
+
+                        margin:0;
+
+                        background:#000;
+
+                        color:#fff;
+
+                        font-family:Arial;
+
+                    }
+
+                    video{
+
+                        width:100%;
+
+                        max-height:80vh;
+
+                        display:block;
+
+                        background:#000;
+
+                    }
+
+                    .info{
+
+                        padding:20px;
+
+                    }
+
+                    h1{
+
+                        font-size:24px;
+
+                    }
+
+                    p{
+
+                        color:#999;
+
+                        line-height:1.6;
+
+                    }
+
+                </style>
+
+            </head>
+
+
+            <body>
+
+                <video
+                    controls
+                    autoplay
                 >
 
-            </video>
+                    <source
+                        src="${escapeHTML(videoURL)}"
+                    >
+
+                </video>
 
 
-            <div class="info">
+                <div class="info">
 
-                <h1>
-                    ${escapeHTML(video.title)}
-                </h1>
+                    <h1>
+                        ${escapeHTML(video.title)}
+                    </h1>
 
-                <p>
-                    ${escapeHTML(
-                        video.description || ""
-                    )}
-                </p>
+                    <p>
+                        ${escapeHTML(
+                            video.description || ""
+                        )}
+                    </p>
 
-            </div>
+                </div>
 
-        </body>
+            </body>
 
-        </html>
+            </html>
 
-    `);
+        `);
 
 
-    preview.document.close();
+        preview.document.close();
+
+
+    }catch(error){
+
+        console.error(
+            "Preview error:",
+            error
+        );
+
+
+        alert(
+            "Could not preview video: " +
+            error.message
+        );
+
+    }
 
 }
 
@@ -2492,9 +3426,7 @@ async function loadSingleVideo(
    DELETE VIDEO
 ===================================================== */
 
-async function deleteVideo(
-    id
-){
+async function deleteVideo(id){
 
     const confirmed =
         confirm(
@@ -2508,27 +3440,26 @@ async function deleteVideo(
         return;
 
 
-    showMessage(
-        "Deleting video...",
-        "success"
-    );
-
-
     try{
 
-        /*
-           First get the database record
-           so we know the Storage paths.
-        */
+        await requireAuthenticatedUser();
+
+
+        showMessage(
+            "Deleting video...",
+            "success"
+        );
+
+
+        /* =========================================
+           GET DATABASE RECORD
+        ========================================= */
 
         const result =
             await supabaseClient
                 .from("videos")
                 .select("*")
-                .eq(
-                    "id",
-                    id
-                )
+                .eq("id",id)
                 .single();
 
 
@@ -2622,10 +3553,7 @@ async function deleteVideo(
             await supabaseClient
                 .from("videos")
                 .delete()
-                .eq(
-                    "id",
-                    id
-                );
+                .eq("id",id);
 
 
         if(deleteRecord.error){
@@ -2778,9 +3706,7 @@ function goToVideos(){
    ESCAPE HTML
 ===================================================== */
 
-function escapeHTML(
-    value
-){
+function escapeHTML(value){
 
     return String(
         value ?? ""
@@ -2815,22 +3741,13 @@ function escapeHTML(
 
 
 /* =====================================================
-   START
+   START APPLICATION
 ===================================================== */
 
-checkAdminSession().then(isLoggedIn => {
-
-    if(isLoggedIn){
-
-        loadVideos();
-
-    }
-
-});
+checkSession();
 
 </script>
 
 </body>
 
 </html>
-```

@@ -1269,6 +1269,47 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
+/* =========================================
+   WEBSITE PRESENCE TRACKING
+========================================= */
+
+const WEBSITE_USER_ID =
+    localStorage.getItem("streamx_user_id") ||
+    crypto.randomUUID();
+
+localStorage.setItem(
+    "streamx_user_id",
+    WEBSITE_USER_ID
+);
+
+async function updateWebsitePresence(){
+
+    try{
+
+        await supabaseClient
+            .from("active_users")
+            .upsert(
+                {
+                    user_id: WEBSITE_USER_ID,
+                    platform: "website",
+                    last_seen: new Date().toISOString()
+                },
+                {
+                    onConflict: "user_id"
+                }
+            );
+
+    }catch(error){
+
+        console.error(
+            "Presence update failed:",
+            error
+        );
+
+    }
+
+}
+
 
 /* =========================
    AGE GATE ELEMENTS
@@ -1311,6 +1352,13 @@ function enterWebsite(){
         "";
 
     loadVideos();
+
+    updateWebsitePresence();
+
+setInterval(
+    updateWebsitePresence,
+    30000
+);
 
 }
 

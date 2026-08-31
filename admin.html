@@ -3066,6 +3066,39 @@ async function loadVideos(){
         ).textContent =
             totalViews.toLocaleString();
 
+/* =========================================
+   TOTAL LIKES
+========================================= */
+
+const likesCountResult =
+    await supabaseClient
+        .from("video_likes")
+        .select(
+            "id",
+            {
+                count: "exact",
+                head: true
+            }
+        );
+
+if (likesCountResult.error) {
+
+    console.error(
+        "Could not load total likes:",
+        likesCountResult.error
+    );
+
+} else {
+
+    document.getElementById(
+        "totalLikes"
+    ).textContent =
+        (
+            likesCountResult.count || 0
+        ).toLocaleString();
+
+}
+
 
 /* =========================================
    LOAD LIKES FOR EACH VIDEO

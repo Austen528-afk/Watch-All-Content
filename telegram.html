@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StreamX</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{
@@ -898,6 +899,161 @@ ageNo.addEventListener("click", function () {
 const SUPABASE_URL = "https://iojjmoywrlnzpyatahyh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* =========================================
+   TELEGRAM MINI APP INITIALIZATION
+========================================= */
+
+let STREAMX_MINIAPP_USER_ID = null;
+
+if (window.Telegram && Telegram.WebApp) {
+
+    Telegram.WebApp.ready();
+
+    const telegramUser =
+        Telegram.WebApp.initDataUnsafe?.user;
+
+    if (telegramUser?.id) {
+
+        STREAMX_MINIAPP_USER_ID =
+            String(telegramUser.id);
+
+    } else {
+
+        /*
+           Fallback for testing outside Telegram.
+           This does NOT affect the real Telegram
+           user ID when the Mini App is opened
+           inside Telegram.
+        */
+
+        STREAMX_MINIAPP_USER_ID =
+            crypto.randomUUID();
+
+    }
+
+} else {
+
+    /*
+       Fallback if the page is opened directly
+       outside Telegram.
+    */
+
+    STREAMX_MINIAPP_USER_ID =
+        crypto.randomUUID();
+
+}
+
+
+/* =========================================
+   MINI APP PRESENCE TRACKING
+========================================= */
+
+async function updateMiniAppPresence(){
+
+    try{
+
+        const { error } =
+            await supabaseClient
+                .from("active_users")
+                .upsert(
+                    {
+                        user_id:
+                            STREAMX_MINIAPP_USER_ID,
+
+                        platform:
+                            "miniapp",
+
+                        last_seen:
+                            new Date().toISOString()
+                    },
+                    {
+                        onConflict:
+                            "user_id"
+                    }
+                );
+
+
+        if(error){
+
+            console.error(
+                "Mini App presence error:",
+                error
+            );
+
+            return;
+
+        }
+
+        console.log(
+            "Mini App presence updated:",
+            STREAMX_MINIAPP_USER_ID
+        );
+
+    }
+    catch(error){
+
+        console.error(
+            "Mini App presence failed:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   INITIAL PRESENCE
+========================================= */
+
+updateMiniAppPresence();
+
+
+/* =========================================
+   KEEP USER ONLINE
+========================================= */
+
+setInterval(
+    updateMiniAppPresence,
+    30000
+);
+
+updateMiniAppPresence();
+
+
+setInterval(
+    updateMiniAppPresence,
+    30000
+);
+
+async function updateMiniAppPresence(){
+
+    try{
+
+        await supabaseClient
+            .from("active_users")
+            .upsert(
+                {
+                    user_id: String(TELEGRAM_USER_ID),
+                    platform: "miniapp",
+                    last_seen: new Date().toISOString()
+                },
+                {
+                    onConflict: "user_id"
+                }
+            );
+
+    }catch(error){
+
+        console.error(
+            "Mini App presence update failed:",
+            error
+        );
+
+    }
+
+}
 
 /* =========================
    VARIABLES

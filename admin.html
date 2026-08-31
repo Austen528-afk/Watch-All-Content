@@ -459,7 +459,7 @@ body{
 
     display:grid;
 
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(6,1fr);
 
     gap:18px;
 
@@ -1492,23 +1492,62 @@ textarea{
 
         </div>
 
+<div class="stat">
 
-        <div class="stat">
+    <div class="stat-icon">
+        🌐
+    </div>
 
-            <div class="stat-icon">
-                📡
-            </div>
+    <div class="stat-label">
+        Website Users
+    </div>
 
-            <div class="stat-label">
-                Platform
-            </div>
+    <div
+        class="stat-number"
+        id="websiteUsers"
+    >
+        0
+    </div>
 
-            <div
-                class="stat-number"
-                style="font-size:20px"
-            >
-                Online
-            </div>
+</div>
+
+<div class="stat">
+
+    <div class="stat-icon">
+        📱
+    </div>
+
+    <div class="stat-label">
+        Mini App Users
+    </div>
+
+    <div
+        class="stat-number"
+        id="miniAppUsers"
+    >
+        0
+    </div>
+
+</div>
+
+<div class="stat">
+
+    <div class="stat-icon">
+        👥
+    </div>
+
+    <div class="stat-label">
+        Total Active Users
+    </div>
+
+    <div
+        class="stat-number"
+        id="allUsers"
+    >
+        0
+    </div>
+
+</div>
 
         </div>
 
@@ -3107,6 +3146,79 @@ document.getElementById(
 ).textContent =
     totalLikes.toLocaleString();
 
+/* =========================================
+   ACTIVE USERS
+========================================= */
+
+const fiveMinutesAgo =
+    new Date(
+        Date.now() - (5 * 60 * 1000)
+    ).toISOString();
+
+
+const activeResult =
+    await supabaseClient
+        .from("active_users")
+        .select(
+            "user_id, platform"
+        )
+        .gte(
+            "last_seen",
+            fiveMinutesAgo
+        );
+
+
+if(!activeResult.error){
+
+    const websiteUsers =
+        new Set();
+
+    const miniAppUsers =
+        new Set();
+
+    const allUsers =
+        new Set();
+
+    activeResult.data.forEach(row => {
+
+        allUsers.add(
+            row.user_id
+        );
+
+        if(
+            row.platform === "website"
+        ){
+            websiteUsers.add(
+                row.user_id
+            );
+        }
+
+        if(
+            row.platform === "miniapp"
+        ){
+            miniAppUsers.add(
+                row.user_id
+            );
+        }
+
+    });
+
+    document.getElementById(
+        "websiteUsers"
+    ).textContent =
+        websiteUsers.size;
+
+    document.getElementById(
+        "miniAppUsers"
+    ).textContent =
+        miniAppUsers.size;
+
+    document.getElementById(
+        "allUsers"
+    ).textContent =
+        allUsers.size;
+
+}
 
         /* =========================================
            EMPTY STATE

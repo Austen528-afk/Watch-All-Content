@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -1316,19 +1316,7 @@ window.supabase.createClient(
    ADMIN PASSWORD PROTECTION
 ===================================================== */
 
-const ADMIN_PASSWORD = "123@Austin";
 
-const enteredPassword = prompt("Enter Admin Password:");
-
-if (enteredPassword !== ADMIN_PASSWORD) {
-    alert("Access Denied!");
-    window.location.href = "index.html";
-    throw new Error("Unauthorized access");
-}
-
-let selectedVideoFile = null;
-
-let selectedThumbnailFile = null;
 
 
 /* =====================================================

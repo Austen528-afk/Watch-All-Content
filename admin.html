@@ -459,7 +459,7 @@ body{
 
     display:grid;
 
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(4,1fr);
 
     gap:18px;
 
@@ -1450,6 +1450,25 @@ textarea{
             >
                 0
             </div>
+        
+            <div class="stat">
+
+    <div class="stat-icon">
+        ❤️
+    </div>
+
+    <div class="stat-label">
+        Total Likes
+    </div>
+
+    <div
+        class="stat-number"
+        id="totalLikes"
+    >
+        0
+    </div>
+
+</div>
 
         </div>
 
@@ -3035,25 +3054,14 @@ async function loadVideos(){
            TOTAL VIEWS
         ========================================= */
 
-        let totalViews = 0;
+let totalViews = 0;
+let totalLikes = 0;
 
+videos.forEach(video => {
 
-        videos.forEach(
-            video => {
+    totalViews += Number(video.views || 0);
 
-                totalViews +=
-                    Number(
-                        video.views || 0
-                    );
-
-            }
-        );
-
-
-        document.getElementById(
-            "totalViews"
-        ).textContent =
-            totalViews.toLocaleString();
+});
 
 
 /* =========================================
@@ -3076,12 +3084,6 @@ for (const video of videos) {
 
     if (likesResult.error) {
 
-        console.error(
-            "Could not load likes for video:",
-            video.id,
-            likesResult.error
-        );
-
         video.likes = 0;
 
     } else {
@@ -3091,7 +3093,19 @@ for (const video of videos) {
 
     }
 
+    totalLikes += Number(video.likes || 0);
+
 }
+
+document.getElementById(
+    "totalViews"
+).textContent =
+    totalViews.toLocaleString();
+
+document.getElementById(
+    "totalLikes"
+).textContent =
+    totalLikes.toLocaleString();
 
 
         /* =========================================

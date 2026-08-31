@@ -580,6 +580,36 @@ body{
     font-size:10px;
 }
 
+.video-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:10px;
+}
+
+.like-btn{
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-size:22px;
+    color:#777;
+    transition:.2s;
+}
+
+.like-btn:hover{
+    transform:scale(1.15);
+}
+
+.like-btn.liked{
+    color:#ff4da6;
+}
+
+.like-count{
+    color:#aaa;
+    font-size:12px;
+    font-weight:bold;
+}
+
 
 /* =========================
    LOADING
@@ -1694,15 +1724,31 @@ function createVideoCard(video){
 
             <div class="video-meta">
 
-                <span class="view-count-${video.id}">
-                    ${views} views
-                </span>
+    <span class="view-count-${video.id}">
+        ${views} views
+    </span>
 
-                <span>
-                    ${escapeHTML(date)}
-                </span>
+    <span>
+        ${escapeHTML(date)}
+    </span>
 
-            </div>
+</div>
+
+<div class="video-actions">
+
+    <button
+        class="like-btn"
+        data-id="${video.id}"
+        type="button"
+    >
+        ♡
+    </button>
+
+    <span class="like-count">
+        ${video.likes_count || 0}
+    </span>
+
+</div>
 
         </div>
 

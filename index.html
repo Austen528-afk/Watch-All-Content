@@ -2,7 +2,9 @@
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>StreamX</title>
@@ -36,68 +38,74 @@ body{
     position:fixed;
     inset:0;
     z-index:99999;
-    background:rgba(0,0,0,.97);
+    background:
+        radial-gradient(
+            circle at center,
+            #1a1a1a 0%,
+            #090909 55%,
+            #000 100%
+        );
     display:flex;
     align-items:center;
     justify-content:center;
     padding:20px;
 }
 
-.age-gate.hidden{
-    display:none;
-}
-
-.age-box{
-    width:min(440px,100%);
+.age-gate-box{
+    width:min(460px,100%);
     background:#111;
     border:1px solid #292929;
     border-radius:18px;
     padding:35px 28px;
     text-align:center;
-    box-shadow:0 25px 80px rgba(0,0,0,.7);
+    box-shadow:0 25px 80px rgba(0,0,0,.75);
 }
 
-.age-icon{
-    width:70px;
-    height:70px;
+.age-gate-logo{
+    font-size:32px;
+    font-weight:900;
+    letter-spacing:-1px;
+    margin-bottom:25px;
+}
+
+.age-gate-logo span{
+    color:#ff1744;
+}
+
+.age-gate-icon{
+    width:75px;
+    height:75px;
     margin:0 auto 20px;
     border-radius:50%;
-    background:#ff1744;
+    background:#1d1d1d;
+    border:1px solid #333;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:30px;
-    font-weight:bold;
-    box-shadow:0 0 30px rgba(255,23,68,.25);
+    font-size:32px;
 }
 
-.age-box h1{
+.age-gate-box h1{
     font-size:25px;
     margin-bottom:12px;
 }
 
-.age-box p{
+.age-gate-box p{
     color:#888;
     font-size:13px;
     line-height:1.7;
     margin-bottom:25px;
 }
 
-.age-warning{
-    color:#aaa;
-    font-size:11px;
-    line-height:1.5;
-    margin-bottom:22px;
-}
-
-.age-buttons{
+.age-gate-buttons{
     display:flex;
-    gap:10px;
+    gap:12px;
+    justify-content:center;
 }
 
 .age-button{
     flex:1;
-    height:48px;
+    min-height:48px;
     border:none;
     border-radius:9px;
     cursor:pointer;
@@ -108,7 +116,7 @@ body{
 
 .age-yes{
     background:#ff1744;
-    color:white;
+    color:#fff;
 }
 
 .age-yes:hover{
@@ -117,32 +125,38 @@ body{
 }
 
 .age-no{
-    background:#252525;
+    background:#242424;
     color:#aaa;
+    border:1px solid #333;
 }
 
 .age-no:hover{
-    background:#333;
-    color:white;
+    background:#303030;
+    color:#fff;
 }
 
 .age-blocked{
     display:none;
 }
 
-.age-blocked.show{
-    display:block;
-}
-
 .age-blocked h2{
-    color:#ff1744;
-    font-size:20px;
-    margin-bottom:10px;
+    font-size:23px;
+    margin-bottom:12px;
 }
 
 .age-blocked p{
     margin-bottom:0;
 }
+
+
+/* =========================
+   MAIN WEBSITE
+========================= */
+
+#siteContent{
+    display:none;
+}
+
 
 /* =========================
    HEADER
@@ -176,6 +190,7 @@ body{
 .logo span{
     color:#ff1744;
 }
+
 
 /* =========================
    SEARCH
@@ -241,6 +256,7 @@ body{
     color:white;
 }
 
+
 /* =========================
    ONLINE
 ========================= */
@@ -264,6 +280,7 @@ body{
     border-radius:50%;
     box-shadow:0 0 10px #21c477;
 }
+
 
 /* =========================
    CATEGORY BAR
@@ -312,6 +329,7 @@ body{
     font-weight:bold;
 }
 
+
 /* =========================
    MAIN
 ========================= */
@@ -321,6 +339,7 @@ body{
     margin:auto;
     padding:30px 25px 70px;
 }
+
 
 /* =========================
    HERO
@@ -368,6 +387,7 @@ body{
     z-index:1;
 }
 
+
 /* =========================
    SECTION HEADER
 ========================= */
@@ -400,6 +420,7 @@ body{
     color:#ff1744;
 }
 
+
 /* =========================
    VIDEO GRID
 ========================= */
@@ -409,6 +430,7 @@ body{
     grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
     gap:20px;
 }
+
 
 /* =========================
    VIDEO CARD
@@ -431,6 +453,7 @@ body{
     border-color:#3a3a3a;
     background:#171717;
 }
+
 
 /* =========================
    THUMBNAIL
@@ -468,6 +491,7 @@ body{
     color:#444;
 }
 
+
 /* =========================
    PLAY OVERLAY
 ========================= */
@@ -500,6 +524,7 @@ body{
     box-shadow:0 5px 25px rgba(0,0,0,.5);
 }
 
+
 /* =========================
    CATEGORY TAG
 ========================= */
@@ -516,6 +541,7 @@ body{
     font-size:10px;
     backdrop-filter:blur(5px);
 }
+
 
 /* =========================
    VIDEO INFO
@@ -554,6 +580,7 @@ body{
     font-size:10px;
 }
 
+
 /* =========================
    LOADING
 ========================= */
@@ -584,6 +611,7 @@ body{
     }
 }
 
+
 /* =========================
    EMPTY
 ========================= */
@@ -609,6 +637,7 @@ body{
 .empty p{
     font-size:12px;
 }
+
 
 /* =========================
    PLAYER MODAL
@@ -695,6 +724,7 @@ body{
     line-height:1.6;
 }
 
+
 /* =========================
    FOOTER
 ========================= */
@@ -706,6 +736,7 @@ body{
     color:#555;
     font-size:11px;
 }
+
 
 /* =========================
    CATEGORY SUGGESTIONS
@@ -746,6 +777,7 @@ body{
     color:#ff1744;
     margin-right:6px;
 }
+
 
 /* =========================
    RESPONSIVE
@@ -810,13 +842,10 @@ body{
         font-size:9px;
     }
 
-    .age-box{
+    .age-gate-box{
         padding:30px 20px;
     }
 
-    .age-box h1{
-        font-size:22px;
-    }
 }
 
 @media(max-width:480px){
@@ -837,19 +866,23 @@ body{
         font-size:18px;
     }
 
-    .age-buttons{
+    .age-gate-box h1{
+        font-size:22px;
+    }
+
+    .age-gate-buttons{
         flex-direction:column;
     }
 
-    .age-button{
-        width:100%;
-    }
 }
 
 </style>
+
 </head>
 
+
 <body>
+
 
 <!-- =========================
      AGE VERIFICATION
@@ -860,59 +893,72 @@ body{
     class="age-gate"
 >
 
-    <div class="age-box">
-
-        <div class="age-icon">
-            18+
-        </div>
-
-        <h1>
-            Age Verification
-        </h1>
-
-        <p id="ageMessage">
-            You must be 18 years or older to enter StreamX.
-        </p>
-
-        <div class="age-warning">
-            By selecting YES, you confirm that you are at least
-            18 years old and agree to continue.
-        </div>
+    <div class="age-gate-box">
 
         <div
-            id="ageButtons"
-            class="age-buttons"
+            id="ageVerificationContent"
         >
 
-            <button
-                id="ageYes"
-                class="age-button age-yes"
-                type="button"
-            >
-                YES, I AM 18+
-            </button>
+            <div class="age-gate-logo">
+                Stream<span>X</span>
+            </div>
 
-            <button
-                id="ageNo"
-                class="age-button age-no"
-                type="button"
-            >
-                NO, I AM UNDER 18
-            </button>
+            <div class="age-gate-icon">
+                🔞
+            </div>
+
+            <h1>
+                Age Verification
+            </h1>
+
+            <p>
+                This website contains adult content.
+                You must be 18 years or older to enter.
+                Please confirm your age before continuing.
+            </p>
+
+            <div class="age-gate-buttons">
+
+                <button
+                    type="button"
+                    id="ageYes"
+                    class="age-button age-yes"
+                >
+                    YES, ENTER
+                </button>
+
+                <button
+                    type="button"
+                    id="ageNo"
+                    class="age-button age-no"
+                >
+                    NO, EXIT
+                </button>
+
+            </div>
 
         </div>
+
 
         <div
             id="ageBlocked"
             class="age-blocked"
         >
 
+            <div class="age-gate-logo">
+                Stream<span>X</span>
+            </div>
+
+            <div class="age-gate-icon">
+                🚫
+            </div>
+
             <h2>
                 Access Denied
             </h2>
 
             <p>
-                You must be 18 or older to access this website.
+                You must be 18 years or older to access this website.
             </p>
 
         </div>
@@ -920,6 +966,13 @@ body{
     </div>
 
 </div>
+
+
+<!-- =========================
+     WEBSITE CONTENT
+========================= -->
+
+<div id="siteContent">
 
 
 <header class="header">
@@ -932,7 +985,9 @@ body{
 
         <div class="search-wrapper">
 
-            <span class="search-icon">🔎</span>
+            <span class="search-icon">
+                🔎
+            </span>
 
             <input
                 type="text"
@@ -981,35 +1036,59 @@ body{
         id="categories"
     >
 
-        <button class="category active" data-category="All">
+        <button
+            class="category active"
+            data-category="All"
+        >
             All
         </button>
 
-        <button class="category" data-category="BackShots">
+        <button
+            class="category"
+            data-category="BackShots"
+        >
             BackShots
         </button>
 
-        <button class="category" data-category="Masterbates">
+        <button
+            class="category"
+            data-category="Masterbates"
+        >
             Masterbates
         </button>
 
-        <button class="category" data-category="RoughX">
+        <button
+            class="category"
+            data-category="RoughX"
+        >
             RoughX
         </button>
 
-        <button class="category" data-category="BBW">
+        <button
+            class="category"
+            data-category="BBW"
+        >
             BBW
         </button>
 
-        <button class="category" data-category="Africans">
+        <button
+            class="category"
+            data-category="Africans"
+        >
             Africans
         </button>
 
-        <button class="category" data-category="Cums">
+        <button
+            class="category"
+            data-category="Cums"
+        >
             Cums
         </button>
 
-        <button class="category" data-category="Close Friends">
+        <button
+            class="category"
+            data-category="Close Friends"
+        >
             Close Friends
         </button>
 
@@ -1044,7 +1123,7 @@ body{
             class="result-count"
             id="resultCount"
         >
-            Waiting for age verification...
+            Loading...
         </span>
 
     </div>
@@ -1066,7 +1145,7 @@ body{
             <div class="spinner"></div>
 
             <span>
-                Waiting for age verification...
+                Loading videos...
             </span>
 
         </div>
@@ -1139,6 +1218,8 @@ body{
 
 </footer>
 
+</div>
+
 
 <script>
 
@@ -1147,7 +1228,7 @@ body{
 ========================= */
 
 const SUPABASE_URL =
-    "https://iojjmoywrlnzpyatahy.supabase.co";
+    "https://iojjmoywrlnzpyatahyh.supabase.co";
 
 const SUPABASE_KEY =
     "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
@@ -1160,7 +1241,7 @@ const supabaseClient =
 
 
 /* =========================
-   AGE GATE
+   AGE GATE ELEMENTS
 ========================= */
 
 const ageGate =
@@ -1172,20 +1253,67 @@ const ageYes =
 const ageNo =
     document.getElementById("ageNo");
 
-const ageButtons =
-    document.getElementById("ageButtons");
-
 const ageBlocked =
     document.getElementById("ageBlocked");
 
+const ageVerificationContent =
+    document.getElementById(
+        "ageVerificationContent"
+    );
 
-/*
- * The age gate is intentionally NOT
- * saved in localStorage or cookies.
- *
- * Therefore it appears every time
- * the website is opened or refreshed.
- */
+const siteContent =
+    document.getElementById("siteContent");
+
+
+/* =========================
+   AGE VERIFICATION
+========================= */
+
+function enterWebsite(){
+
+    ageGate.style.display =
+        "none";
+
+    siteContent.style.display =
+        "block";
+
+    document.body.style.overflow =
+        "";
+
+    loadVideos();
+
+}
+
+
+/* =========================
+   AGE DENIED
+========================= */
+
+function denyAccess(){
+
+    ageVerificationContent.style.display =
+        "none";
+
+    ageBlocked.style.display =
+        "block";
+
+}
+
+
+/* =========================
+   AGE BUTTONS
+========================= */
+
+ageYes.addEventListener(
+    "click",
+    enterWebsite
+);
+
+
+ageNo.addEventListener(
+    "click",
+    denyAccess
+);
 
 
 /* =========================
@@ -1197,8 +1325,6 @@ let allVideos = [];
 let currentCategory = "All";
 
 let searchTerm = "";
-
-let ageVerified = false;
 
 
 /* =========================
@@ -1246,78 +1372,6 @@ const closePlayer =
 
 
 /* =========================
-   AGE YES
-========================= */
-
-ageYes.addEventListener(
-    "click",
-    function(){
-
-        ageVerified = true;
-
-        ageGate.classList.add(
-            "hidden"
-        );
-
-        document.body.style.overflow =
-            "";
-
-        loadVideos();
-
-    }
-);
-
-
-/* =========================
-   AGE NO
-========================= */
-
-ageNo.addEventListener(
-    "click",
-    function(){
-
-        ageVerified = false;
-
-        ageButtons.style.display =
-            "none";
-
-        ageBlocked.classList.add(
-            "show"
-        );
-
-        videoGrid.innerHTML = `
-
-            <div class="empty">
-
-                <div class="empty-icon">
-                    🔒
-                </div>
-
-                <h3>
-                    Age Verification Required
-                </h3>
-
-                <p>
-                    Please confirm that you are 18 or older to view content.
-                </p>
-
-            </div>
-
-        `;
-
-    }
-);
-
-
-/* =========================
-   INITIAL AGE LOCK
-========================= */
-
-document.body.style.overflow =
-    "hidden";
-
-
-/* =========================
    CATEGORIES
 ========================= */
 
@@ -1341,41 +1395,58 @@ const categories = [
 
 async function loadVideos(){
 
-    if(!ageVerified){
-        return;
-    }
-
     showLoading();
 
-    const result =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending:false
-                }
+    try{
+
+        const result =
+            await supabaseClient
+                .from("videos")
+                .select("*")
+                .order(
+                    "created_at",
+                    {
+                        ascending:false
+                    }
+                );
+
+
+        if(result.error){
+
+            console.error(
+                "Supabase error:",
+                result.error
             );
 
-    if(result.error){
+            showError(
+                "Unable to load videos. Please try again."
+            );
+
+            return;
+
+        }
+
+
+        allVideos =
+            result.data || [];
+
+
+        renderVideos();
+
+    }
+    catch(error){
 
         console.error(
-            "Supabase error:",
-            result.error
+            "Unexpected Supabase error:",
+            error
         );
 
         showError(
             "Unable to load videos. Please try again."
         );
 
-        return;
     }
 
-    allVideos =
-        result.data || [];
-
-    renderVideos();
 }
 
 
@@ -1392,29 +1463,35 @@ function getFilteredVideos(){
                 video.category || ""
             );
 
+
         const categoryMatch =
             currentCategory === "All" ||
             videoCategory.toLowerCase() ===
             currentCategory.toLowerCase();
+
 
         const title =
             String(
                 video.title || ""
             ).toLowerCase();
 
+
         const description =
             String(
                 video.description || ""
             ).toLowerCase();
 
+
         const category =
             videoCategory.toLowerCase();
+
 
         const searchMatch =
             !searchTerm ||
             title.includes(searchTerm) ||
             description.includes(searchTerm) ||
             category.includes(searchTerm);
+
 
         return (
             categoryMatch &&
@@ -1432,12 +1509,9 @@ function getFilteredVideos(){
 
 function renderVideos(){
 
-    if(!ageVerified){
-        return;
-    }
-
     const videos =
         getFilteredVideos();
+
 
     videoGrid.innerHTML = "";
 
@@ -1447,8 +1521,10 @@ function renderVideos(){
         sectionTitle.textContent =
             "Search Results";
 
+
         searchStatus.style.display =
             "block";
+
 
         searchStatus.innerHTML =
             "Searching for: <strong>" +
@@ -1460,6 +1536,7 @@ function renderVideos(){
 
         searchStatus.style.display =
             "none";
+
 
         sectionTitle.textContent =
             currentCategory === "All"
@@ -1483,6 +1560,7 @@ function renderVideos(){
         showEmpty();
 
         return;
+
     }
 
 
@@ -1505,6 +1583,7 @@ function createVideoCard(video){
 
     const card =
         document.createElement("article");
+
 
     card.className =
         "video-card";
@@ -1641,6 +1720,7 @@ function createVideoCard(video){
 
 
     return card;
+
 }
 
 
@@ -1844,10 +1924,6 @@ async function getVideoURL(video){
 
 async function openPlayer(video){
 
-    if(!ageVerified){
-        return;
-    }
-
     playerTitle.textContent =
         video.title ||
         "Video";
@@ -1866,6 +1942,7 @@ async function openPlayer(video){
     playerVideo.removeAttribute(
         "src"
     );
+
 
     playerVideo.load();
 
@@ -1898,6 +1975,7 @@ async function openPlayer(video){
 
     playerVideo.src =
         videoURL;
+
 
     playerVideo.load();
 
@@ -1952,6 +2030,7 @@ async function updateViews(video){
             );
 
             return;
+
         }
 
 
@@ -1983,7 +2062,6 @@ async function updateViews(video){
 
         }
 
-
     }
     catch(error){
 
@@ -2005,15 +2083,19 @@ function closeVideoPlayer(){
 
     playerVideo.pause();
 
+
     playerVideo.removeAttribute(
         "src"
     );
 
+
     playerVideo.load();
+
 
     videoModal.classList.remove(
         "show"
     );
+
 
     document.body.style.overflow =
         "";
@@ -2179,6 +2261,7 @@ document
             searchInput.value =
                 "";
 
+
             searchTerm =
                 "";
 
@@ -2204,10 +2287,6 @@ document
 searchInput.addEventListener(
     "input",
     function(){
-
-        if(!ageVerified){
-            return;
-        }
 
         const value =
             this.value.trim();
@@ -2311,10 +2390,6 @@ searchInput.addEventListener(
 function showCategorySuggestions(
     value
 ){
-
-    if(!ageVerified){
-        return;
-    }
 
     if(!value){
 
@@ -2442,15 +2517,13 @@ clearSearch.addEventListener(
     "click",
     function(){
 
-        if(!ageVerified){
-            return;
-        }
-
         searchInput.value =
             "";
 
+
         searchTerm =
             "";
+
 
         currentCategory =
             "All";
@@ -2482,6 +2555,7 @@ clearSearch.addEventListener(
 
 
         renderVideos();
+
 
         searchInput.focus();
 
@@ -2634,20 +2708,8 @@ function escapeHTML(value){
 
 }
 
-
-/* =========================
-   IMPORTANT
-========================= */
-
-/*
- * DO NOT call loadVideos() here.
- *
- * The age verification button
- * calls loadVideos() after the
- * user confirms they are 18+.
- */
-
 </script>
 
 </body>
+
 </html>

@@ -1,19 +1,10 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StreamX</title>
-
-<!-- Telegram Mini App SDK -->
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- Supabase -->
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{
     margin:0;
@@ -135,7 +126,6 @@ body{
 .logo span{
     color:#ff1744;
 }
-
 /* =========================
    SEARCH
 ========================= */
@@ -192,7 +182,6 @@ body{
     background:#ff1744;
     color:white;
 }
-
 /* =========================
    ONLINE
 ========================= */
@@ -213,7 +202,6 @@ body{
     border-radius:50%;
     box-shadow:0 0 10px #21c477;
 }
-
 /* =========================
    CATEGORY BAR
 ========================= */
@@ -254,7 +242,6 @@ body{
     color:white;
     font-weight:bold;
 }
-
 /* =========================
    MAIN
 ========================= */
@@ -263,7 +250,6 @@ body{
     margin:auto;
     padding:30px 25px 70px;
 }
-
 /* =========================
    HERO
 ========================= */
@@ -304,7 +290,6 @@ body{
     position:relative;
     z-index:1;
 }
-
 /* =========================
    SECTION HEADER
 ========================= */
@@ -331,7 +316,6 @@ body{
 .search-status strong{
     color:#ff1744;
 }
-
 /* =========================
    VIDEO GRID
 ========================= */
@@ -340,7 +324,6 @@ body{
     grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
     gap:20px;
 }
-
 /* =========================
    VIDEO CARD
 ========================= */
@@ -360,7 +343,6 @@ body{
     border-color:#3a3a3a;
     background:#171717;
 }
-
 /* =========================
    THUMBNAIL
 ========================= */
@@ -392,7 +374,6 @@ body{
     font-size:45px;
     color:#444;
 }
-
 /* =========================
    PLAY OVERLAY
 ========================= */
@@ -421,7 +402,6 @@ body{
     padding-left:3px;
     box-shadow:0 5px 25px rgba(0,0,0,.5);
 }
-
 /* =========================
    CATEGORY TAG
 ========================= */
@@ -437,7 +417,6 @@ body{
     font-size:10px;
     backdrop-filter:blur(5px);
 }
-
 /* =========================
    VIDEO INFO
 ========================= */
@@ -474,12 +453,14 @@ body{
 /* =========================
    LIKE BUTTON
 ========================= */
+
 .video-actions{
     display:flex;
     align-items:center;
     gap:8px;
     margin-top:10px;
 }
+
 .like-btn{
     background:none;
     border:none;
@@ -490,12 +471,15 @@ body{
     padding:0;
     transition:.2s;
 }
+
 .like-btn:hover{
     transform:scale(1.15);
 }
+
 .like-btn.liked{
     color:#ff1744 !important;
 }
+
 .like-count{
     color:#aaa;
     font-size:12px;
@@ -528,7 +512,6 @@ body{
         transform:rotate(360deg);
     }
 }
-
 /* =========================
    EMPTY
 ========================= */
@@ -550,7 +533,6 @@ body{
 .empty p{
     font-size:12px;
 }
-
 /* =========================
    PLAYER MODAL
 ========================= */
@@ -624,7 +606,6 @@ body{
     font-size:12px;
     line-height:1.6;
 }
-
 /* =========================
    FOOTER
 ========================= */
@@ -635,7 +616,6 @@ body{
     color:#555;
     font-size:11px;
 }
-
 /* =========================
    CATEGORY SUGGESTIONS
 ========================= */
@@ -670,7 +650,6 @@ body{
     color:#ff1744;
     margin-right:6px;
 }
-
 /* =========================
    RESPONSIVE
 ========================= */
@@ -735,288 +714,118 @@ body{
     }
 }
 </style>
-
 </head>
-
 <body>
 
 <!-- =========================
      AGE VERIFICATION GATE
 ========================= -->
-
 <div class="age-gate" id="ageGate">
     <div class="age-box">
         <h2>Welcome to <span>StreamX</span></h2>
-
-```
-    <p>
-        This website contains adult content.<br>
-        You must be 18 years or older to enter.
-    </p>
-
-    <div class="age-buttons">
-
-        <button
-            class="age-btn yes"
-            id="ageYes"
-        >
-            I am 18+
-        </button>
-
-        <button
-            class="age-btn no"
-            id="ageNo"
-        >
-            I am under 18
-        </button>
-
+        <p>
+            This website contains adult content.<br>
+            You must be 18 years or older to enter.
+        </p>
+        <div class="age-buttons">
+            <button class="age-btn yes" id="ageYes">I am 18+</button>
+            <button class="age-btn no" id="ageNo">I am under 18</button>
+        </div>
+        <div class="age-blocked" id="ageBlocked">
+            Access denied. You must be 18 or older.
+        </div>
     </div>
-
-    <div
-        class="age-blocked"
-        id="ageBlocked"
-    >
-        Access denied. You must be 18 or older.
-    </div>
-
-</div>
-```
-
 </div>
 
 <header class="header">
-
-```
-<div class="header-inner">
-
-    <div class="logo">
-        Stream<span>X</span>
-    </div>
-
-    <div class="search-wrapper">
-
-        <span class="search-icon">
-            🔎
-        </span>
-
-        <input
-            type="text"
-            id="searchInput"
-            class="search"
-            placeholder="Search videos or categories..."
-            autocomplete="off"
-        >
-
-        <button
-            id="clearSearch"
-            class="clear-search"
-            type="button"
-        >
-            ×
-        </button>
-
-        <div
-            id="categorySuggestions"
-            class="category-suggestions"
-        ></div>
-
-    </div>
-
-    <div class="header-right">
-
-        <div class="online">
-
-            <span class="online-dot"></span>
-
-            Online
-
+    <div class="header-inner">
+        <div class="logo">
+            Stream<span>X</span>
         </div>
-
+        <div class="search-wrapper">
+            <span class="search-icon">🔎</span>
+            <input
+                type="text"
+                id="searchInput"
+                class="search"
+                placeholder="Search videos or categories..."
+                autocomplete="off"
+            >
+            <button
+                id="clearSearch"
+                class="clear-search"
+                type="button"
+            >
+                ×
+            </button>
+            <div
+                id="categorySuggestions"
+                class="category-suggestions"
+            ></div>
+        </div>
+        <div class="header-right">
+            <div class="online">
+                <span class="online-dot"></span>
+                Online
+            </div>
+        </div>
     </div>
-
-</div>
-```
-
 </header>
 
 <nav class="category-bar">
-
-```
-<div
-    class="categories"
-    id="categories"
->
-
-    <button
-        class="category active"
-        data-category="All"
-    >
-        All
-    </button>
-
-    <button
-        class="category"
-        data-category="BackShots"
-    >
-        BackShots
-    </button>
-
-    <button
-        class="category"
-        data-category="Masterbates"
-    >
-        Masterbates
-    </button>
-
-    <button
-        class="category"
-        data-category="RoughX"
-    >
-        RoughX
-    </button>
-
-    <button
-        class="category"
-        data-category="BBW"
-    >
-        BBW
-    </button>
-
-    <button
-        class="category"
-        data-category="Africans"
-    >
-        Africans
-    </button>
-
-    <button
-        class="category"
-        data-category="Cums"
-    >
-        Cums
-    </button>
-
-    <button
-        class="category"
-        data-category="Close Friends"
-    >
-        Close Friends
-    </button>
-
-</div>
-```
-
+    <div class="categories" id="categories">
+        <button class="category active" data-category="All">All</button>
+        <button class="category" data-category="BackShots">BackShots</button>
+        <button class="category" data-category="Masterbates">Masterbates</button>
+        <button class="category" data-category="RoughX">RoughX</button>
+        <button class="category" data-category="BBW">BBW</button>
+        <button class="category" data-category="Africans">Africans</button>
+        <button class="category" data-category="Cums">Cums</button>
+        <button class="category" data-category="Close Friends">Close Friends</button>
+    </div>
 </nav>
 
 <main class="main">
+    <section class="hero">
+        <h1>Welcome to <span>StreamX</span></h1>
+        <p>Browse the latest content or search for a video or category.</p>
+    </section>
 
-```
-<section class="hero">
-
-    <h1>
-        Welcome to <span>StreamX</span>
-    </h1>
-
-    <p>
-        Browse the latest content or search for a video or category.
-    </p>
-
-</section>
-
-<div class="section-header">
-
-    <h2 id="sectionTitle">
-        All Videos
-    </h2>
-
-    <span
-        class="result-count"
-        id="resultCount"
-    >
-        Loading...
-    </span>
-
-</div>
-
-<div
-    id="searchStatus"
-    class="search-status"
-></div>
-
-<div
-    id="videoGrid"
-    class="video-grid"
->
-
-    <div class="loading">
-
-        <div class="spinner"></div>
-
-        <span>
-            Loading videos...
-        </span>
-
+    <div class="section-header">
+        <h2 id="sectionTitle">All Videos</h2>
+        <span class="result-count" id="resultCount">Loading...</span>
     </div>
 
-</div>
-```
+    <div id="searchStatus" class="search-status"></div>
 
+    <div id="videoGrid" class="video-grid">
+        <div class="loading">
+            <div class="spinner"></div>
+            <span>Loading videos...</span>
+        </div>
+    </div>
 </main>
 
-<div
-    class="modal"
-    id="videoModal"
->
-
-```
-<div class="player-container">
-
-    <div class="player-header">
-
-        <div
-            class="player-title"
-            id="playerTitle"
-        >
-            Video
+<div class="modal" id="videoModal">
+    <div class="player-container">
+        <div class="player-header">
+            <div class="player-title" id="playerTitle">Video</div>
+            <button class="close-button" id="closePlayer" type="button">×</button>
         </div>
-
-        <button
-            class="close-button"
-            id="closePlayer"
-            type="button"
-        >
-            ×
-        </button>
-
+        <video
+            class="player-video"
+            id="playerVideo"
+            controls
+            playsinline
+            controlsList="nodownload noplaybackrate"
+            disablePictureInPicture
+            preload="metadata"
+        ></video>
+        <div class="player-info">
+            <div class="player-category" id="playerCategory"></div>
+            <p class="player-description" id="playerDescription"></p>
+        </div>
     </div>
-
-    <video
-        class="player-video"
-        id="playerVideo"
-        controls
-        playsinline
-        controlsList="nodownload noplaybackrate"
-        disablePictureInPicture
-        preload="metadata"
-    ></video>
-
-    <div class="player-info">
-
-        <div
-            class="player-category"
-            id="playerCategory"
-        ></div>
-
-        <p
-            class="player-description"
-            id="playerDescription"
-        ></p>
-
-    </div>
-
-</div>
-```
-
 </div>
 
 <footer class="footer">
@@ -1026,592 +835,253 @@ body{
 <script>
 
 /* =========================
-   TELEGRAM
-========================= */
-
-const telegramApp =
-    window.Telegram &&
-    window.Telegram.WebApp
-        ? window.Telegram.WebApp
-        : null;
-
-if(telegramApp){
-
-    telegramApp.ready();
-
-    telegramApp.expand();
-
-}
-
-
-/* =========================
    AGE GATE
 ========================= */
 
-const ageGate =
-    document.getElementById("ageGate");
-
-const ageYes =
-    document.getElementById("ageYes");
-
-const ageNo =
-    document.getElementById("ageNo");
-
-const ageBlocked =
-    document.getElementById("ageBlocked");
-
+const ageGate = document.getElementById("ageGate");
+const ageYes = document.getElementById("ageYes");
+const ageNo = document.getElementById("ageNo");
+const ageBlocked = document.getElementById("ageBlocked");
 
 /*
    ALWAYS SHOW AGE GATE WHEN PAGE OPENS
 
    No localStorage is used.
+   Therefore the user must confirm their age
+   every time the page is opened/refreshed.
 */
 
+// Make sure the gate is visible
 ageGate.classList.remove("hidden");
 
+// Reset the gate to its original state
 ageBlocked.style.display = "none";
-
 ageYes.style.display = "";
-
 ageNo.style.display = "";
-
-
-/* =========================
-   SUPABASE
-========================= */
-
-const SUPABASE_URL =
-    "https://iojjmoywrlnzpyatahyh.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
-
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
-
-
-/* =========================
-   ACTIVE USER TRACKING
-========================= */
-
-function getTelegramUserId(){
-
-    if(
-        telegramApp &&
-        telegramApp.initDataUnsafe &&
-        telegramApp.initDataUnsafe.user &&
-        telegramApp.initDataUnsafe.user.id
-    ){
-
-        return String(
-            telegramApp.initDataUnsafe.user.id
-        );
-
-    }
-
-    return null;
-
-}
-
-
-/* =========================
-   RECORD MINI APP USER
-========================= */
-
-async function updateMiniAppActivity(){
-
-    const telegramUserId =
-        getTelegramUserId();
-
-    /*
-       Only track actual Telegram users.
-    */
-
-    if(!telegramUserId){
-
-        console.log(
-            "No Telegram user ID available."
-        );
-
-        return;
-
-    }
-
-
-    try{
-
-        const { error } =
-            await supabaseClient
-                .from("active_users")
-                .upsert(
-                    {
-                        user_id:
-                            telegramUserId,
-
-                        platform:
-                            "miniapp",
-
-                        last_seen:
-                            new Date().toISOString()
-                    },
-                    {
-                        onConflict:
-                            "user_id"
-                    }
-                );
-
-
-        if(error){
-
-            console.error(
-                "Mini App activity error:",
-                error
-            );
-
-            return;
-
-        }
-
-
-        console.log(
-            "Mini App activity updated."
-        );
-
-    }
-    catch(error){
-
-        console.error(
-            "Unexpected activity error:",
-            error
-        );
-
-    }
-
-}
 
 
 /* =========================
    18+ BUTTON
 ========================= */
 
-ageYes.addEventListener(
-    "click",
-    function(){
+ageYes.addEventListener("click", function () {
 
-        /*
-           Hide age gate for this visit.
-        */
+    // Hide the age gate for this visit
+    ageGate.classList.add("hidden");
 
-        ageGate.classList.add("hidden");
-
-
-        /*
-           Record the Telegram Mini App
-           user as active.
-        */
-
-        updateMiniAppActivity();
-
-    }
-);
+});
 
 
 /* =========================
    UNDER 18 BUTTON
 ========================= */
 
-ageNo.addEventListener(
-    "click",
-    function(){
+ageNo.addEventListener("click", function () {
 
-        ageBlocked.style.display =
-            "block";
+    // Show warning message
+    ageBlocked.style.display = "block";
 
-    }
-);
+    /*
+       IMPORTANT:
+       Do NOT hide either button.
 
+       This allows someone who clicked
+       "I am under 18" by mistake to choose
+       again.
+    */
+
+});
 
 /* =========================
-   KEEP MINI APP USER ACTIVE
+   SUPABASE
 ========================= */
-
-setInterval(
-    updateMiniAppActivity,
-    60000
-);
-
+const SUPABASE_URL = "https://iojjmoywrlnzpyatahyh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* =========================
    VARIABLES
 ========================= */
-
 let allVideos = [];
-
-let currentCategory =
-    "All";
-
+let currentCategory = "All";
 let searchTerm = "";
-
-let currentViewVideoId =
-    null;
-
-let viewCountedForCurrentVideo =
-    false;
-
+let currentViewVideoId = null;
+let viewCountedForCurrentVideo = false;
 
 /* =========================
    ELEMENTS
 ========================= */
-
-const videoGrid =
-    document.getElementById(
-        "videoGrid"
-    );
-
-const resultCount =
-    document.getElementById(
-        "resultCount"
-    );
-
-const searchInput =
-    document.getElementById(
-        "searchInput"
-    );
-
-const clearSearch =
-    document.getElementById(
-        "clearSearch"
-    );
-
-const sectionTitle =
-    document.getElementById(
-        "sectionTitle"
-    );
-
-const searchStatus =
-    document.getElementById(
-        "searchStatus"
-    );
-
-const categorySuggestions =
-    document.getElementById(
-        "categorySuggestions"
-    );
-
-const videoModal =
-    document.getElementById(
-        "videoModal"
-    );
-
-const playerVideo =
-    document.getElementById(
-        "playerVideo"
-    );
-
-const playerTitle =
-    document.getElementById(
-        "playerTitle"
-    );
-
-const playerCategory =
-    document.getElementById(
-        "playerCategory"
-    );
-
-const playerDescription =
-    document.getElementById(
-        "playerDescription"
-    );
-
-const closePlayer =
-    document.getElementById(
-        "closePlayer"
-    );
-
+const videoGrid = document.getElementById("videoGrid");
+const resultCount = document.getElementById("resultCount");
+const searchInput = document.getElementById("searchInput");
+const clearSearch = document.getElementById("clearSearch");
+const sectionTitle = document.getElementById("sectionTitle");
+const searchStatus = document.getElementById("searchStatus");
+const categorySuggestions = document.getElementById("categorySuggestions");
+const videoModal = document.getElementById("videoModal");
+const playerVideo = document.getElementById("playerVideo");
+const playerTitle = document.getElementById("playerTitle");
+const playerCategory = document.getElementById("playerCategory");
+const playerDescription = document.getElementById("playerDescription");
+const closePlayer = document.getElementById("closePlayer");
 
 /* =========================
    CATEGORIES
 ========================= */
-
 const categories = [
-
     "All",
-
     "BackShots",
-
     "Masterbates",
-
     "RoughX",
-
     "BBW",
-
     "Africans",
-
     "Cums",
-
     "Close Friends"
-
 ];
-
 
 /* =========================
    LOAD VIDEOS
 ========================= */
-
 async function loadVideos(){
-
     showLoading();
-
     try{
-
-        const result =
-            await supabaseClient
-                .from("videos")
-                .select("*")
-                .order(
-                    "created_at",
-                    {
-                        ascending:false
-                    }
-                );
-
+        const result = await supabaseClient
+            .from("videos")
+            .select("*")
+            .order("created_at", { ascending: false });
 
         if(result.error){
-
-            console.error(
-                "Supabase error:",
-                result.error
-            );
-
-            showError(
-                "Unable to load videos. Please try again."
-            );
-
+            console.error("Supabase error:", result.error);
+            showError("Unable to load videos. Please try again.");
             return;
-
         }
 
-
-        allVideos =
-            result.data || [];
+allVideos = result.data || [];
 
 
-        /* =========================
-           LOAD LIKE COUNTS
-        ========================= */
+/* =========================
+   LOAD LIKE COUNTS
+========================= */
 
-        await Promise.all(
+await Promise.all(
 
-            allVideos.map(
-                async video => {
+    allVideos.map(
+        async video => {
 
-                    const {
-                        count,
-                        error
-                    } =
-                        await supabaseClient
-                            .from("video_likes")
-                            .select(
-                                "*",
-                                {
-                                    count:"exact",
-                                    head:true
-                                }
-                            )
-                            .eq(
-                                "video_id",
-                                video.id
-                            );
-
-
-                    if(error){
-
-                        console.error(
-                            "Initial like count error:",
-                            video.id,
-                            error
-                        );
-
-                        video.likes_count =
-                            0;
-
-                    }
-                    else{
-
-                        video.likes_count =
-                            count || 0;
-
-                    }
-
-                }
-            )
-
-        );
+            const {
+                count,
+                error
+            } =
+                await supabaseClient
+                    .from("video_likes")
+                    .select(
+                        "*",
+                        {
+                            count:"exact",
+                            head:true
+                        }
+                    )
+                    .eq(
+                        "video_id",
+                        video.id
+                    );
 
 
-        renderVideos();
+            if(error){
 
+                console.error(
+                    "Initial like count error:",
+                    video.id,
+                    error
+                );
+
+                video.likes_count = 0;
+
+            }
+            else{
+
+                video.likes_count =
+                    count || 0;
+
+            }
+
+        }
+    )
+
+);
+
+
+renderVideos();
     }
     catch(error){
-
-        console.error(
-            "Unexpected load error:",
-            error
-        );
-
-        showError(
-            "Unable to load videos. Please try again."
-        );
-
+        console.error("Unexpected load error:", error);
+        showError("Unable to load videos. Please try again.");
     }
-
 }
-
 
 /* =========================
    FILTER
 ========================= */
-
 function getFilteredVideos(){
+    return allVideos.filter(video => {
+        const videoCategory = String(video.category || "");
+        const categoryMatch =
+            currentCategory === "All" ||
+            videoCategory.toLowerCase() === currentCategory.toLowerCase();
 
-    return allVideos.filter(
-        video => {
+        const title = String(video.title || "").toLowerCase();
+        const description = String(video.description || "").toLowerCase();
+        const category = videoCategory.toLowerCase();
 
-            const videoCategory =
-                String(
-                    video.category || ""
-                );
+        const searchMatch =
+            !searchTerm ||
+            title.includes(searchTerm) ||
+            description.includes(searchTerm) ||
+            category.includes(searchTerm);
 
-
-            const categoryMatch =
-                currentCategory === "All" ||
-                videoCategory.toLowerCase() ===
-                currentCategory.toLowerCase();
-
-
-            const title =
-                String(
-                    video.title || ""
-                ).toLowerCase();
-
-
-            const description =
-                String(
-                    video.description || ""
-                ).toLowerCase();
-
-
-            const category =
-                videoCategory.toLowerCase();
-
-
-            const searchMatch =
-                !searchTerm ||
-                title.includes(searchTerm) ||
-                description.includes(searchTerm) ||
-                category.includes(searchTerm);
-
-
-            return (
-                categoryMatch &&
-                searchMatch
-            );
-
-        }
-    );
-
+        return categoryMatch && searchMatch;
+    });
 }
-
 
 /* =========================
    RENDER
 ========================= */
-
 function renderVideos(){
-
-    const videos =
-        getFilteredVideos();
-
+    const videos = getFilteredVideos();
     videoGrid.innerHTML = "";
 
-
     if(searchTerm){
-
-        sectionTitle.textContent =
-            "Search Results";
-
-        searchStatus.style.display =
-            "block";
-
+        sectionTitle.textContent = "Search Results";
+        searchStatus.style.display = "block";
         searchStatus.innerHTML =
-            "Searching for: <strong>" +
-            escapeHTML(
-                searchInput.value
-            ) +
-            "</strong>";
-
-    }
-    else{
-
-        searchStatus.style.display =
-            "none";
-
+            "Searching for: <strong>" + escapeHTML(searchInput.value) + "</strong>";
+    } else {
+        searchStatus.style.display = "none";
         sectionTitle.textContent =
-            currentCategory === "All"
-                ? "All Videos"
-                : currentCategory;
-
+            currentCategory === "All" ? "All Videos" : currentCategory;
     }
-
 
     resultCount.textContent =
-        videos.length +
-        (
-            videos.length === 1
-                ? " video"
-                : " videos"
-        );
-
+        videos.length + (videos.length === 1 ? " video" : " videos");
 
     if(videos.length === 0){
-
         showEmpty();
-
         return;
-
     }
 
-
-    videos.forEach(
-        video => {
-
-            videoGrid.appendChild(
-                createVideoCard(video)
-            );
-
-        }
-    );
-
+    videos.forEach(video => {
+        videoGrid.appendChild(createVideoCard(video));
+    });
 }
-
 
 /* =========================
    CREATE CARD
 ========================= */
-
 function createVideoCard(video){
 
-    const card =
-        document.createElement(
-            "article"
-        );
+    const card = document.createElement("article");
 
-    card.className =
-        "video-card";
-
+    card.className = "video-card";
 
     const thumbnail =
         getPublicURL(
@@ -1619,30 +1089,24 @@ function createVideoCard(video){
             "thumbnails"
         );
 
-
     const title =
         video.title ||
         "Untitled Video";
-
 
     const description =
         video.description ||
         "";
 
-
     const category =
         video.category ||
         "General";
-
 
     const views =
         Number(
             video.views || 0
         ).toLocaleString();
 
-
     let date = "";
-
 
     if(video.created_at){
 
@@ -1652,7 +1116,6 @@ function createVideoCard(video){
             ).toLocaleDateString();
 
     }
-
 
     card.innerHTML = `
 
@@ -1697,7 +1160,6 @@ function createVideoCard(video){
             <div class="video-title">
                 ${escapeHTML(title)}
             </div>
-
 
             ${
                 description
@@ -1767,6 +1229,12 @@ function createVideoCard(video){
             "click",
             async function(event){
 
+                /*
+                   IMPORTANT:
+                   Prevent the card click from
+                   opening the video player.
+                */
+
                 event.stopPropagation();
 
                 await toggleLike(
@@ -1793,6 +1261,11 @@ function createVideoCard(video){
     );
 
 
+    /*
+       Check whether this user
+       already liked this video.
+    */
+
     updateLikeButton(
         video.id,
         likeButton
@@ -1800,420 +1273,178 @@ function createVideoCard(video){
 
 
     return card;
-
 }
-
 
 /* =========================
    PUBLIC URL
 ========================= */
+function getPublicURL(value, bucket){
+    if(!value) return null;
 
-function getPublicURL(
-    value,
-    bucket
-){
-
-    if(!value)
-        return null;
-
-
-    if(
-        value.startsWith("http://") ||
-        value.startsWith("https://")
-    ){
-
+    if(value.startsWith("http://") || value.startsWith("https://")){
         return value;
-
     }
 
-
-    return supabaseClient
-        .storage
-        .from(bucket)
-        .getPublicUrl(value)
-        .data
-        .publicUrl;
-
+    return supabaseClient.storage.from(bucket).getPublicUrl(value).data.publicUrl;
 }
-
 
 /* =========================
    STORAGE PATH
 ========================= */
+function getStoragePath(value, bucket){
+    if(!value) return null;
 
-function getStoragePath(
-    value,
-    bucket
-){
-
-    if(!value)
-        return null;
-
-
-    if(
-        !value.startsWith("http://") &&
-        !value.startsWith("https://")
-    ){
-
+    if(!value.startsWith("http://") && !value.startsWith("https://")){
         return value;
-
     }
-
 
     try{
-
-        const url =
-            new URL(value);
-
-
-        const publicMarker =
-            `/storage/v1/object/public/${bucket}/`;
-
-
-        const publicIndex =
-            url.pathname.indexOf(
-                publicMarker
-            );
-
+        const url = new URL(value);
+        const publicMarker = `/storage/v1/object/public/${bucket}/`;
+        const publicIndex = url.pathname.indexOf(publicMarker);
 
         if(publicIndex !== -1){
-
             return decodeURIComponent(
-                url.pathname.substring(
-                    publicIndex +
-                    publicMarker.length
-                )
+                url.pathname.substring(publicIndex + publicMarker.length)
             );
-
         }
 
-
-        const signedMarker =
-            `/storage/v1/object/sign/${bucket}/`;
-
-
-        const signedIndex =
-            url.pathname.indexOf(
-                signedMarker
-            );
-
+        const signedMarker = `/storage/v1/object/sign/${bucket}/`;
+        const signedIndex = url.pathname.indexOf(signedMarker);
 
         if(signedIndex !== -1){
-
             return decodeURIComponent(
-                url.pathname.substring(
-                    signedIndex +
-                    signedMarker.length
-                )
+                url.pathname.substring(signedIndex + signedMarker.length)
             );
-
         }
 
-
         return null;
-
     }
     catch(error){
-
-        console.error(
-            "Storage path error:",
-            error
-        );
-
+        console.error("Storage path error:", error);
         return null;
-
     }
-
 }
-
 
 /* =========================
    GET VIDEO URL
 ========================= */
-
 async function getVideoURL(video){
+    const rawValue = video.video_url;
+    if(!rawValue) return null;
 
-    const rawValue =
-        video.video_url;
-
-
-    if(!rawValue)
-        return null;
-
-
-    const storagePath =
-        getStoragePath(
-            rawValue,
-            "videos"
-        );
-
-
+    const storagePath = getStoragePath(rawValue, "videos");
     if(!storagePath){
-
-        console.error(
-            "Invalid video path:",
-            rawValue
-        );
-
+        console.error("Invalid video path:", rawValue);
         return null;
-
     }
-
 
     try{
-
-        const result =
-            await supabaseClient
-                .storage
-                .from("videos")
-                .createSignedUrl(
-                    storagePath,
-                    3600
-                );
-
+        const result = await supabaseClient
+            .storage
+            .from("videos")
+            .createSignedUrl(storagePath, 3600);
 
         if(result.error){
-
-            console.error(
-                "Signed URL error:",
-                result.error
-            );
-
+            console.error("Signed URL error:", result.error);
             return null;
-
         }
 
-
         return result.data.signedUrl;
-
     }
     catch(error){
-
-        console.error(
-            "Video URL error:",
-            error
-        );
-
+        console.error("Video URL error:", error);
         return null;
-
     }
-
 }
-
 
 /* =========================
    OPEN PLAYER
 ========================= */
-
 async function openPlayer(video){
+    currentViewVideoId = video.id;
+    viewCountedForCurrentVideo = false;
 
-    currentViewVideoId =
-        video.id;
-
-    viewCountedForCurrentVideo =
-        false;
-
-
-    playerTitle.textContent =
-        video.title ||
-        "Video";
-
-
-    playerCategory.textContent =
-        video.category ||
-        "";
-
-
-    playerDescription.textContent =
-        video.description ||
-        "";
-
+    playerTitle.textContent = video.title || "Video";
+    playerCategory.textContent = video.category || "";
+    playerDescription.textContent = video.description || "";
 
     playerVideo.pause();
-
-    playerVideo.removeAttribute(
-        "src"
-    );
-
+    playerVideo.removeAttribute("src");
     playerVideo.load();
 
+    videoModal.classList.add("show");
+    document.body.style.overflow = "hidden";
 
-    videoModal.classList.add(
-        "show"
-    );
+    playerVideo.onplaying = function(){
+        console.log("VIDEO STARTED — COUNTING VIEW");
 
-    document.body.style.overflow =
-        "hidden";
+        if(currentViewVideoId !== video.id) return;
+        if(viewCountedForCurrentVideo) return;
 
+        viewCountedForCurrentVideo = true;
+        updateViews(video);
+    };
 
-    playerVideo.onplaying =
-        function(){
+    const videoURL = await getVideoURL(video);
 
-            console.log(
-                "VIDEO STARTED — COUNTING VIEW"
-            );
-
-
-            if(
-                currentViewVideoId !==
-                video.id
-            )
-                return;
-
-
-            if(
-                viewCountedForCurrentVideo
-            )
-                return;
-
-
-            viewCountedForCurrentVideo =
-                true;
-
-
-            updateViews(video);
-
-        };
-
-
-    const videoURL =
-        await getVideoURL(video);
-
-
-    if(
-        currentViewVideoId !==
-        video.id
-    )
-        return;
-
+    if(currentViewVideoId !== video.id) return;
 
     if(!videoURL){
-
         closeVideoPlayer();
-
-        alert(
-            "Unable to load this video."
-        );
-
+        alert("Unable to load this video.");
         return;
-
     }
 
-
-    playerVideo.src =
-        videoURL;
-
+    playerVideo.src = videoURL;
     playerVideo.load();
 
-
     try{
-
         await playerVideo.play();
-
     }
     catch(error){
-
-        console.log(
-            "Autoplay blocked. User can press Play."
-        );
-
+        console.log("Autoplay blocked. User can press Play.");
     }
-
 }
-
 
 /* =========================
    UPDATE VIEWS
 ========================= */
-
 async function updateViews(video){
-
-    if(
-        !video ||
-        !video.id
-    )
-        return;
-
+    if(!video || !video.id) return;
 
     try{
+        console.log("Counting view for video:", video.id);
 
-        console.log(
-            "Counting view for video:",
-            video.id
+        const { data, error } = await supabaseClient.rpc(
+            "increment_video_views",
+            { p_video_id: video.id }
         );
-
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.rpc(
-                "increment_video_views",
-                {
-                    p_video_id:
-                        video.id
-                }
-            );
-
 
         if(error){
-
-            console.error(
-                "View counter RPC error:",
-                error
-            );
-
-            viewCountedForCurrentVideo =
-                false;
-
+            console.error("View counter RPC error:", error);
+            viewCountedForCurrentVideo = false;
             return;
-
         }
 
+        const newViewCount = Number(data || 0);
+        console.log("View counted successfully. New count:", newViewCount);
 
-        const newViewCount =
-            Number(data || 0);
+        video.views = newViewCount;
 
-
-        console.log(
-            "View counted successfully. New count:",
-            newViewCount
+        const viewElement = document.querySelector(
+            `.view-count-${CSS.escape(String(video.id))}`
         );
-
-
-        video.views =
-            newViewCount;
-
-
-        const viewElement =
-            document.querySelector(
-                `.view-count-${CSS.escape(String(video.id))}`
-            );
-
 
         if(viewElement){
-
-            viewElement.textContent =
-                newViewCount.toLocaleString() +
-                " views";
-
+            viewElement.textContent = newViewCount.toLocaleString() + " views";
         }
-
     }
     catch(error){
-
-        console.error(
-            "Unexpected view update error:",
-            error
-        );
-
-        viewCountedForCurrentVideo =
-            false;
-
+        console.error("Unexpected view update error:", error);
+        viewCountedForCurrentVideo = false;
     }
-
 }
-
 
 /* =========================
    LIKE / UNLIKE
@@ -2226,12 +1457,15 @@ async function toggleLike(videoId){
         videoId
     );
 
-
     try{
 
         const userId =
             getLikeUserId();
 
+
+        /* =========================
+           CHECK EXISTING LIKE
+        ========================= */
 
         const {
             data: existingLike,
@@ -2267,6 +1501,10 @@ async function toggleLike(videoId){
         }
 
 
+        /* =========================
+           UNLIKE
+        ========================= */
+
         if(existingLike){
 
             const {
@@ -2297,6 +1535,12 @@ async function toggleLike(videoId){
             }
 
         }
+
+
+        /* =========================
+           LIKE
+        ========================= */
+
         else{
 
             const {
@@ -2333,11 +1577,17 @@ async function toggleLike(videoId){
         }
 
 
+        /*
+           Update count and heart
+           immediately.
+        */
+
         await updateLikeCount(
             videoId
         );
 
     }
+
     catch(error){
 
         console.error(
@@ -2366,7 +1616,6 @@ function getLikeUserId(){
 
         userId =
             crypto.randomUUID();
-
 
         localStorage.setItem(
             "streamx_like_user_id",
@@ -2424,6 +1673,10 @@ async function updateLikeCount(
         count || 0;
 
 
+    /*
+       Update local video object.
+    */
+
     const video =
         allVideos.find(
             item =>
@@ -2439,6 +1692,11 @@ async function updateLikeCount(
 
     }
 
+
+    /*
+       Update number displayed
+       on the card.
+    */
 
     const button =
         document.querySelector(
@@ -2464,6 +1722,10 @@ async function updateLikeCount(
 
     }
 
+
+    /*
+       Update heart appearance.
+    */
 
     await updateLikeButton(
         videoId,
@@ -2530,6 +1792,10 @@ async function updateLikeButton(
         return;
 
 
+    /* =========================
+       LIKED
+    ========================= */
+
     if(data){
 
         button.textContent =
@@ -2540,7 +1806,18 @@ async function updateLikeButton(
         );
 
     }
+
+
+    /* =========================
+       NOT LIKED
+    ========================= */
+
     else{
+
+        /*
+           IMPORTANT:
+           Outline/unshaded heart.
+        */
 
         button.textContent =
             "♡";
@@ -2553,626 +1830,638 @@ async function updateLikeButton(
 
 }
 
+/* =========================
+   LIKE / UNLIKE
+========================= */
+
+async function toggleLike(videoId){
+
+    console.log(
+        "Like clicked:",
+        videoId
+    );
+
+    try{
+
+        const userId =
+            getLikeUserId();
+
+
+        /* =========================
+           CHECK EXISTING LIKE
+        ========================= */
+
+        const {
+            data: existingLike,
+            error: checkError
+        } =
+            await supabaseClient
+                .from("video_likes")
+                .select("id")
+                .eq(
+                    "video_id",
+                    videoId
+                )
+                .eq(
+                    "user_id",
+                    userId
+                )
+                .maybeSingle();
+
+
+        if(checkError){
+
+            console.error(
+                "Like check error:",
+                checkError
+            );
+
+            alert(
+                "Unable to check like status."
+            );
+
+            return;
+
+        }
+
+
+        /* =========================
+           UNLIKE
+        ========================= */
+
+        if(existingLike){
+
+            const {
+                error
+            } =
+                await supabaseClient
+                    .from("video_likes")
+                    .delete()
+                    .eq(
+                        "id",
+                        existingLike.id
+                    );
+
+
+            if(error){
+
+                console.error(
+                    "Unlike error:",
+                    error
+                );
+
+                alert(
+                    "Unable to remove like."
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        /* =========================
+           LIKE
+        ========================= */
+
+        else{
+
+            const {
+                error
+            } =
+                await supabaseClient
+                    .from("video_likes")
+                    .insert({
+
+                        video_id:
+                            videoId,
+
+                        user_id:
+                            userId
+
+                    });
+
+
+            if(error){
+
+                console.error(
+                    "Like insert error:",
+                    error
+                );
+
+                alert(
+                    "Unable to like this video."
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        /*
+           Update count and heart
+           immediately.
+        */
+
+        await updateLikeCount(
+            videoId
+        );
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Unexpected like error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================
+   LIKE USER ID
+========================= */
+
+function getLikeUserId(){
+
+    let userId =
+        localStorage.getItem(
+            "streamx_like_user_id"
+        );
+
+
+    if(!userId){
+
+        userId =
+            crypto.randomUUID();
+
+        localStorage.setItem(
+            "streamx_like_user_id",
+            userId
+        );
+
+    }
+
+
+    return userId;
+
+}
+
+
+/* =========================
+   UPDATE LIKE COUNT
+========================= */
+
+async function updateLikeCount(
+    videoId
+){
+
+    const {
+        count,
+        error
+    } =
+        await supabaseClient
+            .from("video_likes")
+            .select(
+                "*",
+                {
+                    count:"exact",
+                    head:true
+                }
+            )
+            .eq(
+                "video_id",
+                videoId
+            );
+
+
+    if(error){
+
+        console.error(
+            "Like count error:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    const newLikeCount =
+        count || 0;
+
+
+    /*
+       Update local video object.
+    */
+
+    const video =
+        allVideos.find(
+            item =>
+                String(item.id) ===
+                String(videoId)
+        );
+
+
+    if(video){
+
+        video.likes_count =
+            newLikeCount;
+
+    }
+
+
+    /*
+       Update number displayed
+       on the card.
+    */
+
+    const button =
+        document.querySelector(
+            `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
+        );
+
+
+    if(button){
+
+        const likeCount =
+            button.parentElement
+                .querySelector(
+                    ".like-count"
+                );
+
+
+        if(likeCount){
+
+            likeCount.textContent =
+                newLikeCount;
+
+        }
+
+    }
+
+
+    /*
+       Update heart appearance.
+    */
+
+    await updateLikeButton(
+        videoId,
+        button
+    );
+
+}
+
+
+/* =========================
+   UPDATE HEART STATUS
+========================= */
+
+async function updateLikeButton(
+    videoId,
+    button = null
+){
+
+    const userId =
+        getLikeUserId();
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("video_likes")
+            .select("id")
+            .eq(
+                "video_id",
+                videoId
+            )
+            .eq(
+                "user_id",
+                userId
+            )
+            .maybeSingle();
+
+
+    if(error){
+
+        console.error(
+            "Unable to check like button:",
+            error
+        );
+
+        return;
+
+    }
+
+
+    if(!button){
+
+        button =
+            document.querySelector(
+                `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
+            );
+
+    }
+
+
+    if(!button)
+        return;
+
+
+    /* =========================
+       LIKED
+    ========================= */
+
+    if(data){
+
+        button.textContent =
+            "♥";
+
+        button.classList.add(
+            "liked"
+        );
+
+    }
+
+
+    /* =========================
+       NOT LIKED
+    ========================= */
+
+    else{
+
+        /*
+           IMPORTANT:
+           Outline/unshaded heart.
+        */
+
+        button.textContent =
+            "♡";
+
+        button.classList.remove(
+            "liked"
+        );
+
+    }
+
+}
 
 /* =========================
    CLOSE VIDEO PLAYER
 ========================= */
-
 function closeVideoPlayer(){
+    currentViewVideoId = null;
+    viewCountedForCurrentVideo = false;
 
-    currentViewVideoId =
-        null;
-
-    viewCountedForCurrentVideo =
-        false;
-
-
-    playerVideo.onplaying =
-        null;
-
-
+    playerVideo.onplaying = null;
     playerVideo.pause();
-
-    playerVideo.removeAttribute(
-        "src"
-    );
-
+    playerVideo.removeAttribute("src");
     playerVideo.load();
 
-
-    videoModal.classList.remove(
-        "show"
-    );
-
-    document.body.style.overflow =
-        "";
-
+    videoModal.classList.remove("show");
+    document.body.style.overflow = "";
 }
-
 
 /* =========================
    CLOSE BUTTON
 ========================= */
-
-closePlayer.addEventListener(
-    "click",
-    closeVideoPlayer
-);
-
+closePlayer.addEventListener("click", closeVideoPlayer);
 
 /* =========================
    MODAL BACKGROUND
 ========================= */
-
-videoModal.addEventListener(
-    "click",
-    function(event){
-
-        if(
-            event.target ===
-            videoModal
-        ){
-
-            closeVideoPlayer();
-
-        }
-
+videoModal.addEventListener("click", function(event){
+    if(event.target === videoModal){
+        closeVideoPlayer();
     }
-);
-
+});
 
 /* =========================
    ESCAPE KEY
 ========================= */
-
-document.addEventListener(
-    "keydown",
-    function(event){
-
-        if(event.key === "Escape"){
-
-            if(
-                videoModal.classList.contains(
-                    "show"
-                )
-            ){
-
-                closeVideoPlayer();
-
-            }
-
-            categorySuggestions.style.display =
-                "none";
-
+document.addEventListener("keydown", function(event){
+    if(event.key === "Escape"){
+        if(videoModal.classList.contains("show")){
+            closeVideoPlayer();
         }
-
+        categorySuggestions.style.display = "none";
     }
-);
-
+});
 
 /* =========================
    DISABLE VIDEO RIGHT CLICK
 ========================= */
-
-playerVideo.addEventListener(
-    "contextmenu",
-    function(event){
-
-        event.preventDefault();
-
-    }
-);
-
+playerVideo.addEventListener("contextmenu", function(event){
+    event.preventDefault();
+});
 
 /* =========================
    DISABLE IMAGE RIGHT CLICK
 ========================= */
-
-document.addEventListener(
-    "contextmenu",
-    function(event){
-
-        if(
-            event.target.tagName ===
-            "IMG"
-        ){
-
-            event.preventDefault();
-
-        }
-
+document.addEventListener("contextmenu", function(event){
+    if(event.target.tagName === "IMG"){
+        event.preventDefault();
     }
-);
-
+});
 
 /* =========================
    DISABLE VIDEO DRAG
 ========================= */
-
-playerVideo.addEventListener(
-    "dragstart",
-    function(event){
-
-        event.preventDefault();
-
-    }
-);
-
+playerVideo.addEventListener("dragstart", function(event){
+    event.preventDefault();
+});
 
 /* =========================
    CATEGORY BUTTONS
 ========================= */
+document.getElementById("categories").addEventListener("click", function(event){
+    const button = event.target.closest(".category");
+    if(!button) return;
 
-document
-    .getElementById("categories")
-    .addEventListener(
-        "click",
-        function(event){
+    document.querySelectorAll(".category").forEach(item => {
+        item.classList.remove("active");
+    });
 
-            const button =
-                event.target.closest(
-                    ".category"
-                );
+    button.classList.add("active");
+    currentCategory = button.dataset.category;
 
+    searchInput.value = "";
+    searchTerm = "";
+    clearSearch.style.display = "none";
+    categorySuggestions.style.display = "none";
 
-            if(!button)
-                return;
-
-
-            document
-                .querySelectorAll(
-                    ".category"
-                )
-                .forEach(
-                    item => {
-
-                        item.classList.remove(
-                            "active"
-                        );
-
-                    }
-                );
-
-
-            button.classList.add(
-                "active"
-            );
-
-
-            currentCategory =
-                button.dataset.category;
-
-
-            searchInput.value =
-                "";
-
-            searchTerm =
-                "";
-
-            clearSearch.style.display =
-                "none";
-
-            categorySuggestions.style.display =
-                "none";
-
-
-            renderVideos();
-
-        }
-    );
-
+    renderVideos();
+});
 
 /* =========================
    SEARCH
 ========================= */
+searchInput.addEventListener("input", function(){
+    const value = this.value.trim();
+    searchTerm = value.toLowerCase();
 
-searchInput.addEventListener(
-    "input",
-    function(){
+    clearSearch.style.display = value ? "flex" : "none";
+    showCategorySuggestions(value);
 
-        const value =
-            this.value.trim();
+    const matchingCategory = categories.find(
+        category => category.toLowerCase() === value.toLowerCase()
+    );
 
-
-        searchTerm =
-            value.toLowerCase();
-
-
-        clearSearch.style.display =
-            value
-                ? "flex"
-                : "none";
-
-
-        showCategorySuggestions(
-            value
-        );
-
-
-        const matchingCategory =
-            categories.find(
-                category =>
-                    category.toLowerCase() ===
-                    value.toLowerCase()
+    if(matchingCategory && matchingCategory !== "All"){
+        currentCategory = matchingCategory;
+        document.querySelectorAll(".category").forEach(button => {
+            button.classList.toggle(
+                "active",
+                button.dataset.category.toLowerCase() === matchingCategory.toLowerCase()
             );
-
-
-        if(
-            matchingCategory &&
-            matchingCategory !== "All"
-        ){
-
-            currentCategory =
-                matchingCategory;
-
-
-            document
-                .querySelectorAll(
-                    ".category"
-                )
-                .forEach(
-                    button => {
-
-                        button.classList.toggle(
-                            "active",
-                            button.dataset.category.toLowerCase() ===
-                            matchingCategory.toLowerCase()
-                        );
-
-                    }
-                );
-
-        }
-        else if(!value){
-
-            currentCategory =
-                "All";
-
-
-            document
-                .querySelectorAll(
-                    ".category"
-                )
-                .forEach(
-                    button => {
-
-                        button.classList.toggle(
-                            "active",
-                            button.dataset.category ===
-                            "All"
-                        );
-
-                    }
-                );
-
-        }
-
-
-        renderVideos();
-
+        });
     }
-);
+    else if(!value){
+        currentCategory = "All";
+        document.querySelectorAll(".category").forEach(button => {
+            button.classList.toggle("active", button.dataset.category === "All");
+        });
+    }
 
+    renderVideos();
+});
 
 /* =========================
    CATEGORY SUGGESTIONS
 ========================= */
-
-function showCategorySuggestions(
-    value
-){
-
+function showCategorySuggestions(value){
     if(!value){
-
-        categorySuggestions.style.display =
-            "none";
-
+        categorySuggestions.style.display = "none";
         return;
-
     }
 
-
-    const search =
-        value.toLowerCase();
-
-
-    const matches =
-        categories.filter(
-            category =>
-                category.toLowerCase()
-                    .includes(search)
-        );
-
-
-    if(matches.length === 0){
-
-        categorySuggestions.style.display =
-            "none";
-
-        return;
-
-    }
-
-
-    categorySuggestions.innerHTML =
-        "";
-
-
-    matches.forEach(
-        category => {
-
-            const item =
-                document.createElement(
-                    "div"
-                );
-
-
-            item.className =
-                "category-suggestion";
-
-
-            item.innerHTML =
-                `<span>●</span> ${escapeHTML(category)}`;
-
-
-            item.addEventListener(
-                "click",
-                function(){
-
-                    searchInput.value =
-                        category;
-
-
-                    searchTerm =
-                        category.toLowerCase();
-
-
-                    currentCategory =
-                        category;
-
-
-                    document
-                        .querySelectorAll(
-                            ".category"
-                        )
-                        .forEach(
-                            button => {
-
-                                button.classList.toggle(
-                                    "active",
-                                    button.dataset.category ===
-                                    category
-                                );
-
-                            }
-                        );
-
-
-                    categorySuggestions.style.display =
-                        "none";
-
-
-                    clearSearch.style.display =
-                        "flex";
-
-
-                    renderVideos();
-
-                }
-            );
-
-
-            categorySuggestions.appendChild(
-                item
-            );
-
-        }
+    const search = value.toLowerCase();
+    const matches = categories.filter(category =>
+        category.toLowerCase().includes(search)
     );
 
+    if(matches.length === 0){
+        categorySuggestions.style.display = "none";
+        return;
+    }
 
-    categorySuggestions.style.display =
-        "block";
+    categorySuggestions.innerHTML = "";
 
+    matches.forEach(category => {
+        const item = document.createElement("div");
+        item.className = "category-suggestion";
+        item.innerHTML = `<span>●</span> ${escapeHTML(category)}`;
+
+        item.addEventListener("click", function(){
+            searchInput.value = category;
+            searchTerm = category.toLowerCase();
+            currentCategory = category;
+
+            document.querySelectorAll(".category").forEach(button => {
+                button.classList.toggle("active", button.dataset.category === category);
+            });
+
+            categorySuggestions.style.display = "none";
+            clearSearch.style.display = "flex";
+            renderVideos();
+        });
+
+        categorySuggestions.appendChild(item);
+    });
+
+    categorySuggestions.style.display = "block";
 }
-
 
 /* =========================
    CLEAR SEARCH
 ========================= */
+clearSearch.addEventListener("click", function(){
+    searchInput.value = "";
+    searchTerm = "";
+    currentCategory = "All";
+    clearSearch.style.display = "none";
+    categorySuggestions.style.display = "none";
 
-clearSearch.addEventListener(
-    "click",
-    function(){
+    document.querySelectorAll(".category").forEach(button => {
+        button.classList.toggle("active", button.dataset.category === "All");
+    });
 
-        searchInput.value =
-            "";
-
-        searchTerm =
-            "";
-
-        currentCategory =
-            "All";
-
-        clearSearch.style.display =
-            "none";
-
-        categorySuggestions.style.display =
-            "none";
-
-
-        document
-            .querySelectorAll(
-                ".category"
-            )
-            .forEach(
-                button => {
-
-                    button.classList.toggle(
-                        "active",
-                        button.dataset.category ===
-                        "All"
-                    );
-
-                }
-            );
-
-
-        renderVideos();
-
-        searchInput.focus();
-
-    }
-);
-
+    renderVideos();
+    searchInput.focus();
+});
 
 /* =========================
    CLICK OUTSIDE SEARCH
 ========================= */
-
-document.addEventListener(
-    "click",
-    function(event){
-
-        if(
-            !event.target.closest(
-                ".search-wrapper"
-            )
-        ){
-
-            categorySuggestions.style.display =
-                "none";
-
-        }
-
+document.addEventListener("click", function(event){
+    if(!event.target.closest(".search-wrapper")){
+        categorySuggestions.style.display = "none";
     }
-);
-
+});
 
 /* =========================
    LOADING
 ========================= */
-
 function showLoading(){
-
     videoGrid.innerHTML = `
-
         <div class="loading">
-
             <div class="spinner"></div>
-
-            <span>
-                Loading videos...
-            </span>
-
+            <span>Loading videos...</span>
         </div>
-
     `;
-
 }
-
 
 /* =========================
    EMPTY
 ========================= */
-
 function showEmpty(){
-
     videoGrid.innerHTML = `
-
         <div class="empty">
-
-            <div class="empty-icon">
-                🎬
-            </div>
-
-            <h3>
-                No videos found
-            </h3>
-
-            <p>
-                Try another category or search term.
-            </p>
-
+            <div class="empty-icon">🎬</div>
+            <h3>No videos found</h3>
+            <p>Try another category or search term.</p>
         </div>
-
     `;
-
 }
-
 
 /* =========================
    ERROR
 ========================= */
-
 function showError(message){
-
     videoGrid.innerHTML = `
-
         <div class="empty">
-
-            <div class="empty-icon">
-                ⚠️
-            </div>
-
-            <h3>
-                Something went wrong
-            </h3>
-
-            <p>
-                ${escapeHTML(message)}
-            </p>
-
+            <div class="empty-icon">⚠️</div>
+            <h3>Something went wrong</h3>
+            <p>${escapeHTML(message)}</p>
         </div>
-
     `;
-
-
-    resultCount.textContent =
-        "Error";
-
+    resultCount.textContent = "Error";
 }
-
 
 /* =========================
    ESCAPE HTML
 ========================= */
-
 function escapeHTML(value){
-
-    return String(
-        value ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
-
 
 /* =========================
    START
 ========================= */
-
 loadVideos();
-
 </script>
-
 </body>
 </html>

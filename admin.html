@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -1032,15 +1032,37 @@ textarea{
 
                 <select id="videoCategory">
 
-<option value="">Select category</option>
-<option value="BackShots">BackShots</option>
-<option value="Masterbates">Masterbates</option>
-<option value="RoughX">RoughX</option>
-<option value="BBW">BBW</option>
-<option value="Africans">Africans</option>
-<option value="Cums">Cums</option>
-<option value="Close Friends">Close Friends</option>
+                    <option value="">
+                        Select category
+                    </option>
 
+                    <option value="BackShots">
+                        BackShots
+                    </option>
+
+                    <option value="Masterbates">
+                        Masterbates
+                    </option>
+
+                    <option value="RoughX">
+                        RoughX
+                    </option>
+
+                    <option value="BBW">
+                        BBW
+                    </option>
+
+                    <option value="Africans">
+                        Africans
+                    </option>
+
+                    <option value="Cums">
+                        Cums
+                    </option>
+
+                    <option value="Close Friends">
+                        Close Friends
+                    </option>
 
                 </select>
 
@@ -1312,11 +1334,100 @@ window.supabase.createClient(
    FILE VARIABLES
 ===================================================== */
 
+let selectedVideoFile = null;
+
+let selectedThumbnailFile = null;
+
+
 /* =====================================================
-   ADMIN PASSWORD PROTECTION
+   SUPABASE ADMIN AUTHENTICATION
 ===================================================== */
 
+const ADMIN_EMAIL =
+    "emmanuelmatome528@gmail.com";
 
+
+async function checkAdminAuth(){
+
+    const {
+        data: {
+            session
+        },
+        error
+    } =
+        await supabaseClient.auth.getSession();
+
+
+    /* =========================================
+       AUTHENTICATION ERROR
+    ========================================= */
+
+    if(error){
+
+        console.error(
+            "Authentication error:",
+            error
+        );
+
+        window.location.href =
+            "login.html";
+
+        return false;
+
+    }
+
+
+    /* =========================================
+       NO LOGGED-IN USER
+    ========================================= */
+
+    if(!session){
+
+        window.location.href =
+            "login.html";
+
+        return false;
+
+    }
+
+
+    /* =========================================
+       CHECK ADMIN EMAIL
+    ========================================= */
+
+    if(
+        !session.user.email ||
+        session.user.email.toLowerCase() !==
+        ADMIN_EMAIL.toLowerCase()
+    ){
+
+        await supabaseClient.auth.signOut();
+
+        alert(
+            "Access denied. You are not authorized to access the StreamX admin dashboard."
+        );
+
+        window.location.href =
+            "login.html";
+
+        return false;
+
+    }
+
+
+    /* =========================================
+       ADMIN AUTHENTICATED
+    ========================================= */
+
+    console.log(
+        "StreamX Admin authenticated:",
+        session.user.email
+    );
+
+
+    return true;
+
+}
 
 
 /* =====================================================
@@ -2781,7 +2892,19 @@ function escapeHTML(
    START
 ===================================================== */
 
-loadVideos();
+(async function(){
+
+    const authenticated =
+        await checkAdminAuth();
+
+
+    if(!authenticated)
+        return;
+
+
+    await loadVideos();
+
+})();
 
 </script>
 

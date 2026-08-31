@@ -459,7 +459,7 @@ body{
 
     display:grid;
 
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(3,1fr);
 
     gap:18px;
 
@@ -1481,17 +1481,6 @@ textarea{
             </div>
 
             <div class="stat-label">
-
-            <div class="stat">
-
-    <div class="stat-icon">
-        ❤️
-    </div>
-
-    <div class="stat-label">
-        Total Likes
-    </div>
-
                 Platform
             </div>
 
@@ -3065,39 +3054,6 @@ async function loadVideos(){
             "totalViews"
         ).textContent =
             totalViews.toLocaleString();
-
-/* =========================================
-   TOTAL LIKES
-========================================= */
-
-const likesCountResult =
-    await supabaseClient
-        .from("video_likes")
-        .select(
-            "id",
-            {
-                count: "exact",
-                head: true
-            }
-        );
-
-if (likesCountResult.error) {
-
-    console.error(
-        "Could not load total likes:",
-        likesCountResult.error
-    );
-
-} else {
-
-    document.getElementById(
-        "totalLikes"
-    ).textContent =
-        (
-            likesCountResult.count || 0
-        ).toLocaleString();
-
-}
 
 
 /* =========================================

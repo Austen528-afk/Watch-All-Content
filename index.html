@@ -1754,6 +1754,26 @@ function createVideoCard(video){
 
     `;
 
+    const likeButton =
+    card.querySelector(".like-btn");
+
+if(likeButton){
+
+    likeButton.addEventListener(
+        "click",
+        function(event){
+
+            event.stopPropagation();
+
+            console.log(
+                "Like button clicked"
+            );
+
+        }
+    );
+
+}
+
 
     card.addEventListener(
         "click",

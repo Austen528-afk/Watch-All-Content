@@ -1741,7 +1741,7 @@ function createVideoCard(video){
         data-id="${video.id}"
         type="button"
     >
-        ♡
+                ♥
     </button>
 
     <span class="like-count">
@@ -1761,11 +1761,54 @@ if(likeButton){
 
     likeButton.addEventListener(
         "click",
-        function(event){
+        async function(event){
 
             event.stopPropagation();
 
-toggleLike(video.id);
+            await toggleLike(video.id);
+
+            const userId =
+                getLikeUserId();
+
+            const { data, error } =
+                await supabaseClient
+                    .from("video_likes")
+                    .select("id")
+                    .eq("video_id", video.id)
+                    .eq("user_id", userId)
+                    .maybeSingle();
+
+            if(error){
+
+                console.error(
+                    "Like status error:",
+                    error
+                );
+
+                return;
+
+            }
+
+            if(data){
+
+                likeButton.textContent =
+                    "♥";
+
+                likeButton.classList.add(
+                    "liked"
+                );
+
+            }
+            else{
+
+                likeButton.textContent =
+                    "♡";
+
+                likeButton.classList.remove(
+                    "liked"
+                );
+
+            }
 
         }
     );

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -1306,29 +1307,54 @@ window.supabase.createClient(
     SUPABASE_KEY
 );
 
-
 /* =====================================================
-   FILE VARIABLES
+   CHECK SUPABASE LOGIN
 ===================================================== */
 
-/* =====================================================
-   ADMIN PASSWORD PROTECTION
-===================================================== */
+async function checkAdminSession(){
 
-const ADMIN_PASSWORD = "123@Austin";
+    const {
+        data: { session },
+        error
+    } = await supabaseClient.auth.getSession();
 
-const enteredPassword = prompt("Enter Admin Password:");
 
-if (enteredPassword !== ADMIN_PASSWORD) {
-    alert("Access Denied!");
-    window.location.href = "index.html";
-    throw new Error("Unauthorized access");
+    if(error){
+
+        console.error(
+            "Session error:",
+            error
+        );
+
+        alert(
+            "Could not verify your login."
+        );
+
+        return false;
+
+    }
+
+
+    if(!session){
+
+        alert(
+            "You are not logged in. Please log in first."
+        );
+
+        return false;
+
+    }
+
+
+    console.log(
+        "Logged in as:",
+        session.user.email
+    );
+
+
+    return true;
+
 }
-
-let selectedVideoFile = null;
-
-let selectedThumbnailFile = null;
-
 
 /* =====================================================
    ELEMENTS
@@ -2792,11 +2818,19 @@ function escapeHTML(
    START
 ===================================================== */
 
-loadVideos();
+checkAdminSession().then(isLoggedIn => {
+
+    if(isLoggedIn){
+
+        loadVideos();
+
+    }
+
+});
 
 </script>
 
 </body>
 
 </html>
-
+```

@@ -1305,7 +1305,6 @@ textarea{
 
 <div id="app">
 
-
 <!-- =====================================================
      SIDEBAR
 ===================================================== -->
@@ -1320,23 +1319,63 @@ textarea{
         Administration
     </div>
 
-
+    <!-- MAIN DASHBOARD -->
     <button
         class="nav-button active"
         onclick="goToUpload()"
     >
-        ⬆️ Upload Content
+        📊 Dashboard
     </button>
 
-
+    <!-- UPLOAD + LIBRARY PAGE -->
     <button
         class="nav-button"
-        onclick="goToVideos()"
+        onclick="goToUpload()"
     >
-        🎬 Video Library
+        🎬 Videos
     </button>
 
+    <!-- USERS -->
+    <button
+        class="nav-button"
+        onclick="goToUsers()"
+    >
+        👥 Users
+    </button>
 
+    <!-- CATEGORIES -->
+    <button
+        class="nav-button"
+        onclick="goToCategories()"
+    >
+        🏷️ Categories
+    </button>
+
+    <!-- ANALYTICS -->
+    <button
+        class="nav-button"
+        onclick="goToAnalytics()"
+    >
+        📈 Analytics
+    </button>
+
+    <!-- REPORTS -->
+    <button
+        class="nav-button"
+        onclick="goToReports()"
+    >
+        📋 Reports
+    </button>
+
+    <!-- SETTINGS -->
+    <button
+        class="nav-button"
+        onclick="goToSettings()"
+    >
+        ⚙️ Settings
+    </button>
+
+    <!-- WEBSITE -->
     <a
         href="index.html"
         class="nav-button"
@@ -1344,7 +1383,6 @@ textarea{
     >
         🌐 User Website
     </a>
-
 
     <div class="sidebar-bottom">
 
@@ -1361,7 +1399,6 @@ textarea{
     </div>
 
 </aside>
-
 
 
 <!-- =====================================================

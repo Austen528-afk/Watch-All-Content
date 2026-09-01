@@ -4223,12 +4223,17 @@ function clearForm(){
    NAVIGATION
 ===================================================== */
 
+/*
+ * DASHBOARD
+ *
+ * For now the dashboard uses the existing
+ * upload/library page.
+ */
+
 function goToUpload(){
 
     document
-        .getElementById(
-            "uploadSection"
-        )
+        .getElementById("uploadSection")
         .scrollIntoView({
             behavior:"smooth"
         });
@@ -4236,15 +4241,96 @@ function goToUpload(){
 }
 
 
+/*
+ * VIDEOS
+ *
+ * Videos contains both:
+ * - Upload New Video
+ * - Video Library
+ */
+
 function goToVideos(){
 
     document
-        .getElementById(
-            "videosSection"
-        )
+        .getElementById("uploadSection")
         .scrollIntoView({
             behavior:"smooth"
         });
+
+}
+
+
+/*
+ * USERS
+ *
+ * Section will be built next.
+ */
+
+function goToUsers(){
+
+    alert(
+        "Users management will be added next."
+    );
+
+}
+
+
+/*
+ * CATEGORIES
+ *
+ * Section will be built next.
+ */
+
+function goToCategories(){
+
+    alert(
+        "Category management will be added next."
+    );
+
+}
+
+
+/*
+ * ANALYTICS
+ *
+ * Section will be built next.
+ */
+
+function goToAnalytics(){
+
+    alert(
+        "Analytics will be added next."
+    );
+
+}
+
+
+/*
+ * REPORTS
+ *
+ * Section will be built next.
+ */
+
+function goToReports(){
+
+    alert(
+        "Reports will be added next."
+    );
+
+}
+
+
+/*
+ * SETTINGS
+ *
+ * Section will be built next.
+ */
+
+function goToSettings(){
+
+    alert(
+        "Settings will be added next."
+    );
 
 }
 

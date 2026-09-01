@@ -4573,19 +4573,73 @@ async function addCategory(){
 }
 
 async function editCategory(id, oldName){
-    const newName=prompt("Edit category name:",oldName);
-    if(newName===null) return;
-    const cleanedName=newName.trim();
-    if(!cleanedName){ alert("Category name cannot be empty."); return; }
-    if(cleanedName===oldName) return;
+
+    const newName = prompt("Edit category name:", oldName);
+
+    if(newName === null) return;
+
+    const cleanedName = newName.trim();
+
+    if(!cleanedName){
+        alert("Category name cannot be empty.");
+        return;
+    }
+
+    if(cleanedName === oldName) return;
+
     try{
+
         await requireAuthenticatedUser();
-        const categoryUpdate=await supabaseClient.from("categories").update({name:cleanedName}).eq("id",id);
-        if(categoryUpdate.error){ if(categoryUpdate.error.code==="23505") throw new Error("That category already exists."); throw new Error(categoryUpdate.error.message); }
-        const videoUpdate=await supabaseClient.from("videos").update({category:cleanedName}).eq("category",oldName);
-        if(videoUpdate.error) console.warn("Category renamed, but existing video categories could not be synchronized:",videoUpdate.error);
-        showCategoryMessage("✓ Category updated successfully.","success"); await loadCategories(); await loadVideos();
-    }catch(error){ console.error("Edit category error:",error); showCategoryMessage("❌ " + error.message,"error"); }
+
+        /* Update the category name. */
+        const categoryUpdate =
+            await supabaseClient
+                .from("categories")
+                .update({name: cleanedName})
+                .eq("id", id);
+
+        if(categoryUpdate.error){
+            if(categoryUpdate.error.code === "23505"){
+                throw new Error("That category already exists.");
+            }
+
+            throw new Error(
+                "Could not update category: " +
+                categoryUpdate.error.message
+            );
+        }
+
+        /* Keep existing videos connected to the renamed category. */
+        const videoUpdate =
+            await supabaseClient
+                .from("videos")
+                .update({category: cleanedName})
+                .eq("category", oldName);
+
+        if(videoUpdate.error){
+            throw new Error(
+                "Category name changed, but existing videos could not be updated: " +
+                videoUpdate.error.message
+            );
+        }
+
+        showCategoryMessage(
+            `✓ Category renamed from "${oldName}" to "${cleanedName}".`,
+            "success"
+        );
+
+        await loadCategories();
+        await loadVideos();
+
+    }catch(error){
+
+        console.error("Edit category error:", error);
+
+        showCategoryMessage(
+            "❌ " + error.message,
+            "error"
+        );
+    }
 }
 
 async function deleteCategory(id,name,button=null){

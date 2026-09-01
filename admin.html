@@ -2003,15 +2003,53 @@ async function login(){
         }
 
 
-        console.log(
-            "Supabase authentication successful:",
-            result.data.user.email
+console.log(
+    "Supabase authentication successful:",
+    result.data.user.email
+);
+
+
+/* =========================================
+   REGISTER ADMIN AS ACTIVE USER
+========================================= */
+
+const activeUser =
+    result.data.user;
+
+const { error: activeUserError } =
+    await supabaseClient
+        .from("active_users")
+        .upsert(
+            {
+                user_id: activeUser.id,
+                platform: "admin",
+                last_seen: new Date().toISOString()
+            },
+            {
+                onConflict: "user_id"
+            }
         );
 
 
-        showApplication(
-            result.data.session
-        );
+if(activeUserError){
+
+    console.error(
+        "Could not update active_users:",
+        activeUserError
+    );
+
+}else{
+
+    console.log(
+        "Admin registered in active_users."
+    );
+
+}
+
+
+showApplication(
+    result.data.session
+);
 
 
     }catch(error){

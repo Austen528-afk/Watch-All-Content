@@ -1308,7 +1308,8 @@ function enterWebsite(){
     // Load categories and videos independently so a category-table
     // permission/realtime problem cannot make the category bar vanish.
     loadCategories();
-    setupCategoryRealtime();
+    startCategorySync();
+    startVideoSync();
     loadVideos();
 
 updateMiniAppPresence();
@@ -1412,31 +1413,61 @@ const closePlayer =
 ========================= */
 
 let categories = ["All"];
+let categoryRealtimeChannel = null;
+let categoryPollTimer = null;
+let categorySyncInProgress = false;
+let videoRealtimeChannel = null;
+let videoPollTimer = null;
+let videoSyncInProgress = false;
+let lastCategorySignature = "";
 
 
 /* =========================
    LOAD CATEGORIES
 ========================= */
 
-async function loadCategories(){
+function normaliseCategories(data){
 
-    // Restore the last known category list immediately while Supabase loads.
-    try{
-        const cached =
-            JSON.parse(
-                localStorage.getItem("streamx_categories_cache") || "null"
-            );
+    const names = (data || [])
+        .map(row =>
+            row.name ??
+            row.category ??
+            row.title ??
+            ""
+        )
+        .map(value => String(value).trim())
+        .filter(Boolean)
+        .filter(name => name.toLowerCase() !== "all");
 
-        if(Array.isArray(cached) && cached.length){
-            categories = ["All", ...cached.filter(
-                category =>
-                    String(category).toLowerCase() !== "all"
-            )];
-            renderCategoryButtons();
+    const unique = [];
+    const seen = new Set();
+
+    names.forEach(name => {
+        const key = name.toLowerCase();
+        if(!seen.has(key)){
+            seen.add(key);
+            unique.push(name);
         }
-    }catch(cacheError){
-        console.warn("Unable to restore category cache:", cacheError);
+    });
+
+    return ["All", ...unique];
+}
+
+function categorySignature(list){
+    return list
+        .map(category => String(category).trim().toLowerCase())
+        .join("||");
+}
+
+async function loadCategories(options = {}){
+
+    const render = options.render !== false;
+
+    if(categorySyncInProgress){
+        return;
     }
+
+    categorySyncInProgress = true;
 
     try{
 
@@ -1446,54 +1477,54 @@ async function loadCategories(){
                 .select("*");
 
         if(error){
+
             console.error(
                 "Categories load error:",
                 error
             );
 
-            // Keep the category bar usable even if the categories table
-            // is temporarily unavailable or its SELECT policy is missing.
-            // The actual database categories will replace this as soon as
-            // the query succeeds.
-            categories = ["All"];
-            renderCategoryButtons();
             return;
         }
 
-        const databaseCategories = (data || [])
-            .map(row =>
-                row.name ??
-                row.category ??
-                row.title ??
-                ""
-            )
-            .map(value => String(value).trim())
-            .filter(Boolean);
+        const newCategories = normaliseCategories(data);
+        const newSignature = categorySignature(newCategories);
 
-        categories = [
-            "All",
-            ...databaseCategories.filter(
-                (category, index, list) =>
-                    list.findIndex(
-                        item =>
-                            item.toLowerCase() ===
-                            category.toLowerCase()
-                    ) === index
-            )
-        ];
+        if(newSignature === lastCategorySignature){
+            return;
+        }
 
-        // Keep the last successful database list available during a
-        // temporary network/table-policy failure.
+        const oldCurrentCategory = currentCategory;
+        const renamedCategory = options.renamedCategory || null;
+
+        categories = newCategories;
+        lastCategorySignature = newSignature;
+
         try{
             localStorage.setItem(
                 "streamx_categories_cache",
                 JSON.stringify(categories)
             );
         }catch(cacheError){
-            console.warn("Category cache unavailable:", cacheError);
+            console.warn(
+                "Category cache unavailable:",
+                cacheError
+            );
         }
 
-        if(
+        /*
+           If an UPDATE renamed the currently selected category,
+           keep that category selected instead of jumping to All.
+        */
+        if(renamedCategory &&
+           oldCurrentCategory !== "All" &&
+           renamedCategory.oldName &&
+           renamedCategory.newName &&
+           String(oldCurrentCategory).toLowerCase() ===
+               String(renamedCategory.oldName).toLowerCase()){
+
+            currentCategory = renamedCategory.newName;
+        }
+        else if(
             currentCategory !== "All" &&
             !categories.some(
                 category =>
@@ -1502,13 +1533,12 @@ async function loadCategories(){
             )
         ){
             currentCategory = "All";
-            searchTerm = "";
-            searchInput.value = "";
-            clearSearch.style.display = "none";
         }
 
-        renderCategoryButtons();
-        renderVideos();
+        if(render){
+            renderCategoryButtons();
+            renderVideos();
+        }
 
     }
     catch(error){
@@ -1518,6 +1548,9 @@ async function loadCategories(){
             error
         );
 
+    }
+    finally{
+        categorySyncInProgress = false;
     }
 }
 
@@ -1553,7 +1586,10 @@ function renderCategoryButtons(){
     });
 }
 
-let categoryRealtimeChannel = null;
+
+/* =========================
+   REALTIME CATEGORY SYNC
+========================= */
 
 function setupCategoryRealtime(){
 
@@ -1563,35 +1599,248 @@ function setupCategoryRealtime(){
 
     categoryRealtimeChannel =
         supabaseClient
-        .channel("categories-realtime")
-        .on(
-            "postgres_changes",
-            {
-                event: "*",
-                schema: "public",
-                table: "categories"
-            },
-            async payload => {
+            .channel("streamx-categories-sync-v2")
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "categories"
+                },
+                async payload => {
+                    console.log(
+                        "Category INSERT received:",
+                        payload.new
+                    );
+                    await loadCategories();
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "categories"
+                },
+                async payload => {
+
+                    console.log(
+                        "Category UPDATE received:",
+                        payload.new
+                    );
+
+                    const oldName =
+                        payload.old?.name ??
+                        payload.old?.category ??
+                        payload.old?.title ??
+                        "";
+
+                    const newName =
+                        payload.new?.name ??
+                        payload.new?.category ??
+                        payload.new?.title ??
+                        "";
+
+                    await loadCategories({
+                        renamedCategory: {
+                            oldName,
+                            newName
+                        }
+                    });
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "DELETE",
+                    schema: "public",
+                    table: "categories"
+                },
+                async payload => {
+                    console.log(
+                        "Category DELETE received:",
+                        payload.old
+                    );
+                    await loadCategories();
+                }
+            )
+            .subscribe(status => {
 
                 console.log(
-                    "Category realtime update:",
-                    payload.eventType
+                    "Categories realtime status:",
+                    status
                 );
 
-                await loadCategories();
+                if(status === "SUBSCRIBED"){
+                    // Immediately verify the live database state.
+                    loadCategories();
+                }
 
-            }
-        )
-        .subscribe(status => {
-
-            console.log(
-                "Categories realtime status:",
-                status
-            );
-
-        });
+            });
 }
 
+
+/* =========================
+   CATEGORY SYNC FALLBACK
+========================= */
+
+function startCategorySync(){
+
+    setupCategoryRealtime();
+
+    if(categoryPollTimer){
+        return;
+    }
+
+    /*
+       Realtime is the primary mechanism. This lightweight 5-second
+       check is a fallback in case Supabase Realtime is disabled,
+       disconnected, or blocked by a project configuration issue.
+       It also guarantees admin category changes eventually appear
+       without a page refresh.
+    */
+    categoryPollTimer = setInterval(
+        () => loadCategories(),
+        5000
+    );
+}
+
+
+/* =========================
+   REALTIME VIDEO SYNC
+========================= */
+
+function setupVideoRealtime(){
+
+    if(videoRealtimeChannel){
+        return;
+    }
+
+    videoRealtimeChannel =
+        supabaseClient
+            .channel("streamx-videos-sync-v1")
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "videos"
+                },
+                async payload => {
+
+                    console.log(
+                        "Video INSERT received:",
+                        payload.new
+                    );
+
+                    await loadVideos();
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "videos"
+                },
+                async payload => {
+
+                    console.log(
+                        "Video UPDATE received:",
+                        payload.new
+                    );
+
+                    await loadVideos();
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "DELETE",
+                    schema: "public",
+                    table: "videos"
+                },
+                async payload => {
+
+                    console.log(
+                        "Video DELETE received:",
+                        payload.old
+                    );
+
+                    await loadVideos();
+                }
+            )
+            .subscribe(status => {
+
+                console.log(
+                    "Videos realtime status:",
+                    status
+                );
+
+                if(status === "SUBSCRIBED"){
+                    loadVideos();
+                }
+
+            });
+}
+
+function startVideoSync(){
+
+    setupVideoRealtime();
+
+    if(videoPollTimer){
+        return;
+    }
+
+    // Realtime is primary. This is only a fallback if Realtime disconnects.
+    videoPollTimer = setInterval(
+        () => loadVideos(),
+        5000
+    );
+}
+
+
+/* =========================
+   RESTORE CACHED CATEGORIES
+========================= */
+
+(function restoreCategoryCache(){
+
+    try{
+
+        const cached =
+            JSON.parse(
+                localStorage.getItem(
+                    "streamx_categories_cache"
+                ) || "null"
+            );
+
+        if(Array.isArray(cached) && cached.length){
+
+            categories = [
+                "All",
+                ...cached
+                    .filter(category =>
+                        String(category).toLowerCase() !== "all"
+                    )
+                    .map(category => String(category).trim())
+                    .filter(Boolean)
+            ];
+
+            lastCategorySignature =
+                categorySignature(categories);
+
+            renderCategoryButtons();
+        }
+
+    }catch(error){
+        console.warn(
+            "Unable to restore category cache:",
+            error
+        );
+    }
+
+})();
 
 /* =========================
    LOAD VIDEOS

@@ -4538,7 +4538,7 @@ function renderCategories(){
                 </div>
             </div>
             <div class="category-actions">
-                <button type="button" class="category-action" onclick="editCategory(${JSON.stringify(category.id)}, ${JSON.stringify(category.name)})">✏️ Edit</button>
+                <button type="button" class="category-action edit" data-category-id="${escapeHTML(category.id)}">✏️ Edit</button>
                 <button type="button" class="category-action delete" data-category-id="${escapeHTML(category.id)}">🗑 Delete</button>
             </div>`;
         list.appendChild(row);
@@ -4732,6 +4732,32 @@ async function deleteCategory(id,name,button=null){
    from breaking the delete action.
 */
 const categoryListElement = document.getElementById("categoryList");
+
+if(categoryListElement){
+
+    categoryListElement.addEventListener("click", function(event){
+
+        const editButton = event.target.closest(".category-action.edit[data-category-id]");
+
+        if(!editButton || !categoryListElement.contains(editButton)) return;
+
+        const id = editButton.dataset.categoryId;
+        const category = allCategories.find(item =>
+            String(item.id) === String(id)
+        );
+
+        if(!category){
+            showCategoryMessage(
+                "❌ Category could not be found. Please refresh the page and try again.",
+                "error"
+            );
+            return;
+        }
+
+        editCategory(category.id, category.name);
+    });
+}
+
 
 if(categoryListElement){
 

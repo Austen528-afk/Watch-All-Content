@@ -1614,25 +1614,6 @@ textarea{
     </div>
 
 
-    <div class="stat">
-
-        <div class="stat-icon">
-            🔵
-        </div>
-
-        <div class="stat-label">
-            Active on Both
-        </div>
-
-        <div
-            class="stat-number"
-            id="activeBoth"
-        >
-            0
-        </div>
-
-    </div>
-
 </div>
 
 
@@ -1683,6 +1664,26 @@ textarea{
         <div
             class="stat-number"
             id="miniAppOnline"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🔵
+        </div>
+
+        <div class="stat-label">
+            Total Active Users
+        </div>
+
+        <div
+            class="stat-number"
+            id="totalActiveUsers"
         >
             0
         </div>
@@ -2931,27 +2932,13 @@ async function loadActiveUsers(){
 
 
         /*
-         * USERS ACTIVE ON BOTH PLATFORMS
+         * TOTAL ACTIVE USERS
+         * Live total = Website Online Now + Mini App Online Now
          */
 
-        let activeBoth = 0;
-
-
-        websiteUsers.forEach(
-            userId => {
-
-                if(
-                    miniAppUsers.has(
-                        userId
-                    )
-                ){
-
-                    activeBoth++;
-
-                }
-
-            }
-        );
+        const totalActiveUsers =
+            websiteOnline.size +
+            miniAppOnline.size;
 
 
         /*
@@ -2983,9 +2970,9 @@ async function loadActiveUsers(){
 
 
         document.getElementById(
-            "activeBoth"
+            "totalActiveUsers"
         ).textContent =
-            activeBoth.toLocaleString();
+            totalActiveUsers.toLocaleString();
 
 
         console.log(
@@ -3003,8 +2990,8 @@ async function loadActiveUsers(){
                 miniAppOnline:
                     miniAppOnline.size,
 
-                activeBoth:
-                    activeBoth
+                totalActiveUsers:
+                    totalActiveUsers
             }
         );
 
@@ -3035,6 +3022,14 @@ setInterval(
     loadActiveUsers,
     5000
 );
+
+/* Refresh live activity immediately when admin returns to the tab */
+document.addEventListener("visibilitychange", function(){
+    if(!document.hidden){
+        updateActiveUser();
+        loadActiveUsers();
+    }
+});
 
 /* =====================================================
    UPLOAD VIDEO

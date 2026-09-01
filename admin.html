@@ -219,22 +219,6 @@ body{
 
 }
 
-/* =====================================================
-   ADMIN PAGES
-===================================================== */
-
-.admin-page{
-
-    display:none;
-
-}
-
-.admin-page.active{
-
-    display:block;
-
-}
-
 
 /* =====================================================
    SIDEBAR
@@ -1338,7 +1322,7 @@ textarea{
     <!-- MAIN DASHBOARD -->
     <button
         class="nav-button active"
-        onclick="openPage('dashboardPage', this)"
+        onclick="goToUpload()"
     >
         📊 Dashboard
     </button>
@@ -1346,7 +1330,7 @@ textarea{
     <!-- UPLOAD + LIBRARY PAGE -->
     <button
         class="nav-button"
-        onclick="openPage('dashboardPage', this)"
+        onclick="goToUpload()"
     >
         🎬 Videos
     </button>
@@ -1354,7 +1338,7 @@ textarea{
     <!-- USERS -->
     <button
         class="nav-button"
-        onclick="openPage('dashboardPage', this)"
+        onclick="goToUsers()"
     >
         👥 Users
     </button>
@@ -1362,7 +1346,7 @@ textarea{
     <!-- CATEGORIES -->
     <button
         class="nav-button"
-        onclick="openPage('dashboardPage', this)"
+        onclick="goToCategories()"
     >
         🏷️ Categories
     </button>
@@ -1370,7 +1354,7 @@ textarea{
     <!-- ANALYTICS -->
     <button
         class="nav-button"
-        onclick="openPage('dashboardPage', this)"
+        onclick="goToAnalytics()"
     >
         📈 Analytics
     </button>
@@ -1378,7 +1362,7 @@ textarea{
     <!-- REPORTS -->
     <button
         class="nav-button"
-        onclick="openPage('dashboardPage', this)"
+        onclick="goToReports()"
     >
         📋 Reports
     </button>
@@ -1386,7 +1370,7 @@ textarea{
     <!-- SETTINGS -->
     <button
         class="nav-button"
-        onclick="openPage('dashboardPage', this)"
+        onclick="goToSettings()"
     >
         ⚙️ Settings
     </button>
@@ -1422,287 +1406,6 @@ textarea{
 ===================================================== -->
 
 <main class="main">
-
-<!-- =================================================
-     DASHBOARD PAGE
-================================================= -->
-
-<div
-    id="dashboardPage"
-    class="admin-page active"
->
-
-    <!-- MOBILE HEADER -->
-
-    <div class="mobile-header">
-
-        <div class="mobile-logo">
-            Stream<span>X</span>
-        </div>
-
-        <button
-            class="user-button"
-            onclick="logout()"
-        >
-            Logout
-        </button>
-
-    </div>
-
-    <!-- =================================================
-     VIDEOS PAGE
-================================================= -->
-
-<div
-    id="videosPage"
-    class="admin-page"
->
-
-    <div class="topbar">
-
-        <div>
-
-            <h1>
-                Videos
-            </h1>
-
-            <p>
-                Upload and manage your StreamX videos.
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <!-- TOP BAR -->
-
-    <div class="topbar">
-
-        <div>
-
-            <h1>
-                Content Dashboard
-            </h1>
-
-            <p>
-                Overview of your StreamX platform.
-            </p>
-
-        </div>
-
-
-        <div class="user-area">
-
-            <span
-                class="user-email"
-                id="loggedInEmail"
-            ></span>
-
-            <button
-                class="user-button"
-                onclick="logout()"
-            >
-                Logout
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- STATISTICS -->
-
-    <div class="stats">
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                🎬
-            </div>
-
-            <div class="stat-label">
-                Uploaded Videos
-            </div>
-
-            <div
-                class="stat-number"
-                id="totalVideos"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                ❤️
-            </div>
-
-            <div class="stat-label">
-                Total Likes
-            </div>
-
-            <div
-                class="stat-number"
-                id="totalLikes"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                👁️
-            </div>
-
-            <div class="stat-label">
-                Total Views
-            </div>
-
-            <div
-                class="stat-number"
-                id="totalViews"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                📡
-            </div>
-
-            <div class="stat-label">
-                Platform
-            </div>
-
-            <div
-                class="stat-number"
-                style="font-size:20px"
-            >
-                Online
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- ACTIVE USERS -->
-
-    <div class="stats">
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                🌐
-            </div>
-
-            <div class="stat-label">
-                Website Users
-            </div>
-
-            <div
-                class="stat-number"
-                id="websiteUsers"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                📱
-            </div>
-
-            <div class="stat-label">
-                Mini App Users
-            </div>
-
-            <div
-                class="stat-number"
-                id="miniAppUsers"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                🟢
-            </div>
-
-            <div class="stat-label">
-                Website Online Now
-            </div>
-
-            <div
-                class="stat-number"
-                id="websiteOnline"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                🟢
-            </div>
-
-            <div class="stat-label">
-                Mini App Online Now
-            </div>
-
-            <div
-                class="stat-number"
-                id="miniAppOnline"
-            >
-                0
-            </div>
-
-        </div>
-
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                🔵
-            </div>
-
-            <div class="stat-label">
-                Active on Both
-            </div>
-
-            <div
-                class="stat-number"
-                id="activeBoth"
-            >
-                0
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
 
 
     <!-- MOBILE HEADER -->
@@ -2239,6 +1942,8 @@ textarea{
 
 
     </section>
+
+
 
     <!-- =================================================
          VIDEO LIBRARY

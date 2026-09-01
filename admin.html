@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -1471,7 +1470,9 @@ textarea{
 
 </head>
 
+
 <body>
+
 
 <!-- =====================================================
      LOGIN SCREEN
@@ -1479,84 +1480,84 @@ textarea{
 
 <div id="loginScreen">
 
-```
-<div class="login-box">
+    <div class="login-box">
 
-    <div class="login-logo">
-        Stream<span>X</span>
-    </div>
+        <div class="login-logo">
+            Stream<span>X</span>
+        </div>
 
-    <div class="login-subtitle">
-        Administrator Login
-    </div>
-
-
-    <div
-        id="loginError"
-        class="login-error"
-    ></div>
-
-
-    <form id="loginForm">
-
-
-        <div class="login-group">
-
-            <label>
-                Email
-            </label>
-
-            <input
-                type="email"
-                id="loginEmail"
-                placeholder="Admin email"
-                autocomplete="username"
-                required
-            >
-
+        <div class="login-subtitle">
+            Administrator Login
         </div>
 
 
-        <div class="login-group">
+        <div
+            id="loginError"
+            class="login-error"
+        ></div>
 
-            <label>
-                Password
-            </label>
 
-            <input
-                type="password"
-                id="loginPassword"
-                placeholder="Password"
-                autocomplete="current-password"
-                required
+        <form id="loginForm">
+
+
+            <div class="login-group">
+
+                <label>
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="Admin email"
+                    autocomplete="username"
+                    required
+                >
+
+            </div>
+
+
+            <div class="login-group">
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Password"
+                    autocomplete="current-password"
+                    required
+                >
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="login-button"
+                id="loginButton"
             >
+                Login to Admin Panel
+            </button>
+
+
+        </form>
+
+
+        <div class="login-info">
+
+            Your login is handled securely through
+            Supabase Authentication.
 
         </div>
-
-
-        <button
-            type="submit"
-            class="login-button"
-            id="loginButton"
-        >
-            Login to Admin Panel
-        </button>
-
-
-    </form>
-
-
-    <div class="login-info">
-
-        Your login is handled securely through
-        Supabase Authentication.
 
     </div>
 
 </div>
-```
 
-</div>
+
 
 <!-- =====================================================
      APPLICATION
@@ -1564,87 +1565,88 @@ textarea{
 
 <div id="app">
 
+
 <!-- =====================================================
      SIDEBAR
 ===================================================== -->
 
 <aside class="sidebar">
 
-```
-<div class="logo">
-    Stream<span>X</span>
-</div>
+    <div class="logo">
+        Stream<span>X</span>
+    </div>
 
-<div class="admin-label">
-    Administration
-</div>
+    <div class="admin-label">
+        Administration
+    </div>
 
-<button
-    class="nav-button active"
-    onclick="openPage('dashboardPage', this)"
->
-    📊 Dashboard
-</button>
+    <button
+        class="nav-button active"
+        onclick="openPage('dashboardPage', this)"
+    >
+        📊 Dashboard
+    </button>
 
-<button
-    class="nav-button"
-    onclick="openPage('videosPage', this)"
->
-    🎬 Videos
-</button>
+    <button
+        class="nav-button"
+        onclick="openPage('videosPage', this)"
+    >
+        🎬 Videos
+    </button>
 
-<button
-    class="nav-button"
-    onclick="openPage('categoriesPage', this)"
->
-    🏷️ Categories
-</button>
+    <button
+        class="nav-button"
+        onclick="openPage('categoriesPage', this)"
+    >
+        🏷️ Categories
+    </button>
 
-<button
-    class="nav-button"
-    onclick="openPage('analyticsPage', this)"
->
-    📈 Analytics
-</button>
+    <button
+        class="nav-button"
+        onclick="openPage('analyticsPage', this)"
+    >
+        📈 Analytics
+    </button>
 
-<button
-    class="nav-button"
-    onclick="openPage('reportsPage', this)"
->
-    📋 Reports
-</button>
+    <button
+        class="nav-button"
+        onclick="openPage('reportsPage', this)"
+    >
+        📋 Reports
+    </button>
 
-<button
-    class="nav-button"
-    onclick="openPage('settingsPage', this)"
->
-    ⚙️ Settings
-</button>
+    <button
+        class="nav-button"
+        onclick="openPage('settingsPage', this)"
+    >
+        ⚙️ Settings
+    </button>
 
-<a
-    href="index.html"
-    class="nav-button"
-    style="text-decoration:none;"
->
-    🌐 User Website
-</a>
+    <a
+        href="index.html"
+        class="nav-button"
+        style="text-decoration:none;"
+    >
+        🌐 User Website
+    </a>
 
-<div class="sidebar-bottom">
+    <div class="sidebar-bottom">
 
-    <div class="status-box">
+        <div class="status-box">
 
-        ● <span>Supabase Connected</span>
+            ● <span>Supabase Connected</span>
 
-        <br>
+            <br>
 
-        Authenticated administrator
+            Authenticated administrator
+
+        </div>
 
     </div>
 
-</div>
-```
-
 </aside>
+
+
 
 <!-- =====================================================
      MAIN
@@ -1652,53 +1654,22 @@ textarea{
 
 <main class="main">
 
-```
-<!-- =================================================
-     DASHBOARD PAGE
-================================================= -->
+    <!-- =================================================
+         DASHBOARD PAGE
+    ================================================= -->
 
-<div
-    id="dashboardPage"
-    class="admin-page active"
->
-
-<div class="mobile-header">
-
-    <div class="mobile-logo">
-        Stream<span>X</span>
-    </div>
-
-    <button
-        class="user-button"
-        onclick="logout()"
+    <div
+        id="dashboardPage"
+        class="admin-page active"
     >
-        Logout
-    </button>
 
-</div>
+    <!-- MOBILE HEADER -->
 
+    <div class="mobile-header">
 
-<div class="topbar">
-
-    <div>
-
-        <h1>
-            Content Dashboard
-        </h1>
-
-        <p>
-            Overview of your StreamX platform.
-        </p>
-
-    </div>
-
-
-    <div class="user-area">
-
-        <span
-            class="user-email"
-            id="loggedInEmail"
-        ></span>
+        <div class="mobile-logo">
+            Stream<span>X</span>
+        </div>
 
         <button
             class="user-button"
@@ -1709,474 +1680,38 @@ textarea{
 
     </div>
 
-</div>
-```
 
-<div class="stats">
 
-```
-<div class="stat">
-
-    <div class="stat-icon">
-        🎬
-    </div>
-
-    <div class="stat-label">
-        Uploaded Videos
-    </div>
-
-    <div
-        class="stat-number"
-        id="totalVideos"
-    >
-        0
-    </div>
-
-</div>
-
-
-<div class="stat">
-
-    <div class="stat-icon">
-        ❤️
-    </div>
-
-    <div class="stat-label">
-        Total Likes
-    </div>
-
-    <div
-        class="stat-number"
-        id="totalLikes"
-    >
-        0
-    </div>
-
-</div>
-
-
-<div class="stat">
-
-    <div class="stat-icon">
-        👁️
-    </div>
-
-    <div class="stat-label">
-        Total Views
-    </div>
-
-    <div
-        class="stat-number"
-        id="totalViews"
-    >
-        0
-    </div>
-
-</div>
-
-
-<div class="stat">
-
-    <div class="stat-icon">
-        📡
-    </div>
-
-    <div class="stat-label">
-        Platform
-    </div>
-
-    <div
-        class="stat-number"
-        style="font-size:20px"
-    >
-        Online
-    </div>
-
-</div>
-```
-
-</div>
-
-<div class="section-heading">
-
-```
-<h2>
-    Active Users
-</h2>
-```
-
-</div>
-
-<div class="stats">
-
-```
-<div class="stat">
-
-    <div class="stat-icon">
-        🌐
-    </div>
-
-    <div class="stat-label">
-        Website Users
-    </div>
-
-    <div
-        class="stat-number"
-        id="websiteUsers"
-    >
-        0
-    </div>
-
-</div>
-
-
-<div class="stat">
-
-    <div class="stat-icon">
-        📱
-    </div>
-
-    <div class="stat-label">
-        Mini App Users
-    </div>
-
-    <div
-        class="stat-number"
-        id="miniAppUsers"
-    >
-        0
-    </div>
-
-</div>
-
-
-<div class="stat">
-
-    <div class="stat-icon">
-        🔵
-    </div>
-
-    <div class="stat-label">
-        Active on Both
-    </div>
-
-    <div
-        class="stat-number"
-        id="activeBoth"
-    >
-        0
-    </div>
-
-</div>
-```
-
-</div>
-
-<div class="section-heading" style="margin-top:32px;">
-
-```
-<h2>
-    Live Activity
-</h2>
-```
-
-</div>
-
-<div class="stats">
-
-```
-<div class="stat">
-
-    <div class="stat-icon">
-        🟢
-    </div>
-
-    <div class="stat-label">
-        Website Online Now
-    </div>
-
-    <div
-        class="stat-number"
-        id="websiteOnline"
-    >
-        0
-    </div>
-
-</div>
-
-
-<div class="stat">
-
-    <div class="stat-icon">
-        🟢
-    </div>
-
-    <div class="stat-label">
-        Mini App Online Now
-    </div>
-
-    <div
-        class="stat-number"
-        id="miniAppOnline"
-    >
-        0
-    </div>
-
-</div>
-```
-
-</div>
-
-```
-</div>
-
-
-<!-- =================================================
-     VIDEOS PAGE
-================================================= -->
-
-<div
-    id="videosPage"
-    class="admin-page"
->
+    <!-- TOP BAR -->
 
     <div class="topbar">
 
         <div>
 
             <h1>
-                Videos
+                Content Dashboard
             </h1>
 
             <p>
-                Upload and manage your StreamX videos.
+                Overview of your StreamX platform.
             </p>
 
         </div>
 
-    </div>
 
-<section
-    class="section"
-    id="uploadSection"
->
+        <div class="user-area">
 
+            <span
+                class="user-email"
+                id="loggedInEmail"
+            ></span>
 
-    <div class="section-heading">
-
-        <h2>
-            Upload New Video
-        </h2>
-
-        <p>
-            Uploaded content will be stored in Supabase
-            and appear on the public website.
-        </p>
-
-    </div>
-
-
-
-    <div class="form-grid">
-
-
-        <div class="form-group">
-
-            <label>
-                Video Title
-            </label>
-
-            <input
-                type="text"
-                id="videoTitle"
-                placeholder="Enter video title"
+            <button
+                class="user-button"
+                onclick="logout()"
             >
-
-        </div>
-
-
-
-        <div class="form-group">
-
-            <label>
-                Category
-            </label>
-
-            <select id="videoCategory">
-
-                <option value="">
-                    Select category
-                </option>
-
-            </select>
-
-        </div>
-
-
-
-        <div class="form-group full">
-
-            <label>
-                Description
-            </label>
-
-            <textarea
-                id="videoDescription"
-                placeholder="Write a description for your video..."
-            ></textarea>
-
-        </div>
-
-
-
-        <div class="form-group">
-
-            <label>
-                Video File
-            </label>
-
-            <label class="upload-box">
-
-                <input
-                    type="file"
-                    id="videoFile"
-                    accept="video/*"
-                >
-
-                <div class="upload-icon">
-                    🎬
-                </div>
-
-                <strong>
-                    Choose Video
-                </strong>
-
-                <small>
-                    MP4, WebM, MOV
-                </small>
-
-                <div
-                    class="file-name"
-                    id="videoFileName"
-                ></div>
-
-            </label>
-
-        </div>
-
-
-
-        <div class="form-group">
-
-            <label>
-                Thumbnail
-            </label>
-
-
-            <label
-                class="upload-box"
-                id="thumbnailUploadBox"
-            >
-
-                <input
-                    type="file"
-                    id="thumbnailFile"
-                    accept="image/*"
-                >
-
-                <div class="upload-icon">
-                    🖼️
-                </div>
-
-                <strong>
-                    Choose Thumbnail
-                </strong>
-
-                <small>
-                    JPG, PNG, WebP
-                </small>
-
-                <div
-                    class="file-name"
-                    id="thumbnailFileName"
-                ></div>
-
-            </label>
-
-
-            <div
-                class="thumbnail-preview"
-                id="thumbnailPreview"
-            >
-
-                <img
-                    id="thumbnailImage"
-                    alt="Thumbnail"
-                >
-
-                <button
-                    type="button"
-                    class="remove-thumbnail"
-                    onclick="removeThumbnail(event)"
-                >
-                    ×
-                </button>
-
-            </div>
-
-        </div>
-
-
-    </div>
-
-
-
-    <div class="upload-actions">
-
-        <button
-            id="uploadButton"
-            class="upload-button"
-            onclick="uploadVideo()"
-        >
-            ⬆ Upload Video
-        </button>
-
-
-        <button
-            class="clear-button"
-            onclick="clearForm()"
-        >
-            Clear
-        </button>
-
-    </div>
-
-
-
-    <div
-        class="progress-wrapper"
-        id="progressWrapper"
-    >
-
-        <div class="progress-top">
-
-            <span id="progressText">
-                Preparing upload...
-            </span>
-
-            <span id="progressPercent">
-                0%
-            </span>
-
-        </div>
-
-
-        <div class="progress">
-
-            <div
-                class="progress-bar"
-                id="progressBar"
-            ></div>
+                Logout
+            </button>
 
         </div>
 
@@ -2184,235 +1719,656 @@ textarea{
 
 
 
-    <div
-        id="message"
-        class="message"
-    ></div>
+<!-- =================================================
+     STATISTICS
+================================================= -->
 
+<div class="stats">
 
-</section>
+    <div class="stat">
 
-
-
-<section
-    class="section"
-    id="videosSection"
->
-
-
-    <div class="section-top">
-
-        <h2>
-            Video Library
-        </h2>
-
-        <span
-            class="video-count"
-            id="videoCount"
-        >
-            0 videos
-        </span>
-
-    </div>
-
-
-    <div
-        id="videoGrid"
-        class="video-grid"
-    ></div>
-
-
-    <div
-        id="emptyState"
-        class="empty"
-    >
-
-        <div class="empty-icon">
+        <div class="stat-icon">
             🎬
         </div>
 
-        <h3>
-            No videos yet
-        </h3>
+        <div class="stat-label">
+            Uploaded Videos
+        </div>
 
-        <p style="margin-top:8px;">
-            Upload your first video above.
-        </p>
+        <div
+            class="stat-number"
+            id="totalVideos"
+        >
+            0
+        </div>
 
     </div>
 
 
-</section>
+    <div class="stat">
+
+        <div class="stat-icon">
+            ❤️
+        </div>
+
+        <div class="stat-label">
+            Total Likes
+        </div>
+
+        <div
+            class="stat-number"
+            id="totalLikes"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            👁️
+        </div>
+
+        <div class="stat-label">
+            Total Views
+        </div>
+
+        <div
+            class="stat-number"
+            id="totalViews"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            📡
+        </div>
+
+        <div class="stat-label">
+            Platform
+        </div>
+
+        <div
+            class="stat-number"
+            style="font-size:20px"
+        >
+            Online
+        </div>
+
+    </div>
 
 </div>
 
 
 <!-- =================================================
-     CATEGORIES PAGE
-================================================= -->
+     ACTIVE USERS
+===================================================== -->
 
-<div id="categoriesPage" class="admin-page">
+<div class="section-heading">
 
-    <div class="topbar">
-        <div>
-            <h1>Categories</h1>
-            <p>Add, edit and remove categories used across StreamX.</p>
+    <h2>
+        Active Users
+    </h2>
+
+</div>
+
+<div class="stats">
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🌐
         </div>
+
+        <div class="stat-label">
+            Website Users
+        </div>
+
+        <div
+            class="stat-number"
+            id="websiteUsers"
+        >
+            0
+        </div>
+
     </div>
 
-    <section class="section">
 
-        <div class="section-heading">
-            <div>
-                <h2>Category Management</h2>
-                <p>Create categories for your videos and manage existing ones.</p>
-            </div>
+    <div class="stat">
+
+        <div class="stat-icon">
+            📱
         </div>
 
-        <div class="category-manager">
+        <div class="stat-label">
+            Mini App Users
+        </div>
 
-            <div class="category-add-box">
+        <div
+            class="stat-number"
+            id="miniAppUsers"
+        >
+            0
+        </div>
 
-                <label for="newCategoryName">
-                    Add New Category
-                </label>
+    </div>
 
-                <div class="category-add-row">
 
-                    <input
-                        type="text"
-                        id="newCategoryName"
-                        placeholder="Enter category name"
-                        maxlength="80"
-                    >
+    <div class="stat">
 
-                    <button
-                        type="button"
-                        class="primary-button"
-                        onclick="addCategory()"
-                    >
-                        + Add Category
-                    </button>
+        <div class="stat-icon">
+            🔵
+        </div>
 
-                </div>
+        <div class="stat-label">
+            Active on Both
+        </div>
 
-                <div
-                    id="categoryMessage"
-                    class="message"
-                    style="display:none;margin-top:14px;"
-                ></div>
+        <div
+            class="stat-number"
+            id="activeBoth"
+        >
+            0
+        </div>
 
-            </div>
+    </div>
 
-            <div class="category-list-header">
+</div>
 
-                <h3>
-                    Categories
-                </h3>
 
-                <span
-                    id="categoryCount"
-                    class="video-count"
-                >
-                    0 categories
-                </span>
+<!-- =================================================
+     LIVE ACTIVITY
+===================================================== -->
 
-            </div>
+<div class="section-heading" style="margin-top:32px;">
 
-            <div
-                id="categoryList"
-                class="category-list"
-            ></div>
+    <h2>
+        Live Activity
+    </h2>
 
-            <div
-                id="categoryEmptyState"
-                class="empty"
-                style="display:none;"
-            >
+</div>
 
-                <div class="empty-icon">
-                    🏷️
-                </div>
+<div class="stats">
 
-                <h3>
-                    No categories yet
-                </h3>
+    <div class="stat">
 
-                <p style="margin-top:8px;">
-                    Add your first category above.
+        <div class="stat-icon">
+            🟢
+        </div>
+
+        <div class="stat-label">
+            Website Online Now
+        </div>
+
+        <div
+            class="stat-number"
+            id="websiteOnline"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🟢
+        </div>
+
+        <div class="stat-label">
+            Mini App Online Now
+        </div>
+
+        <div
+            class="stat-number"
+            id="miniAppOnline"
+        >
+            0
+        </div>
+
+    </div>
+
+</div>
+
+
+
+    </div>
+
+
+    <!-- =================================================
+         VIDEOS PAGE
+    ================================================= -->
+
+    <div
+        id="videosPage"
+        class="admin-page"
+    >
+
+        <div class="topbar">
+
+            <div>
+
+                <h1>
+                    Videos
+                </h1>
+
+                <p>
+                    Upload and manage your StreamX videos.
                 </p>
 
             </div>
 
         </div>
 
+    <section
+        class="section"
+        id="uploadSection"
+    >
+
+
+        <div class="section-heading">
+
+            <h2>
+                Upload New Video
+            </h2>
+
+            <p>
+                Uploaded content will be stored in Supabase
+                and appear on the public website.
+            </p>
+
+        </div>
+
+
+
+        <div class="form-grid">
+
+
+            <!-- TITLE -->
+
+            <div class="form-group">
+
+                <label>
+                    Video Title
+                </label>
+
+                <input
+                    type="text"
+                    id="videoTitle"
+                    placeholder="Enter video title"
+                >
+
+            </div>
+
+
+
+            <!-- CATEGORY -->
+
+            <div class="form-group">
+
+                <label>
+                    Category
+                </label>
+
+                <select id="videoCategory">
+
+                    <option value="">
+                        Select category
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="form-group full">
+
+                <label>
+                    Description
+                </label>
+
+                <textarea
+                    id="videoDescription"
+                    placeholder="Write a description for your video..."
+                ></textarea>
+
+            </div>
+
+
+
+            <!-- VIDEO FILE -->
+
+            <div class="form-group">
+
+                <label>
+                    Video File
+                </label>
+
+                <label class="upload-box">
+
+                    <input
+                        type="file"
+                        id="videoFile"
+                        accept="video/*"
+                    >
+
+                    <div class="upload-icon">
+                        🎬
+                    </div>
+
+                    <strong>
+                        Choose Video
+                    </strong>
+
+                    <small>
+                        MP4, WebM, MOV
+                    </small>
+
+                    <div
+                        class="file-name"
+                        id="videoFileName"
+                    ></div>
+
+                </label>
+
+            </div>
+
+
+
+            <!-- THUMBNAIL -->
+
+            <div class="form-group">
+
+                <label>
+                    Thumbnail
+                </label>
+
+
+                <label
+                    class="upload-box"
+                    id="thumbnailUploadBox"
+                >
+
+                    <input
+                        type="file"
+                        id="thumbnailFile"
+                        accept="image/*"
+                    >
+
+                    <div class="upload-icon">
+                        🖼️
+                    </div>
+
+                    <strong>
+                        Choose Thumbnail
+                    </strong>
+
+                    <small>
+                        JPG, PNG, WebP
+                    </small>
+
+                    <div
+                        class="file-name"
+                        id="thumbnailFileName"
+                    ></div>
+
+                </label>
+
+
+                <div
+                    class="thumbnail-preview"
+                    id="thumbnailPreview"
+                >
+
+                    <img
+                        id="thumbnailImage"
+                        alt="Thumbnail"
+                    >
+
+                    <button
+                        type="button"
+                        class="remove-thumbnail"
+                        onclick="removeThumbnail(event)"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- BUTTONS -->
+
+        <div class="upload-actions">
+
+            <button
+                id="uploadButton"
+                class="upload-button"
+                onclick="uploadVideo()"
+            >
+                ⬆ Upload Video
+            </button>
+
+
+            <button
+                class="clear-button"
+                onclick="clearForm()"
+            >
+                Clear
+            </button>
+
+        </div>
+
+
+
+        <!-- PROGRESS -->
+
+        <div
+            class="progress-wrapper"
+            id="progressWrapper"
+        >
+
+            <div class="progress-top">
+
+                <span id="progressText">
+                    Preparing upload...
+                </span>
+
+                <span id="progressPercent">
+                    0%
+                </span>
+
+            </div>
+
+
+            <div class="progress">
+
+                <div
+                    class="progress-bar"
+                    id="progressBar"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- MESSAGE -->
+
+        <div
+            id="message"
+            class="message"
+        ></div>
+
+
     </section>
 
-</div>
 
 
-<div id="analyticsPage" class="admin-page">
+    <!-- =================================================
+         VIDEO LIBRARY
+    ================================================= -->
 
-    <div class="topbar">
 
-        <div>
+    <section
+        class="section"
+        id="videosSection"
+    >
 
-            <h1>
-                Analytics
-            </h1>
 
-            <p>
-                Advanced analytics will be added in a later step.
+        <div class="section-top">
+
+            <h2>
+                Video Library
+            </h2>
+
+            <span
+                class="video-count"
+                id="videoCount"
+            >
+                0 videos
+            </span>
+
+        </div>
+
+
+        <div
+            id="videoGrid"
+            class="video-grid"
+        ></div>
+
+
+        <div
+            id="emptyState"
+            class="empty"
+        >
+
+            <div class="empty-icon">
+                🎬
+            </div>
+
+            <h3>
+                No videos yet
+            </h3>
+
+            <p style="margin-top:8px;">
+                Upload your first video above.
             </p>
 
         </div>
 
+
+    </section>
+
     </div>
 
-</div>
 
+    <!-- =================================================
+         FUTURE ADMIN PAGES
+    ================================================= -->
 
-<div id="reportsPage" class="admin-page">
+    <div id="categoriesPage" class="admin-page">
 
-    <div class="topbar">
-
-        <div>
-
-            <h1>
-                Reports
-            </h1>
-
-            <p>
-                Reports will be added in a later step.
-            </p>
-
+        <div class="topbar">
+            <div>
+                <h1>Categories</h1>
+                <p>Add, edit and remove categories used across StreamX.</p>
+            </div>
         </div>
 
+        <section class="section">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Category Management</h2>
+                    <p>Create categories for your videos and manage existing ones.</p>
+                </div>
+            </div>
+
+            <div class="category-manager">
+
+                <div class="category-add-box">
+                    <label for="newCategoryName">Add New Category</label>
+                    <div class="category-add-row">
+                        <input
+                            type="text"
+                            id="newCategoryName"
+                            placeholder="Enter category name"
+                            maxlength="80"
+                        >
+                        <button
+                            type="button"
+                            class="primary-button"
+                            onclick="addCategory()"
+                        >
+                            + Add Category
+                        </button>
+                    </div>
+                    <div id="categoryMessage" class="message" style="display:none;margin-top:14px;"></div>
+                </div>
+
+                <div class="category-list-header">
+                    <h3>Categories</h3>
+                    <span id="categoryCount" class="video-count">0 categories</span>
+                </div>
+
+                <div id="categoryList" class="category-list"></div>
+
+                <div id="categoryEmptyState" class="empty" style="display:none;">
+                    <div class="empty-icon">🏷️</div>
+                    <h3>No categories yet</h3>
+                    <p style="margin-top:8px;">Add your first category above.</p>
+                </div>
+
+            </div>
+
+        </section>
+
     </div>
 
-</div>
-
-
-<div id="settingsPage" class="admin-page">
-
-    <div class="topbar">
-
-        <div>
-
-            <h1>
-                Settings
-            </h1>
-
-            <p>
-                Admin settings will be added in a later step.
-            </p>
-
+    <div id="analyticsPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Analytics</h1>
+                <p>Advanced analytics will be added in a later step.</p>
+            </div>
         </div>
-
     </div>
 
-</div>
-```
+    <div id="reportsPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Reports</h1>
+                <p>Reports will be added in a later step.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Settings</h1>
+                <p>Admin settings will be added in a later step.</p>
+            </div>
+        </div>
+    </div>
 
 </main>
 
@@ -2557,38 +2513,53 @@ async function login(){
         }
 
 
-        const activeUser =
-            result.data.user;
+console.log(
+    "Supabase authentication successful:",
+    result.data.user.email
+);
 
 
-        const { error: activeUserError } =
-            await supabaseClient
-                .from("active_users")
-                .upsert(
-                    {
-                        user_id: activeUser.id,
-                        platform: "admin",
-                        last_seen: new Date().toISOString()
-                    },
-                    {
-                        onConflict: "user_id"
-                    }
-                );
+/* =========================================
+   REGISTER ADMIN AS ACTIVE USER
+========================================= */
 
+const activeUser =
+    result.data.user;
 
-        if(activeUserError){
-
-            console.error(
-                "Could not update active_users:",
-                activeUserError
-            );
-
-        }
-
-
-        showApplication(
-            result.data.session
+const { error: activeUserError } =
+    await supabaseClient
+        .from("active_users")
+        .upsert(
+            {
+                user_id: activeUser.id,
+                platform: "admin",
+                last_seen: new Date().toISOString()
+            },
+            {
+                onConflict: "user_id"
+            }
         );
+
+
+if(activeUserError){
+
+    console.error(
+        "Could not update active_users:",
+        activeUserError
+    );
+
+}else{
+
+    console.log(
+        "Admin registered in active_users."
+    );
+
+}
+
+
+showApplication(
+    result.data.session
+);
 
 
     }catch(error){
@@ -2649,13 +2620,18 @@ async function checkSession(){
             result.data.session;
 
 
-        if(session){
+if(session){
 
-            await updateActiveUser();
+    console.log(
+        "Existing Supabase session found:",
+        session.user.email
+    );
 
-            showApplication(
-                session
-            );
+    await updateActiveUser();
+
+    showApplication(
+        session
+    );
 
         }else{
 
@@ -2679,6 +2655,12 @@ async function checkSession(){
 
 
 /* =====================================================
+   SHOW APPLICATION
+===================================================== */
+
+
+
+/* =====================================================
    SHOW LOGIN
 ===================================================== */
 
@@ -2697,7 +2679,6 @@ function showLogin(){
 
 }
 
-
 /* =====================================================
    SHOW APPLICATION
 ===================================================== */
@@ -2705,31 +2686,29 @@ function showLogin(){
 async function showApplication(session){
 
     if(!session || !session.user){
-
         showLogin();
-
         return;
-
     }
 
+    console.log(
+        "Opening StreamX Admin:",
+        session.user.email
+    );
 
     document
         .getElementById("loginScreen")
         .style.display =
         "none";
 
-
     document
         .getElementById("app")
         .style.display =
         "block";
 
-
     document
         .getElementById("loggedInEmail")
         .textContent =
         session.user.email;
-
 
     await loadVideos();
 
@@ -2762,6 +2741,11 @@ async function logout(){
 
     if(result.error){
 
+        console.error(
+            "Logout error:",
+            result.error
+        );
+
         alert(
             "Could not log out: " +
             result.error.message
@@ -2783,6 +2767,12 @@ async function logout(){
 
 supabaseClient.auth.onAuthStateChange(
     function(event, session){
+
+        console.log(
+            "Auth event:",
+            event
+        );
+
 
         if(
             event === "SIGNED_OUT"
@@ -2808,14 +2798,22 @@ videoFile.addEventListener(
             this.files[0] || null;
 
 
-        document.getElementById(
-            "videoFileName"
-        ).textContent =
-            selectedVideoFile
-            ?
-            "✓ " + selectedVideoFile.name
-            :
-            "";
+        if(selectedVideoFile){
+
+            document.getElementById(
+                "videoFileName"
+            ).textContent =
+                "✓ " +
+                selectedVideoFile.name;
+
+        }else{
+
+            document.getElementById(
+                "videoFileName"
+            ).textContent =
+                "";
+
+        }
 
     }
 );
@@ -2922,16 +2920,25 @@ function removeThumbnail(event){
    MESSAGE
 ===================================================== */
 
-function showMessage(text,type){
+function showMessage(
+    text,
+    type
+){
 
     const message =
-        document.getElementById("message");
+        document.getElementById(
+            "message"
+        );
+
 
     message.textContent =
         text;
 
+
     message.className =
-        "message " + type;
+        "message " +
+        type;
+
 
     message.style.display =
         "block";
@@ -2942,7 +2949,10 @@ function showMessage(text,type){
 function hideMessage(){
 
     const message =
-        document.getElementById("message");
+        document.getElementById(
+            "message"
+        );
+
 
     message.style.display =
         "none";
@@ -2954,18 +2964,29 @@ function hideMessage(){
    SAFE FILE NAME
 ===================================================== */
 
-function cleanFileName(name){
+function cleanFileName(
+    name
+){
 
     return name
+
         .toLowerCase()
-        .replace(/[^a-z0-9.]+/g,"-")
-        .replace(/^-+|-+$/g,"");
+
+        .replace(
+            /[^a-z0-9.]+/g,
+            "-"
+        )
+
+        .replace(
+            /^-+|-+$/g,
+            ""
+        );
 
 }
 
 
 /* =====================================================
-   CHECK AUTHENTICATION
+   CHECK AUTHENTICATION BEFORE UPLOAD
 ===================================================== */
 
 async function requireAuthenticatedUser(){
@@ -2999,10 +3020,15 @@ async function requireAuthenticatedUser(){
     }
 
 
+    console.log(
+        "Upload authenticated as:",
+        session.user.email
+    );
+
+
     return session;
 
 }
-
 
 /* =====================================================
    UPDATE ACTIVE USER
@@ -3015,35 +3041,38 @@ async function updateActiveUser(){
         const result =
             await supabaseClient.auth.getSession();
 
-
-        if(result.error || !result.data.session)
+        if(result.error || !result.data.session){
             return;
-
+        }
 
         const user =
             result.data.session.user;
-
 
         const { error } =
             await supabaseClient
                 .from("active_users")
                 .upsert(
                     {
-                        user_id:user.id,
-                        platform:"admin",
-                        last_seen:new Date().toISOString()
+                        user_id: user.id,
+                        platform: "admin",
+                        last_seen: new Date().toISOString()
                     },
                     {
-                        onConflict:"user_id"
+                        onConflict: "user_id"
                     }
                 );
-
 
         if(error){
 
             console.error(
                 "Could not update active_users:",
                 error
+            );
+
+        }else{
+
+            console.log(
+                "Active user timestamp updated."
             );
 
         }
@@ -3059,7 +3088,6 @@ async function updateActiveUser(){
 
 }
 
-
 /* =====================================================
    LOAD ACTIVE USERS
 ===================================================== */
@@ -3071,10 +3099,7 @@ async function loadActiveUsers(){
         const result =
             await supabaseClient
                 .from("active_users")
-                .select(
-                    "user_id, platform, last_seen"
-                );
-
+                .select("user_id, platform, last_seen");
 
         if(result.error){
 
@@ -3084,27 +3109,25 @@ async function loadActiveUsers(){
 
         }
 
-
         const users =
             result.data || [];
 
 
+        /*
+         * A user is considered online if their
+         * last_seen timestamp is within the
+         * last 5 minutes.
+         */
+
         const onlineLimit =
-            Date.now() -
-            (20 * 1000);
+            Date.now() - (20 * 1000);
 
 
-        const websiteUsers =
-            new Set();
+        let websiteUsers = new Set();
+        let miniAppUsers = new Set();
 
-        const miniAppUsers =
-            new Set();
-
-        const websiteOnline =
-            new Set();
-
-        const miniAppOnline =
-            new Set();
+        let websiteOnline = new Set();
+        let miniAppOnline = new Set();
 
 
         users.forEach(user => {
@@ -3118,6 +3141,10 @@ async function loadActiveUsers(){
                     user.platform || ""
                 ).toLowerCase();
 
+
+            /*
+             * WEBSITE
+             */
 
             if(platform === "website"){
 
@@ -3141,6 +3168,10 @@ async function loadActiveUsers(){
 
             }
 
+
+            /*
+             * MINI APP
+             */
 
             if(
                 platform === "miniapp" ||
@@ -3170,6 +3201,10 @@ async function loadActiveUsers(){
         });
 
 
+        /*
+         * USERS ACTIVE ON BOTH PLATFORMS
+         */
+
         let activeBoth = 0;
 
 
@@ -3177,7 +3212,9 @@ async function loadActiveUsers(){
             userId => {
 
                 if(
-                    miniAppUsers.has(userId)
+                    miniAppUsers.has(
+                        userId
+                    )
                 ){
 
                     activeBoth++;
@@ -3187,6 +3224,10 @@ async function loadActiveUsers(){
             }
         );
 
+
+        /*
+         * UPDATE DASHBOARD
+         */
 
         document.getElementById(
             "websiteUsers"
@@ -3218,6 +3259,27 @@ async function loadActiveUsers(){
             activeBoth.toLocaleString();
 
 
+        console.log(
+            "Active users:",
+            {
+                websiteUsers:
+                    websiteUsers.size,
+
+                miniAppUsers:
+                    miniAppUsers.size,
+
+                websiteOnline:
+                    websiteOnline.size,
+
+                miniAppOnline:
+                    miniAppOnline.size,
+
+                activeBoth:
+                    activeBoth
+            }
+        );
+
+
     }catch(error){
 
         console.error(
@@ -3236,11 +3298,14 @@ setInterval(
 );
 
 
+/* =====================================================
+   ACTIVE USERS REFRESH
+===================================================== */
+
 setInterval(
     loadActiveUsers,
     5000
 );
-
 
 /* =====================================================
    UPLOAD VIDEO
@@ -3259,8 +3324,23 @@ async function uploadVideo(){
 
     try{
 
-        await requireAuthenticatedUser();
+        /* =========================================
+           VERIFY AUTHENTICATION
+        ========================================= */
 
+        const session =
+            await requireAuthenticatedUser();
+
+
+        console.log(
+            "Authenticated user:",
+            session.user.email
+        );
+
+
+        /* =========================================
+           FORM DATA
+        ========================================= */
 
         const title =
             document.getElementById(
@@ -3279,6 +3359,10 @@ async function uploadVideo(){
                 "videoDescription"
             ).value.trim();
 
+
+        /* =========================================
+           VALIDATION
+        ========================================= */
 
         if(!title){
 
@@ -3323,6 +3407,10 @@ async function uploadVideo(){
         );
 
 
+        /* =========================================
+           UNIQUE FILE NAME
+        ========================================= */
+
         const uniqueID =
             Date.now() +
             "-" +
@@ -3346,6 +3434,10 @@ async function uploadVideo(){
         let thumbnailPath =
             null;
 
+
+        /* =========================================
+           UPLOAD VIDEO
+        ========================================= */
 
         updateProgress(
             10,
@@ -3384,6 +3476,10 @@ async function uploadVideo(){
             "Video uploaded. Processing thumbnail..."
         );
 
+
+        /* =========================================
+           UPLOAD THUMBNAIL
+        ========================================= */
 
         if(selectedThumbnailFile){
 
@@ -3441,6 +3537,10 @@ async function uploadVideo(){
         );
 
 
+        /* =========================================
+           GET PUBLIC VIDEO URL
+        ========================================= */
+
         const videoURL =
             supabaseClient
                 .storage
@@ -3471,6 +3571,15 @@ async function uploadVideo(){
         }
 
 
+        /* =========================================
+           DATABASE INSERT
+        ========================================= */
+
+        console.log(
+            "Attempting database insert..."
+        );
+
+
         const databaseInsert =
             await supabaseClient
                 .from("videos")
@@ -3478,20 +3587,36 @@ async function uploadVideo(){
 
                     title:title,
 
-                    description:description,
+                    description:
+                        description,
 
-                    category:category,
+                    category:
+                        category,
 
-                    video_url:videoURL,
+                    video_url:
+                        videoURL,
 
-                    thumbnail_url:thumbnailURL,
+                    thumbnail_url:
+                        thumbnailURL,
 
                     views:0
 
                 });
 
 
+        /* =========================================
+           DATABASE ERROR
+        ========================================= */
+
         if(databaseInsert.error){
+
+            console.error(
+                "DATABASE INSERT ERROR:",
+                databaseInsert.error
+            );
+
+
+            /* CLEAN VIDEO */
 
             await supabaseClient
                 .storage
@@ -3500,6 +3625,8 @@ async function uploadVideo(){
                     videoPath
                 ]);
 
+
+            /* CLEAN THUMBNAIL */
 
             if(thumbnailPath){
 
@@ -3520,6 +3647,10 @@ async function uploadVideo(){
 
         }
 
+
+        /* =========================================
+           SUCCESS
+        ========================================= */
 
         updateProgress(
             100,
@@ -3573,7 +3704,10 @@ async function uploadVideo(){
    PROGRESS
 ===================================================== */
 
-function updateProgress(percent,text){
+function updateProgress(
+    percent,
+    text
+){
 
     document.getElementById(
         "progressBar"
@@ -3599,7 +3733,10 @@ function updateProgress(percent,text){
    GET STORAGE PATH
 ===================================================== */
 
-function getStoragePath(value,bucket){
+function getStoragePath(
+    value,
+    bucket
+){
 
     if(!value)
         return null;
@@ -3642,7 +3779,10 @@ function getStoragePath(value,bucket){
    GET PUBLIC URL
 ===================================================== */
 
-function getPublicURL(value,bucket){
+function getPublicURL(
+    value,
+    bucket
+){
 
     if(!value)
         return null;
@@ -3666,7 +3806,6 @@ function getPublicURL(value,bucket){
         .publicUrl;
 
 }
-
 
 /* =====================================================
    LOAD VIDEOS
@@ -3694,6 +3833,10 @@ async function loadVideos(){
         grid.innerHTML =
             "";
 
+
+        /* =========================================
+           LOAD VIDEOS
+        ========================================= */
 
         const result =
             await supabaseClient
@@ -3732,77 +3875,72 @@ async function loadVideos(){
             videos.length +
             (
                 videos.length === 1
-                ?
-                " video"
-                :
-                " videos"
+                ? " video"
+                : " videos"
             );
 
 
-        let totalViews = 0;
+        /* =========================================
+           TOTAL VIEWS
+        ========================================= */
 
-        let totalLikes = 0;
+let totalViews = 0;
+let totalLikes = 0;
 
+videos.forEach(video => {
 
-        videos.forEach(video => {
+    totalViews += Number(video.views || 0);
 
-            totalViews +=
-                Number(
-                    video.views || 0
-                );
-
-        });
-
-
-        for(const video of videos){
-
-            const likesResult =
-                await supabaseClient
-                    .from("video_likes")
-                    .select(
-                        "id",
-                        {
-                            count:"exact",
-                            head:true
-                        }
-                    )
-                    .eq(
-                        "video_id",
-                        video.id
-                    );
+});
 
 
-            if(likesResult.error){
+/* =========================================
+   LOAD LIKES FOR EACH VIDEO
+========================================= */
 
-                video.likes = 0;
+for (const video of videos) {
 
-            }else{
+    const likesResult =
+        await supabaseClient
+            .from("video_likes")
+            .select(
+                "id",
+                {
+                    count: "exact",
+                    head: true
+                }
+            )
+            .eq("video_id", video.id);
 
-                video.likes =
-                    likesResult.count || 0;
+    if (likesResult.error) {
 
-            }
+        video.likes = 0;
+
+    } else {
+
+        video.likes =
+            likesResult.count || 0;
+
+    }
+
+    totalLikes += Number(video.likes || 0);
+
+}
+
+document.getElementById(
+    "totalViews"
+).textContent =
+    totalViews.toLocaleString();
+
+document.getElementById(
+    "totalLikes"
+).textContent =
+    totalLikes.toLocaleString();
 
 
-            totalLikes +=
-                Number(
-                    video.likes || 0
-                );
-
-        }
-
-
-        document.getElementById(
-            "totalViews"
-        ).textContent =
-            totalViews.toLocaleString();
-
-
-        document.getElementById(
-            "totalLikes"
-        ).textContent =
-            totalLikes.toLocaleString();
-
+        /* =========================================
+           EMPTY STATE
+        ========================================= */
 
         if(videos.length === 0){
 
@@ -3817,6 +3955,10 @@ async function loadVideos(){
         empty.style.display =
             "none";
 
+
+        /* =========================================
+           CREATE VIDEO CARDS
+        ========================================= */
 
         videos.forEach(
             video => {
@@ -3847,15 +3989,18 @@ async function loadVideos(){
 
 }
 
-
 /* =====================================================
    CREATE VIDEO CARD
 ===================================================== */
 
-function createVideoCard(video){
+function createVideoCard(
+    video
+){
 
     const card =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     card.className =
@@ -3893,6 +4038,10 @@ function createVideoCard(video){
         :
         "";
 
+
+    /* =========================================
+       LIKES
+    ========================================= */
 
     const likes =
         Number(
@@ -3999,7 +4148,6 @@ function createVideoCard(video){
         .appendChild(card);
 
 }
-
 
 /* =====================================================
    PREVIEW VIDEO
@@ -4130,1128 +4278,711 @@ async function loadSingleVideo(id){
 
                     }
 
-                </style>
+                
 
-```
-        </head>
+</style>
+
+            </head>
 
 
-        <body>
+            <body>
 
-            <video
-                controls
-                autoplay
-            >
-
-                <source
-                    src="${escapeHTML(videoURL)}"
+                <video
+                    controls
+                    autoplay
                 >
 
-            </video>
+                    <source
+                        src="${escapeHTML(videoURL)}"
+                    >
+
+                </video>
 
 
-            <div class="info">
+                <div class="info">
 
-                <h1>
-                    ${escapeHTML(video.title)}
-                </h1>
+                    <h1>
+                        ${escapeHTML(video.title)}
+                    </h1>
 
-                <p>
-                    ${escapeHTML(
-                        video.description || ""
-                    )}
-                </p>
+                    <p>
+                        ${escapeHTML(
+                            video.description || ""
+                        )}
+                    </p>
 
-            </div>
+                </div>
 
-        </body>
+            </body>
 
-        </html>
+            </html>
 
-    `);
-
-
-    preview.document.close();
+        `);
 
 
-}catch(error){
-
-    console.error(
-        "Preview error:",
-        error
-    );
+        preview.document.close();
 
 
-    alert(
-        "Could not preview video: " +
-        error.message
-    );
+    }catch(error){
+
+        console.error(
+            "Preview error:",
+            error
+        );
+
+
+        alert(
+            "Could not preview video: " +
+            error.message
+        );
+
+    }
 
 }
-```
 
-}
 
 /* =====================================================
-DELETE VIDEO
+   DELETE VIDEO
 ===================================================== */
 
 async function deleteVideo(id){
 
-```
-const confirmed =
-    confirm(
-        "Delete this video permanently?\n\n" +
-        "This will remove the database record, " +
-        "video file and thumbnail."
-    );
-
-
-if(!confirmed)
-    return;
-
-
-try{
-
-    await requireAuthenticatedUser();
-
-
-    showMessage(
-        "Deleting video...",
-        "success"
-    );
-
-
-    const result =
-        await supabaseClient
-            .from("videos")
-            .select("*")
-            .eq("id",id)
-            .single();
-
-
-    if(result.error){
-
-        throw new Error(
-            "Could not find video: " +
-            result.error.message
-        );
-
-    }
-
-
-    const video =
-        result.data;
-
-
-    const videoPath =
-        getStoragePath(
-            video.video_url,
-            "videos"
+    const confirmed =
+        confirm(
+            "Delete this video permanently?\n\n" +
+            "This will remove the database record, " +
+            "video file and thumbnail."
         );
 
 
-    const thumbnailPath =
-        getStoragePath(
-            video.thumbnail_url,
-            "thumbnails"
+    if(!confirmed)
+        return;
+
+
+    try{
+
+        await requireAuthenticatedUser();
+
+
+        showMessage(
+            "Deleting video...",
+            "success"
         );
 
 
-    if(videoPath){
+        /* =========================================
+           GET DATABASE RECORD
+        ========================================= */
 
-        const deleteVideoFile =
+        const result =
             await supabaseClient
-                .storage
                 .from("videos")
-                .remove([
-                    videoPath
-                ]);
+                .select("*")
+                .eq("id",id)
+                .single();
 
 
-        if(deleteVideoFile.error){
+        if(result.error){
 
             throw new Error(
-                "Could not delete video file: " +
-                deleteVideoFile.error.message
+                "Could not find video: " +
+                result.error.message
             );
 
         }
 
-    }
+
+        const video =
+            result.data;
 
 
-    if(thumbnailPath){
-
-        await supabaseClient
-            .storage
-            .from("thumbnails")
-            .remove([
-                thumbnailPath
-            ]);
-
-    }
+        const videoPath =
+            getStoragePath(
+                video.video_url,
+                "videos"
+            );
 
 
-    const deleteRecord =
-        await supabaseClient
-            .from("videos")
-            .delete()
-            .eq("id",id);
+        const thumbnailPath =
+            getStoragePath(
+                video.thumbnail_url,
+                "thumbnails"
+            );
 
 
-    if(deleteRecord.error){
+        /* =========================================
+           DELETE VIDEO FILE
+        ========================================= */
 
-        throw new Error(
-            "Files deleted but database record could not be deleted: " +
-            deleteRecord.error.message
+        if(videoPath){
+
+            const deleteVideoFile =
+                await supabaseClient
+                    .storage
+                    .from("videos")
+                    .remove([
+                        videoPath
+                    ]);
+
+
+            if(deleteVideoFile.error){
+
+                throw new Error(
+                    "Could not delete video file: " +
+                    deleteVideoFile.error.message
+                );
+
+            }
+
+        }
+
+
+        /* =========================================
+           DELETE THUMBNAIL
+        ========================================= */
+
+        if(thumbnailPath){
+
+            const deleteThumbnail =
+                await supabaseClient
+                    .storage
+                    .from("thumbnails")
+                    .remove([
+                        thumbnailPath
+                    ]);
+
+
+            if(deleteThumbnail.error){
+
+                console.warn(
+                    "Thumbnail deletion warning:",
+                    deleteThumbnail.error
+                );
+
+            }
+
+        }
+
+
+        /* =========================================
+           DELETE DATABASE RECORD
+        ========================================= */
+
+        const deleteRecord =
+            await supabaseClient
+                .from("videos")
+                .delete()
+                .eq("id",id);
+
+
+        if(deleteRecord.error){
+
+            throw new Error(
+                "Files deleted but database record could not be deleted: " +
+                deleteRecord.error.message
+            );
+
+        }
+
+
+        showMessage(
+            "✓ Video deleted successfully.",
+            "success"
+        );
+
+
+        await loadVideos();
+
+
+    }catch(error){
+
+        console.error(
+            "Delete error:",
+            error
+        );
+
+
+        showMessage(
+            "❌ Delete failed: " +
+            error.message,
+            "error"
         );
 
     }
 
-
-    showMessage(
-        "✓ Video deleted successfully.",
-        "success"
-    );
-
-
-    await loadVideos();
-
-
-}catch(error){
-
-    console.error(
-        "Delete error:",
-        error
-    );
-
-
-    showMessage(
-        "❌ Delete failed: " +
-        error.message,
-        "error"
-    );
-
 }
-```
 
-}
 
 /* =====================================================
-CLEAR FORM
+   CLEAR FORM
 ===================================================== */
 
 function clearForm(){
 
-```
-document.getElementById(
-    "videoTitle"
-).value =
-    "";
+    document.getElementById(
+        "videoTitle"
+    ).value =
+        "";
 
 
-document.getElementById(
-    "videoCategory"
-).value =
-    "";
+    document.getElementById(
+        "videoCategory"
+    ).value =
+        "";
 
 
-document.getElementById(
-    "videoDescription"
-).value =
-    "";
+    document.getElementById(
+        "videoDescription"
+    ).value =
+        "";
 
 
-videoFile.value =
-    "";
+    videoFile.value =
+        "";
 
 
-thumbnailFile.value =
-    "";
+    thumbnailFile.value =
+        "";
 
 
-selectedVideoFile =
-    null;
+    selectedVideoFile =
+        null;
 
 
-selectedThumbnailFile =
-    null;
+    selectedThumbnailFile =
+        null;
 
 
-document.getElementById(
-    "videoFileName"
-).textContent =
-    "";
+    document.getElementById(
+        "videoFileName"
+    ).textContent =
+        "";
 
 
-document.getElementById(
-    "thumbnailFileName"
-).textContent =
-    "";
+    document.getElementById(
+        "thumbnailFileName"
+    ).textContent =
+        "";
 
 
-document.getElementById(
-    "thumbnailPreview"
-).style.display =
-    "none";
+    document.getElementById(
+        "thumbnailPreview"
+    ).style.display =
+        "none";
 
 
-document.getElementById(
-    "thumbnailUploadBox"
-).style.display =
-    "flex";
+    document.getElementById(
+        "thumbnailUploadBox"
+    ).style.display =
+        "flex";
 
 
-document.getElementById(
-    "progressWrapper"
-).style.display =
-    "none";
+    document.getElementById(
+        "progressWrapper"
+    ).style.display =
+        "none";
 
 
-updateProgress(
-    0,
-    "Preparing upload..."
-);
-```
+    updateProgress(
+        0,
+        "Preparing upload..."
+    );
 
 }
 
+
 /* =====================================================
-CATEGORY MANAGEMENT
+   CATEGORY MANAGEMENT
 ===================================================== */
 
 async function loadCategories(){
 
-```
-try{
+    try{
 
-    await requireAuthenticatedUser();
+        await requireAuthenticatedUser();
 
+        const result =
+            await supabaseClient
+                .from("categories")
+                .select("id, name, created_at")
+                .order("name", { ascending:true });
 
-    const result =
-        await supabaseClient
-            .from("categories")
-            .select(
-                "id, name, created_at"
-            )
-            .order(
-                "name",
-                {
-                    ascending:true
-                }
-            );
+        if(result.error){
+            throw new Error(result.error.message);
+        }
 
+        const categories = result.data || [];
 
-    if(result.error){
+        renderCategories(categories);
+        populateCategorySelect(categories);
 
-        throw new Error(
-            result.error.message
+    }catch(error){
+
+        console.error("Could not load categories:", error);
+
+        showCategoryMessage(
+            "Could not load categories: " + error.message,
+            "error"
         );
-
     }
-
-
-    const categories =
-        result.data || [];
-
-
-    renderCategories(
-        categories
-    );
-
-
-    populateCategorySelect(
-        categories
-    );
-
-
-}catch(error){
-
-    console.error(
-        "Could not load categories:",
-        error
-    );
-
-
-    showCategoryMessage(
-        "Could not load categories: " +
-        error.message,
-        "error"
-    );
-
 }
-```
-
-}
-
-/* =====================================================
-RENDER CATEGORIES
-===================================================== */
 
 function renderCategories(categories){
 
-```
-const list =
-    document.getElementById(
-        "categoryList"
-    );
+    const list = document.getElementById("categoryList");
+    const empty = document.getElementById("categoryEmptyState");
+    const count = document.getElementById("categoryCount");
 
+    list.innerHTML = "";
 
-const empty =
-    document.getElementById(
-        "categoryEmptyState"
-    );
+    count.textContent =
+        categories.length +
+        (categories.length === 1 ? " category" : " categories");
 
+    if(categories.length === 0){
+        empty.style.display = "block";
+        return;
+    }
 
-const count =
-    document.getElementById(
-        "categoryCount"
-    );
+    empty.style.display = "none";
 
+    categories.forEach(category => {
 
-list.innerHTML =
-    "";
-
-
-count.textContent =
-    categories.length +
-    (
-        categories.length === 1
-        ?
-        " category"
-        :
-        " categories"
-    );
-
-
-if(categories.length === 0){
-
-    empty.style.display =
-        "block";
-
-    return;
-
-}
-
-
-empty.style.display =
-    "none";
-
-
-categories.forEach(
-    category => {
-
-        const row =
-            document.createElement(
-                "div"
-            );
-
-
-        row.className =
-            "category-row";
-
+        const row = document.createElement("div");
+        row.className = "category-row";
 
         row.innerHTML = `
-
             <div class="category-name-wrap">
-
-                <div class="category-icon">
-                    🏷️
-                </div>
-
+                <div class="category-icon">🏷️</div>
                 <div class="category-name">
                     ${escapeHTML(category.name)}
                 </div>
-
             </div>
 
-
             <div class="category-actions">
-
                 <button
                     type="button"
                     class="category-action"
-                    onclick="editCategory(
-                        ${JSON.stringify(category.id)},
-                        ${JSON.stringify(category.name)}
-                    )"
+                    onclick="editCategory(${JSON.stringify(category.id)}, ${JSON.stringify(category.name)})"
                 >
                     ✏️ Edit
                 </button>
 
-
                 <button
                     type="button"
                     class="category-action delete"
-                    onclick="deleteCategory(
-                        ${JSON.stringify(category.id)},
-                        ${JSON.stringify(category.name)}
-                    )"
+                    onclick="deleteCategory(${JSON.stringify(category.id)}, ${JSON.stringify(category.name)})"
                 >
                     🗑 Delete
                 </button>
-
             </div>
-
         `;
 
-
-        list.appendChild(
-            row
-        );
-
-    }
-);
-```
-
+        list.appendChild(row);
+    });
 }
-
-/* =====================================================
-POPULATE VIDEO CATEGORY SELECT
-===================================================== */
 
 function populateCategorySelect(categories){
 
-```
-const select =
-    document.getElementById(
-        "videoCategory"
-    );
+    const select = document.getElementById("videoCategory");
 
+    if(!select) return;
 
-if(!select)
-    return;
+    const currentValue = select.value;
 
+    select.innerHTML = `
+        <option value="">
+            Select category
+        </option>
+    `;
 
-const currentValue =
-    select.value;
+    categories.forEach(category => {
 
+        const option = document.createElement("option");
+        option.value = category.name;
+        option.textContent = category.name;
+        select.appendChild(option);
+    });
 
-select.innerHTML = `
-
-    <option value="">
-        Select category
-    </option>
-
-`;
-
-
-categories.forEach(
-    category => {
-
-        const option =
-            document.createElement(
-                "option"
-            );
-
-
-        option.value =
-            category.name;
-
-
-        option.textContent =
-            category.name;
-
-
-        select.appendChild(
-            option
-        );
-
+    if(categories.some(category => category.name === currentValue)){
+        select.value = currentValue;
     }
-);
-
-
-if(
-    categories.some(
-        category =>
-            category.name === currentValue
-    )
-){
-
-    select.value =
-        currentValue;
-
 }
-```
-
-}
-
-/* =====================================================
-ADD CATEGORY
-===================================================== */
 
 async function addCategory(){
 
-```
-const input =
-    document.getElementById(
-        "newCategoryName"
-    );
+    const input = document.getElementById("newCategoryName");
+    const name = input.value.trim();
 
-
-const name =
-    input.value.trim();
-
-
-if(!name){
-
-    showCategoryMessage(
-        "Please enter a category name.",
-        "error"
-    );
-
-
-    input.focus();
-
-    return;
-
-}
-
-
-try{
-
-    await requireAuthenticatedUser();
-
-
-    const result =
-        await supabaseClient
-            .from("categories")
-            .insert({
-                name:name
-            })
-            .select(
-                "id, name, created_at"
-            )
-            .single();
-
-
-    if(result.error){
-
-        if(
-            result.error.code ===
-            "23505"
-        ){
-
-            throw new Error(
-                "That category already exists."
-            );
-
-        }
-
-
-        throw new Error(
-            result.error.message
-        );
-
+    if(!name){
+        showCategoryMessage("Please enter a category name.", "error");
+        input.focus();
+        return;
     }
 
+    try{
 
-    input.value =
-        "";
+        await requireAuthenticatedUser();
 
+        const result =
+            await supabaseClient
+                .from("categories")
+                .insert({ name:name })
+                .select("id, name, created_at")
+                .single();
 
-    showCategoryMessage(
-        "✓ Category added successfully.",
-        "success"
-    );
+        if(result.error){
 
+            if(result.error.code === "23505"){
+                throw new Error("That category already exists.");
+            }
 
-    await loadCategories();
+            throw new Error(result.error.message);
+        }
 
+        input.value = "";
 
-}catch(error){
+        showCategoryMessage("✓ Category added successfully.", "success");
 
-    console.error(
-        "Add category error:",
-        error
-    );
+        await loadCategories();
 
+    }catch(error){
 
-    showCategoryMessage(
-        "❌ " + error.message,
-        "error"
-    );
-
+        console.error("Add category error:", error);
+        showCategoryMessage("❌ " + error.message, "error");
+    }
 }
-```
 
-}
+async function editCategory(id, oldName){
 
-/* =====================================================
-EDIT CATEGORY
-===================================================== */
-
-async function editCategory(id,oldName){
-
-```
-const newName =
-    prompt(
+    const newName = prompt(
         "Edit category name:",
         oldName
     );
 
+    if(newName === null) return;
 
-if(newName === null)
-    return;
+    const cleanedName = newName.trim();
 
+    if(!cleanedName){
+        alert("Category name cannot be empty.");
+        return;
+    }
 
-const cleanedName =
-    newName.trim();
+    if(cleanedName === oldName) return;
 
+    try{
 
-if(!cleanedName){
+        await requireAuthenticatedUser();
 
-    alert(
-        "Category name cannot be empty."
-    );
+        /* Update the category itself. */
+        const categoryUpdate =
+            await supabaseClient
+                .from("categories")
+                .update({ name:cleanedName })
+                .eq("id", id);
 
-    return;
+        if(categoryUpdate.error){
 
-}
+            if(categoryUpdate.error.code === "23505"){
+                throw new Error("That category already exists.");
+            }
 
-
-if(cleanedName === oldName)
-    return;
-
-
-try{
-
-    await requireAuthenticatedUser();
-
-
-    const categoryUpdate =
-        await supabaseClient
-            .from("categories")
-            .update({
-                name:cleanedName
-            })
-            .eq(
-                "id",
-                id
-            );
-
-
-    if(categoryUpdate.error){
-
-        if(
-            categoryUpdate.error.code ===
-            "23505"
-        ){
-
-            throw new Error(
-                "That category already exists."
-            );
-
+            throw new Error(categoryUpdate.error.message);
         }
 
+        /* Keep existing videos synchronized with the renamed category. */
+        const videoUpdate =
+            await supabaseClient
+                .from("videos")
+                .update({ category:cleanedName })
+                .eq("category", oldName);
 
-        throw new Error(
-            categoryUpdate.error.message
-        );
-
-    }
-
-
-    const videoUpdate =
-        await supabaseClient
-            .from("videos")
-            .update({
-                category:cleanedName
-            })
-            .eq(
-                "category",
-                oldName
+        if(videoUpdate.error){
+            console.warn(
+                "Category renamed, but existing video categories could not be synchronized:",
+                videoUpdate.error
             );
+        }
 
+        showCategoryMessage("✓ Category updated successfully.", "success");
 
-    if(videoUpdate.error){
+        await loadCategories();
+        await loadVideos();
 
-        console.warn(
-            "Category renamed, but existing video categories could not be synchronized:",
-            videoUpdate.error
-        );
+    }catch(error){
 
+        console.error("Edit category error:", error);
+        showCategoryMessage("❌ " + error.message, "error");
     }
-
-
-    showCategoryMessage(
-        "✓ Category updated successfully.",
-        "success"
-    );
-
-
-    await loadCategories();
-
-    await loadVideos();
-
-
-}catch(error){
-
-    console.error(
-        "Edit category error:",
-        error
-    );
-
-
-    showCategoryMessage(
-        "❌ " + error.message,
-        "error"
-    );
-
 }
-```
 
+async function deleteCategory(id, name){
+
+    const confirmed = confirm(
+        `Delete the category "${name}"?\n\nExisting videos using this category will be changed to "Uncategorized".`
+    );
+
+    if(!confirmed) return;
+
+    try{
+
+        await requireAuthenticatedUser();
+
+        /* Prevent existing videos from pointing at a deleted category. */
+        const videoUpdate =
+            await supabaseClient
+                .from("videos")
+                .update({ category:"Uncategorized" })
+                .eq("category", name);
+
+        if(videoUpdate.error){
+            throw new Error(
+                "Could not update videos using this category: " +
+                videoUpdate.error.message
+            );
+        }
+
+        const result =
+            await supabaseClient
+                .from("categories")
+                .delete()
+                .eq("id", id);
+
+        if(result.error){
+            throw new Error(result.error.message);
+        }
+
+        showCategoryMessage("✓ Category deleted successfully.", "success");
+
+        await loadCategories();
+        await loadVideos();
+
+    }catch(error){
+
+        console.error("Delete category error:", error);
+        showCategoryMessage("❌ " + error.message, "error");
+    }
 }
+
+function showCategoryMessage(text, type){
+
+    const message = document.getElementById("categoryMessage");
+
+    if(!message) return;
+
+    message.textContent = text;
+    message.className = "message " + type;
+    message.style.display = "block";
+
+    if(type === "success"){
+        setTimeout(() => {
+            message.style.display = "none";
+        }, 3000);
+    }
+}
+
 
 /* =====================================================
-DELETE CATEGORY
-UPDATED FUNCTION
+   PAGE NAVIGATION
 ===================================================== */
 
-async function deleteCategory(id,name){
+function openPage(pageId, button){
 
-```
-const confirmed =
-    confirm(
-        `Delete the category "${name}"?\n\n` +
-        `Existing videos using this category ` +
-        `will be changed to "Uncategorized".`
-    );
+    const pages =
+        document.querySelectorAll(".admin-page");
 
+    pages.forEach(page => {
+        page.classList.remove("active");
+    });
 
-if(!confirmed)
-    return;
+    const selectedPage =
+        document.getElementById(pageId);
 
-
-try{
-
-    /* =========================================
-       VERIFY ADMIN SESSION
-    ========================================= */
-
-    await requireAuthenticatedUser();
-
-
-    /* =========================================
-       SHOW STATUS
-    ========================================= */
-
-    showCategoryMessage(
-        "Deleting category...",
-        "success"
-    );
-
-
-    /* =========================================
-       UPDATE VIDEOS FIRST
-    ========================================= */
-
-    const videoUpdate =
-        await supabaseClient
-            .from("videos")
-            .update({
-                category:"Uncategorized"
-            })
-            .eq(
-                "category",
-                name
-            );
-
-
-    if(videoUpdate.error){
-
-        console.error(
-            "Video category update error:",
-            videoUpdate.error
-        );
-
-
-        throw new Error(
-            "Could not update videos using this category: " +
-            videoUpdate.error.message
-        );
-
+    if(selectedPage){
+        selectedPage.classList.add("active");
     }
 
-
-    /* =========================================
-       DELETE CATEGORY
-    ========================================= */
-
-    const categoryDelete =
-        await supabaseClient
-            .from("categories")
-            .delete()
-            .eq(
-                "id",
-                id
-            );
-
-
-    if(categoryDelete.error){
-
-        console.error(
-            "Category delete error:",
-            categoryDelete.error
-        );
-
-
-        throw new Error(
-            "Could not delete category: " +
-            categoryDelete.error.message
-        );
-
+    if(pageId === "categoriesPage"){
+        loadCategories();
     }
 
+    const buttons =
+        document.querySelectorAll(".nav-button");
 
-    /* =========================================
-       SUCCESS
-    ========================================= */
+    buttons.forEach(navButton => {
+        navButton.classList.remove("active");
+    });
 
-    showCategoryMessage(
-        `✓ "${name}" deleted successfully.`,
-        "success"
-    );
+    if(button){
+        button.classList.add("active");
+    }
 
-
-    /* =========================================
-       REFRESH CATEGORY LIST
-    ========================================= */
-
-    await loadCategories();
-
-
-    /* =========================================
-       REFRESH VIDEO LIBRARY
-    ========================================= */
-
-    await loadVideos();
-
-
-}catch(error){
-
-    console.error(
-        "Delete category error:",
-        error
-    );
-
-
-    showCategoryMessage(
-        "❌ Delete failed: " +
-        error.message,
-        "error"
-    );
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
 
 }
-```
 
-}
 
 /* =====================================================
-CATEGORY MESSAGE
-===================================================== */
-
-function showCategoryMessage(text,type){
-
-```
-const message =
-    document.getElementById(
-        "categoryMessage"
-    );
-
-
-if(!message)
-    return;
-
-
-message.textContent =
-    text;
-
-
-message.className =
-    "message " +
-    type;
-
-
-message.style.display =
-    "block";
-
-
-if(type === "success"){
-
-    setTimeout(
-        () => {
-
-            message.style.display =
-                "none";
-
-        },
-        3000
-    );
-
-}
-```
-
-}
-
-/* =====================================================
-PAGE NAVIGATION
-===================================================== */
-
-function openPage(pageId,button){
-
-```
-const pages =
-    document.querySelectorAll(
-        ".admin-page"
-    );
-
-
-pages.forEach(
-    page => {
-
-        page.classList.remove(
-            "active"
-        );
-
-    }
-);
-
-
-const selectedPage =
-    document.getElementById(
-        pageId
-    );
-
-
-if(selectedPage){
-
-    selectedPage.classList.add(
-        "active"
-    );
-
-}
-
-
-if(
-    pageId ===
-    "categoriesPage"
-){
-
-    loadCategories();
-
-}
-
-
-const buttons =
-    document.querySelectorAll(
-        ".nav-button"
-    );
-
-
-buttons.forEach(
-    navButton => {
-
-        navButton.classList.remove(
-            "active"
-        );
-
-    }
-);
-
-
-if(button){
-
-    button.classList.add(
-        "active"
-    );
-
-}
-
-
-window.scrollTo({
-
-    top:0,
-
-    behavior:"smooth"
-
-});
-```
-
-}
-
-/* =====================================================
-ESCAPE HTML
+   ESCAPE HTML
 ===================================================== */
 
 function escapeHTML(value){
 
-```
-return String(
-    value ?? ""
-)
+    return String(
+        value ?? ""
+    )
 
-.replace(
-    /&/g,
-    "&amp;"
-)
+    .replace(
+        /&/g,
+        "&amp;"
+    )
 
-.replace(
-    /</g,
-    "&lt;"
-)
+    .replace(
+        /</g,
+        "&lt;"
+    )
 
-.replace(
-    />/g,
-    "&gt;"
-)
+    .replace(
+        />/g,
+        "&gt;"
+    )
 
-.replace(
-    /"/g,
-    "&quot;"
-)
+    .replace(
+        /"/g,
+        "&quot;"
+    )
 
-.replace(
-    /'/g,
-    "&#039;"
-);
-```
+    .replace(
+        /'/g,
+        "&#039;"
+    );
 
 }
 
+
 /* =====================================================
-CATEGORY ENTER KEY
+   CATEGORY ENTER KEY
 ===================================================== */
 
 const newCategoryInput =
-document.getElementById(
-"newCategoryName"
-);
+    document.getElementById("newCategoryName");
 
 if(newCategoryInput){
-
-```
-newCategoryInput.addEventListener(
-    "keydown",
-    function(event){
-
+    newCategoryInput.addEventListener("keydown", function(event){
         if(event.key === "Enter"){
-
             event.preventDefault();
-
             addCategory();
-
         }
-
-    }
-);
-```
-
+    });
 }
 
+
 /* =====================================================
-START APPLICATION
+   START APPLICATION
 ===================================================== */
 
 checkSession();

@@ -1073,55 +1073,6 @@ body{
             All
         </button>
 
-        <button
-            class="category"
-            data-category="BackShots"
-        >
-            BackShots
-        </button>
-
-        <button
-            class="category"
-            data-category="Masterbates"
-        >
-            Masterbates
-        </button>
-
-        <button
-            class="category"
-            data-category="RoughX"
-        >
-            RoughX
-        </button>
-
-        <button
-            class="category"
-            data-category="BBW"
-        >
-            BBW
-        </button>
-
-        <button
-            class="category"
-            data-category="Africans"
-        >
-            Africans
-        </button>
-
-        <button
-            class="category"
-            data-category="Cums"
-        >
-            Cums
-        </button>
-
-        <button
-            class="category"
-            data-category="Close Friends"
-        >
-            Close Friends
-        </button>
-
     </div>
 
 </nav>
@@ -1351,6 +1302,8 @@ function enterWebsite(){
     document.body.style.overflow =
         "";
 
+loadCategories();
+setupCategoryRealtime();
 loadVideos();
 
 updateMiniAppPresence();
@@ -1453,18 +1406,143 @@ const closePlayer =
    CATEGORIES
 ========================= */
 
-const categories = [
+let categories = ["All"];
 
-    "All",
-    "BackShots",
-    "Masterbates",
-    "RoughX",
-    "BBW",
-    "Africans",
-    "Cums",
-    "Close Friends"
 
-];
+/* =========================
+   LOAD CATEGORIES
+========================= */
+
+async function loadCategories(){
+
+    try{
+
+        const { data, error } =
+            await supabaseClient
+                .from("categories")
+                .select("*");
+
+        if(error){
+            console.error(
+                "Categories load error:",
+                error
+            );
+            return;
+        }
+
+        const databaseCategories = (data || [])
+            .map(row =>
+                row.name ??
+                row.category ??
+                row.title ??
+                ""
+            )
+            .map(value => String(value).trim())
+            .filter(Boolean);
+
+        categories = [
+            "All",
+            ...databaseCategories.filter(
+                (category, index, list) =>
+                    list.findIndex(
+                        item =>
+                            item.toLowerCase() ===
+                            category.toLowerCase()
+                    ) === index
+            )
+        ];
+
+        if(
+            currentCategory !== "All" &&
+            !categories.some(
+                category =>
+                    category.toLowerCase() ===
+                    currentCategory.toLowerCase()
+            )
+        ){
+            currentCategory = "All";
+            searchTerm = "";
+            searchInput.value = "";
+            clearSearch.style.display = "none";
+        }
+
+        renderCategoryButtons();
+        renderVideos();
+
+    }
+    catch(error){
+
+        console.error(
+            "Unexpected categories error:",
+            error
+        );
+
+    }
+}
+
+function renderCategoryButtons(){
+
+    const categoryContainer =
+        document.getElementById("categories");
+
+    if(!categoryContainer)
+        return;
+
+    categoryContainer.innerHTML = "";
+
+    categories.forEach(category => {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.className = "category";
+        button.dataset.category = category;
+        button.textContent = category;
+
+        if(
+            category.toLowerCase() ===
+            currentCategory.toLowerCase()
+        ){
+            button.classList.add("active");
+        }
+
+        categoryContainer.appendChild(button);
+
+    });
+}
+
+function setupCategoryRealtime(){
+
+    supabaseClient
+        .channel("categories-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "categories"
+            },
+            async payload => {
+
+                console.log(
+                    "Category realtime update:",
+                    payload.eventType
+                );
+
+                await loadCategories();
+
+            }
+        )
+        .subscribe(status => {
+
+            console.log(
+                "Categories realtime status:",
+                status
+            );
+
+        });
+}
 
 
 /* =========================

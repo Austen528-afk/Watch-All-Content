@@ -1206,6 +1206,19 @@ textarea{
 
 }
 
+
+/* =====================================================
+   ADMIN PAGES
+===================================================== */
+
+.admin-page{
+    display:none;
+}
+
+.admin-page.active{
+    display:block;
+}
+
 </style>
 
 </head>
@@ -1305,6 +1318,7 @@ textarea{
 
 <div id="app">
 
+
 <!-- =====================================================
      SIDEBAR
 ===================================================== -->
@@ -1319,63 +1333,55 @@ textarea{
         Administration
     </div>
 
-    <!-- MAIN DASHBOARD -->
     <button
         class="nav-button active"
-        onclick="goToUpload()"
+        onclick="openPage('dashboardPage', this)"
     >
         📊 Dashboard
     </button>
 
-    <!-- UPLOAD + LIBRARY PAGE -->
     <button
         class="nav-button"
-        onclick="goToUpload()"
+        onclick="openPage('videosPage', this)"
     >
         🎬 Videos
     </button>
 
-    <!-- USERS -->
     <button
         class="nav-button"
-        onclick="goToUsers()"
+        onclick="openPage('usersPage', this)"
     >
         👥 Users
     </button>
 
-    <!-- CATEGORIES -->
     <button
         class="nav-button"
-        onclick="goToCategories()"
+        onclick="openPage('categoriesPage', this)"
     >
         🏷️ Categories
     </button>
 
-    <!-- ANALYTICS -->
     <button
         class="nav-button"
-        onclick="goToAnalytics()"
+        onclick="openPage('analyticsPage', this)"
     >
         📈 Analytics
     </button>
 
-    <!-- REPORTS -->
     <button
         class="nav-button"
-        onclick="goToReports()"
+        onclick="openPage('reportsPage', this)"
     >
         📋 Reports
     </button>
 
-    <!-- SETTINGS -->
     <button
         class="nav-button"
-        onclick="goToSettings()"
+        onclick="openPage('settingsPage', this)"
     >
         ⚙️ Settings
     </button>
 
-    <!-- WEBSITE -->
     <a
         href="index.html"
         class="nav-button"
@@ -1401,12 +1407,21 @@ textarea{
 </aside>
 
 
+
 <!-- =====================================================
      MAIN
 ===================================================== -->
 
 <main class="main">
 
+    <!-- =================================================
+         DASHBOARD PAGE
+    ================================================= -->
+
+    <div
+        id="dashboardPage"
+        class="admin-page active"
+    >
 
     <!-- MOBILE HEADER -->
 
@@ -1438,7 +1453,7 @@ textarea{
             </h1>
 
             <p>
-                Upload and manage your StreamX videos.
+                Overview of your StreamX platform.
             </p>
 
         </div>
@@ -1659,9 +1674,35 @@ textarea{
 
 </div>
 
+
+
+    </div>
+
+
     <!-- =================================================
-         UPLOAD
+         VIDEOS PAGE
     ================================================= -->
+
+    <div
+        id="videosPage"
+        class="admin-page"
+    >
+
+        <div class="topbar">
+
+            <div>
+
+                <h1>
+                    Videos
+                </h1>
+
+                <p>
+                    Upload and manage your StreamX videos.
+                </p>
+
+            </div>
+
+        </div>
 
     <section
         class="section"
@@ -1949,6 +1990,7 @@ textarea{
          VIDEO LIBRARY
     ================================================= -->
 
+
     <section
         class="section"
         id="videosSection"
@@ -1999,12 +2041,61 @@ textarea{
 
     </section>
 
+    </div>
+
+
+    <!-- =================================================
+         FUTURE ADMIN PAGES
+    ================================================= -->
+
+    <div id="usersPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Users</h1>
+                <p>User management will be added in a later step.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="categoriesPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Categories</h1>
+                <p>Category management will be added in a later step.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="analyticsPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Analytics</h1>
+                <p>Advanced analytics will be added in a later step.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportsPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Reports</h1>
+                <p>Reports will be added in a later step.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsPage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Settings</h1>
+                <p>Admin settings will be added in a later step.</p>
+            </div>
+        </div>
+    </div>
 
 </main>
 
 </div>
-
-
 
 <script>
 
@@ -4220,117 +4311,40 @@ function clearForm(){
 
 
 /* =====================================================
-   NAVIGATION
+   PAGE NAVIGATION
 ===================================================== */
 
-/*
- * DASHBOARD
- *
- * For now the dashboard uses the existing
- * upload/library page.
- */
+function openPage(pageId, button){
 
-function goToUpload(){
+    const pages =
+        document.querySelectorAll(".admin-page");
 
-    document
-        .getElementById("uploadSection")
-        .scrollIntoView({
-            behavior:"smooth"
-        });
+    pages.forEach(page => {
+        page.classList.remove("active");
+    });
 
-}
+    const selectedPage =
+        document.getElementById(pageId);
 
+    if(selectedPage){
+        selectedPage.classList.add("active");
+    }
 
-/*
- * VIDEOS
- *
- * Videos contains both:
- * - Upload New Video
- * - Video Library
- */
+    const buttons =
+        document.querySelectorAll(".nav-button");
 
-function goToVideos(){
+    buttons.forEach(navButton => {
+        navButton.classList.remove("active");
+    });
 
-    document
-        .getElementById("uploadSection")
-        .scrollIntoView({
-            behavior:"smooth"
-        });
+    if(button){
+        button.classList.add("active");
+    }
 
-}
-
-
-/*
- * USERS
- *
- * Section will be built next.
- */
-
-function goToUsers(){
-
-    alert(
-        "Users management will be added next."
-    );
-
-}
-
-
-/*
- * CATEGORIES
- *
- * Section will be built next.
- */
-
-function goToCategories(){
-
-    alert(
-        "Category management will be added next."
-    );
-
-}
-
-
-/*
- * ANALYTICS
- *
- * Section will be built next.
- */
-
-function goToAnalytics(){
-
-    alert(
-        "Analytics will be added next."
-    );
-
-}
-
-
-/*
- * REPORTS
- *
- * Section will be built next.
- */
-
-function goToReports(){
-
-    alert(
-        "Reports will be added next."
-    );
-
-}
-
-
-/*
- * SETTINGS
- *
- * Section will be built next.
- */
-
-function goToSettings(){
-
-    alert(
-        "Settings will be added next."
-    );
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
 
 }
 

@@ -1295,7 +1295,7 @@ async function updateWebsitePresence(){
                     last_seen: new Date().toISOString()
                 },
                 {
-                    onConflict: "user_id"
+                    onConflict: "user_id,platform"
                 }
             );
 

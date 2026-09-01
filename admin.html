@@ -1427,93 +1427,203 @@ textarea{
 
 
 
-    <!-- =================================================
-         STATISTICS
-    ================================================= -->
+```html
+<!-- =================================================
+     STATISTICS
+================================================= -->
 
-    <div class="stats">
+<div class="stats">
 
+    <div class="stat">
 
-        <div class="stat">
+        <div class="stat-icon">
+            🎬
+        </div>
 
-            <div class="stat-icon">
-                🎬
-            </div>
+        <div class="stat-label">
+            Uploaded Videos
+        </div>
 
-            <div class="stat-label">
-                Uploaded Videos
-            </div>
+        <div
+            class="stat-number"
+            id="totalVideos"
+        >
+            0
+        </div>
 
-            <div
-                class="stat-number"
-                id="totalVideos"
-            >
-                0
-            </div>
-        
-            <div class="stat">
-
-    <div class="stat-icon">
-        ❤️
     </div>
 
-    <div class="stat-label">
-        Total Likes
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            ❤️
+        </div>
+
+        <div class="stat-label">
+            Total Likes
+        </div>
+
+        <div
+            class="stat-number"
+            id="totalLikes"
+        >
+            0
+        </div>
+
     </div>
 
-    <div
-        class="stat-number"
-        id="totalLikes"
-    >
-        0
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            👁️
+        </div>
+
+        <div class="stat-label">
+            Total Views
+        </div>
+
+        <div
+            class="stat-number"
+            id="totalViews"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            📡
+        </div>
+
+        <div class="stat-label">
+            Platform
+        </div>
+
+        <div
+            class="stat-number"
+            style="font-size:20px"
+        >
+            Online
+        </div>
+
     </div>
 
 </div>
 
+
+<!-- =================================================
+     ACTIVE USERS
+===================================================== -->
+
+<div class="stats">
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🌐
         </div>
 
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                👁️
-            </div>
-
-            <div class="stat-label">
-                Total Views
-            </div>
-
-            <div
-                class="stat-number"
-                id="totalViews"
-            >
-                0
-            </div>
-
+        <div class="stat-label">
+            Website Users
         </div>
 
-
-        <div class="stat">
-
-            <div class="stat-icon">
-                📡
-            </div>
-
-            <div class="stat-label">
-                Platform
-            </div>
-
-            <div
-                class="stat-number"
-                style="font-size:20px"
-            >
-                Online
-            </div>
-
+        <div
+            class="stat-number"
+            id="websiteUsers"
+        >
+            0
         </div>
-
 
     </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            📱
+        </div>
+
+        <div class="stat-label">
+            Mini App Users
+        </div>
+
+        <div
+            class="stat-number"
+            id="miniAppUsers"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🟢
+        </div>
+
+        <div class="stat-label">
+            Website Online Now
+        </div>
+
+        <div
+            class="stat-number"
+            id="websiteOnline"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🟢
+        </div>
+
+        <div class="stat-label">
+            Mini App Online Now
+        </div>
+
+        <div
+            class="stat-number"
+            id="miniAppOnline"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🔵
+        </div>
+
+        <div class="stat-label">
+            Active on Both
+        </div>
+
+        <div
+            class="stat-number"
+            id="activeBoth"
+        >
+            0
+        </div>
+
+    </div>
+
+</div>
+```
+
 
 
 
@@ -2180,6 +2290,8 @@ async function showApplication(
 
     await loadVideos();
 
+    await loadActiveUsers();
+
 }
 
 
@@ -2572,11 +2684,224 @@ async function updateActiveUser(){
 
 }
 
+/* =====================================================
+   LOAD ACTIVE USERS
+===================================================== */
+
+async function loadActiveUsers(){
+
+    try{
+
+        const result =
+            await supabaseClient
+                .from("active_users")
+                .select("user_id, platform, last_seen");
+
+        if(result.error){
+
+            throw new Error(
+                result.error.message
+            );
+
+        }
+
+        const users =
+            result.data || [];
+
+
+        /*
+         * A user is considered online if their
+         * last_seen timestamp is within the
+         * last 5 minutes.
+         */
+
+        const onlineLimit =
+            Date.now() - (5 * 60 * 1000);
+
+
+        let websiteUsers = new Set();
+        let miniAppUsers = new Set();
+
+        let websiteOnline = new Set();
+        let miniAppOnline = new Set();
+
+
+        users.forEach(user => {
+
+            if(!user.user_id)
+                return;
+
+
+            const platform =
+                String(
+                    user.platform || ""
+                ).toLowerCase();
+
+
+            /*
+             * WEBSITE
+             */
+
+            if(platform === "website"){
+
+                websiteUsers.add(
+                    user.user_id
+                );
+
+
+                if(
+                    user.last_seen &&
+                    new Date(
+                        user.last_seen
+                    ).getTime() >= onlineLimit
+                ){
+
+                    websiteOnline.add(
+                        user.user_id
+                    );
+
+                }
+
+            }
+
+
+            /*
+             * MINI APP
+             */
+
+            if(
+                platform === "miniapp" ||
+                platform === "mini_app"
+            ){
+
+                miniAppUsers.add(
+                    user.user_id
+                );
+
+
+                if(
+                    user.last_seen &&
+                    new Date(
+                        user.last_seen
+                    ).getTime() >= onlineLimit
+                ){
+
+                    miniAppOnline.add(
+                        user.user_id
+                    );
+
+                }
+
+            }
+
+        });
+
+
+        /*
+         * USERS ACTIVE ON BOTH PLATFORMS
+         */
+
+        let activeBoth = 0;
+
+
+        websiteUsers.forEach(
+            userId => {
+
+                if(
+                    miniAppUsers.has(
+                        userId
+                    )
+                ){
+
+                    activeBoth++;
+
+                }
+
+            }
+        );
+
+
+        /*
+         * UPDATE DASHBOARD
+         */
+
+        document.getElementById(
+            "websiteUsers"
+        ).textContent =
+            websiteUsers.size.toLocaleString();
+
+
+        document.getElementById(
+            "miniAppUsers"
+        ).textContent =
+            miniAppUsers.size.toLocaleString();
+
+
+        document.getElementById(
+            "websiteOnline"
+        ).textContent =
+            websiteOnline.size.toLocaleString();
+
+
+        document.getElementById(
+            "miniAppOnline"
+        ).textContent =
+            miniAppOnline.size.toLocaleString();
+
+
+        document.getElementById(
+            "activeBoth"
+        ).textContent =
+            activeBoth.toLocaleString();
+
+
+        console.log(
+            "Active users:",
+            {
+                websiteUsers:
+                    websiteUsers.size,
+
+                miniAppUsers:
+                    miniAppUsers.size,
+
+                websiteOnline:
+                    websiteOnline.size,
+
+                miniAppOnline:
+                    miniAppOnline.size,
+
+                activeBoth:
+                    activeBoth
+            }
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Could not load active users:",
+            error
+        );
+
+    }
+
+}
+
+
 setInterval(
     updateActiveUser,
     60000
 );
 
+
+/* =====================================================
+   ACTIVE USERS REFRESH
+===================================================== */
+
+setInterval(
+    loadActiveUsers,
+    30000
+);
 
 /* =====================================================
    UPLOAD VIDEO

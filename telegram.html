@@ -1273,16 +1273,16 @@ const supabaseClient =
    WEBSITE PRESENCE TRACKING
 ========================================= */
 
-const WEBSITE_USER_ID =
-    localStorage.getItem("streamx_user_id") ||
+const MINI_APP_USER_ID =
+    localStorage.getItem("streamx_mini_app_user_id") ||
     crypto.randomUUID();
 
 localStorage.setItem(
-    "streamx_user_id",
-    WEBSITE_USER_ID
+    "streamx_mini_app_user_id",
+    MINI_APP_USER_ID
 );
 
-async function updateWebsitePresence(){
+async function updateMiniAppPresence(){
 
     try{
 
@@ -1290,8 +1290,8 @@ async function updateWebsitePresence(){
             .from("active_users")
             .upsert(
                 {
-                    user_id: WEBSITE_USER_ID,
-                    platform: "website",
+                    user_id: MINI_APP_USER_ID,
+                    platform: "mini_app",
                     last_seen: new Date().toISOString()
                 },
                 {
@@ -1302,7 +1302,7 @@ async function updateWebsitePresence(){
     }catch(error){
 
         console.error(
-            "Presence update failed:",
+            "Mini App presence update failed:",
             error
         );
 

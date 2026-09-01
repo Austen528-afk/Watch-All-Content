@@ -2253,39 +2253,6 @@ if(session){
    SHOW APPLICATION
 ===================================================== */
 
-if(session){
-
-    console.log(
-        "Existing Supabase session found:",
-        session.user.email
-    );
-
-    await updateActiveUser();
-
-    showApplication(
-        session
-    );
-
-
-    document
-        .getElementById("app")
-        .style.display =
-        "block";
-
-
-    document
-        .getElementById("loggedInEmail")
-        .textContent =
-        session.user.email;
-
-
-await loadVideos();
-
-await updateActiveUser();
-
-await loadActiveUsers();
-
-}
 
 
 /* =====================================================
@@ -2304,6 +2271,43 @@ function showLogin(){
         .getElementById("app")
         .style.display =
         "none";
+
+}
+
+/* =====================================================
+   SHOW APPLICATION
+===================================================== */
+
+async function showApplication(session){
+
+    if(!session || !session.user){
+        showLogin();
+        return;
+    }
+
+    console.log(
+        "Opening StreamX Admin:",
+        session.user.email
+    );
+
+    document
+        .getElementById("loginScreen")
+        .style.display =
+        "none";
+
+    document
+        .getElementById("app")
+        .style.display =
+        "block";
+
+    document
+        .getElementById("loggedInEmail")
+        .textContent =
+        session.user.email;
+
+    await loadVideos();
+
+    await loadActiveUsers();
 
 }
 

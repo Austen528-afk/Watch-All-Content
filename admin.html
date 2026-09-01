@@ -2279,9 +2279,11 @@ if(session){
         session.user.email;
 
 
-    await loadVideos();
+await loadVideos();
 
-    await loadActiveUsers();
+await updateActiveUser();
+
+await loadActiveUsers();
 
 }
 

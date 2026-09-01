@@ -2215,17 +2215,18 @@ async function checkSession(){
             result.data.session;
 
 
-        if(session){
+if(session){
 
-            console.log(
-                "Existing Supabase session found:",
-                session.user.email
-            );
+    console.log(
+        "Existing Supabase session found:",
+        session.user.email
+    );
 
+    await updateActiveUser();
 
-            showApplication(
-                session
-            );
+    showApplication(
+        session
+    );
 
         }else{
 
@@ -2252,23 +2253,18 @@ async function checkSession(){
    SHOW APPLICATION
 ===================================================== */
 
-async function showApplication(
-    session
-){
+if(session){
 
-    if(!session){
+    console.log(
+        "Existing Supabase session found:",
+        session.user.email
+    );
 
-        showLogin();
+    await updateActiveUser();
 
-        return;
-
-    }
-
-
-    document
-        .getElementById("loginScreen")
-        .style.display =
-        "none";
+    showApplication(
+        session
+    );
 
 
     document
@@ -2711,7 +2707,7 @@ async function loadActiveUsers(){
          */
 
         const onlineLimit =
-            Date.now() - (5 * 60 * 1000);
+            Date.now() - (20 * 1000);
 
 
         let websiteUsers = new Set();
@@ -2885,7 +2881,7 @@ async function loadActiveUsers(){
 
 setInterval(
     updateActiveUser,
-    60000
+    10000
 );
 
 
@@ -2895,7 +2891,7 @@ setInterval(
 
 setInterval(
     loadActiveUsers,
-    30000
+    5000
 );
 
 /* =====================================================

@@ -1614,6 +1614,25 @@ textarea{
     </div>
 
 
+    <div class="stat">
+
+        <div class="stat-icon">
+            🔵
+        </div>
+
+        <div class="stat-label">
+            Active on Both
+        </div>
+
+        <div
+            class="stat-number"
+            id="activeBoth"
+        >
+            0
+        </div>
+
+    </div>
+
 </div>
 
 
@@ -1664,26 +1683,6 @@ textarea{
         <div
             class="stat-number"
             id="miniAppOnline"
-        >
-            0
-        </div>
-
-    </div>
-
-
-    <div class="stat">
-
-        <div class="stat-icon">
-            🔵
-        </div>
-
-        <div class="stat-label">
-            Total Active Users
-        </div>
-
-        <div
-            class="stat-number"
-            id="totalActiveUsers"
         >
             0
         </div>
@@ -1776,34 +1775,6 @@ textarea{
 
                     <option value="">
                         Select category
-                    </option>
-
-                    <option value="BackShots">
-                        BackShots
-                    </option>
-
-                    <option value="Masterbates">
-                        Masterbates
-                    </option>
-
-                    <option value="RoughX">
-                        RoughX
-                    </option>
-
-                    <option value="BBW">
-                        BBW
-                    </option>
-
-                    <option value="Africans">
-                        Africans
-                    </option>
-
-                    <option value="Cums">
-                        Cums
-                    </option>
-
-                    <option value="Close Friends">
-                        Close Friends
                     </option>
 
                 </select>
@@ -2067,12 +2038,62 @@ textarea{
     ================================================= -->
 
     <div id="categoriesPage" class="admin-page">
+
         <div class="topbar">
             <div>
                 <h1>Categories</h1>
-                <p>Category management will be added in a later step.</p>
+                <p>Add, edit and remove categories used across StreamX.</p>
             </div>
         </div>
+
+        <section class="section">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Category Management</h2>
+                    <p>Create categories for your videos and manage existing ones.</p>
+                </div>
+            </div>
+
+            <div class="category-manager">
+
+                <div class="category-add-box">
+                    <label for="newCategoryName">Add New Category</label>
+                    <div class="category-add-row">
+                        <input
+                            type="text"
+                            id="newCategoryName"
+                            placeholder="Enter category name"
+                            maxlength="80"
+                        >
+                        <button
+                            type="button"
+                            class="primary-button"
+                            onclick="addCategory()"
+                        >
+                            + Add Category
+                        </button>
+                    </div>
+                    <div id="categoryMessage" class="message" style="display:none;margin-top:14px;"></div>
+                </div>
+
+                <div class="category-list-header">
+                    <h3>Categories</h3>
+                    <span id="categoryCount" class="video-count">0 categories</span>
+                </div>
+
+                <div id="categoryList" class="category-list"></div>
+
+                <div id="categoryEmptyState" class="empty" style="display:none;">
+                    <div class="empty-icon">🏷️</div>
+                    <h3>No categories yet</h3>
+                    <p style="margin-top:8px;">Add your first category above.</p>
+                </div>
+
+            </div>
+
+        </section>
+
     </div>
 
     <div id="analyticsPage" class="admin-page">
@@ -2443,6 +2464,8 @@ async function showApplication(session){
         session.user.email;
 
     await loadVideos();
+
+    await loadCategories();
 
     await loadActiveUsers();
 
@@ -2932,13 +2955,27 @@ async function loadActiveUsers(){
 
 
         /*
-         * TOTAL ACTIVE USERS
-         * Live total = Website Online Now + Mini App Online Now
+         * USERS ACTIVE ON BOTH PLATFORMS
          */
 
-        const totalActiveUsers =
-            websiteOnline.size +
-            miniAppOnline.size;
+        let activeBoth = 0;
+
+
+        websiteUsers.forEach(
+            userId => {
+
+                if(
+                    miniAppUsers.has(
+                        userId
+                    )
+                ){
+
+                    activeBoth++;
+
+                }
+
+            }
+        );
 
 
         /*
@@ -2970,9 +3007,9 @@ async function loadActiveUsers(){
 
 
         document.getElementById(
-            "totalActiveUsers"
+            "activeBoth"
         ).textContent =
-            totalActiveUsers.toLocaleString();
+            activeBoth.toLocaleString();
 
 
         console.log(
@@ -2990,8 +3027,8 @@ async function loadActiveUsers(){
                 miniAppOnline:
                     miniAppOnline.size,
 
-                totalActiveUsers:
-                    totalActiveUsers
+                activeBoth:
+                    activeBoth
             }
         );
 
@@ -3022,14 +3059,6 @@ setInterval(
     loadActiveUsers,
     5000
 );
-
-/* Refresh live activity immediately when admin returns to the tab */
-document.addEventListener("visibilitychange", function(){
-    if(!document.hidden){
-        updateActiveUser();
-        loadActiveUsers();
-    }
-});
 
 /* =====================================================
    UPLOAD VIDEO
@@ -4002,7 +4031,135 @@ async function loadSingleVideo(id){
 
                     }
 
-                </style>
+                
+
+/* =====================================================
+   CATEGORY MANAGEMENT
+===================================================== */
+
+.category-manager{
+    width:100%;
+}
+
+.category-add-box{
+    padding:22px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    background:rgba(255,255,255,.025);
+}
+
+.category-add-box label{
+    display:block;
+    font-weight:700;
+    margin-bottom:10px;
+}
+
+.category-add-row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+}
+
+.category-add-row input{
+    flex:1;
+    min-width:0;
+}
+
+.primary-button{
+    border:0;
+    border-radius:10px;
+    padding:13px 18px;
+    cursor:pointer;
+    font-weight:700;
+    background:#ff1744;
+    color:#fff;
+    white-space:nowrap;
+}
+
+.primary-button:hover{
+    opacity:.9;
+}
+
+.category-list-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:28px;
+    margin-bottom:14px;
+}
+
+.category-list-header h3{
+    margin:0;
+}
+
+.category-list{
+    display:grid;
+    gap:10px;
+}
+
+.category-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:15px 18px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px;
+    background:rgba(255,255,255,.025);
+}
+
+.category-name{
+    font-weight:700;
+    word-break:break-word;
+}
+
+.category-actions{
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+}
+
+.category-action{
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.05);
+    color:#fff;
+    border-radius:8px;
+    padding:8px 12px;
+    cursor:pointer;
+}
+
+.category-action:hover{
+    background:rgba(255,255,255,.1);
+}
+
+.category-action.delete{
+    color:#ff6b81;
+}
+
+@media(max-width:700px){
+    .category-add-row{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .category-add-row .primary-button{
+        width:100%;
+    }
+
+    .category-row{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .category-actions{
+        width:100%;
+    }
+
+    .category-action{
+        flex:1;
+    }
+}
+</style>
 
             </head>
 
@@ -4314,6 +4471,295 @@ function clearForm(){
 
 
 /* =====================================================
+   CATEGORY MANAGEMENT
+===================================================== */
+
+async function loadCategories(){
+
+    try{
+
+        await requireAuthenticatedUser();
+
+        const result =
+            await supabaseClient
+                .from("categories")
+                .select("id, name, created_at")
+                .order("name", { ascending:true });
+
+        if(result.error){
+            throw new Error(result.error.message);
+        }
+
+        const categories = result.data || [];
+
+        renderCategories(categories);
+        populateCategorySelect(categories);
+
+    }catch(error){
+
+        console.error("Could not load categories:", error);
+
+        showCategoryMessage(
+            "Could not load categories: " + error.message,
+            "error"
+        );
+    }
+}
+
+function renderCategories(categories){
+
+    const list = document.getElementById("categoryList");
+    const empty = document.getElementById("categoryEmptyState");
+    const count = document.getElementById("categoryCount");
+
+    list.innerHTML = "";
+
+    count.textContent =
+        categories.length +
+        (categories.length === 1 ? " category" : " categories");
+
+    if(categories.length === 0){
+        empty.style.display = "block";
+        return;
+    }
+
+    empty.style.display = "none";
+
+    categories.forEach(category => {
+
+        const row = document.createElement("div");
+        row.className = "category-row";
+
+        row.innerHTML = `
+            <div class="category-name">
+                ${escapeHTML(category.name)}
+            </div>
+
+            <div class="category-actions">
+                <button
+                    type="button"
+                    class="category-action"
+                    onclick="editCategory(${JSON.stringify(category.id)}, ${JSON.stringify(category.name)})"
+                >
+                    ✏️ Edit
+                </button>
+
+                <button
+                    type="button"
+                    class="category-action delete"
+                    onclick="deleteCategory(${JSON.stringify(category.id)}, ${JSON.stringify(category.name)})"
+                >
+                    🗑 Delete
+                </button>
+            </div>
+        `;
+
+        list.appendChild(row);
+    });
+}
+
+function populateCategorySelect(categories){
+
+    const select = document.getElementById("videoCategory");
+
+    if(!select) return;
+
+    const currentValue = select.value;
+
+    select.innerHTML = `
+        <option value="">
+            Select category
+        </option>
+    `;
+
+    categories.forEach(category => {
+
+        const option = document.createElement("option");
+        option.value = category.name;
+        option.textContent = category.name;
+        select.appendChild(option);
+    });
+
+    if(categories.some(category => category.name === currentValue)){
+        select.value = currentValue;
+    }
+}
+
+async function addCategory(){
+
+    const input = document.getElementById("newCategoryName");
+    const name = input.value.trim();
+
+    if(!name){
+        showCategoryMessage("Please enter a category name.", "error");
+        input.focus();
+        return;
+    }
+
+    try{
+
+        await requireAuthenticatedUser();
+
+        const result =
+            await supabaseClient
+                .from("categories")
+                .insert({ name:name })
+                .select("id, name, created_at")
+                .single();
+
+        if(result.error){
+
+            if(result.error.code === "23505"){
+                throw new Error("That category already exists.");
+            }
+
+            throw new Error(result.error.message);
+        }
+
+        input.value = "";
+
+        showCategoryMessage("✓ Category added successfully.", "success");
+
+        await loadCategories();
+
+    }catch(error){
+
+        console.error("Add category error:", error);
+        showCategoryMessage("❌ " + error.message, "error");
+    }
+}
+
+async function editCategory(id, oldName){
+
+    const newName = prompt(
+        "Edit category name:",
+        oldName
+    );
+
+    if(newName === null) return;
+
+    const cleanedName = newName.trim();
+
+    if(!cleanedName){
+        alert("Category name cannot be empty.");
+        return;
+    }
+
+    if(cleanedName === oldName) return;
+
+    try{
+
+        await requireAuthenticatedUser();
+
+        /* Update the category itself. */
+        const categoryUpdate =
+            await supabaseClient
+                .from("categories")
+                .update({ name:cleanedName })
+                .eq("id", id);
+
+        if(categoryUpdate.error){
+
+            if(categoryUpdate.error.code === "23505"){
+                throw new Error("That category already exists.");
+            }
+
+            throw new Error(categoryUpdate.error.message);
+        }
+
+        /* Keep existing videos synchronized with the renamed category. */
+        const videoUpdate =
+            await supabaseClient
+                .from("videos")
+                .update({ category:cleanedName })
+                .eq("category", oldName);
+
+        if(videoUpdate.error){
+            console.warn(
+                "Category renamed, but existing video categories could not be synchronized:",
+                videoUpdate.error
+            );
+        }
+
+        showCategoryMessage("✓ Category updated successfully.", "success");
+
+        await loadCategories();
+        await loadVideos();
+
+    }catch(error){
+
+        console.error("Edit category error:", error);
+        showCategoryMessage("❌ " + error.message, "error");
+    }
+}
+
+async function deleteCategory(id, name){
+
+    const confirmed = confirm(
+        `Delete the category "${name}"?\n\nExisting videos using this category will be changed to "Uncategorized".`
+    );
+
+    if(!confirmed) return;
+
+    try{
+
+        await requireAuthenticatedUser();
+
+        /* Prevent existing videos from pointing at a deleted category. */
+        const videoUpdate =
+            await supabaseClient
+                .from("videos")
+                .update({ category:"Uncategorized" })
+                .eq("category", name);
+
+        if(videoUpdate.error){
+            throw new Error(
+                "Could not update videos using this category: " +
+                videoUpdate.error.message
+            );
+        }
+
+        const result =
+            await supabaseClient
+                .from("categories")
+                .delete()
+                .eq("id", id);
+
+        if(result.error){
+            throw new Error(result.error.message);
+        }
+
+        showCategoryMessage("✓ Category deleted successfully.", "success");
+
+        await loadCategories();
+        await loadVideos();
+
+    }catch(error){
+
+        console.error("Delete category error:", error);
+        showCategoryMessage("❌ " + error.message, "error");
+    }
+}
+
+function showCategoryMessage(text, type){
+
+    const message = document.getElementById("categoryMessage");
+
+    if(!message) return;
+
+    message.textContent = text;
+    message.className = "message " + type;
+    message.style.display = "block";
+
+    if(type === "success"){
+        setTimeout(() => {
+            message.style.display = "none";
+        }, 3000);
+    }
+}
+
+
+/* =====================================================
    PAGE NAVIGATION
 ===================================================== */
 
@@ -4331,6 +4777,10 @@ function openPage(pageId, button){
 
     if(selectedPage){
         selectedPage.classList.add("active");
+    }
+
+    if(pageId === "categoriesPage"){
+        loadCategories();
     }
 
     const buttons =
@@ -4387,6 +4837,23 @@ function escapeHTML(value){
         "&#039;"
     );
 
+}
+
+
+/* =====================================================
+   CATEGORY ENTER KEY
+===================================================== */
+
+const newCategoryInput =
+    document.getElementById("newCategoryName");
+
+if(newCategoryInput){
+    newCategoryInput.addEventListener("keydown", function(event){
+        if(event.key === "Enter"){
+            event.preventDefault();
+            addCategory();
+        }
+    });
 }
 
 

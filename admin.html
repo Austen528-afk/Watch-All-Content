@@ -2514,6 +2514,69 @@ async function requireAuthenticatedUser(){
 
 }
 
+/* =====================================================
+   UPDATE ACTIVE USER
+===================================================== */
+
+async function updateActiveUser(){
+
+    try{
+
+        const result =
+            await supabaseClient.auth.getSession();
+
+        if(result.error || !result.data.session){
+            return;
+        }
+
+        const user =
+            result.data.session.user;
+
+        const { error } =
+            await supabaseClient
+                .from("active_users")
+                .upsert(
+                    {
+                        user_id: user.id,
+                        platform: "admin",
+                        last_seen: new Date().toISOString()
+                    },
+                    {
+                        onConflict: "user_id"
+                    }
+                );
+
+        if(error){
+
+            console.error(
+                "Could not update active_users:",
+                error
+            );
+
+        }else{
+
+            console.log(
+                "Active user timestamp updated."
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "Active user update error:",
+            error
+        );
+
+    }
+
+}
+
+setInterval(
+    updateActiveUser,
+    60000
+);
+
 
 /* =====================================================
    UPLOAD VIDEO

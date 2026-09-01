@@ -1302,9 +1302,14 @@ function enterWebsite(){
     document.body.style.overflow =
         "";
 
-loadCategories();
-setupCategoryRealtime();
-loadVideos();
+    // Always render the All button immediately.
+    renderCategoryButtons();
+
+    // Load categories and videos independently so a category-table
+    // permission/realtime problem cannot make the category bar vanish.
+    loadCategories();
+    setupCategoryRealtime();
+    loadVideos();
 
 updateMiniAppPresence();
 
@@ -1415,6 +1420,24 @@ let categories = ["All"];
 
 async function loadCategories(){
 
+    // Restore the last known category list immediately while Supabase loads.
+    try{
+        const cached =
+            JSON.parse(
+                localStorage.getItem("streamx_categories_cache") || "null"
+            );
+
+        if(Array.isArray(cached) && cached.length){
+            categories = ["All", ...cached.filter(
+                category =>
+                    String(category).toLowerCase() !== "all"
+            )];
+            renderCategoryButtons();
+        }
+    }catch(cacheError){
+        console.warn("Unable to restore category cache:", cacheError);
+    }
+
     try{
 
         const { data, error } =
@@ -1427,6 +1450,13 @@ async function loadCategories(){
                 "Categories load error:",
                 error
             );
+
+            // Keep the category bar usable even if the categories table
+            // is temporarily unavailable or its SELECT policy is missing.
+            // The actual database categories will replace this as soon as
+            // the query succeeds.
+            categories = ["All"];
+            renderCategoryButtons();
             return;
         }
 
@@ -1451,6 +1481,17 @@ async function loadCategories(){
                     ) === index
             )
         ];
+
+        // Keep the last successful database list available during a
+        // temporary network/table-policy failure.
+        try{
+            localStorage.setItem(
+                "streamx_categories_cache",
+                JSON.stringify(categories)
+            );
+        }catch(cacheError){
+            console.warn("Category cache unavailable:", cacheError);
+        }
 
         if(
             currentCategory !== "All" &&
@@ -1512,9 +1553,16 @@ function renderCategoryButtons(){
     });
 }
 
+let categoryRealtimeChannel = null;
+
 function setupCategoryRealtime(){
 
-    supabaseClient
+    if(categoryRealtimeChannel){
+        return;
+    }
+
+    categoryRealtimeChannel =
+        supabaseClient
         .channel("categories-realtime")
         .on(
             "postgres_changes",
@@ -1585,6 +1633,34 @@ async function loadVideos(){
 
 allVideos =
     result.data || [];
+
+// If the categories table cannot be read, use categories already present
+// on videos so the category bar still works. This does not replace the
+// database as the source of truth; a successful categories query always
+// takes priority.
+if(categories.length <= 1){
+
+    const videoCategories = allVideos
+        .map(video => String(video.category || "").trim())
+        .filter(Boolean);
+
+    const uniqueVideoCategories = [
+        ...new Map(
+            videoCategories.map(category => [
+                category.toLowerCase(),
+                category
+            ])
+        ).values()
+    ];
+
+    if(uniqueVideoCategories.length){
+        categories = [
+            "All",
+            ...uniqueVideoCategories
+        ];
+        renderCategoryButtons();
+    }
+}
 
 // Load the real like count for every video
 await Promise.all(

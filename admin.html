@@ -1219,132 +1219,6 @@ textarea{
     display:block;
 }
 
-/* =====================================================
-   CATEGORY MANAGEMENT
-===================================================== */
-
- .category-manager{
-    width:100%;
-}
-
-.category-add-box{
-    position:relative;
-    padding:24px;
-    border:1px solid rgba(255,255,255,.09);
-    border-radius:18px;
-    background:radial-gradient(circle at 100% 0%, rgba(255,23,68,.10), transparent 38%), linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
-    box-shadow:0 18px 45px rgba(0,0,0,.18);
-    overflow:hidden;
-}
-
-.category-add-box::before{
-    content:"";
-    position:absolute;
-    left:0;
-    top:0;
-    width:4px;
-    height:100%;
-    background:#ff1744;
-}
-
-.category-add-title-row{
-    display:flex;
-    align-items:center;
-    gap:13px;
-    margin-bottom:18px;
-}
-
-.category-add-icon,.category-toolbar-icon{
-    width:42px;
-    height:42px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-    border-radius:11px;
-    background:rgba(255,23,68,.10);
-    border:1px solid rgba(255,23,68,.16);
-    font-size:19px;
-}
-
-.category-add-title{
-    font-size:15px;
-    font-weight:800;
-    color:#f2f2f2;
-}
-
-.category-add-description{
-    color:#777;
-    font-size:12px;
-    margin-top:4px;
-    line-height:1.5;
-}
-
-.category-add-row{
-    display:flex;
-    gap:12px;
-    align-items:center;
-}
-
-.category-add-row input{
-    flex:1;
-    min-width:0;
-    height:48px;
-    padding:0 16px;
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:11px;
-    background:#0d0d0d;
-    color:#fff;
-    outline:none;
-    font-size:14px;
-    transition:border-color .2s, box-shadow .2s, background .2s;
-}
-
-.category-add-row input::placeholder{color:#777;}
-.category-add-row input:focus{border-color:#ff1744;background:#101010;box-shadow:0 0 0 3px rgba(255,23,68,.10);}
-
-.primary-button{
-    height:48px;
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:11px;
-    padding:0 19px;
-    cursor:pointer;
-    font-weight:700;
-    font-size:14px;
-    background:#ff1744;
-    color:#fff;
-    white-space:nowrap;
-    transition:transform .18s, background .18s, box-shadow .18s;
-    box-shadow:0 8px 20px rgba(255,23,68,.16);
-}
-.category-toolbar-right{display:flex;align-items:center;gap:10px;min-width:0;}
-.category-list-header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-top:30px;margin-bottom:14px;}
-.category-toolbar-left{display:flex;align-items:center;gap:11px;min-width:0;}
-.category-toolbar-left h3{margin:0;font-size:18px;}
-.category-toolbar-left span{display:block;color:#777;font-size:11px;margin-top:4px;}
-.category-toolbar-icon{width:36px;height:36px;font-size:16px;}
-.category-list-header .video-count{display:inline-flex;align-items:center;min-height:30px;padding:5px 11px;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(255,255,255,.04);color:#a9a9a9;font-size:12px;font-weight:600;white-space:nowrap;}
-.category-search{position:relative;width:230px;}
-.category-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#777;font-size:17px;pointer-events:none;}
-.category-search input{width:100%;height:38px;padding:0 12px 0 34px;border:1px solid rgba(255,255,255,.10);border-radius:9px;background:#0d0d0d;color:#fff;outline:none;font-size:12px;}
-.category-search input:focus{border-color:#ff1744;box-shadow:0 0 0 3px rgba(255,23,68,.08);}
-.category-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
-.category-row{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:72px;padding:14px 15px 14px 18px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015));transition:border-color .2s,background .2s,transform .2s;}
-.category-row:hover{border-color:rgba(255,23,68,.28);background:linear-gradient(145deg,rgba(255,23,68,.07),rgba(255,255,255,.018));transform:translateY(-1px);}
-.category-name-wrap{display:flex;align-items:center;gap:12px;min-width:0;}
-.category-icon{width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:10px;background:rgba(255,23,68,.10);border:1px solid rgba(255,23,68,.16);font-size:13px;font-weight:800;color:#ff7188;}
-.category-name-info{min-width:0;}
-.category-name{font-size:14px;font-weight:700;color:#f2f2f2;word-break:break-word;}
-.category-subtext{font-size:10px;color:#666;margin-top:4px;}
-.category-actions{display:flex;gap:7px;flex-shrink:0;}
-.category-action{height:36px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.045);color:#ddd;border-radius:9px;padding:0 11px;cursor:pointer;font-size:12px;font-weight:700;transition:background .18s,border-color .18s,color .18s;}
-.category-action:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.17);color:#fff;}
-.category-action.delete{color:#ff7188;}
-.category-action.delete:hover{background:rgba(255,23,68,.10);border-color:rgba(255,23,68,.24);color:#ff8da0;}
-.category-empty{grid-column:1 / -1;}
-@media(max-width:900px){.category-list{grid-template-columns:1fr;}}
-@media(max-width:700px){.category-add-box{padding:20px}.category-add-row{flex-direction:column;align-items:stretch}.category-add-row .primary-button{width:100%}.category-list-header{align-items:stretch;flex-direction:column}.category-toolbar-right{flex-direction:column;align-items:stretch}.category-search{width:100%}.category-row{align-items:flex-start;flex-direction:column}.category-name-wrap{width:100%}.category-actions{width:100%}.category-action{flex:1;}}
-
 </style>
 
 </head>
@@ -1740,25 +1614,6 @@ textarea{
     </div>
 
 
-    <div class="stat">
-
-        <div class="stat-icon">
-            🔵
-        </div>
-
-        <div class="stat-label">
-            Active on Both
-        </div>
-
-        <div
-            class="stat-number"
-            id="activeBoth"
-        >
-            0
-        </div>
-
-    </div>
-
 </div>
 
 
@@ -1809,6 +1664,26 @@ textarea{
         <div
             class="stat-number"
             id="miniAppOnline"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            🔵
+        </div>
+
+        <div class="stat-label">
+            Total Active Users
+        </div>
+
+        <div
+            class="stat-number"
+            id="totalActiveUsers"
         >
             0
         </div>
@@ -1901,6 +1776,34 @@ textarea{
 
                     <option value="">
                         Select category
+                    </option>
+
+                    <option value="BackShots">
+                        BackShots
+                    </option>
+
+                    <option value="Masterbates">
+                        Masterbates
+                    </option>
+
+                    <option value="RoughX">
+                        RoughX
+                    </option>
+
+                    <option value="BBW">
+                        BBW
+                    </option>
+
+                    <option value="Africans">
+                        Africans
+                    </option>
+
+                    <option value="Cums">
+                        Cums
+                    </option>
+
+                    <option value="Close Friends">
+                        Close Friends
                     </option>
 
                 </select>
@@ -2164,80 +2067,12 @@ textarea{
     ================================================= -->
 
     <div id="categoriesPage" class="admin-page">
-
         <div class="topbar">
             <div>
                 <h1>Categories</h1>
-                <p>Add, edit and remove categories used across StreamX.</p>
+                <p>Category management will be added in a later step.</p>
             </div>
         </div>
-
-        <section class="section">
-
-            <div class="section-heading">
-                <div>
-                    <h2>Category Management</h2>
-                    <p>Create categories for your videos and manage existing ones.</p>
-                </div>
-            </div>
-
-            <div class="category-manager">
-
-                <div class="category-add-box">
-                    <div class="category-add-title-row">
-                        <div class="category-add-icon">🏷️</div>
-                        <div>
-                            <div class="category-add-title">Add New Category</div>
-                            <div class="category-add-description">Create a category and make it immediately available when uploading videos.</div>
-                        </div>
-                    </div>
-                    <div class="category-add-row">
-                        <input
-                            type="text"
-                            id="newCategoryName"
-                            placeholder="Enter category name"
-                            maxlength="80"
-                        >
-                        <button
-                            type="button"
-                            class="primary-button"
-                            onclick="addCategory()"
-                        >
-                            + Add Category
-                        </button>
-                    </div>
-                    <div id="categoryMessage" class="message" style="display:none;margin-top:14px;"></div>
-                </div>
-
-                <div class="category-list-header">
-                    <div class="category-toolbar-left">
-                        <div class="category-toolbar-icon">☷</div>
-                        <div>
-                            <h3>Categories</h3>
-                            <span>Manage your available video categories</span>
-                        </div>
-                    </div>
-                    <div class="category-toolbar-right">
-                        <div class="category-search">
-                            <span class="category-search-icon">⌕</span>
-                            <input type="text" id="categorySearch" placeholder="Search categories..." autocomplete="off">
-                        </div>
-                        <span id="categoryCount" class="video-count">0 categories</span>
-                    </div>
-                </div>
-
-                <div id="categoryList" class="category-list"></div>
-
-                <div id="categoryEmptyState" class="empty" style="display:none;">
-                    <div class="empty-icon">🏷️</div>
-                    <h3>No categories yet</h3>
-                    <p style="margin-top:8px;">Add your first category above.</p>
-                </div>
-
-            </div>
-
-        </section>
-
     </div>
 
     <div id="analyticsPage" class="admin-page">
@@ -2298,9 +2133,6 @@ const supabaseClient =
 let selectedVideoFile = null;
 
 let selectedThumbnailFile = null;
-
-let allCategories = [];
-let categorySearchTerm = "";
 
 
 /* =====================================================
@@ -2611,8 +2443,6 @@ async function showApplication(session){
         session.user.email;
 
     await loadVideos();
-
-    await loadCategories();
 
     await loadActiveUsers();
 
@@ -3102,27 +2932,13 @@ async function loadActiveUsers(){
 
 
         /*
-         * USERS ACTIVE ON BOTH PLATFORMS
+         * TOTAL ACTIVE USERS
+         * Live total = Website Online Now + Mini App Online Now
          */
 
-        let activeBoth = 0;
-
-
-        websiteUsers.forEach(
-            userId => {
-
-                if(
-                    miniAppUsers.has(
-                        userId
-                    )
-                ){
-
-                    activeBoth++;
-
-                }
-
-            }
-        );
+        const totalActiveUsers =
+            websiteOnline.size +
+            miniAppOnline.size;
 
 
         /*
@@ -3154,9 +2970,9 @@ async function loadActiveUsers(){
 
 
         document.getElementById(
-            "activeBoth"
+            "totalActiveUsers"
         ).textContent =
-            activeBoth.toLocaleString();
+            totalActiveUsers.toLocaleString();
 
 
         console.log(
@@ -3174,8 +2990,8 @@ async function loadActiveUsers(){
                 miniAppOnline:
                     miniAppOnline.size,
 
-                activeBoth:
-                    activeBoth
+                totalActiveUsers:
+                    totalActiveUsers
             }
         );
 
@@ -3206,6 +3022,14 @@ setInterval(
     loadActiveUsers,
     5000
 );
+
+/* Refresh live activity immediately when admin returns to the tab */
+document.addEventListener("visibilitychange", function(){
+    if(!document.hidden){
+        updateActiveUser();
+        loadActiveUsers();
+    }
+});
 
 /* =====================================================
    UPLOAD VIDEO
@@ -4178,9 +4002,7 @@ async function loadSingleVideo(id){
 
                     }
 
-                
-
-</style>
+                </style>
 
             </head>
 
@@ -4492,218 +4314,6 @@ function clearForm(){
 
 
 /* =====================================================
-   CATEGORY MANAGEMENT
-===================================================== */
-
-async function loadCategories(){
-    try{
-        await requireAuthenticatedUser();
-        const result = await supabaseClient.from("categories").select("id, name, created_at").order("name", { ascending:true });
-        if(result.error) throw new Error(result.error.message);
-        allCategories = result.data || [];
-        renderCategories();
-        populateCategorySelect(allCategories);
-    }catch(error){
-        console.error("Could not load categories:", error);
-        showCategoryMessage("Could not load categories: " + error.message, "error");
-    }
-}
-
-function renderCategories(){
-    const list=document.getElementById("categoryList");
-    const empty=document.getElementById("categoryEmptyState");
-    const count=document.getElementById("categoryCount");
-    const filtered=allCategories.filter(category => category.name.toLowerCase().includes(categorySearchTerm.toLowerCase()));
-    list.innerHTML="";
-    count.textContent=filtered.length + (filtered.length===1 ? " category" : " categories");
-    if(filtered.length===0){
-        empty.style.display="block";
-        const title=empty.querySelector("h3");
-        const text=empty.querySelector("p");
-        if(allCategories.length===0){ title.textContent="No categories yet"; text.textContent="Add your first category above."; }
-        else { title.textContent="No matching categories"; text.textContent="Try a different search term."; }
-        return;
-    }
-    empty.style.display="none";
-    filtered.forEach(category=>{
-        const row=document.createElement("div");
-        row.className="category-row";
-        const initial=escapeHTML(category.name.trim().charAt(0).toUpperCase() || "?");
-        row.innerHTML=`
-            <div class="category-name-wrap">
-                <div class="category-icon">${initial}</div>
-                <div class="category-name-info">
-                    <div class="category-name">${escapeHTML(category.name)}</div>
-                    <div class="category-subtext">Available for video uploads</div>
-                </div>
-            </div>
-            <div class="category-actions">
-                <button type="button" class="category-action" onclick="editCategory(${JSON.stringify(category.id)}, ${JSON.stringify(category.name)})">✏️ Edit</button>
-                <button type="button" class="category-action delete" data-category-id="${escapeHTML(category.id)}" onclick="deleteCategory(${JSON.stringify(category.id)}, ${JSON.stringify(category.name)})">🗑 Delete</button>
-            </div>`;
-        list.appendChild(row);
-    });
-}
-
-function filterCategories(){
-    const input=document.getElementById("categorySearch");
-    categorySearchTerm=input ? input.value.trim() : "";
-    renderCategories();
-}
-
-function populateCategorySelect(categories){
-    const select=document.getElementById("videoCategory");
-    if(!select) return;
-    const currentValue=select.value;
-    select.innerHTML='<option value="">Select category</option>';
-    categories.forEach(category=>{ const option=document.createElement("option"); option.value=category.name; option.textContent=category.name; select.appendChild(option); });
-    if(categories.some(category=>category.name===currentValue)) select.value=currentValue;
-}
-
-async function addCategory(){
-    const input=document.getElementById("newCategoryName");
-    const name=input.value.trim();
-    if(!name){ showCategoryMessage("Please enter a category name.","error"); input.focus(); return; }
-    try{
-        await requireAuthenticatedUser();
-        const result=await supabaseClient.from("categories").insert({name:name}).select("id, name, created_at").single();
-        if(result.error){ if(result.error.code==="23505") throw new Error("That category already exists."); throw new Error(result.error.message); }
-        input.value=""; showCategoryMessage("✓ Category added successfully.","success"); await loadCategories();
-    }catch(error){ console.error("Add category error:",error); showCategoryMessage("❌ " + error.message,"error"); }
-}
-
-async function editCategory(id, oldName){
-    const newName=prompt("Edit category name:",oldName);
-    if(newName===null) return;
-    const cleanedName=newName.trim();
-    if(!cleanedName){ alert("Category name cannot be empty."); return; }
-    if(cleanedName===oldName) return;
-    try{
-        await requireAuthenticatedUser();
-        const categoryUpdate=await supabaseClient.from("categories").update({name:cleanedName}).eq("id",id);
-        if(categoryUpdate.error){ if(categoryUpdate.error.code==="23505") throw new Error("That category already exists."); throw new Error(categoryUpdate.error.message); }
-        const videoUpdate=await supabaseClient.from("videos").update({category:cleanedName}).eq("category",oldName);
-        if(videoUpdate.error) console.warn("Category renamed, but existing video categories could not be synchronized:",videoUpdate.error);
-        showCategoryMessage("✓ Category updated successfully.","success"); await loadCategories(); await loadVideos();
-    }catch(error){ console.error("Edit category error:",error); showCategoryMessage("❌ " + error.message,"error"); }
-}
-
-async function deleteCategory(id,name){
-
-    const confirmed = confirm(
-        `Delete the category "${name}"?\n\nExisting videos using this category will be changed to "Uncategorized".`
-    );
-
-    if(!confirmed) return;
-
-    /* Find the exact button that was used for this category. */
-    const deleteButtons = document.querySelectorAll(
-        ".category-action.delete[data-category-id]"
-    );
-
-    let button = null;
-
-    deleteButtons.forEach(item => {
-        if(String(item.dataset.categoryId) === String(id)){
-            button = item;
-        }
-    });
-
-    if(button){
-        button.disabled = true;
-        button.textContent = "Deleting...";
-        button.style.opacity = "0.6";
-        button.style.cursor = "wait";
-    }
-
-    try{
-
-        /* Verify the current authenticated Supabase session. */
-        const session = await requireAuthenticatedUser();
-
-        console.log("Deleting category:", {
-            id:id,
-            name:name,
-            user:session.user.email
-        });
-
-        /* Move existing videos to Uncategorized first. */
-        const videoUpdate =
-            await supabaseClient
-                .from("videos")
-                .update({category:"Uncategorized"})
-                .eq("category",name);
-
-        if(videoUpdate.error){
-            throw new Error(
-                "Could not update videos using this category: " +
-                videoUpdate.error.message
-            );
-        }
-
-        /* Delete the category and return the deleted row. */
-        const result =
-            await supabaseClient
-                .from("categories")
-                .delete()
-                .eq("id",id)
-                .select("id, name, created_at")
-                .maybeSingle();
-
-        if(result.error){
-            throw new Error(
-                "Could not delete category: " +
-                result.error.message
-            );
-        }
-
-        /* Never show success unless Supabase returned the deleted row. */
-        if(!result.data){
-            throw new Error(
-                `Category "${name}" could not be deleted because no matching category was found. Please refresh the page and try again.`
-            );
-        }
-
-        console.log("Category deleted successfully:",result.data);
-
-        showCategoryMessage(
-            `✓ Category "${name}" deleted successfully.`,
-            "success"
-        );
-
-        /* Refresh the category list and upload dropdown. */
-        await loadCategories();
-        await loadVideos();
-
-    }catch(error){
-
-        console.error("Delete category error:",error);
-
-        showCategoryMessage(
-            "❌ " + error.message,
-            "error"
-        );
-
-    }finally{
-
-        if(button){
-            button.disabled = false;
-            button.textContent = "🗑 Delete";
-            button.style.opacity = "";
-            button.style.cursor = "";
-        }
-
-    }
-}
-
-function showCategoryMessage(text,type){
-    const message=document.getElementById("categoryMessage");
-    if(!message) return;
-    message.textContent=text; message.className="message " + type; message.style.display="block";
-    if(type==="success") setTimeout(()=>{message.style.display="none";},3000);
-}
-
-/* =====================================================
    PAGE NAVIGATION
 ===================================================== */
 
@@ -4721,10 +4331,6 @@ function openPage(pageId, button){
 
     if(selectedPage){
         selectedPage.classList.add("active");
-    }
-
-    if(pageId === "categoriesPage"){
-        loadCategories();
     }
 
     const buttons =
@@ -4781,29 +4387,6 @@ function escapeHTML(value){
         "&#039;"
     );
 
-}
-
-
-/* =====================================================
-   CATEGORY ENTER KEY
-===================================================== */
-
-const categorySearchInput = document.getElementById("categorySearch");
-
-if(categorySearchInput){
-    categorySearchInput.addEventListener("input", filterCategories);
-}
-
-const newCategoryInput =
-    document.getElementById("newCategoryName");
-
-if(newCategoryInput){
-    newCategoryInput.addEventListener("keydown", function(event){
-        if(event.key === "Enter"){
-            event.preventDefault();
-            addCategory();
-        }
-    });
 }
 
 

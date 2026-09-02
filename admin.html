@@ -1538,6 +1538,26 @@ textarea{
     font-weight:900;
 }
 
+.statistics-video-play{
+    padding:0;
+    cursor:pointer;
+    font-family:inherit;
+    transition:transform .18s, background .18s, border-color .18s, color .18s, box-shadow .18s;
+}
+
+.statistics-video-play:hover{
+    transform:scale(1.06);
+    border-color:rgba(255,23,68,.42);
+    background:rgba(255,23,68,.20);
+    color:#fff;
+    box-shadow:0 6px 16px rgba(255,23,68,.14);
+}
+
+.statistics-video-play:focus-visible{
+    outline:2px solid #ff1744;
+    outline-offset:2px;
+}
+
 .statistics-category-name{
     overflow:hidden;
     color:#f2f2f2;
@@ -1617,8 +1637,13 @@ textarea{
         padding-right:14px;
     }
 
-    .statistics-category-icon{
+    .statistics-category-icon:not(.statistics-video-play){
         display:none;
+    }
+
+    .statistics-video-play{
+        width:34px;
+        height:34px;
     }
 
     .statistics-views{
@@ -5766,7 +5791,13 @@ function renderVideoStatisticsRanking(list,count,videos,metric,unit){
             <div class="statistics-row">
                 <div class="statistics-rank">#${index + 1}</div>
                 <div class="statistics-category">
-                    <div class="statistics-category-icon">▶</div>
+                    <button
+                        type="button"
+                        class="statistics-category-icon statistics-video-play"
+                        onclick="previewVideo(${JSON.stringify(video.id)})"
+                        aria-label="Play ${escapeHTML(video.name)}"
+                        title="Play video"
+                    >▶</button>
                     <div class="statistics-item-text">
                         <div class="statistics-category-name">${escapeHTML(video.name)}</div>
                         <div class="statistics-item-subtext">${escapeHTML(video.category)}</div>
@@ -5871,7 +5902,13 @@ function renderVideoWatchTimeRanking(list,count,rows){
             <div class="statistics-row">
                 <div class="statistics-rank">#${index + 1}</div>
                 <div class="statistics-category">
-                    <div class="statistics-category-icon">▶</div>
+                    <button
+                        type="button"
+                        class="statistics-category-icon statistics-video-play"
+                        onclick="previewVideo(${JSON.stringify(video.id)})"
+                        aria-label="Play ${escapeHTML(video.name)}"
+                        title="Play video"
+                    >▶</button>
                     <div class="statistics-item-text">
                         <div class="statistics-category-name">${escapeHTML(video.name)}</div>
                         <div class="statistics-item-subtext">${escapeHTML(video.category)}</div>

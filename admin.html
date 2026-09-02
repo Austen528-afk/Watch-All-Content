@@ -1346,8 +1346,14 @@ textarea{
 @media(max-width:700px){.category-add-box{padding:20px}.category-add-row{flex-direction:column;align-items:stretch}.category-add-row .primary-button{width:100%}.category-list-header{align-items:stretch;flex-direction:column}.category-toolbar-right{flex-direction:column;align-items:stretch}.category-search{width:100%}.category-row{align-items:flex-start;flex-direction:column}.category-name-wrap{width:100%}.category-actions{width:100%}.category-action{flex:1;}}
 
 /* =====================================================
-   CATEGORY VIEW RANKING
+   CATEGORY STATISTICS RANKINGS
 ===================================================== */
+
+.statistics-ranking-block + .statistics-ranking-block{
+    margin-top:32px;
+    padding-top:32px;
+    border-top:1px solid rgba(255,255,255,.08);
+}
 
 .statistics-table{
     width:100%;
@@ -1458,6 +1464,12 @@ textarea{
 }
 
 @media(max-width:600px){
+    .statistics-ranking-block .section-top{
+        align-items:flex-start;
+        flex-direction:column;
+        gap:10px;
+    }
+
     .statistics-table-header,
     .statistics-row{
         grid-template-columns:48px minmax(0,1fr) 105px;
@@ -2365,27 +2377,71 @@ textarea{
         <div class="topbar">
             <div>
                 <h1>Statistics</h1>
-                <p>See which video categories receive the most views.</p>
+                <p>Compare video categories by views, likes and total engagement.</p>
             </div>
         </div>
 
         <section class="section">
-            <div class="section-top">
-                <div>
-                    <h2>Category View Ranking</h2>
-                    <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked from most viewed to least viewed.</p>
+            <div class="statistics-ranking-block">
+                <div class="section-top">
+                    <div>
+                        <h2>Category View Ranking</h2>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked from most viewed to least viewed.</p>
+                    </div>
+                    <span class="video-count" id="categoryViewsRankingCount">0 categories</span>
                 </div>
-                <span class="video-count" id="categoryRankingCount">0 categories</span>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Category</span>
+                        <span>Total Views</span>
+                    </div>
+                    <div id="categoryViewsRankingList">
+                        <div class="statistics-status">Loading view rankings...</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="statistics-table">
-                <div class="statistics-table-header">
-                    <span>Rank</span>
-                    <span>Category</span>
-                    <span>Total Views</span>
+            <div class="statistics-ranking-block">
+                <div class="section-top">
+                    <div>
+                        <h2>Category Like Ranking</h2>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked from most liked to least liked.</p>
+                    </div>
+                    <span class="video-count" id="categoryLikesRankingCount">0 categories</span>
                 </div>
-                <div id="categoryRankingList">
-                    <div class="statistics-status">Loading category statistics...</div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Category</span>
+                        <span>Total Likes</span>
+                    </div>
+                    <div id="categoryLikesRankingList">
+                        <div class="statistics-status">Loading like rankings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="statistics-ranking-block">
+                <div class="section-top">
+                    <div>
+                        <h2>Category Engagement Ranking</h2>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked by total views plus total likes.</p>
+                    </div>
+                    <span class="video-count" id="categoryEngagementRankingCount">0 categories</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Category</span>
+                        <span>Views + Likes</span>
+                    </div>
+                    <div id="categoryEngagementRankingList">
+                        <div class="statistics-status">Loading engagement rankings...</div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -4949,12 +5005,35 @@ function showCategoryMessage(text,type){
 
 async function loadCategoryStatistics(){
 
-    const list = document.getElementById("categoryRankingList");
-    const count = document.getElementById("categoryRankingCount");
+    const rankingTargets = [
+        {
+            list:document.getElementById("categoryViewsRankingList"),
+            count:document.getElementById("categoryViewsRankingCount"),
+            metric:"views",
+            unit:"views",
+            loadingText:"Loading view rankings..."
+        },
+        {
+            list:document.getElementById("categoryLikesRankingList"),
+            count:document.getElementById("categoryLikesRankingCount"),
+            metric:"likes",
+            unit:"likes",
+            loadingText:"Loading like rankings..."
+        },
+        {
+            list:document.getElementById("categoryEngagementRankingList"),
+            count:document.getElementById("categoryEngagementRankingCount"),
+            metric:"engagement",
+            unit:"combined",
+            loadingText:"Loading engagement rankings..."
+        }
+    ];
 
-    if(!list || !count) return;
+    if(rankingTargets.some(target => !target.list || !target.count)) return;
 
-    list.innerHTML = '<div class="statistics-status">Loading category statistics...</div>';
+    rankingTargets.forEach(target => {
+        target.list.innerHTML = `<div class="statistics-status">${target.loadingText}</div>`;
+    });
 
     try{
 
@@ -4966,7 +5045,7 @@ async function loadCategoryStatistics(){
                 .select("name"),
             supabaseClient
                 .from("videos")
-                .select("category, views")
+                .select("id, category, views")
         ]);
 
         if(categoriesResult.error){
@@ -4977,6 +5056,27 @@ async function loadCategoryStatistics(){
             throw new Error(videosResult.error.message);
         }
 
+        const videos = videosResult.data || [];
+
+        const videoLikeCounts = await Promise.all(
+            videos.map(async video => {
+                const likesResult = await supabaseClient
+                    .from("video_likes")
+                    .select("id", { count:"exact", head:true })
+                    .eq("video_id", video.id);
+
+                if(likesResult.error){
+                    console.warn(
+                        "Could not load likes for video " + video.id + ":",
+                        likesResult.error
+                    );
+                    return 0;
+                }
+
+                return Number(likesResult.count || 0);
+            })
+        );
+
         const categoryTotals = new Map();
 
         (categoriesResult.data || []).forEach(category => {
@@ -4984,57 +5084,90 @@ async function loadCategoryStatistics(){
             const key = name.toLowerCase();
 
             if(!categoryTotals.has(key)){
-                categoryTotals.set(key, { name:name, views:0 });
+                categoryTotals.set(key, {
+                    name:name,
+                    views:0,
+                    likes:0,
+                    engagement:0
+                });
             }
         });
 
-        (videosResult.data || []).forEach(video => {
+        videos.forEach((video,index) => {
             const name = String(video.category || "Uncategorized").trim() || "Uncategorized";
             const key = name.toLowerCase();
             const parsedViews = Number(video.views || 0);
             const views = Number.isFinite(parsedViews) ? parsedViews : 0;
+            const parsedLikes = Number(videoLikeCounts[index] || 0);
+            const likes = Number.isFinite(parsedLikes) ? parsedLikes : 0;
 
             if(!categoryTotals.has(key)){
-                categoryTotals.set(key, { name:name, views:0 });
+                categoryTotals.set(key, {
+                    name:name,
+                    views:0,
+                    likes:0,
+                    engagement:0
+                });
             }
 
             categoryTotals.get(key).views += views;
+            categoryTotals.get(key).likes += likes;
+            categoryTotals.get(key).engagement += views + likes;
         });
 
-        const rankings = Array.from(categoryTotals.values()).sort((a,b) => {
-            return b.views - a.views || a.name.localeCompare(b.name);
+        const totals = Array.from(categoryTotals.values());
+
+        rankingTargets.forEach(target => {
+            renderCategoryStatisticsRanking(
+                target.list,
+                target.count,
+                totals,
+                target.metric,
+                target.unit
+            );
         });
-
-        count.textContent = rankings.length + (rankings.length === 1 ? " category" : " categories");
-
-        if(rankings.length === 0){
-            list.innerHTML = '<div class="statistics-status">No category statistics are available yet.</div>';
-            return;
-        }
-
-        list.innerHTML = rankings.map((category,index) => {
-            const initial = escapeHTML(category.name.charAt(0).toUpperCase() || "?");
-
-            return `
-                <div class="statistics-row">
-                    <div class="statistics-rank">#${index + 1}</div>
-                    <div class="statistics-category">
-                        <div class="statistics-category-icon">${initial}</div>
-                        <div class="statistics-category-name">${escapeHTML(category.name)}</div>
-                    </div>
-                    <div class="statistics-views">
-                        ${category.views.toLocaleString()}
-                        <span>views</span>
-                    </div>
-                </div>
-            `;
-        }).join("");
 
     }catch(error){
         console.error("Could not load category statistics:", error);
-        count.textContent = "Unavailable";
-        list.innerHTML = `<div class="statistics-status error">Could not load category statistics: ${escapeHTML(error.message)}</div>`;
+
+        rankingTargets.forEach(target => {
+            target.count.textContent = "Unavailable";
+            target.list.innerHTML = `<div class="statistics-status error">Could not load category statistics: ${escapeHTML(error.message)}</div>`;
+        });
     }
+}
+
+function renderCategoryStatisticsRanking(list,count,totals,metric,unit){
+
+    const rankings = [...totals].sort((a,b) => {
+        return b[metric] - a[metric] || a.name.localeCompare(b.name);
+    });
+
+    count.textContent = rankings.length + (rankings.length === 1 ? " category" : " categories");
+
+    if(rankings.length === 0){
+        list.innerHTML = '<div class="statistics-status">No category statistics are available yet.</div>';
+        return;
+    }
+
+    list.innerHTML = rankings.map((category,index) => {
+        const initial = escapeHTML(category.name.charAt(0).toUpperCase() || "?");
+        const value = Number(category[metric] || 0);
+
+        return `
+            <div class="statistics-row">
+                <div class="statistics-rank">#${index + 1}</div>
+                <div class="statistics-category">
+                    <div class="statistics-category-icon">${initial}</div>
+                    <div class="statistics-category-name">${escapeHTML(category.name)}</div>
+                </div>
+                <div class="statistics-views">
+                    ${value.toLocaleString()}
+                    <span>${escapeHTML(unit)}</span>
+                </div>
+            </div>
+        `;
+    }).join("");
 }
 
 /* =====================================================

@@ -2886,18 +2886,18 @@ textarea{
     <div class="stat">
 
         <div class="stat-icon">
-            📡
+            📚
         </div>
 
         <div class="stat-label">
-            Platform
+            Total Videos in Libraries
         </div>
 
         <div
             class="stat-number"
-            style="font-size:20px"
+            id="totalLibraryVideos"
         >
-            Online
+            0
         </div>
 
     </div>
@@ -5274,7 +5274,7 @@ async function loadActiveUsers(){
                     .select("viewer_id, platform, last_seen"),
                 supabaseClient
                     .from("video_library")
-                    .select("viewer_id, platform")
+                    .select("viewer_id, platform", {count:"exact"})
             ]);
 
         if(activeResult.error){
@@ -5302,6 +5302,19 @@ async function loadActiveUsers(){
         /* Library Users must have at least one saved video. */
         const savedLibraryRows =
             libraryVideosResult.error ? [] : (libraryVideosResult.data || []);
+
+        const totalLibraryVideos =
+            libraryVideosResult.error
+                ? 0
+                : Number(libraryVideosResult.count || 0);
+
+        const totalLibraryVideosElement =
+            document.getElementById("totalLibraryVideos");
+
+        if(totalLibraryVideosElement){
+            totalLibraryVideosElement.textContent =
+                totalLibraryVideos.toLocaleString();
+        }
 
         if(libraryVideosResult.error){
             console.warn(

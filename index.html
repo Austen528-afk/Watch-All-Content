@@ -326,34 +326,56 @@ body{
 }
 
 .library-toggle{
+    position:relative;
+    overflow:visible;
     flex-shrink:0;
     display:inline-flex;
     align-items:center;
     gap:7px;
-    border:1px solid #343434;
-    background:#181818;
-    color:#aaa;
-    padding:9px 13px;
+    border:2px solid #ff1744;
+    background:linear-gradient(135deg,#35111a 0%,#1d1014 100%);
+    color:#fff;
+    min-height:44px;
+    padding:10px 17px;
     border-radius:20px;
     cursor:pointer;
-    font-size:12px;
-    transition:.2s;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.15px;
+    box-shadow:0 0 0 3px rgba(255,23,68,.10),0 0 22px rgba(255,23,68,.28);
+    transition:background .2s,border-color .2s,color .2s,box-shadow .2s,transform .2s;
+    animation:libraryAttention 2.8s ease-in-out infinite;
 }
 
 .library-toggle:hover{
-    background:#292929;
+    background:linear-gradient(135deg,#521522 0%,#2a1118 100%);
     color:white;
+    transform:translateY(-1px) scale(1.02);
+    box-shadow:0 0 0 4px rgba(255,23,68,.15),0 0 28px rgba(255,23,68,.42);
 }
 
 .library-toggle.active{
     border-color:#ff1744;
-    background:rgba(255,23,68,.14);
-    color:#ff7188;
+    background:linear-gradient(135deg,#ff1744 0%,#c70f35 100%);
+    color:#fff;
+    box-shadow:0 0 0 3px rgba(255,23,68,.18),0 0 24px rgba(255,23,68,.38);
+    animation:none;
+}
+
+.library-toggle::before{
+    content:"";
+    position:absolute;
+    inset:-5px;
+    border:1px solid rgba(255,23,68,.58);
+    border-radius:25px;
+    pointer-events:none;
+    animation:libraryRing 2.8s ease-out infinite;
 }
 
 .library-toggle-icon{
     color:#f5b942;
-    font-size:15px;
+    font-size:20px;
+    text-shadow:0 0 10px rgba(245,185,66,.6);
     line-height:1;
 }
 
@@ -364,7 +386,47 @@ body{
     background:#292929;
     color:#ddd;
     font-size:10px;
+    font-weight:800;
     text-align:center;
+}
+
+.library-callout{
+    flex-shrink:0;
+    max-width:155px;
+    color:#ffb4bf;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.2;
+    white-space:normal;
+    text-shadow:0 0 10px rgba(255,23,68,.3);
+    animation:libraryCallout 2.8s ease-in-out infinite;
+}
+
+.library-callout.active{
+    color:#8be7ff;
+    text-shadow:0 0 10px rgba(139,231,255,.3);
+    animation:none;
+}
+
+@keyframes libraryAttention{
+    0%,100%{transform:scale(1);box-shadow:0 0 0 3px rgba(255,23,68,.10),0 0 22px rgba(255,23,68,.28)}
+    50%{transform:scale(1.045);box-shadow:0 0 0 5px rgba(255,23,68,.16),0 0 30px rgba(255,23,68,.46)}
+}
+
+@keyframes libraryRing{
+    0%{transform:scale(.96);opacity:.78}
+    70%,100%{transform:scale(1.14);opacity:0}
+}
+
+@keyframes libraryCallout{
+    0%,100%{opacity:.72}
+    50%{opacity:1;color:#fff}
+}
+
+@media(prefers-reduced-motion:reduce){
+    .library-toggle,
+    .library-toggle::before,
+    .library-callout{animation:none}
 }
 
 .category{
@@ -1215,6 +1277,12 @@ body{
             >0</span>
         </button>
 
+        <span
+            class="library-callout"
+            id="libraryCallout"
+            aria-live="polite"
+        >Tap ☆ on a video to save it here</span>
+
         <div
             class="categories"
             id="categories"
@@ -1493,6 +1561,8 @@ let libraryPendingIds = new Set();
 let libraryLoading = false;
 let libraryStatusTimer = null;
 let currentPlayerVideoId = null;
+let libraryActivityTimer = null;
+let libraryActivityLastSeen = 0;
 
 
 /* =========================
@@ -1546,6 +1616,9 @@ const libraryToggleIcon =
 
 const libraryCount =
     document.getElementById("libraryCount");
+
+const libraryCallout =
+    document.getElementById("libraryCallout");
 
 const libraryStatus =
     document.getElementById("libraryStatus");
@@ -1866,6 +1939,103 @@ const LIBRARY_PLATFORM = WATCH_TIME_PLATFORM;
 const LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
 const LIBRARY_STORAGE_KEY =
     "streamx_" + LIBRARY_PLATFORM + "_library";
+const LIBRARY_ACTIVITY_TABLE = "library_activity";
+const LIBRARY_ACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+const LIBRARY_ACTIVITY_HEARTBEAT_MS = 60 * 1000;
+
+function stopLibraryActivityTracking(){
+
+    if(libraryActivityTimer){
+        clearInterval(libraryActivityTimer);
+        libraryActivityTimer = null;
+    }
+}
+
+async function sendLibraryActivityHeartbeat(){
+
+    const now = Date.now();
+    const libraryIsVisible =
+        libraryViewActive &&
+        document.visibilityState === "visible";
+
+    /* Do not create network traffic while the tab is hidden. */
+    if(document.visibilityState !== "visible"){
+
+        if(
+            !libraryActivityLastSeen ||
+            now - libraryActivityLastSeen >= LIBRARY_ACTIVITY_TIMEOUT_MS
+        ){
+            stopLibraryActivityTracking();
+        }
+
+        return;
+    }
+
+    /* Keep an open, visible library session alive; other actions expire. */
+    if(
+        !libraryActivityLastSeen ||
+        (!libraryIsVisible &&
+            now - libraryActivityLastSeen >= LIBRARY_ACTIVITY_TIMEOUT_MS)
+    ){
+        stopLibraryActivityTracking();
+        return;
+    }
+
+    if(libraryIsVisible){
+        libraryActivityLastSeen = now;
+    }
+
+    try{
+
+        const { error } = await supabaseClient
+            .from(LIBRARY_ACTIVITY_TABLE)
+            .upsert(
+                {
+                    viewer_id:LIBRARY_VIEWER_ID,
+                    platform:LIBRARY_PLATFORM,
+                    last_seen:new Date().toISOString()
+                },
+                {
+                    onConflict:"viewer_id,platform"
+                }
+            );
+
+        if(error) throw error;
+
+    }
+    catch(error){
+
+        /* Library activity is optional; never interrupt video browsing. */
+        console.warn("Could not update library activity:",error);
+
+    }
+}
+
+function recordLibraryActivity(){
+
+    libraryActivityLastSeen = Date.now();
+    sendLibraryActivityHeartbeat();
+
+    if(!libraryActivityTimer){
+        libraryActivityTimer = setInterval(
+            sendLibraryActivityHeartbeat,
+            LIBRARY_ACTIVITY_HEARTBEAT_MS
+        );
+    }
+}
+
+document.addEventListener("visibilitychange",function(){
+
+    if(
+        document.visibilityState === "visible" &&
+        libraryViewActive
+    ){
+        recordLibraryActivity();
+    }
+
+});
+
+window.addEventListener("pagehide",stopLibraryActivityTracking);
 
 function normalizeLibraryIds(values){
 
@@ -2010,6 +2180,21 @@ function updateLibraryUI(){
 
     }
 
+    if(libraryCallout){
+
+        libraryCallout.textContent = libraryViewActive
+            ? "Your saved videos"
+            : libraryVideoIds.size
+                ? libraryVideoIds.size.toLocaleString() +
+                    " saved • tap ☆ to add more"
+                : "Tap ☆ on a video to save it here";
+        libraryCallout.classList.toggle(
+            "active",
+            libraryViewActive || libraryVideoIds.size > 0
+        );
+
+    }
+
     document
         .querySelectorAll(".library-btn")
         .forEach(button => {
@@ -2066,6 +2251,8 @@ async function loadLibrary(){
 
 function toggleLibraryView(){
 
+    recordLibraryActivity();
+
     if(!libraryViewActive){
 
         libraryPreviousCategory = currentCategory;
@@ -2101,6 +2288,8 @@ async function toggleLibrary(videoId){
     const key = String(videoId);
 
     if(libraryPendingIds.has(key)) return;
+
+    recordLibraryActivity();
 
     const wasSaved = libraryVideoIds.has(key);
     libraryPendingIds.add(key);

@@ -1506,6 +1506,7 @@ function enterWebsite(){
     loadCategories();
     setupCategoryRealtime();
     startWebsitePresenceTracking();
+    startViewerTimeTracking("outside");
     loadLibrary();
     loadVideos();
 
@@ -1943,6 +1944,10 @@ const LIBRARY_STORAGE_KEY =
 const LIBRARY_ACTIVITY_TABLE = "library_activity";
 const LIBRARY_ACTIVITY_TIMEOUT_MS = 10 * 1000;
 const LIBRARY_ACTIVITY_HEARTBEAT_MS = 5 * 1000;
+const VIEWER_TIME_HEARTBEAT_MS = 10 * 1000;
+
+let viewerTimeState = null;
+let viewerTimeTimer = null;
 
 function stopLibraryActivityTracking(){
 
@@ -1950,6 +1955,159 @@ function stopLibraryActivityTracking(){
         clearInterval(libraryActivityTimer);
         libraryActivityTimer = null;
     }
+}
+
+/* =========================
+   VISIBLE TIME BY CONTEXT
+========================= */
+
+function captureViewerTime(forceVisible = false){
+
+    const state = viewerTimeState;
+
+    if(!state) return;
+
+    const now = Date.now();
+    const isVisible = forceVisible || document.visibilityState === "visible";
+
+    if(state.lastClockAt === null){
+        if(isVisible) state.lastClockAt = now;
+        return;
+    }
+
+    const elapsedMilliseconds = now - state.lastClockAt;
+
+    if(
+        isVisible &&
+        elapsedMilliseconds > 0 &&
+        elapsedMilliseconds <= 60000
+    ){
+        state.elapsedSeconds += elapsedMilliseconds / 1000;
+    }
+
+    state.lastClockAt = isVisible ? now : null;
+}
+
+function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
+
+    const state = stateOverride || viewerTimeState;
+
+    if(!state) return Promise.resolve();
+
+    if(!stateOverride) captureViewerTime();
+
+    const seconds = Math.floor(state.elapsedSeconds);
+
+    if(!ended && seconds <= state.lastSentSeconds){
+        return Promise.resolve();
+    }
+
+    state.lastSentSeconds = Math.max(
+        state.lastSentSeconds,
+        seconds
+    );
+
+    return fetch(
+        SUPABASE_URL + "/rest/v1/rpc/record_viewer_time",
+        {
+            method:"POST",
+            keepalive:true,
+            headers:{
+                "apikey":SUPABASE_KEY,
+                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                p_session_id:state.sessionId,
+                p_viewer_id:state.viewerId,
+                p_platform:state.platform,
+                p_context:state.context,
+                p_duration_seconds:seconds,
+                p_ended:ended
+            })
+        }
+    )
+    .then(response => {
+        if(!response.ok){
+            throw new Error("Visible-time save returned " + response.status);
+        }
+
+        state.lastSavedSeconds = Math.max(
+            state.lastSavedSeconds,
+            seconds
+        );
+    })
+    .catch(error => {
+        if(state.lastSentSeconds === seconds){
+            state.lastSentSeconds = state.lastSavedSeconds;
+        }
+
+        /* Analytics must never interrupt browsing. */
+        console.warn("Could not save visible time:",error);
+    });
+}
+
+function startViewerTimeTracking(context){
+
+    stopViewerTimeTracking();
+
+    const normalizedContext = context === "library"
+        ? "library"
+        : "outside";
+
+    viewerTimeState = {
+        sessionId:createWatchTimeId(),
+        viewerId:LIBRARY_VIEWER_ID,
+        platform:LIBRARY_PLATFORM,
+        context:normalizedContext,
+        elapsedSeconds:0,
+        lastSentSeconds:-1,
+        lastSavedSeconds:0,
+        lastClockAt:document.visibilityState === "visible"
+            ? Date.now()
+            : null
+    };
+
+    sendViewerTimeHeartbeat();
+
+    viewerTimeTimer = setInterval(
+        sendViewerTimeHeartbeat,
+        VIEWER_TIME_HEARTBEAT_MS
+    );
+}
+
+function switchViewerTimeContext(context){
+
+    const normalizedContext = context === "library"
+        ? "library"
+        : "outside";
+
+    if(
+        viewerTimeState &&
+        viewerTimeState.context === normalizedContext
+    ){
+        sendViewerTimeHeartbeat();
+        return;
+    }
+
+    startViewerTimeTracking(normalizedContext);
+}
+
+function stopViewerTimeTracking(){
+
+    const state = viewerTimeState;
+
+    if(!state) return;
+
+    captureViewerTime(true);
+
+    if(viewerTimeTimer){
+        clearInterval(viewerTimeTimer);
+        viewerTimeTimer = null;
+    }
+
+    viewerTimeState = null;
+    sendViewerTimeHeartbeat(true,state);
 }
 
 async function sendLibraryActivityHeartbeat(){
@@ -2019,6 +2177,21 @@ function recordLibraryActivity(){
 
 document.addEventListener("visibilitychange",function(){
 
+    if(viewerTimeState){
+
+        if(document.visibilityState === "hidden"){
+            /* The visibility event fires after the state changes, so force
+               capture of the final visible interval before pausing. */
+            captureViewerTime(true);
+            viewerTimeState.lastClockAt = null;
+            sendViewerTimeHeartbeat();
+        }
+        else{
+            viewerTimeState.lastClockAt = Date.now();
+        }
+
+    }
+
     if(
         document.visibilityState === "visible" &&
         libraryViewActive
@@ -2028,7 +2201,10 @@ document.addEventListener("visibilitychange",function(){
 
 });
 
-window.addEventListener("pagehide",stopLibraryActivityTracking);
+window.addEventListener("pagehide",function(){
+    stopLibraryActivityTracking();
+    stopViewerTimeTracking();
+});
 
 function normalizeLibraryIds(values){
 
@@ -2254,6 +2430,7 @@ function toggleLibraryView(){
         searchInput.value = "";
         clearSearch.style.display = "none";
         categorySuggestions.style.display = "none";
+        switchViewerTimeContext("library");
         recordLibraryActivity();
 
     }
@@ -2261,6 +2438,7 @@ function toggleLibraryView(){
 
         libraryViewActive = false;
         stopLibraryActivityTracking();
+        switchViewerTimeContext("outside");
         currentCategory = categories.some(
             category => category.toLowerCase() ===
                 libraryPreviousCategory.toLowerCase()
@@ -3825,6 +4003,7 @@ document
 
             libraryViewActive = false;
             stopLibraryActivityTracking();
+            switchViewerTimeContext("outside");
 
 
             document

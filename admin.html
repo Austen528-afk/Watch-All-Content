@@ -1693,6 +1693,431 @@ textarea{
     line-height:1.55;
 }
 
+.daily-performance-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:18px;
+}
+
+.graph-filter-group,
+.graph-metric-group{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:5px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:11px;
+    background:rgba(255,255,255,.025);
+}
+
+.graph-filter-button,
+.graph-metric-button,
+.graph-refresh-button{
+    min-height:36px;
+    padding:8px 12px;
+    border:1px solid transparent;
+    border-radius:8px;
+    background:transparent;
+    color:#777;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:11px;
+    font-weight:800;
+    white-space:nowrap;
+    transition:background .18s,border-color .18s,color .18s;
+}
+
+.graph-filter-button:hover,
+.graph-metric-button:hover,
+.graph-refresh-button:hover{
+    background:rgba(255,255,255,.055);
+    color:#fff;
+}
+
+.graph-filter-button.active,
+.graph-metric-button.active{
+    border-color:rgba(255,23,68,.30);
+    background:rgba(255,23,68,.12);
+    color:#ff7188;
+}
+
+.graph-refresh-button{
+    border-color:rgba(255,255,255,.09);
+    background:rgba(255,255,255,.035);
+}
+
+.graph-filter-button:focus-visible,
+.graph-metric-button:focus-visible,
+.graph-refresh-button:focus-visible{
+    outline:2px solid #ff1744;
+    outline-offset:2px;
+}
+
+.daily-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+    margin-bottom:16px;
+}
+
+.daily-summary-card{
+    min-width:0;
+    padding:15px;
+    border:1px solid rgba(255,255,255,.075);
+    border-radius:13px;
+    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+}
+
+.daily-summary-card span{
+    display:block;
+    overflow:hidden;
+    color:#696969;
+    font-size:10px;
+    font-weight:750;
+    letter-spacing:.45px;
+    text-overflow:ellipsis;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.daily-summary-card strong{
+    display:block;
+    margin-top:8px;
+    overflow:hidden;
+    color:#f3f3f3;
+    font-size:20px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.daily-chart-card{
+    padding:18px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+}
+
+.daily-chart-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    margin-bottom:15px;
+}
+
+.daily-chart-title strong{
+    display:block;
+    color:#f1f1f1;
+    font-size:15px;
+}
+
+.daily-chart-title span{
+    display:block;
+    margin-top:5px;
+    color:#666;
+    font-size:11px;
+}
+
+.daily-chart-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:13px;
+}
+
+.daily-chart-legend span{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:#888;
+    font-size:10px;
+    font-weight:700;
+}
+
+.daily-chart-legend i{
+    width:18px;
+    height:3px;
+    display:block;
+    border-radius:999px;
+}
+
+.daily-chart-legend .website-line{
+    background:#ff3d61;
+}
+
+.daily-chart-legend .mini-app-line{
+    background:#38bdf8;
+}
+
+.daily-chart-wrap{
+    position:relative;
+    min-height:360px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.055);
+    border-radius:12px;
+    background:rgba(5,5,5,.52);
+}
+
+#dailyPerformanceCanvas{
+    width:100%;
+    height:360px;
+    display:block;
+}
+
+.daily-chart-status{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:rgba(5,5,5,.80);
+    color:#777;
+    font-size:12px;
+    line-height:1.55;
+    text-align:center;
+}
+
+.daily-chart-status.error{
+    color:#ff7188;
+}
+
+.daily-chart-status.hidden{
+    display:none;
+}
+
+/* =====================================================
+   LIVE STATISTICAL GRAPH PANELS
+===================================================== */
+
+.live-graph-card{
+    padding:18px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+}
+
+.live-graph-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:16px;
+}
+
+.live-graph-toolbar p{
+    margin-top:5px;
+    color:#686868;
+    font-size:11px;
+    line-height:1.45;
+}
+
+.live-graph-controls{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:7px;
+}
+
+.live-graph-button{
+    min-height:34px;
+    padding:7px 11px;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:8px;
+    background:rgba(255,255,255,.035);
+    color:#858585;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:10px;
+    font-weight:800;
+    white-space:nowrap;
+    transition:background .18s,border-color .18s,color .18s;
+}
+
+.live-graph-button:hover{
+    border-color:rgba(255,255,255,.18);
+    background:rgba(255,255,255,.07);
+    color:#fff;
+}
+
+.live-graph-button.active{
+    border-color:rgba(255,23,68,.34);
+    background:rgba(255,23,68,.13);
+    color:#ff7188;
+}
+
+.live-graph-button:focus-visible{
+    outline:2px solid #ff1744;
+    outline-offset:2px;
+}
+
+.live-graph-summary{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-bottom:14px;
+}
+
+.live-graph-summary-card{
+    min-width:0;
+    padding:13px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:12px;
+    background:rgba(255,255,255,.025);
+}
+
+.live-graph-summary-card span{
+    display:block;
+    overflow:hidden;
+    color:#686868;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.45px;
+    text-overflow:ellipsis;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.live-graph-summary-card strong{
+    display:block;
+    margin-top:7px;
+    overflow:hidden;
+    color:#f3f3f3;
+    font-size:18px;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.live-graph-canvas-wrap{
+    position:relative;
+    min-height:340px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.055);
+    border-radius:12px;
+    background:rgba(5,5,5,.52);
+}
+
+.live-graph-canvas{
+    width:100%;
+    height:340px;
+    display:block;
+}
+
+.live-graph-status{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:rgba(5,5,5,.80);
+    color:#777;
+    font-size:12px;
+    line-height:1.55;
+    text-align:center;
+}
+
+.live-graph-status.error{
+    color:#ff7188;
+}
+
+.live-graph-status.hidden{
+    display:none;
+}
+
+.live-graph-note{
+    margin-top:10px;
+    color:#666;
+    font-size:10px;
+    line-height:1.5;
+}
+
+.live-graph-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:12px;
+}
+
+.live-graph-legend span{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:#888;
+    font-size:10px;
+    font-weight:700;
+}
+
+.live-graph-legend i{
+    width:18px;
+    height:3px;
+    display:block;
+    border-radius:999px;
+}
+
+.live-graph-legend .website-line{
+    background:#ff3d61;
+}
+
+.live-graph-legend .mini-app-line{
+    background:#38bdf8;
+}
+
+.live-graph-legend .new-user-line{
+    background:#a78bfa;
+}
+
+.live-graph-legend .returning-user-line{
+    background:#34d399;
+}
+
+.graph-tooltip{
+    position:fixed;
+    z-index:20;
+    max-width:220px;
+    padding:9px 11px;
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:9px;
+    background:#171717;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+    color:#eee;
+    font-size:11px;
+    line-height:1.45;
+    pointer-events:none;
+}
+
+@media(max-width:600px){
+    .live-graph-toolbar{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .live-graph-controls{
+        overflow-x:auto;
+        flex-wrap:nowrap;
+    }
+
+    .live-graph-button{
+        flex:0 0 auto;
+    }
+
+    .live-graph-summary{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .live-graph-card{
+        padding:12px;
+    }
+
+    .live-graph-canvas-wrap,
+    .live-graph-canvas{
+        min-height:300px;
+        height:300px;
+    }
+}
+
 @media(max-width:600px){
     .category-stats-tabs{
         margin-left:-4px;
@@ -1737,6 +2162,40 @@ textarea{
     .graph-workspace{
         min-height:280px;
         padding:28px 18px;
+    }
+
+    .daily-performance-toolbar,
+    .daily-chart-top{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .graph-filter-group,
+    .graph-metric-group{
+        overflow-x:auto;
+    }
+
+    .graph-filter-button,
+    .graph-metric-button{
+        flex:1 0 auto;
+    }
+
+    .daily-summary-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .daily-summary-card strong{
+        font-size:17px;
+    }
+
+    .daily-chart-card{
+        padding:12px;
+    }
+
+    .daily-chart-wrap,
+    #dailyPerformanceCanvas{
+        min-height:310px;
+        height:310px;
     }
 }
 
@@ -3053,15 +3512,95 @@ textarea{
                 <div class="graph-panel-intro">
                     <div>
                         <h3>Daily Performance Trend</h3>
-                        <p>Track views, watch time and active users by day, with Website and Telegram Mini App comparisons.</p>
+                        <p>Track video starts, watch time and unique viewers by day, with Website and Telegram Mini App comparisons.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">📈</div>
-                        <strong>Daily performance graph</strong>
-                        <span>This panel is ready for the first time-series graph and date-range controls.</span>
+
+                <div class="daily-performance-toolbar">
+                    <div class="graph-filter-group" id="dailyRangeControls" aria-label="Daily performance date range">
+                        <button
+                            type="button"
+                            class="graph-filter-button"
+                            onclick="setDailyPerformanceRange(7,this)"
+                        >7 Days</button>
+                        <button
+                            type="button"
+                            class="graph-filter-button active"
+                            onclick="setDailyPerformanceRange(30,this)"
+                        >30 Days</button>
+                        <button
+                            type="button"
+                            class="graph-filter-button"
+                            onclick="setDailyPerformanceRange(90,this)"
+                        >90 Days</button>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="graph-refresh-button"
+                        onclick="loadDailyPerformanceGraph(true)"
+                    >↻ Refresh data</button>
+                </div>
+
+                <div class="daily-summary-grid">
+                    <div class="daily-summary-card">
+                        <span>Total Video Starts</span>
+                        <strong id="dailyTotalStarts">—</strong>
+                    </div>
+                    <div class="daily-summary-card">
+                        <span>Total Watch Time</span>
+                        <strong id="dailyTotalWatchTime">—</strong>
+                    </div>
+                    <div class="daily-summary-card">
+                        <span>Best Day</span>
+                        <strong id="dailyBestDay">—</strong>
+                    </div>
+                    <div class="daily-summary-card">
+                        <span>Leading Platform</span>
+                        <strong id="dailyLeadingPlatform">—</strong>
+                    </div>
+                </div>
+
+                <div class="daily-chart-card">
+                    <div class="daily-chart-top">
+                        <div class="daily-chart-title">
+                            <strong id="dailyChartTitle">Video Starts</strong>
+                            <span id="dailyChartRangeLabel">Last 30 days</span>
+                            <div class="daily-chart-legend" aria-label="Graph legend">
+                                <span><i class="website-line"></i>Website</span>
+                                <span><i class="mini-app-line"></i>Mini App</span>
+                            </div>
+                        </div>
+
+                        <div class="graph-metric-group" id="dailyMetricControls" aria-label="Daily performance metric">
+                            <button
+                                type="button"
+                                class="graph-metric-button active"
+                                onclick="setDailyPerformanceMetric('starts',this)"
+                            >Video Starts</button>
+                            <button
+                                type="button"
+                                class="graph-metric-button"
+                                onclick="setDailyPerformanceMetric('watchTime',this)"
+                            >Watch Time</button>
+                            <button
+                                type="button"
+                                class="graph-metric-button"
+                                onclick="setDailyPerformanceMetric('viewers',this)"
+                            >Unique Viewers</button>
+                        </div>
+                    </div>
+
+                    <div class="daily-chart-wrap">
+                        <canvas
+                            id="dailyPerformanceCanvas"
+                            role="img"
+                            aria-label="Daily performance line graph comparing Website and Mini App"
+                        ></canvas>
+                        <div class="daily-chart-status" id="dailyPerformanceStatus">
+                            Open Daily Performance to load graph data.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3076,16 +3615,57 @@ textarea{
                 <div class="graph-panel-intro">
                     <div>
                         <h3>Audience Retention</h3>
-                        <p>Show the percentage of viewers remaining at each point in an individual video.</p>
+                        <p>See how many viewing sessions reach each watch-time milestone across Website and Telegram Mini App.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">⏳</div>
-                        <strong>Audience retention graph</strong>
-                        <span>This panel will expose drop-offs, strong moments and video completion behaviour.</span>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong>Watch-time retention curve</strong>
+                            <p>Percentage of sessions that continue watching for each milestone.</p>
+                        </div>
+                        <button
+                            type="button"
+                            class="graph-refresh-button"
+                            onclick="loadAudienceRetentionGraph(true)"
+                        >↻ Refresh data</button>
                     </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>Viewing Sessions</span>
+                            <strong id="retentionSessionCount">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Reached 30 Seconds</span>
+                            <strong id="retentionThirtySecondRate">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Average Watch Time</span>
+                            <strong id="retentionAverageWatchTime">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="audienceRetentionCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="Audience retention line graph"
+                        ></canvas>
+                        <div class="live-graph-status" id="audienceRetentionStatus">
+                            Open Audience Retention to load graph data.
+                        </div>
+                    </div>
+
+                    <div class="live-graph-legend" aria-label="Audience retention graph legend">
+                        <span><i class="website-line"></i>Website</span>
+                        <span><i class="mini-app-line"></i>Mini App</span>
+                    </div>
+
+                    <p class="live-graph-note">Retention is calculated from recorded video-watch sessions. A session is saved by the connected website or mini app every ten seconds while a video is playing.</p>
                 </div>
             </div>
 
@@ -3099,16 +3679,52 @@ textarea{
                 <div class="graph-panel-intro">
                     <div>
                         <h3>Category Performance</h3>
-                        <p>Compare category reach against average watch duration and engagement quality.</p>
+                        <p>Compare category reach, likes and total watch time to find content themes worth promoting.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">🗂</div>
-                        <strong>Category performance graph</strong>
-                        <span>This panel will identify categories that attract clicks and hold attention.</span>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong id="categoryPerformanceChartTitle">Category Watch Time</strong>
+                            <p>Top categories are shown first; switch the metric to compare performance.</p>
+                        </div>
+                        <div class="live-graph-controls" id="categoryPerformanceMetricControls" aria-label="Category performance metric">
+                            <button type="button" class="live-graph-button active" onclick="setCategoryPerformanceMetric('watchTime',this)">Watch Time</button>
+                            <button type="button" class="live-graph-button" onclick="setCategoryPerformanceMetric('views',this)">Views</button>
+                            <button type="button" class="live-graph-button" onclick="setCategoryPerformanceMetric('likes',this)">Likes</button>
+                        </div>
                     </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>Top Category</span>
+                            <strong id="categoryPerformanceTopCategory">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Categories Tracked</span>
+                            <strong id="categoryPerformanceCategoryCount">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Watch Time Total</span>
+                            <strong id="categoryPerformanceTotalWatchTime">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="categoryPerformanceCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="Category performance bar graph"
+                        ></canvas>
+                        <div class="live-graph-status" id="categoryPerformanceStatus">
+                            Open Category Performance to load graph data.
+                        </div>
+                    </div>
+
+                    <p class="live-graph-note">Category metrics combine the current video totals with recorded watch time from both connected platforms.</p>
                 </div>
             </div>
 
@@ -3122,16 +3738,58 @@ textarea{
                 <div class="graph-panel-intro">
                     <div>
                         <h3>New vs Returning Users</h3>
-                        <p>Compare newly acquired users with people who repeatedly return to the platform.</p>
+                        <p>Compare first-time viewers with returning viewers by day across the connected platforms.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">↩</div>
-                        <strong>Audience loyalty graph</strong>
-                        <span>This panel will measure whether audience growth is turning into repeat usage.</span>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong>Audience loyalty trend</strong>
+                            <p>A viewer is returning when they have a recorded session before that day.</p>
+                        </div>
+                        <div class="live-graph-controls" id="returningUsersRangeControls" aria-label="New versus returning user range">
+                            <button type="button" class="live-graph-button" onclick="setReturningUsersRange(7,this)">7 Days</button>
+                            <button type="button" class="live-graph-button active" onclick="setReturningUsersRange(30,this)">30 Days</button>
+                            <button type="button" class="live-graph-button" onclick="setReturningUsersRange(90,this)">90 Days</button>
+                            <button type="button" class="graph-refresh-button" onclick="loadReturningUsersGraph(true)">↻ Refresh</button>
+                        </div>
                     </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>New Viewers</span>
+                            <strong id="returningUsersNewCount">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Returning Viewers</span>
+                            <strong id="returningUsersReturningCount">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Return Rate</span>
+                            <strong id="returningUsersReturnRate">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="returningUsersCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="New and returning viewers bar graph"
+                        ></canvas>
+                        <div class="live-graph-status" id="returningUsersStatus">
+                            Open New vs Returning to load graph data.
+                        </div>
+                    </div>
+
+                    <div class="live-graph-legend" aria-label="New versus returning viewers graph legend">
+                        <span><i class="new-user-line"></i>New viewers</span>
+                        <span><i class="returning-user-line"></i>Returning viewers</span>
+                    </div>
+
+                    <p class="live-graph-note">Viewer identity is the anonymous or authenticated viewer ID sent by the website and Telegram mini app. No viewer names are exposed in this graph.</p>
                 </div>
             </div>
 
@@ -3281,6 +3939,23 @@ let selectedThumbnailFile = null;
 
 let allCategories = [];
 let categorySearchTerm = "";
+
+let dailyPerformanceDays = 30;
+let dailyPerformanceMetric = "starts";
+let dailyPerformanceData = [];
+let dailyPerformanceLoadedDays = 0;
+let dailyPerformanceLoading = false;
+let dailyPerformanceResizeTimer = null;
+
+let graphSourceCache = null;
+let graphSourcePromise = null;
+let graphSourceLoadedAt = 0;
+let categoryPerformanceMetric = "watchTime";
+let returningUsersDays = 30;
+let statisticalGraphsResizeTimer = null;
+let audienceRetentionData = [];
+let categoryPerformanceData = [];
+let returningUsersData = [];
 
 
 /* =====================================================
@@ -6767,7 +7442,1333 @@ function openStatisticalGraphPanel(panelId,button){
         panelId,
         button
     );
+
+    if(panelId === "dailyPerformanceGraphPanel"){
+        loadDailyPerformanceGraph();
+    }
+    else if(panelId === "audienceRetentionGraphPanel"){
+        loadAudienceRetentionGraph();
+    }
+    else if(panelId === "categoryPerformanceGraphPanel"){
+        loadCategoryPerformanceGraph();
+    }
+    else if(panelId === "returningUsersGraphPanel"){
+        loadReturningUsersGraph();
+    }
 }
+
+/* =====================================================
+   LIVE STATISTICAL GRAPHS
+===================================================== */
+
+function setGraphStatus(statusId,message,isError){
+
+    const status = document.getElementById(statusId);
+
+    if(!status) return;
+
+    status.textContent = message;
+    status.classList.toggle("error",Boolean(isError));
+    status.classList.remove("hidden");
+}
+
+function hideGraphStatus(statusId){
+
+    const status = document.getElementById(statusId);
+
+    if(!status) return;
+
+    status.classList.remove("error");
+    status.classList.add("hidden");
+}
+
+function graphNumber(value){
+
+    const number = Number(value);
+
+    return Number.isFinite(number) ? number : 0;
+}
+
+function graphDateKey(value){
+
+    const date = new Date(value);
+
+    if(Number.isNaN(date.getTime())) return "";
+
+    return date.toISOString().slice(0,10);
+}
+
+function graphDateRange(days){
+
+    const count = Math.max(1,Number(days) || 1);
+    const dates = [];
+    const today = new Date();
+
+    today.setUTCHours(0,0,0,0);
+
+    for(let index = count - 1; index >= 0; index--){
+
+        const date = new Date(today);
+
+        date.setUTCDate(today.getUTCDate() - index);
+        dates.push(date.toISOString().slice(0,10));
+
+    }
+
+    return dates;
+}
+
+function formatGraphNumber(value){
+
+    return Math.round(graphNumber(value)).toLocaleString();
+}
+
+function formatGraphCompactNumber(value){
+
+    const number = graphNumber(value);
+
+    if(number >= 1000000) return (number / 1000000).toFixed(number >= 10000000 ? 0 : 1) + "M";
+    if(number >= 1000) return (number / 1000).toFixed(number >= 10000 ? 0 : 1) + "K";
+
+    return Math.round(number).toLocaleString();
+}
+
+function formatGraphDateLabel(dateKey,includeYear){
+
+    const date = new Date(dateKey + "T00:00:00Z");
+
+    if(Number.isNaN(date.getTime())) return dateKey;
+
+    return date.toLocaleDateString(undefined,{
+        month:"short",
+        day:"numeric",
+        year:includeYear ? "numeric" : undefined,
+        timeZone:"UTC"
+    });
+}
+
+function formatGraphDuration(value){
+
+    const seconds = Math.max(0,Math.round(graphNumber(value)));
+
+    if(seconds < 60) return seconds + "s";
+    if(seconds < 3600) return Math.floor(seconds / 60) + "m";
+
+    return Math.floor(seconds / 3600) + "h " + Math.floor((seconds % 3600) / 60) + "m";
+}
+
+function normalizeGraphPlatform(value){
+
+    return String(value || "").toLowerCase() === "website"
+        ? "website"
+        : "mini_app";
+}
+
+function getSessionDateKey(session){
+
+    return graphDateKey(
+        session && (session.created_at || session.updated_at)
+    );
+}
+
+function getSessionSeconds(session){
+
+    return Math.max(
+        0,
+        Math.floor(graphNumber(session && session.watched_seconds))
+    );
+}
+
+function buildGraphLikeCounts(rows){
+
+    const counts = new Map();
+
+    (rows || []).forEach(row => {
+
+        const key = String(row && row.video_id || "");
+
+        if(!key) return;
+
+        counts.set(key,(counts.get(key) || 0) + 1);
+
+    });
+
+    return counts;
+}
+
+async function loadGraphSourceData(force,requestedDays){
+
+    const requiredDays = Math.max(
+        90,
+        Number(requestedDays) || 90
+    );
+
+    const cacheIsFresh =
+        graphSourceCache &&
+        graphSourceCache.days >= requiredDays &&
+        Date.now() - graphSourceLoadedAt < 60000;
+
+    if(cacheIsFresh && !force){
+        return graphSourceCache;
+    }
+
+    if(graphSourcePromise && !force){
+        return graphSourcePromise;
+    }
+
+    graphSourcePromise = (async function(){
+
+        await requireAuthenticatedUser();
+
+        const since = new Date(
+            Date.now() - ((requiredDays + 3) * 86400000)
+        ).toISOString();
+
+        const [sessionsResult,videosResult,likesResult] =
+            await Promise.all([
+                supabaseClient
+                    .from("video_watch_sessions")
+                    .select("session_id,viewer_id,video_id,video_category,platform,watched_seconds,created_at,updated_at")
+                    .gte("created_at",since)
+                    .order("created_at",{ascending:true})
+                    .limit(10000),
+                supabaseClient
+                    .from("videos")
+                    .select("id,title,category,views,created_at")
+                    .order("created_at",{ascending:true})
+                    .limit(10000),
+                supabaseClient
+                    .from("video_likes")
+                    .select("video_id")
+                    .limit(10000)
+            ]);
+
+        if(videosResult.error){
+            throw new Error(
+                "Could not load videos for the graphs: " +
+                videosResult.error.message
+            );
+        }
+
+        return {
+            days:requiredDays,
+            sessions:sessionsResult.data || [],
+            sessionsError:sessionsResult.error
+                ? sessionsResult.error.message
+                : "",
+            videos:videosResult.data || [],
+            likes:likesResult.data || [],
+            likesError:likesResult.error
+                ? likesResult.error.message
+                : ""
+        };
+
+    })();
+
+    try{
+
+        const source = await graphSourcePromise;
+
+        graphSourceCache = source;
+        graphSourceLoadedAt = Date.now();
+
+        return source;
+
+    }
+    finally{
+
+        graphSourcePromise = null;
+
+    }
+}
+
+function prepareGraphCanvas(canvas){
+
+    if(!canvas) return null;
+
+    const parent = canvas.parentElement;
+    const width = Math.max(
+        320,
+        Math.floor(canvas.clientWidth || (parent && parent.clientWidth) || 640)
+    );
+    const height = Math.max(
+        260,
+        Math.floor(canvas.clientHeight || 340)
+    );
+    const ratio = Math.max(
+        1,
+        Math.min(2,window.devicePixelRatio || 1)
+    );
+    const context = canvas.getContext("2d");
+
+    if(!context) return null;
+
+    canvas.width = Math.floor(width * ratio);
+    canvas.height = Math.floor(height * ratio);
+    context.setTransform(ratio,0,0,ratio,0,0);
+    context.clearRect(0,0,width,height);
+
+    return {context,width,height};
+}
+
+function drawGraphGrid(context,chart,maxValue,formatY){
+
+    const {left,top,width,height} = chart;
+
+    context.lineWidth = 1;
+    context.font = "10px Arial, Helvetica, sans-serif";
+    context.textAlign = "right";
+    context.textBaseline = "middle";
+
+    for(let index = 0; index <= 4; index++){
+
+        const ratio = index / 4;
+        const y = top + height - (ratio * height);
+
+        context.strokeStyle = "rgba(255,255,255,.08)";
+        context.beginPath();
+        context.moveTo(left,y);
+        context.lineTo(left + width,y);
+        context.stroke();
+
+        context.fillStyle = "#686868";
+        context.fillText(
+            formatY(maxValue * ratio),
+            left - 10,
+            y
+        );
+
+    }
+}
+
+function drawLineGraph(canvas,rows,series,options){
+
+    const prepared = prepareGraphCanvas(canvas);
+
+    if(!prepared || !rows || rows.length === 0) return;
+
+    const context = prepared.context;
+    const chart = {
+        left:58,
+        top:22,
+        width:prepared.width - 82,
+        height:prepared.height - 68
+    };
+    const values = [];
+
+    rows.forEach(row => {
+        series.forEach(item => {
+            values.push(graphNumber(item.value(row)));
+        });
+    });
+
+    const maxValue = Math.max(
+        1,
+        graphNumber(options && options.maxValue),
+        ...values
+    );
+    const formatY = options && options.formatY
+        ? options.formatY
+        : formatGraphCompactNumber;
+
+    drawGraphGrid(context,chart,maxValue,formatY);
+
+    const xFor = index => chart.left + (
+        rows.length === 1
+            ? chart.width / 2
+            : (index / (rows.length - 1)) * chart.width
+    );
+    const yFor = value => chart.top + chart.height - (
+        (graphNumber(value) / maxValue) * chart.height
+    );
+    const labelStep = Math.max(
+        1,
+        Math.ceil(rows.length / 6)
+    );
+
+    context.textAlign = "center";
+    context.textBaseline = "top";
+    context.font = "10px Arial, Helvetica, sans-serif";
+
+    rows.forEach((row,index) => {
+
+        if(index % labelStep !== 0 && index !== rows.length - 1) return;
+
+        context.fillStyle = "#686868";
+        context.fillText(
+            options && options.label
+                ? options.label(row,index)
+                : String(row.label || ""),
+            xFor(index),
+            chart.top + chart.height + 13
+        );
+
+    });
+
+    series.forEach(item => {
+
+        context.beginPath();
+
+        rows.forEach((row,index) => {
+
+            const x = xFor(index);
+            const y = yFor(item.value(row));
+
+            if(index === 0) context.moveTo(x,y);
+            else context.lineTo(x,y);
+
+        });
+
+        context.strokeStyle = item.color;
+        context.lineWidth = 2.5;
+        context.lineJoin = "round";
+        context.lineCap = "round";
+        context.stroke();
+
+        rows.forEach((row,index) => {
+
+            const x = xFor(index);
+            const y = yFor(item.value(row));
+
+            context.fillStyle = item.color;
+            context.beginPath();
+            context.arc(x,y,3.2,0,Math.PI * 2);
+            context.fill();
+
+        });
+
+    });
+}
+
+function fillGraphRoundedRect(context,x,y,width,height,radius){
+
+    context.beginPath();
+
+    if(typeof context.roundRect === "function"){
+        context.roundRect(
+            x,
+            y,
+            width,
+            height,
+            radius
+        );
+    }
+    else{
+        context.rect(x,y,width,height);
+    }
+
+    context.fill();
+}
+
+function drawBarGraph(canvas,rows,options){
+
+    const prepared = prepareGraphCanvas(canvas);
+
+    if(!prepared || !rows || rows.length === 0) return;
+
+    const context = prepared.context;
+    const chart = {
+        left:58,
+        top:22,
+        width:prepared.width - 82,
+        height:prepared.height - 92
+    };
+    const values = rows.map(row => graphNumber(options.value(row)));
+    const maxValue = Math.max(1,...values);
+    const formatY = options.formatY || formatGraphCompactNumber;
+
+    drawGraphGrid(context,chart,maxValue,formatY);
+
+    const slot = chart.width / Math.max(1,rows.length);
+    const barWidth = Math.max(
+        12,
+        Math.min(52,slot * .64)
+    );
+
+    rows.forEach((row,index) => {
+
+        const value = graphNumber(options.value(row));
+        const x = chart.left + (index * slot) + ((slot - barWidth) / 2);
+        const barHeight = (value / maxValue) * chart.height;
+        const y = chart.top + chart.height - barHeight;
+        const gradient = context.createLinearGradient(0,y,0,chart.top + chart.height);
+
+        gradient.addColorStop(0,options.color || "#ff3d61");
+        gradient.addColorStop(1,"rgba(255,23,68,.18)");
+        context.fillStyle = gradient;
+        fillGraphRoundedRect(
+            context,
+            x,
+            y,
+            barWidth,
+            Math.max(2,barHeight),
+            [7,7,0,0]
+        );
+
+        context.fillStyle = "#8b8b8b";
+        context.font = "10px Arial, Helvetica, sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "top";
+        context.fillText(
+            formatY(value),
+            x + (barWidth / 2),
+            Math.max(chart.top + 2,y - 15)
+        );
+
+        context.save();
+        context.translate(
+            x + (barWidth / 2),
+            chart.top + chart.height + 14
+        );
+        context.rotate(-Math.PI / 7);
+        context.fillStyle = "#686868";
+        context.textAlign = "right";
+        context.textBaseline = "top";
+        context.fillText(
+            String(options.label(row,index) || "").slice(0,22),
+            0,
+            0
+        );
+        context.restore();
+
+    });
+}
+
+function drawStackedBarGraph(canvas,rows){
+
+    const prepared = prepareGraphCanvas(canvas);
+
+    if(!prepared || !rows || rows.length === 0) return;
+
+    const context = prepared.context;
+    const chart = {
+        left:58,
+        top:22,
+        width:prepared.width - 82,
+        height:prepared.height - 92
+    };
+    const totals = rows.map(row =>
+        graphNumber(row.newUsers) + graphNumber(row.returningUsers)
+    );
+    const maxValue = Math.max(1,...totals);
+
+    drawGraphGrid(context,chart,maxValue,formatGraphCompactNumber);
+
+    const slot = chart.width / Math.max(1,rows.length);
+    const barWidth = Math.max(12,Math.min(52,slot * .64));
+
+    rows.forEach((row,index) => {
+
+        const x = chart.left + (index * slot) + ((slot - barWidth) / 2);
+        const newValue = graphNumber(row.newUsers);
+        const returningValue = graphNumber(row.returningUsers);
+        const newHeight = (newValue / maxValue) * chart.height;
+        const returningHeight = (returningValue / maxValue) * chart.height;
+        const baseY = chart.top + chart.height;
+
+        context.fillStyle = "#a78bfa";
+        fillGraphRoundedRect(
+            context,
+            x,
+            baseY - newHeight,
+            barWidth,
+            Math.max(2,newHeight),
+            [7,7,0,0]
+        );
+
+        context.fillStyle = "#34d399";
+        context.fillRect(
+            x,
+            baseY - newHeight - returningHeight,
+            barWidth,
+            Math.max(2,returningHeight)
+        );
+
+        context.save();
+        context.translate(
+            x + (barWidth / 2),
+            baseY + 14
+        );
+        context.rotate(-Math.PI / 7);
+        context.fillStyle = "#686868";
+        context.font = "10px Arial, Helvetica, sans-serif";
+        context.textAlign = "right";
+        context.textBaseline = "top";
+        context.fillText(
+            formatGraphDateLabel(row.date,false),
+            0,
+            0
+        );
+        context.restore();
+
+    });
+}
+
+function buildDailyPerformanceRows(sessions,days){
+
+    const dates = graphDateRange(days);
+    const buckets = new Map();
+
+    dates.forEach(date => {
+
+        buckets.set(date,{
+            date:date,
+            website:{starts:0,watchTime:0,viewers:new Set()},
+            mini_app:{starts:0,watchTime:0,viewers:new Set()}
+        });
+
+    });
+
+    (sessions || []).forEach(session => {
+
+        const date = getSessionDateKey(session);
+        const bucket = buckets.get(date);
+
+        if(!bucket) return;
+
+        const platform = normalizeGraphPlatform(session.platform);
+        const target = bucket[platform];
+        const viewerId = String(session.viewer_id || "").trim();
+
+        target.starts += 1;
+        target.watchTime += getSessionSeconds(session);
+
+        if(viewerId) target.viewers.add(viewerId);
+
+    });
+
+    return dates.map(date => {
+
+        const bucket = buckets.get(date);
+
+        return {
+            date:date,
+            websiteStarts:bucket.website.starts,
+            websiteWatchTime:bucket.website.watchTime,
+            websiteViewers:bucket.website.viewers.size,
+            miniAppStarts:bucket.mini_app.starts,
+            miniAppWatchTime:bucket.mini_app.watchTime,
+            miniAppViewers:bucket.mini_app.viewers.size
+        };
+
+    });
+}
+
+function dailyMetricValue(row,platform,metric){
+
+    if(platform === "website"){
+        if(metric === "watchTime") return row.websiteWatchTime;
+        if(metric === "viewers") return row.websiteViewers;
+
+        return row.websiteStarts;
+    }
+
+    if(metric === "watchTime") return row.miniAppWatchTime;
+    if(metric === "viewers") return row.miniAppViewers;
+
+    return row.miniAppStarts;
+}
+
+function renderDailyPerformanceGraph(){
+
+    const title = document.getElementById("dailyChartTitle");
+    const rangeLabel = document.getElementById("dailyChartRangeLabel");
+    const metricLabels = {
+        starts:"Video Starts",
+        watchTime:"Watch Time",
+        viewers:"Unique Viewers"
+    };
+    const metricLabel = metricLabels[dailyPerformanceMetric] || "Video Starts";
+
+    if(title) title.textContent = metricLabel;
+    if(rangeLabel) rangeLabel.textContent = "Last " + dailyPerformanceDays + " days";
+
+    drawLineGraph(
+        document.getElementById("dailyPerformanceCanvas"),
+        dailyPerformanceData,
+        [
+            {
+                color:"#ff3d61",
+                value:row => dailyMetricValue(row,"website",dailyPerformanceMetric)
+            },
+            {
+                color:"#38bdf8",
+                value:row => dailyMetricValue(row,"mini_app",dailyPerformanceMetric)
+            }
+        ],
+        {
+            label:row => formatGraphDateLabel(row.date,dailyPerformanceDays > 60),
+            formatY:dailyPerformanceMetric === "watchTime"
+                ? formatGraphDuration
+                : formatGraphCompactNumber
+        }
+    );
+}
+
+function updateDailyPerformanceSummary(){
+
+    const totalStarts = dailyPerformanceData.reduce(
+        (sum,row) => sum + row.websiteStarts + row.miniAppStarts,
+        0
+    );
+    const totalWatchTime = dailyPerformanceData.reduce(
+        (sum,row) => sum + row.websiteWatchTime + row.miniAppWatchTime,
+        0
+    );
+    const bestDay = [...dailyPerformanceData].sort((first,second) => {
+
+        const firstValue = dailyMetricValue(first,"website",dailyPerformanceMetric) +
+            dailyMetricValue(first,"mini_app",dailyPerformanceMetric);
+        const secondValue = dailyMetricValue(second,"website",dailyPerformanceMetric) +
+            dailyMetricValue(second,"mini_app",dailyPerformanceMetric);
+
+        return secondValue - firstValue;
+
+    })[0];
+    const websiteTotal = dailyPerformanceData.reduce(
+        (sum,row) => sum + dailyMetricValue(row,"website",dailyPerformanceMetric),
+        0
+    );
+    const miniAppTotal = dailyPerformanceData.reduce(
+        (sum,row) => sum + dailyMetricValue(row,"mini_app",dailyPerformanceMetric),
+        0
+    );
+    const totalStartsElement = document.getElementById("dailyTotalStarts");
+    const totalWatchTimeElement = document.getElementById("dailyTotalWatchTime");
+    const bestDayElement = document.getElementById("dailyBestDay");
+    const leadingPlatformElement = document.getElementById("dailyLeadingPlatform");
+
+    if(totalStartsElement) totalStartsElement.textContent = formatGraphNumber(totalStarts);
+    if(totalWatchTimeElement) totalWatchTimeElement.textContent = formatGraphDuration(totalWatchTime);
+    if(bestDayElement){
+        bestDayElement.textContent = bestDay && dailyMetricValue(bestDay,"website",dailyPerformanceMetric) +
+            dailyMetricValue(bestDay,"mini_app",dailyPerformanceMetric) > 0
+            ? formatGraphDateLabel(bestDay.date,false)
+            : "—";
+    }
+    if(leadingPlatformElement){
+        leadingPlatformElement.textContent = websiteTotal === 0 && miniAppTotal === 0
+            ? "—"
+            : websiteTotal >= miniAppTotal ? "Website" : "Mini App";
+    }
+}
+
+function setDailyPerformanceRange(days,button){
+
+    dailyPerformanceDays = Math.max(7,Number(days) || 30);
+
+    if(button){
+        document
+            .querySelectorAll("#dailyRangeControls .graph-filter-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    loadDailyPerformanceGraph(true);
+}
+
+function setDailyPerformanceMetric(metric,button){
+
+    dailyPerformanceMetric = metric === "watchTime" || metric === "viewers"
+        ? metric
+        : "starts";
+
+    if(button){
+        document
+            .querySelectorAll("#dailyMetricControls .graph-metric-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    updateDailyPerformanceSummary();
+    renderDailyPerformanceGraph();
+}
+
+async function loadDailyPerformanceGraph(force){
+
+    if(dailyPerformanceLoading && !force) return;
+
+    dailyPerformanceLoading = true;
+    setGraphStatus(
+        "dailyPerformanceStatus",
+        "Loading daily performance data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(
+            Boolean(force),
+            dailyPerformanceDays
+        );
+
+        dailyPerformanceData = buildDailyPerformanceRows(
+            source.sessions,
+            dailyPerformanceDays
+        );
+        dailyPerformanceLoadedDays = dailyPerformanceDays;
+
+        updateDailyPerformanceSummary();
+        renderDailyPerformanceGraph();
+
+        const hasDailySessions = dailyPerformanceData.some(
+            row => row.websiteStarts + row.miniAppStarts > 0
+        );
+
+        if(source.sessionsError){
+            setGraphStatus(
+                "dailyPerformanceStatus",
+                "Watch-time tracking is unavailable. Run setup_watch_time.sql in Supabase to activate this graph.",
+                true
+            );
+        }
+        else if(!hasDailySessions){
+            setGraphStatus(
+                "dailyPerformanceStatus",
+                "No viewing sessions have been recorded in this period yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("dailyPerformanceStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "dailyPerformanceStatus",
+            "Could not load daily performance data: " + error.message,
+            true
+        );
+
+    }
+    finally{
+
+        dailyPerformanceLoading = false;
+
+    }
+}
+
+function buildAudienceRetentionRows(sessions){
+
+    const milestones = [5,10,20,30,60,120,300];
+    const validSessions = (sessions || []).filter(
+        session => getSessionSeconds(session) > 0
+    );
+    const websiteSessions = validSessions.filter(
+        session => normalizeGraphPlatform(session.platform) === "website"
+    );
+    const miniAppSessions = validSessions.filter(
+        session => normalizeGraphPlatform(session.platform) === "mini_app"
+    );
+    const percentageAt = (rows,milestone) => rows.length
+        ? rows.filter(session => getSessionSeconds(session) >= milestone).length / rows.length * 100
+        : 0;
+
+    return milestones.map(seconds => ({
+        seconds:seconds,
+        label:formatGraphDuration(seconds),
+        website:percentageAt(websiteSessions,seconds),
+        miniApp:percentageAt(miniAppSessions,seconds),
+        total:percentageAt(validSessions,seconds)
+    }));
+}
+
+function renderAudienceRetentionGraph(){
+
+    drawLineGraph(
+        document.getElementById("audienceRetentionCanvas"),
+        audienceRetentionData,
+        [
+            {color:"#ff3d61",value:row => row.website},
+            {color:"#38bdf8",value:row => row.miniApp}
+        ],
+        {
+            label:row => row.label,
+            maxValue:100,
+            formatY:value => Math.round(value) + "%"
+        }
+    );
+}
+
+async function loadAudienceRetentionGraph(force){
+
+    setGraphStatus(
+        "audienceRetentionStatus",
+        "Loading audience retention data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),365);
+        const sessions = (source.sessions || []).filter(
+            session => getSessionSeconds(session) > 0
+        );
+        const totalSeconds = sessions.reduce(
+            (sum,session) => sum + getSessionSeconds(session),
+            0
+        );
+        const reachedThirty = sessions.filter(
+            session => getSessionSeconds(session) >= 30
+        ).length;
+        const sessionCountElement = document.getElementById("retentionSessionCount");
+        const thirtySecondElement = document.getElementById("retentionThirtySecondRate");
+        const averageElement = document.getElementById("retentionAverageWatchTime");
+
+        audienceRetentionData = buildAudienceRetentionRows(source.sessions);
+        if(sessionCountElement) sessionCountElement.textContent = formatGraphNumber(sessions.length);
+        if(thirtySecondElement){
+            thirtySecondElement.textContent = sessions.length
+                ? Math.round((reachedThirty / sessions.length) * 100) + "%"
+                : "—";
+        }
+        if(averageElement){
+            averageElement.textContent = sessions.length
+                ? formatGraphDuration(totalSeconds / sessions.length)
+                : "—";
+        }
+
+        renderAudienceRetentionGraph();
+
+        if(source.sessionsError){
+            setGraphStatus(
+                "audienceRetentionStatus",
+                "Watch-time tracking is unavailable. Run setup_watch_time.sql in Supabase to activate this graph.",
+                true
+            );
+        }
+        else if(!sessions.length){
+            setGraphStatus(
+                "audienceRetentionStatus",
+                "No viewing sessions have been recorded yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("audienceRetentionStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "audienceRetentionStatus",
+            "Could not load audience retention data: " + error.message,
+            true
+        );
+
+    }
+}
+
+function buildCategoryPerformanceRows(source){
+
+    const likeCounts = buildGraphLikeCounts(source.likes);
+    const videoCategories = new Map();
+    const categories = new Map();
+
+    (source.videos || []).forEach(video => {
+
+        const categoryName = String(
+            video.category || "Uncategorized"
+        ).trim() || "Uncategorized";
+        const categoryKey = categoryName.toLowerCase();
+        const videoKey = String(video.id || "");
+
+        videoCategories.set(videoKey,categoryName);
+
+        if(!categories.has(categoryKey)){
+            categories.set(categoryKey,{
+                name:categoryName,
+                views:0,
+                likes:0,
+                watchTime:0
+            });
+        }
+
+        const target = categories.get(categoryKey);
+        target.views += graphNumber(video.views);
+        target.likes += likeCounts.get(videoKey) || 0;
+
+    });
+
+    (source.sessions || []).forEach(session => {
+
+        const categoryName = String(
+            videoCategories.get(String(session.video_id || "")) ||
+            session.video_category ||
+            "Uncategorized"
+        ).trim() || "Uncategorized";
+        const categoryKey = categoryName.toLowerCase();
+
+        if(!categories.has(categoryKey)){
+            categories.set(categoryKey,{
+                name:categoryName,
+                views:0,
+                likes:0,
+                watchTime:0
+            });
+        }
+
+        categories.get(categoryKey).watchTime += getSessionSeconds(session);
+
+    });
+
+    return Array.from(categories.values());
+}
+
+function setCategoryPerformanceMetric(metric,button){
+
+    categoryPerformanceMetric =
+        ["watchTime","views","likes"].includes(metric)
+            ? metric
+            : "watchTime";
+
+    if(button){
+        document
+            .querySelectorAll("#categoryPerformanceMetricControls .live-graph-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    renderCategoryPerformanceGraph();
+
+    if(graphSourceCache){
+        updateCategoryPerformanceStatus(graphSourceCache);
+    }
+}
+
+function renderCategoryPerformanceGraph(){
+
+    const title = document.getElementById("categoryPerformanceChartTitle");
+    const titleLabels = {
+        watchTime:"Category Watch Time",
+        views:"Category Views",
+        likes:"Category Likes"
+    };
+
+    if(title){
+        title.textContent = titleLabels[categoryPerformanceMetric] || "Category Watch Time";
+    }
+
+    const rows = [...categoryPerformanceData]
+        .sort((first,second) => {
+            return graphNumber(second[categoryPerformanceMetric]) -
+                graphNumber(first[categoryPerformanceMetric]) ||
+                first.name.localeCompare(second.name);
+        })
+        .slice(0,10);
+
+    drawBarGraph(
+        document.getElementById("categoryPerformanceCanvas"),
+        rows,
+        {
+            value:row => row[categoryPerformanceMetric],
+            label:row => row.name,
+            color:categoryPerformanceMetric === "views"
+                ? "#38bdf8"
+                : categoryPerformanceMetric === "likes"
+                    ? "#a78bfa"
+                    : "#ff3d61",
+            formatY:categoryPerformanceMetric === "watchTime"
+                ? formatGraphDuration
+                : formatGraphCompactNumber
+        }
+    );
+}
+
+function updateCategoryPerformanceStatus(source){
+
+    const metricNeedsSessions = categoryPerformanceMetric === "watchTime";
+    const metricUnavailable =
+        (metricNeedsSessions && source.sessionsError) ||
+        (categoryPerformanceMetric === "likes" && source.likesError);
+
+    if(metricUnavailable){
+        setGraphStatus(
+            "categoryPerformanceStatus",
+            metricNeedsSessions
+                ? "Watch-time tracking is unavailable. Run setup_watch_time.sql in Supabase to activate this metric."
+                : "Like data could not be read: " + source.likesError,
+            true
+        );
+    }
+    else if(
+        !categoryPerformanceData.length ||
+        !categoryPerformanceData.some(row => graphNumber(row[categoryPerformanceMetric]) > 0)
+    ){
+        const metricLabel = categoryPerformanceMetric === "watchTime"
+            ? "watch time"
+            : categoryPerformanceMetric === "likes"
+                ? "likes"
+                : "views";
+
+        setGraphStatus(
+            "categoryPerformanceStatus",
+            "No category " + metricLabel + " has been recorded yet.",
+            false
+        );
+    }
+    else{
+        hideGraphStatus("categoryPerformanceStatus");
+    }
+}
+
+async function loadCategoryPerformanceGraph(force){
+
+    setGraphStatus(
+        "categoryPerformanceStatus",
+        "Loading category performance data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),365);
+
+        categoryPerformanceData = buildCategoryPerformanceRows(source);
+
+        const sortedRows = [...categoryPerformanceData].sort((first,second) => {
+            return graphNumber(second[categoryPerformanceMetric]) -
+                graphNumber(first[categoryPerformanceMetric]) ||
+                first.name.localeCompare(second.name);
+        });
+        const topCategory = sortedRows[0];
+        const totalWatchTime = categoryPerformanceData.reduce(
+            (sum,row) => sum + graphNumber(row.watchTime),
+            0
+        );
+        const topElement = document.getElementById("categoryPerformanceTopCategory");
+        const countElement = document.getElementById("categoryPerformanceCategoryCount");
+        const totalElement = document.getElementById("categoryPerformanceTotalWatchTime");
+
+        if(topElement) topElement.textContent = topCategory ? topCategory.name : "—";
+        if(countElement) countElement.textContent = formatGraphNumber(categoryPerformanceData.length);
+        if(totalElement) totalElement.textContent = formatGraphDuration(totalWatchTime);
+
+        renderCategoryPerformanceGraph();
+
+        updateCategoryPerformanceStatus(source);
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "categoryPerformanceStatus",
+            "Could not load category performance data: " + error.message,
+            true
+        );
+
+    }
+}
+
+function buildReturningUsersRows(sessions,days){
+
+    const dates = graphDateRange(days);
+    const dateSet = new Set(dates);
+    const firstSeen = new Map();
+    const sortedSessions = [...(sessions || [])]
+        .filter(session => String(session.viewer_id || "").trim())
+        .sort((first,second) => {
+            const firstTime = new Date(first.created_at || first.updated_at).getTime();
+            const secondTime = new Date(second.created_at || second.updated_at).getTime();
+
+            return firstTime - secondTime;
+        });
+
+    sortedSessions.forEach(session => {
+
+        const viewerId = String(session.viewer_id).trim();
+        const date = getSessionDateKey(session);
+
+        if(!viewerId || !date || firstSeen.has(viewerId)) return;
+
+        firstSeen.set(viewerId,date);
+
+    });
+
+    const buckets = new Map();
+
+    dates.forEach(date => {
+        buckets.set(date,{
+            date:date,
+            newIds:new Set(),
+            returningIds:new Set()
+        });
+    });
+
+    sortedSessions.forEach(session => {
+
+        const viewerId = String(session.viewer_id).trim();
+        const date = getSessionDateKey(session);
+        const bucket = buckets.get(date);
+
+        if(!bucket || !dateSet.has(date)) return;
+
+        if(firstSeen.get(viewerId) === date){
+            bucket.newIds.add(viewerId);
+        }
+        else{
+            bucket.returningIds.add(viewerId);
+        }
+
+    });
+
+    return dates.map(date => {
+
+        const bucket = buckets.get(date);
+
+        return {
+            date:date,
+            newUsers:bucket.newIds.size,
+            returningUsers:bucket.returningIds.size
+        };
+
+    });
+}
+
+function renderReturningUsersGraph(){
+
+    drawStackedBarGraph(
+        document.getElementById("returningUsersCanvas"),
+        returningUsersData
+    );
+}
+
+function setReturningUsersRange(days,button){
+
+    returningUsersDays = Math.max(7,Number(days) || 30);
+
+    if(button){
+        document
+            .querySelectorAll("#returningUsersRangeControls .live-graph-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    loadReturningUsersGraph(true);
+}
+
+async function loadReturningUsersGraph(force){
+
+    setGraphStatus(
+        "returningUsersStatus",
+        "Loading new and returning viewer data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),365);
+
+        returningUsersData = buildReturningUsersRows(
+            source.sessions,
+            returningUsersDays
+        );
+
+        /* Build a unique range summary separately from the daily buckets. */
+        const newViewerIds = new Set();
+        const returningViewerIds = new Set();
+        const rangeDates = new Set(graphDateRange(returningUsersDays));
+        const firstSeen = new Map();
+        [...(source.sessions || [])]
+            .filter(session => String(session.viewer_id || "").trim())
+            .sort((first,second) => new Date(first.created_at || first.updated_at).getTime() - new Date(second.created_at || second.updated_at).getTime())
+            .forEach(session => {
+                const viewerId = String(session.viewer_id).trim();
+                if(!firstSeen.has(viewerId)) firstSeen.set(viewerId,getSessionDateKey(session));
+            });
+
+        (source.sessions || []).forEach(session => {
+            const viewerId = String(session.viewer_id || "").trim();
+            const date = getSessionDateKey(session);
+
+            if(!viewerId || !rangeDates.has(date)) return;
+
+            if(firstSeen.get(viewerId) === date) newViewerIds.add(viewerId);
+            else returningViewerIds.add(viewerId);
+        });
+
+        const totalViewerCount = newViewerIds.size + returningViewerIds.size;
+        const newCountElement = document.getElementById("returningUsersNewCount");
+        const returningCountElement = document.getElementById("returningUsersReturningCount");
+        const returnRateElement = document.getElementById("returningUsersReturnRate");
+
+        if(newCountElement) newCountElement.textContent = formatGraphNumber(newViewerIds.size);
+        if(returningCountElement) returningCountElement.textContent = formatGraphNumber(returningViewerIds.size);
+        if(returnRateElement){
+            returnRateElement.textContent = totalViewerCount
+                ? Math.round((returningViewerIds.size / totalViewerCount) * 100) + "%"
+                : "—";
+        }
+
+        renderReturningUsersGraph();
+
+        if(source.sessionsError){
+            setGraphStatus(
+                "returningUsersStatus",
+                "Watch-time tracking is unavailable. Run setup_watch_time.sql in Supabase to activate this graph.",
+                true
+            );
+        }
+        else if(!totalViewerCount){
+            setGraphStatus(
+                "returningUsersStatus",
+                "No viewer sessions have been recorded yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("returningUsersStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "returningUsersStatus",
+            "Could not load new and returning viewer data: " + error.message,
+            true
+        );
+
+    }
+}
+
+function redrawStatisticalGraphs(){
+
+    const graphsSection = document.getElementById("statisticalGraphsSection");
+
+    if(!graphsSection) return;
+
+    if(dailyPerformanceData.length){
+        updateDailyPerformanceSummary();
+        renderDailyPerformanceGraph();
+    }
+
+    if(audienceRetentionData.length){
+        renderAudienceRetentionGraph();
+    }
+
+    if(categoryPerformanceData.length){
+        renderCategoryPerformanceGraph();
+    }
+
+    if(returningUsersData.length){
+        renderReturningUsersGraph();
+    }
+}
+
+window.addEventListener("resize",function(){
+
+    clearTimeout(statisticalGraphsResizeTimer);
+
+    statisticalGraphsResizeTimer = setTimeout(
+        redrawStatisticalGraphs,
+        120
+    );
+
+});
 
 async function loadCategoryStatistics(){
 
@@ -7253,6 +9254,7 @@ function openPage(pageId, button){
     if(pageId === "analyticsPage"){
         hideCategoryStatsPanels();
         hideVideoStatsPanels();
+        hideStatisticalGraphPanels();
         loadCategoryStatistics();
     }
 

@@ -426,7 +426,14 @@ body{
 @media(prefers-reduced-motion:reduce){
     .library-toggle,
     .library-toggle::before,
-    .library-callout{animation:none}
+    .library-callout,
+    .like-btn,
+    .library-btn,
+    .player-library-button,
+    .like-btn::after,
+    .library-btn::after,
+    .player-library-button::after,
+    .streamx-action-burst{animation:none!important;transition:none!important}
 }
 
 .category{
@@ -727,12 +734,15 @@ body{
 }
 
 .like-btn{
+    position:relative;
+    overflow:visible;
     background:none;
     border:none;
     cursor:pointer;
     font-size:22px;
     color:#777;
-    transition:.2s;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
 }
 
 .like-btn:hover{
@@ -744,6 +754,8 @@ body{
 }
 
 .library-btn{
+    position:relative;
+    overflow:visible;
     margin-left:auto;
     border:none;
     background:none;
@@ -751,7 +763,8 @@ body{
     cursor:pointer;
     font-size:21px;
     line-height:1;
-    transition:.2s;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
 }
 
 .library-btn:hover{
@@ -766,6 +779,69 @@ body{
 .library-btn:disabled{
     cursor:wait;
     opacity:.55;
+}
+
+.player-library-button{
+    position:relative;
+    overflow:visible;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,background .22s,border-color .22s,box-shadow .22s;
+}
+
+.like-btn.streamx-action-pop,
+.library-btn.streamx-action-pop,
+.player-library-button.streamx-action-pop{
+    animation:streamxActionPop .5s cubic-bezier(.2,.75,.25,1);
+}
+
+.like-btn.streamx-action-pop::after,
+.library-btn.streamx-action-pop::after,
+.player-library-button.streamx-action-pop::after{
+    content:"";
+    position:absolute;
+    inset:-5px;
+    border:2px solid currentColor;
+    border-radius:inherit;
+    pointer-events:none;
+    animation:streamxActionRing .56s ease-out forwards;
+}
+
+.streamx-action-burst{
+    position:absolute;
+    left:50%;
+    top:50%;
+    z-index:2;
+    pointer-events:none;
+    font-size:17px;
+    line-height:1;
+    text-shadow:0 0 10px currentColor;
+    transform:translate(-50%,-50%);
+    animation:streamxActionBurst .68s cubic-bezier(.2,.75,.25,1) forwards;
+}
+
+.streamx-action-burst.like{
+    color:#ff1744;
+}
+
+.streamx-action-burst.star{
+    color:#f5b942;
+}
+
+@keyframes streamxActionPop{
+    0%,100%{transform:translateZ(0) scale(1) rotate(0)}
+    36%{transform:translateZ(0) scale(1.24) rotate(-5deg)}
+    68%{transform:translateZ(0) scale(.94) rotate(3deg)}
+}
+
+@keyframes streamxActionRing{
+    0%{transform:scale(.72);opacity:.8}
+    100%{transform:scale(1.5);opacity:0}
+}
+
+@keyframes streamxActionBurst{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
+    22%{opacity:1}
+    100%{opacity:0;transform:translate(-50%,-145%) scale(1.12)}
 }
 
 .like-count{
@@ -927,7 +1003,8 @@ body{
     padding:9px 12px;
     cursor:pointer;
     font-size:12px;
-    transition:.2s;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
 }
 
 .player-library-button:hover{
@@ -1552,6 +1629,7 @@ function enterWebsite(){
     loadLibrary();
     loadVideos();
     setupVideoRealtime();
+    setupLikeRealtime();
 
 updateMiniAppPresence();
 startViewerTimeTracking("outside");
@@ -2180,6 +2258,7 @@ document.addEventListener("visibilitychange",function(){
 window.addEventListener("pagehide",function(){
     stopLibraryActivityTracking();
     stopViewerTimeTracking();
+    stopLikeCountFallback();
 });
 
 function normalizeLibraryIds(values){
@@ -2259,6 +2338,40 @@ function updateLibraryButtonState(button,videoId){
         saved ? "Remove from My Library" : "Save to My Library"
     );
     button.title = saved ? "Remove from My Library" : "Save to My Library";
+}
+
+function animateAction(button,kind){
+
+    if(!button) return;
+
+    button.classList.remove("streamx-action-pop");
+    /* Restart the keyframes even when the user taps repeatedly. */
+    void button.offsetWidth;
+    button.classList.add("streamx-action-pop");
+
+    if(button.__streamxActionTimer){
+        clearTimeout(button.__streamxActionTimer);
+    }
+
+    button.__streamxActionTimer = setTimeout(
+        () => button.classList.remove("streamx-action-pop"),
+        620
+    );
+
+    const reducedMotion =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if(reducedMotion) return;
+
+    const burst = document.createElement("span");
+    burst.className =
+        "streamx-action-burst " +
+        (kind === "star" ? "star" : "like");
+    burst.textContent = kind === "star" ? "★" : "♥";
+    button.appendChild(burst);
+
+    setTimeout(() => burst.remove(),700);
 }
 
 function updatePlayerLibraryButton(){
@@ -2430,7 +2543,7 @@ function toggleLibraryView(){
     renderVideos();
 }
 
-async function toggleLibrary(videoId){
+async function toggleLibrary(videoId,sourceButton){
 
     const key = String(videoId);
 
@@ -2450,6 +2563,8 @@ async function toggleLibrary(videoId){
 
     persistLibraryCache();
     updateLibraryUI();
+
+    animateAction(sourceButton,"star");
 
     if(libraryViewActive){
         renderVideos();
@@ -2520,6 +2635,11 @@ async function toggleLibrary(videoId){
 
     if(libraryViewActive){
         renderVideos();
+
+        const replacementButton = document.querySelector(
+            `.library-btn[data-id="${CSS.escape(String(videoId))}"]`
+        );
+        animateAction(replacementButton,"star");
     }
 }
 
@@ -2842,6 +2962,69 @@ renderVideos();
 ========================= */
 
 let videoRealtimeChannel = null;
+let likeRealtimeChannel = null;
+let likeRealtimeStatus = "";
+let likeCountRefreshTimer = null;
+const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
+
+function updateRealtimeViewUI(videoId,views){
+
+    const text =
+        Number(views || 0).toLocaleString() +
+        " views";
+    const selector =
+        `.view-count-${CSS.escape(String(videoId))}`;
+
+    document
+        .querySelectorAll(selector)
+        .forEach(element => {
+            element.textContent = text;
+        });
+}
+
+function mergeRealtimeVideo(video){
+
+    if(!video || video.id === undefined || video.id === null){
+        return;
+    }
+
+    const index = allVideos.findIndex(
+        item => String(item.id) === String(video.id)
+    );
+    const previous = index >= 0 ? allVideos[index] : null;
+    const displayFields = [
+        "title",
+        "description",
+        "category",
+        "video_url",
+        "video_path",
+        "thumbnail_url",
+        "created_at"
+    ];
+    const contentChanged =
+        !previous ||
+        displayFields.some(field =>
+            String(previous[field] ?? "") !==
+            String(video[field] ?? "")
+        );
+
+    if(index >= 0){
+        allVideos[index] = {
+            ...previous,
+            ...video
+        };
+    }
+    else{
+        allVideos.unshift(video);
+    }
+
+    if(contentChanged){
+        renderVideos();
+    }
+    else{
+        updateRealtimeViewUI(video.id,video.views);
+    }
+}
 
 function setupVideoRealtime(){
     if(videoRealtimeChannel){
@@ -2854,28 +3037,14 @@ function setupVideoRealtime(){
             "postgres_changes",
             { event:"INSERT", schema:"public", table:"videos" },
             payload => {
-                const video = payload.new;
-                if(!video) return;
-                const exists = allVideos.some(v => String(v.id) === String(video.id));
-                if(!exists){
-                    allVideos.unshift(video);
-                    renderVideos();
-                }
+                mergeRealtimeVideo(payload.new);
             }
         )
         .on(
             "postgres_changes",
             { event:"UPDATE", schema:"public", table:"videos" },
             payload => {
-                const video = payload.new;
-                if(!video) return;
-                const index = allVideos.findIndex(v => String(v.id) === String(video.id));
-                if(index >= 0){
-                    allVideos[index] = { ...allVideos[index], ...video };
-                }else{
-                    allVideos.unshift(video);
-                }
-                renderVideos();
+                mergeRealtimeVideo(payload.new);
             }
         )
         .on(
@@ -2890,6 +3059,94 @@ function setupVideoRealtime(){
         .subscribe(status => {
             console.log("Videos realtime status:", status);
         });
+}
+
+function getVisibleLikeVideoIds(){
+
+    return Array.from(
+        new Set(
+            Array.from(
+                document.querySelectorAll(".like-btn[data-id]")
+            )
+                .map(button => button.dataset.id)
+                .filter(Boolean)
+        )
+    );
+}
+
+function refreshVisibleLikeCounts(){
+
+    getVisibleLikeVideoIds().forEach(videoId => {
+        void updateLikeCount(videoId);
+    });
+}
+
+function startLikeCountFallback(){
+
+    if(likeCountRefreshTimer) return;
+
+    refreshVisibleLikeCounts();
+    likeCountRefreshTimer = setInterval(
+        () => {
+            if(document.visibilityState === "visible"){
+                refreshVisibleLikeCounts();
+            }
+        },
+        LIKE_COUNT_FALLBACK_INTERVAL_MS
+    );
+}
+
+function stopLikeCountFallback(){
+
+    if(!likeCountRefreshTimer) return;
+
+    clearInterval(likeCountRefreshTimer);
+    likeCountRefreshTimer = null;
+}
+
+function setupLikeRealtime(){
+
+    if(likeRealtimeChannel) return;
+
+    likeRealtimeChannel = supabaseClient
+        .channel("mini-app-video-likes-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event:"*",
+                schema:"public",
+                table:"video_likes"
+            },
+            payload => {
+                const videoId =
+                    payload.new && payload.new.video_id !== undefined
+                        ? payload.new.video_id
+                        : payload.old && payload.old.video_id;
+
+                if(videoId === undefined || videoId === null){
+                    refreshVisibleLikeCounts();
+                    return;
+                }
+
+                void updateLikeCount(videoId);
+            }
+        )
+        .subscribe(status => {
+            likeRealtimeStatus = status;
+
+            if(status === "SUBSCRIBED"){
+                stopLikeCountFallback();
+            }
+            else{
+                startLikeCountFallback();
+            }
+
+            console.log("Mini App likes realtime status:",status);
+        });
+
+    /* The interval is only a fallback for projects where the table has not
+       yet been enabled in Supabase Realtime. */
+    startLikeCountFallback();
 }
 
 
@@ -3202,6 +3459,7 @@ if(likeButton){
 
             event.stopPropagation();
 
+            animateAction(likeButton,"like");
             await toggleLike(video.id);
 
         }
@@ -3230,7 +3488,7 @@ if(likeButton){
             async function(event){
 
                 event.stopPropagation();
-                await toggleLibrary(video.id);
+                await toggleLibrary(video.id,libraryButton);
 
             }
         );
@@ -3780,25 +4038,25 @@ async function updateLikeCount(videoId){
             newLikeCount;
     }
 
-    // Update the number displayed on the card
-    const button =
-        document.querySelector(
-            `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
-        );
+    // Update every matching card without rebuilding the grid or interrupting
+    // a video that may be playing in the modal.
+    const selector =
+        `.like-btn[data-id="${CSS.escape(String(videoId))}"]`;
 
-    if(button){
+    document
+        .querySelectorAll(selector)
+        .forEach(button => {
+            const actions =
+                button.closest(".video-actions") ||
+                button.parentElement;
+            const likeCount =
+                actions && actions.querySelector(".like-count");
 
-        const likeCount =
-            button.parentElement.querySelector(
-                ".like-count"
-            );
-
-        if(likeCount){
-
-            likeCount.textContent =
-                newLikeCount;
-        }
-    }
+            if(likeCount){
+                likeCount.textContent =
+                    newLikeCount.toLocaleString();
+            }
+        });
 
     // Update heart color/status
     await updateLikeButton(videoId);
@@ -3923,7 +4181,7 @@ if(playerLibraryButton){
                 currentPlayerVideoId !== null &&
                 currentPlayerVideoId !== undefined
             ){
-                await toggleLibrary(currentPlayerVideoId);
+                await toggleLibrary(currentPlayerVideoId,playerLibraryButton);
             }
 
         }

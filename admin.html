@@ -4647,12 +4647,104 @@ function createVideoCard(
 
 function previewVideo(id){
 
-    loadSingleVideo(id);
+    const preview =
+        window.open(
+            "",
+            "_blank"
+        );
+
+
+    if(!preview){
+
+        alert(
+            "Could not open the video preview. Please allow popups for this admin page."
+        );
+
+        return;
+
+    }
+
+
+    preview.document.open();
+
+
+    preview.document.write(`
+
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+            <title>Loading video...</title>
+
+            <style>
+
+                body{
+                    margin:0;
+                    display:grid;
+                    min-height:100vh;
+                    place-items:center;
+                    background:#000;
+                    color:#fff;
+                    font-family:Arial,Helvetica,sans-serif;
+                }
+
+                .preview-spinner{
+                    width:42px;
+                    height:42px;
+                    margin:0 auto 18px;
+                    border:4px solid rgba(255,255,255,.15);
+                    border-top-color:#ff1744;
+                    border-radius:50%;
+                    animation:preview-spin .75s linear infinite;
+                }
+
+                p{
+                    margin:0;
+                    color:#aaa;
+                }
+
+                @keyframes preview-spin{
+                    to{ transform:rotate(360deg); }
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            <div>
+                <div class="preview-spinner"></div>
+                <p>Loading video...</p>
+            </div>
+
+        </body>
+
+        </html>
+
+    `);
+
+
+    preview.document.close();
+
+
+    loadSingleVideo(
+        id,
+        preview
+    );
 
 }
 
 
-async function loadSingleVideo(id){
+async function loadSingleVideo(
+    id,
+    preview
+){
 
     try{
 
@@ -4696,20 +4788,13 @@ async function loadSingleVideo(id){
         }
 
 
-        const preview =
-            window.open(
-                "",
-                "_blank"
-            );
+        if(
+            !preview ||
+            preview.closed
+        ) return;
 
 
-        if(!preview){
-
-            throw new Error(
-                "Popup was blocked by your browser."
-            );
-
-        }
+        preview.document.open();
 
 
         preview.document.write(`
@@ -4720,11 +4805,20 @@ async function loadSingleVideo(id){
 
             <head>
 
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
                 <title>
                     ${escapeHTML(video.title)}
                 </title>
 
                 <style>
+
+                    *{
+
+                        box-sizing:border-box;
+
+                    }
 
                     body{
 
@@ -4738,6 +4832,23 @@ async function loadSingleVideo(id){
 
                     }
 
+
+                    .player-shell{
+
+                        position:relative;
+
+                        display:flex;
+
+                        min-height:260px;
+
+                        align-items:center;
+
+                        justify-content:center;
+
+                        background:#000;
+
+                    }
+
                     video{
 
                         width:100%;
@@ -4747,6 +4858,77 @@ async function loadSingleVideo(id){
                         display:block;
 
                         background:#000;
+
+                    }
+
+
+                    .player-message{
+
+                        position:absolute;
+
+                        inset:0;
+
+                        display:flex;
+
+                        padding:24px;
+
+                        align-items:center;
+
+                        justify-content:center;
+
+                        flex-direction:column;
+
+                        gap:14px;
+
+                        background:rgba(0,0,0,.78);
+
+                        color:#bbb;
+
+                        text-align:center;
+
+                    }
+
+
+                    .player-message.hidden{
+
+                        display:none;
+
+                    }
+
+
+                    .player-message.error{
+
+                        color:#ff8b9d;
+
+                    }
+
+
+                    .manual-play{
+
+                        display:none;
+
+                        padding:11px 18px;
+
+                        border:1px solid rgba(255,23,68,.65);
+
+                        border-radius:10px;
+
+                        background:#ff1744;
+
+                        color:#fff;
+
+                        cursor:pointer;
+
+                        font-size:14px;
+
+                        font-weight:800;
+
+                    }
+
+
+                    .manual-play.visible{
+
+                        display:inline-flex;
 
                     }
 
@@ -4770,6 +4952,23 @@ async function loadSingleVideo(id){
 
                     }
 
+
+                    .original-link{
+
+                        display:inline-block;
+
+                        margin-top:16px;
+
+                        color:#ff7188;
+
+                        font-size:13px;
+
+                        font-weight:700;
+
+                        text-decoration:none;
+
+                    }
+
                 
 
 </style>
@@ -4779,16 +4978,38 @@ async function loadSingleVideo(id){
 
             <body>
 
-                <video
-                    controls
-                    autoplay
-                >
+                <div class="player-shell">
 
-                    <source
+                    <video
+                        id="previewPlayer"
+                        controls
+                        playsinline
+                        preload="auto"
                         src="${escapeHTML(videoURL)}"
+                    ></video>
+
+
+                    <div
+                        class="player-message"
+                        id="playerMessage"
                     >
 
-                </video>
+                        <div id="playerMessageText">
+                            Loading video...
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="manual-play"
+                            id="manualPlay"
+                        >
+                            ▶ Play video
+                        </button>
+
+                    </div>
+
+                </div>
 
 
                 <div class="info">
@@ -4803,6 +5024,16 @@ async function loadSingleVideo(id){
                         )}
                     </p>
 
+
+                    <a
+                        class="original-link"
+                        href="${escapeHTML(videoURL)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Open original video file ↗
+                    </a>
+
                 </div>
 
             </body>
@@ -4815,6 +5046,190 @@ async function loadSingleVideo(id){
         preview.document.close();
 
 
+        const player =
+            preview.document.getElementById(
+                "previewPlayer"
+            );
+
+
+        const playerMessage =
+            preview.document.getElementById(
+                "playerMessage"
+            );
+
+
+        const playerMessageText =
+            preview.document.getElementById(
+                "playerMessageText"
+            );
+
+
+        const manualPlay =
+            preview.document.getElementById(
+                "manualPlay"
+            );
+
+
+        const showPlayerMessage = function(
+            message,
+            showPlayButton,
+            isError
+        ){
+
+            playerMessageText.textContent =
+                message;
+
+
+            playerMessage.classList.toggle(
+                "error",
+                Boolean(isError)
+            );
+
+
+            playerMessage.classList.remove(
+                "hidden"
+            );
+
+
+            manualPlay.classList.toggle(
+                "visible",
+                Boolean(showPlayButton)
+            );
+
+        };
+
+
+        const hidePlayerMessage = function(){
+
+            playerMessage.classList.add(
+                "hidden"
+            );
+
+        };
+
+
+        const tryToPlay = function(){
+
+            const playAttempt =
+                player.play();
+
+
+            if(
+                playAttempt &&
+                typeof playAttempt.catch === "function"
+            ){
+
+                playAttempt.catch(function(){
+
+                    if(player.error) return;
+
+                    showPlayerMessage(
+                        "The video is ready. Press Play to start it.",
+                        true,
+                        false
+                    );
+
+                });
+
+            }
+
+        };
+
+
+        player.addEventListener(
+            "loadeddata",
+            tryToPlay,
+            {once:true}
+        );
+
+
+        player.addEventListener(
+            "playing",
+            hidePlayerMessage
+        );
+
+
+        player.addEventListener(
+            "waiting",
+            function(){
+
+                showPlayerMessage(
+                    "Buffering video...",
+                    false,
+                    false
+                );
+
+            }
+        );
+
+
+        player.addEventListener(
+            "stalled",
+            function(){
+
+                showPlayerMessage(
+                    "The connection stalled. Press Play to try again.",
+                    true,
+                    false
+                );
+
+            }
+        );
+
+
+        player.addEventListener(
+            "error",
+            function(){
+
+                const mediaError =
+                    player.error;
+
+
+                let message =
+                    "This video could not be loaded.";
+
+
+                if(
+                    mediaError &&
+                    mediaError.code === 3
+                ){
+
+                    message =
+                        "The browser could not decode this video. Convert it to MP4 using H.264 video and AAC audio, then upload it again.";
+
+                }
+
+
+                if(
+                    mediaError &&
+                    mediaError.code === 4
+                ){
+
+                    message =
+                        "This video format or codec is not supported. Convert it to MP4 using H.264 video and AAC audio, then upload it again.";
+
+                }
+
+
+                showPlayerMessage(
+                    message,
+                    false,
+                    true
+                );
+
+            }
+        );
+
+
+        manualPlay.addEventListener(
+            "click",
+            tryToPlay
+        );
+
+
+        player.load();
+
+
     }catch(error){
 
         console.error(
@@ -4823,10 +5238,80 @@ async function loadSingleVideo(id){
         );
 
 
-        alert(
-            "Could not preview video: " +
-            error.message
-        );
+        if(
+            preview &&
+            !preview.closed
+        ){
+
+            preview.document.open();
+
+
+            preview.document.write(`
+
+                <!DOCTYPE html>
+
+                <html>
+
+                <head>
+
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+                    <title>Video preview error</title>
+
+                    <style>
+
+                        body{
+                            margin:0;
+                            display:grid;
+                            min-height:100vh;
+                            padding:24px;
+                            place-items:center;
+                            background:#000;
+                            color:#fff;
+                            font-family:Arial,Helvetica,sans-serif;
+                            text-align:center;
+                        }
+
+                        h1{
+                            color:#ff7188;
+                            font-size:24px;
+                        }
+
+                        p{
+                            max-width:560px;
+                            color:#aaa;
+                            line-height:1.6;
+                        }
+
+                    </style>
+
+                </head>
+
+                <body>
+
+                    <div>
+                        <h1>Could not open this video</h1>
+                        <p>${escapeHTML(error.message)}</p>
+                    </div>
+
+                </body>
+
+                </html>
+
+            `);
+
+
+            preview.document.close();
+
+        }else{
+
+            alert(
+                "Could not preview video: " +
+                error.message
+            );
+
+        }
 
     }
 

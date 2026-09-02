@@ -4864,27 +4864,21 @@ async function loadSingleVideo(
 
                     .player-message{
 
-                        position:absolute;
-
-                        inset:0;
-
                         display:flex;
 
-                        padding:24px;
+                        padding:14px 20px;
 
                         align-items:center;
 
-                        justify-content:center;
-
-                        flex-direction:column;
+                        justify-content:space-between;
 
                         gap:14px;
 
-                        background:rgba(0,0,0,.78);
+                        background:#0d0d0d;
 
                         color:#bbb;
 
-                        text-align:center;
+                        font-size:13px;
 
                     }
 
@@ -4929,6 +4923,19 @@ async function loadSingleVideo(
                     .manual-play.visible{
 
                         display:inline-flex;
+
+                    }
+
+
+                    @media(max-width:600px){
+
+                        .player-message{
+
+                            align-items:flex-start;
+
+                            flex-direction:column;
+
+                        }
 
                     }
 
@@ -4983,10 +4990,18 @@ async function loadSingleVideo(
                     <video
                         id="previewPlayer"
                         controls
+                        autoplay
                         playsinline
-                        preload="auto"
-                        src="${escapeHTML(videoURL)}"
-                    ></video>
+                        preload="metadata"
+                    >
+
+                        <source
+                            src="${escapeHTML(videoURL)}"
+                        >
+
+                    </video>
+
+                </div>
 
 
                     <div
@@ -5008,8 +5023,6 @@ async function loadSingleVideo(
                         </button>
 
                     </div>
-
-                </div>
 
 
                 <div class="info">
@@ -5119,17 +5132,19 @@ async function loadSingleVideo(
                 typeof playAttempt.catch === "function"
             ){
 
-                playAttempt.catch(function(){
+                playAttempt
+                    .then(hidePlayerMessage)
+                    .catch(function(){
 
-                    if(player.error) return;
+                        if(player.error) return;
 
-                    showPlayerMessage(
-                        "The video is ready. Press Play to start it.",
-                        true,
-                        false
-                    );
+                        showPlayerMessage(
+                            "The video is ready. Press Play to start it.",
+                            true,
+                            false
+                        );
 
-                });
+                    });
 
             }
 
@@ -5227,7 +5242,7 @@ async function loadSingleVideo(
         );
 
 
-        player.load();
+        tryToPlay();
 
 
     }catch(error){

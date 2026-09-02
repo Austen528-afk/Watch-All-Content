@@ -1411,6 +1411,32 @@ textarea{
     outline-offset:2px;
 }
 
+.category-stats-close{
+    flex:0 0 100px;
+    min-height:44px;
+    padding:9px 14px;
+    border:1px solid rgba(56,189,248,.30);
+    border-radius:10px;
+    background:rgba(56,189,248,.11);
+    color:#69d2ff;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+    transition:background .18s,border-color .18s,color .18s;
+}
+
+.category-stats-close:hover{
+    border-color:rgba(56,189,248,.52);
+    background:rgba(56,189,248,.19);
+    color:#bcecff;
+}
+
+.category-stats-close:focus-visible{
+    outline:2px solid #38bdf8;
+    outline-offset:2px;
+}
+
 .category-stats-panel{
     display:none;
 }
@@ -1425,6 +1451,23 @@ textarea{
     border:1px solid rgba(255,255,255,.08);
     border-radius:16px;
     background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+}
+
+.statistics-table-body{
+    max-height:380px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:#4a4a4a transparent;
+}
+
+.statistics-table-body::-webkit-scrollbar{
+    width:7px;
+}
+
+.statistics-table-body::-webkit-scrollbar-thumb{
+    border-radius:999px;
+    background:#4a4a4a;
 }
 
 .statistics-table-header,
@@ -1452,6 +1495,7 @@ textarea{
 }
 
 .statistics-row{
+    height:76px;
     min-height:76px;
     padding:14px 20px;
     border-bottom:1px solid rgba(255,255,255,.065);
@@ -2465,6 +2509,13 @@ textarea{
             <div class="category-stats-tabs" role="tablist" aria-label="Category statistics rankings">
                 <button
                     type="button"
+                    class="category-stats-close"
+                    onclick="hideCategoryStatsPanels()"
+                    aria-label="Close the open category ranking"
+                >✕ Close</button>
+
+                <button
+                    type="button"
                     class="category-stats-tab"
                     id="categoryViewsTab"
                     role="tab"
@@ -2524,7 +2575,7 @@ textarea{
                         <span>Category</span>
                         <span>Total Views</span>
                     </div>
-                    <div id="categoryViewsRankingList">
+                    <div id="categoryViewsRankingList" class="statistics-table-body">
                         <div class="statistics-status">Loading view rankings...</div>
                     </div>
                 </div>
@@ -2550,7 +2601,7 @@ textarea{
                         <span>Category</span>
                         <span>Total Likes</span>
                     </div>
-                    <div id="categoryLikesRankingList">
+                    <div id="categoryLikesRankingList" class="statistics-table-body">
                         <div class="statistics-status">Loading like rankings...</div>
                     </div>
                 </div>
@@ -2576,7 +2627,7 @@ textarea{
                         <span>Category</span>
                         <span>Views + Likes</span>
                     </div>
-                    <div id="categoryEngagementRankingList">
+                    <div id="categoryEngagementRankingList" class="statistics-table-body">
                         <div class="statistics-status">Loading engagement rankings...</div>
                     </div>
                 </div>
@@ -2602,7 +2653,7 @@ textarea{
                         <span>Category</span>
                         <span>Total Watch Time</span>
                     </div>
-                    <div id="categoryWatchTimeRankingList">
+                    <div id="categoryWatchTimeRankingList" class="statistics-table-body">
                         <div class="statistics-status">Loading watch-time rankings...</div>
                     </div>
                 </div>

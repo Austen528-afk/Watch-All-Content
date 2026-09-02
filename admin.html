@@ -2023,12 +2023,6 @@ textarea{
         <div class="stat-number" id="totalActiveUsers">0</div>
     </div>
 
-    <div class="stat">
-        <div class="stat-icon">🔵</div>
-        <div class="stat-label">Active on Both</div>
-        <div class="stat-number" id="activeBoth">0</div>
-    </div>
-
 </div>
 
 
@@ -2471,10 +2465,10 @@ textarea{
             <div class="category-stats-tabs" role="tablist" aria-label="Category statistics rankings">
                 <button
                     type="button"
-                    class="category-stats-tab active"
+                    class="category-stats-tab"
                     id="categoryViewsTab"
                     role="tab"
-                    aria-selected="true"
+                    aria-selected="false"
                     aria-controls="categoryViewsPanel"
                     onclick="openCategoryStatsPanel('categoryViewsPanel',this)"
                 >📊 Category View Ranking</button>
@@ -2512,10 +2506,10 @@ textarea{
 
             <div
                 id="categoryViewsPanel"
-                class="category-stats-panel active"
+                class="category-stats-panel"
                 role="tabpanel"
                 aria-labelledby="categoryViewsTab"
-                aria-hidden="false"
+                aria-hidden="true"
             >
                 <div class="section-top">
                     <div>
@@ -3469,25 +3463,6 @@ async function loadActiveUsers(){
 
 
         /*
-         * USERS ACTIVE ON BOTH PLATFORMS
-         * Only users currently online on both platforms.
-         */
-
-        let activeBoth = 0;
-
-        websiteOnline.forEach(
-            userId => {
-                if(
-                    miniAppOnline.has(
-                        userId
-                    )
-                ){
-                    activeBoth++;
-                }
-            }
-        );
-
-        /*
          * TOTAL ACTIVE USERS
          * Website online + Mini App online.
          */
@@ -3528,11 +3503,6 @@ async function loadActiveUsers(){
         ).textContent =
             totalActiveUsers.toLocaleString();
 
-        document.getElementById(
-            "activeBoth"
-        ).textContent =
-            activeBoth.toLocaleString();
-
 
         console.log(
             "Active users:",
@@ -3547,10 +3517,7 @@ async function loadActiveUsers(){
                     websiteOnline.size,
 
                 miniAppOnline:
-                    miniAppOnline.size,
-
-                activeBoth:
-                    activeBoth
+                    miniAppOnline.size
             }
         );
 
@@ -5172,7 +5139,7 @@ function showCategoryMessage(text,type){
    CATEGORY STATISTICS
 ===================================================== */
 
-function openCategoryStatsPanel(panelId,button){
+function hideCategoryStatsPanels(){
 
     const statisticsPage =
         document.getElementById("analyticsPage");
@@ -5192,6 +5159,11 @@ function openCategoryStatsPanel(panelId,button){
             tab.classList.remove("active");
             tab.setAttribute("aria-selected","false");
         });
+}
+
+function openCategoryStatsPanel(panelId,button){
+
+    hideCategoryStatsPanels();
 
     const selectedPanel =
         document.getElementById(panelId);
@@ -5503,6 +5475,7 @@ function openPage(pageId, button){
     }
 
     if(pageId === "analyticsPage"){
+        hideCategoryStatsPanels();
         loadCategoryStatistics();
     }
 

@@ -2073,6 +2073,14 @@ textarea{
     background:#34d399;
 }
 
+.live-graph-legend .heatmap-low-line{
+    background:rgba(255,23,68,.20);
+}
+
+.live-graph-legend .heatmap-high-line{
+    background:#ff1744;
+}
+
 .graph-tooltip{
     position:fixed;
     z-index:20;
@@ -3803,16 +3811,53 @@ textarea{
                 <div class="graph-panel-intro">
                     <div>
                         <h3>Traffic Sources</h3>
-                        <p>Compare visitors arriving through Telegram, direct links, social platforms, search and campaigns.</p>
+                        <p>Compare audience entry points from the Website and Telegram Mini App using recorded viewing sessions.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">🧭</div>
-                        <strong>Traffic acquisition graph</strong>
-                        <span>This panel will reveal which promotion channels attract valuable viewers.</span>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong>Platform acquisition</strong>
+                            <p>Use this split to see where your valuable viewing audience is arriving.</p>
+                        </div>
+                        <div class="live-graph-controls" id="trafficSourcesRangeControls" aria-label="Traffic source range">
+                            <button type="button" class="live-graph-button" onclick="setTrafficSourcesRange(7,this)">7 Days</button>
+                            <button type="button" class="live-graph-button active" onclick="setTrafficSourcesRange(30,this)">30 Days</button>
+                            <button type="button" class="live-graph-button" onclick="setTrafficSourcesRange(90,this)">90 Days</button>
+                            <button type="button" class="graph-refresh-button" onclick="loadTrafficSourcesGraph(true)">↻ Refresh</button>
+                        </div>
                     </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>Leading Source</span>
+                            <strong id="trafficSourcesTopSource">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Unique Viewers</span>
+                            <strong id="trafficSourcesViewerCount">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Total Watch Time</span>
+                            <strong id="trafficSourcesWatchTime">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="trafficSourcesCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="Traffic sources bar graph"
+                        ></canvas>
+                        <div class="live-graph-status" id="trafficSourcesStatus">
+                            Open Traffic Sources to load graph data.
+                        </div>
+                    </div>
+
+                    <p class="live-graph-note">Traffic attribution currently uses the platform recorded by each connected client. Direct, social, search and campaign tags can be added later without changing this graph.</p>
                 </div>
             </div>
 
@@ -3828,14 +3873,55 @@ textarea{
                         <h3>User Activity Heatmap</h3>
                         <p>Map viewing activity by day of the week and hour of the day.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">🔥</div>
-                        <strong>Activity heatmap</strong>
-                        <span>This panel will help identify the best times to publish and promote content.</span>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong id="activityHeatmapChartTitle">Viewing Sessions by Hour</strong>
+                            <p>Find the days and hours when viewers are most active.</p>
+                        </div>
+                        <div class="live-graph-controls" id="activityHeatmapMetricControls" aria-label="Activity heatmap metric">
+                            <button type="button" class="live-graph-button active" onclick="setActivityHeatmapMetric('sessions',this)">Sessions</button>
+                            <button type="button" class="live-graph-button" onclick="setActivityHeatmapMetric('watchTime',this)">Watch Time</button>
+                            <button type="button" class="graph-refresh-button" onclick="loadActivityHeatmapGraph(true)">↻ Refresh</button>
+                        </div>
                     </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>Peak Day</span>
+                            <strong id="activityHeatmapPeakDay">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Peak Hour</span>
+                            <strong id="activityHeatmapPeakHour">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Total Activity</span>
+                            <strong id="activityHeatmapTotal">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="activityHeatmapCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="User activity heatmap"
+                        ></canvas>
+                        <div class="live-graph-status" id="activityHeatmapStatus">
+                            Open Activity Heatmap to load graph data.
+                        </div>
+                    </div>
+
+                    <div class="live-graph-legend" aria-label="Activity heatmap legend">
+                        <span><i class="heatmap-low-line"></i>Low activity</span>
+                        <span><i class="heatmap-high-line"></i>High activity</span>
+                    </div>
+
+                    <p class="live-graph-note">Times use UTC so the Website and Telegram Mini App can be compared consistently.</p>
                 </div>
             </div>
 
@@ -3849,16 +3935,48 @@ textarea{
                 <div class="graph-panel-intro">
                     <div>
                         <h3>Video Conversion Funnel</h3>
-                        <p>Follow users from video impressions through opens, watch milestones, completion and likes.</p>
+                        <p>Follow viewers from recorded video views through watch sessions, deeper viewing and likes.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">🔻</div>
-                        <strong>Viewing conversion funnel</strong>
-                        <span>This panel will show the stage where the largest number of users leave.</span>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong>Viewing conversion path</strong>
+                            <p>Each stage is compared with the total recorded video views.</p>
+                        </div>
+                        <button type="button" class="graph-refresh-button" onclick="loadConversionFunnelGraph(true)">↻ Refresh data</button>
                     </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>Views → Watch Sessions</span>
+                            <strong id="conversionFunnelOpenRate">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Views → Likes</span>
+                            <strong id="conversionFunnelLikeRate">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Largest Drop</span>
+                            <strong id="conversionFunnelLargestDrop">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="conversionFunnelCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="Video conversion funnel graph"
+                        ></canvas>
+                        <div class="live-graph-status" id="conversionFunnelStatus">
+                            Open Conversion Funnel to load graph data.
+                        </div>
+                    </div>
+
+                    <p class="live-graph-note">The available tracking model records views, sessions and watch-time milestones. “Deep watch” represents sessions reaching at least two minutes; a true completion stage requires storing video duration.</p>
                 </div>
             </div>
 
@@ -3872,16 +3990,52 @@ textarea{
                 <div class="graph-panel-intro">
                     <div>
                         <h3>Video Quality Comparison</h3>
-                        <p>Compare average watch duration, completion rate and like rate across individual videos.</p>
+                        <p>Compare each video's reach with average watch time and like rate to find high-quality content.</p>
                     </div>
-                    <span class="graph-status-badge">Graph workspace</span>
+                    <span class="graph-status-badge">Live data</span>
                 </div>
-                <div class="graph-workspace">
-                    <div class="graph-placeholder">
-                        <div class="graph-placeholder-icon">✨</div>
-                        <strong>Video quality graph</strong>
-                        <span>This panel will reveal strong videos even when their total reach is still small.</span>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong>Reach versus watch quality</strong>
+                            <p>Each point is one video. Higher points mean longer average watch time.</p>
+                        </div>
+                        <button type="button" class="graph-refresh-button" onclick="loadVideoQualityGraph(true)">↻ Refresh data</button>
                     </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>Top Average Watch</span>
+                            <strong id="videoQualityTopVideo">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Average Watch Time</span>
+                            <strong id="videoQualityAverageWatchTime">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Average Like Rate</span>
+                            <strong id="videoQualityAverageLikeRate">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="videoQualityCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="Video quality scatter graph"
+                        ></canvas>
+                        <div class="live-graph-status" id="videoQualityStatus">
+                            Open Video Quality to load graph data.
+                        </div>
+                    </div>
+
+                    <div class="live-graph-legend" aria-label="Video quality graph legend">
+                        <span><i class="mini-app-line"></i>Each point is a video</span>
+                    </div>
+
+                    <p class="live-graph-note">The X axis is total recorded views and the Y axis is average watch time per recorded viewing session. Video names are shown in the point labels when space allows.</p>
                 </div>
             </div>
         </section>
@@ -3956,6 +4110,12 @@ let statisticalGraphsResizeTimer = null;
 let audienceRetentionData = [];
 let categoryPerformanceData = [];
 let returningUsersData = [];
+let trafficSourcesDays = 30;
+let trafficSourcesData = [];
+let activityHeatmapMetric = "sessions";
+let activityHeatmapData = null;
+let conversionFunnelData = [];
+let videoQualityData = [];
 
 
 /* =====================================================
@@ -7455,6 +7615,18 @@ function openStatisticalGraphPanel(panelId,button){
     else if(panelId === "returningUsersGraphPanel"){
         loadReturningUsersGraph();
     }
+    else if(panelId === "trafficSourcesGraphPanel"){
+        loadTrafficSourcesGraph();
+    }
+    else if(panelId === "activityHeatmapGraphPanel"){
+        loadActivityHeatmapGraph();
+    }
+    else if(panelId === "conversionFunnelGraphPanel"){
+        loadConversionFunnelGraph();
+    }
+    else if(panelId === "videoQualityGraphPanel"){
+        loadVideoQualityGraph();
+    }
 }
 
 /* =====================================================
@@ -7624,7 +7796,7 @@ async function loadGraphSourceData(force,requestedDays){
             Date.now() - ((requiredDays + 3) * 86400000)
         ).toISOString();
 
-        const [sessionsResult,videosResult,likesResult] =
+        const [sessionsResult,videosResult,likesResult,activeUsersResult] =
             await Promise.all([
                 supabaseClient
                     .from("video_watch_sessions")
@@ -7640,6 +7812,10 @@ async function loadGraphSourceData(force,requestedDays){
                 supabaseClient
                     .from("video_likes")
                     .select("video_id")
+                    .limit(10000),
+                supabaseClient
+                    .from("active_users")
+                    .select("user_id,platform,last_seen")
                     .limit(10000)
             ]);
 
@@ -7660,6 +7836,10 @@ async function loadGraphSourceData(force,requestedDays){
             likes:likesResult.data || [],
             likesError:likesResult.error
                 ? likesResult.error.message
+                : "",
+            activeUsers:activeUsersResult.data || [],
+            activeUsersError:activeUsersResult.error
+                ? activeUsersResult.error.message
                 : ""
         };
 
@@ -7705,6 +7885,8 @@ function prepareGraphCanvas(canvas){
 
     canvas.width = Math.floor(width * ratio);
     canvas.height = Math.floor(height * ratio);
+    canvas.__graphCssWidth = width;
+    canvas.__graphCssHeight = height;
     context.setTransform(ratio,0,0,ratio,0,0);
     context.clearRect(0,0,width,height);
 
@@ -7739,6 +7921,39 @@ function drawGraphGrid(context,chart,maxValue,formatY){
         );
 
     }
+}
+
+function drawGraphAxisLabels(context,canvas,chart,options){
+
+    if(!options) return;
+
+    context.save();
+    context.fillStyle = "#8c8c8c";
+    context.font = "700 10px Arial, Helvetica, sans-serif";
+    context.letterSpacing = "0.2px";
+
+    if(options.xAxisLabel){
+        context.textAlign = "center";
+        context.textBaseline = "bottom";
+        context.fillText(
+            options.xAxisLabel,
+            chart.left + (chart.width / 2),
+            (canvas.__graphCssHeight || canvas.clientHeight || 340) - 8
+        );
+    }
+
+    if(options.yAxisLabel){
+        context.translate(
+            15,
+            chart.top + (chart.height / 2)
+        );
+        context.rotate(-Math.PI / 2);
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(options.yAxisLabel,0,0);
+    }
+
+    context.restore();
 }
 
 function drawLineGraph(canvas,rows,series,options){
@@ -7804,6 +8019,8 @@ function drawLineGraph(canvas,rows,series,options){
         );
 
     });
+
+    drawGraphAxisLabels(context,canvas,chart,options);
 
     series.forEach(item => {
 
@@ -7932,6 +8149,8 @@ function drawBarGraph(canvas,rows,options){
         context.restore();
 
     });
+
+    drawGraphAxisLabels(context,canvas,chart,options);
 }
 
 function drawStackedBarGraph(canvas,rows){
@@ -8002,6 +8221,247 @@ function drawStackedBarGraph(canvas,rows){
         context.restore();
 
     });
+
+    drawGraphAxisLabels(context,canvas,chart,{
+        xAxisLabel:"Date",
+        yAxisLabel:"Unique viewers"
+    });
+}
+
+function drawHeatmapGraph(canvas,data,options){
+
+    const prepared = prepareGraphCanvas(canvas);
+
+    if(!prepared || !data || !data.matrix) return;
+
+    const context = prepared.context;
+    const chart = {
+        left:72,
+        top:26,
+        width:prepared.width - 98,
+        height:prepared.height - 92
+    };
+    const matrix = data.matrix;
+    const rows = matrix.length || 7;
+    const columns = rows && matrix[0] ? matrix[0].length : 24;
+    const maxValue = Math.max(1,graphNumber(data.maxValue));
+    const cellWidth = chart.width / columns;
+    const cellHeight = chart.height / rows;
+    const dayLabels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+    context.font = "10px Arial, Helvetica, sans-serif";
+    context.textBaseline = "middle";
+
+    for(let day = 0; day < rows; day++){
+
+        context.fillStyle = "#777";
+        context.textAlign = "right";
+        context.fillText(
+            dayLabels[day] || "Day " + (day + 1),
+            chart.left - 10,
+            chart.top + (day * cellHeight) + (cellHeight / 2)
+        );
+
+        for(let hour = 0; hour < columns; hour++){
+
+            const value = graphNumber(matrix[day][hour]);
+            const ratio = Math.min(1,value / maxValue);
+
+            context.fillStyle = value > 0
+                ? "rgba(255,23,68," + (0.13 + (ratio * .82)) + ")"
+                : "rgba(255,255,255,.035)";
+            context.fillRect(
+                chart.left + (hour * cellWidth) + 1,
+                chart.top + (day * cellHeight) + 1,
+                Math.max(1,cellWidth - 2),
+                Math.max(1,cellHeight - 2)
+            );
+
+        }
+
+    }
+
+    context.fillStyle = "#777";
+    context.textAlign = "center";
+    context.textBaseline = "top";
+
+    for(let hour = 0; hour < columns; hour += 3){
+
+        context.fillText(
+            String(hour).padStart(2,"0"),
+            chart.left + (hour * cellWidth) + (cellWidth / 2),
+            chart.top + chart.height + 12
+        );
+
+    }
+
+    drawGraphAxisLabels(context,canvas,chart,options || {
+        xAxisLabel:"Hour of day",
+        yAxisLabel:"Day of week"
+    });
+}
+
+function drawFunnelGraph(canvas,rows){
+
+    const prepared = prepareGraphCanvas(canvas);
+
+    if(!prepared || !rows || rows.length === 0) return;
+
+    const context = prepared.context;
+    const chart = {
+        left:142,
+        top:26,
+        width:prepared.width - 178,
+        height:prepared.height - 82
+    };
+    const values = rows.map(row => graphNumber(row.value));
+    const maxValue = Math.max(1,...values);
+    const rowHeight = chart.height / rows.length;
+    const trackHeight = Math.min(30,rowHeight * .58);
+
+    context.font = "10px Arial, Helvetica, sans-serif";
+    context.textBaseline = "middle";
+
+    for(let index = 0; index < 5; index++){
+
+        const ratio = index / 4;
+        const x = chart.left + (ratio * chart.width);
+
+        context.strokeStyle = "rgba(255,255,255,.08)";
+        context.beginPath();
+        context.moveTo(x,chart.top);
+        context.lineTo(x,chart.top + chart.height);
+        context.stroke();
+
+        context.fillStyle = "#686868";
+        context.textAlign = "center";
+        context.fillText(
+            formatGraphCompactNumber(maxValue * ratio),
+            x,
+            chart.top + chart.height + 16
+        );
+
+    }
+
+    rows.forEach((row,index) => {
+
+        const value = graphNumber(row.value);
+        const y = chart.top + (index * rowHeight) + ((rowHeight - trackHeight) / 2);
+        const fillWidth = (value / maxValue) * chart.width;
+
+        context.fillStyle = "#777";
+        context.textAlign = "right";
+        context.fillText(
+            String(row.label || "Stage"),
+            chart.left - 14,
+            y + (trackHeight / 2)
+        );
+
+        context.fillStyle = "rgba(255,255,255,.07)";
+        context.fillRect(chart.left,y,chart.width,trackHeight);
+
+        const gradient = context.createLinearGradient(chart.left,y,chart.left + chart.width,y);
+        gradient.addColorStop(0,"#ff3d61");
+        gradient.addColorStop(1,"#a78bfa");
+        context.fillStyle = gradient;
+        fillGraphRoundedRect(
+            context,
+            chart.left,
+            y,
+            Math.max(3,fillWidth),
+            trackHeight,
+            [7,7,7,7]
+        );
+
+        context.fillStyle = "#cfcfcf";
+        context.textAlign = "left";
+        context.fillText(
+            formatGraphCompactNumber(value) + "  " + (row.percent == null ? "" : Math.round(row.percent) + "%"),
+            chart.left + chart.width + 9,
+            y + (trackHeight / 2)
+        );
+
+    });
+
+    drawGraphAxisLabels(context,canvas,chart,{
+        xAxisLabel:"Viewers / interactions",
+        yAxisLabel:"Conversion stage"
+    });
+}
+
+function drawScatterGraph(canvas,rows,options){
+
+    const prepared = prepareGraphCanvas(canvas);
+
+    if(!prepared || !rows || rows.length === 0) return;
+
+    const context = prepared.context;
+    const chart = {
+        left:70,
+        top:24,
+        width:prepared.width - 102,
+        height:prepared.height - 82
+    };
+    const maxX = Math.max(1,...rows.map(row => graphNumber(row.x)));
+    const maxY = Math.max(1,...rows.map(row => graphNumber(row.y)));
+    const formatY = options && options.formatY
+        ? options.formatY
+        : formatGraphDuration;
+
+    drawGraphGrid(context,chart,maxY,formatY);
+
+    for(let index = 0; index <= 4; index++){
+
+        const ratio = index / 4;
+        const x = chart.left + (ratio * chart.width);
+
+        context.strokeStyle = "rgba(255,255,255,.05)";
+        context.beginPath();
+        context.moveTo(x,chart.top);
+        context.lineTo(x,chart.top + chart.height);
+        context.stroke();
+
+        context.fillStyle = "#686868";
+        context.font = "10px Arial, Helvetica, sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "top";
+        context.fillText(
+            formatGraphCompactNumber(maxX * ratio),
+            x,
+            chart.top + chart.height + 12
+        );
+
+    }
+
+    rows.forEach((row,index) => {
+
+        const x = chart.left + (graphNumber(row.x) / maxX) * chart.width;
+        const y = chart.top + chart.height - (graphNumber(row.y) / maxY) * chart.height;
+        const radius = Math.max(4,Math.min(9,4 + Math.sqrt(graphNumber(row.sessions) || 1)));
+        const colors = ["#ff3d61","#38bdf8","#a78bfa","#34d399"];
+
+        context.fillStyle = colors[index % colors.length];
+        context.globalAlpha = .88;
+        context.beginPath();
+        context.arc(x,y,radius,0,Math.PI * 2);
+        context.fill();
+        context.globalAlpha = 1;
+
+        if(rows.length <= 12){
+            context.fillStyle = "#aaa";
+            context.font = "9px Arial, Helvetica, sans-serif";
+            context.textAlign = x > chart.left + chart.width * .72 ? "right" : "left";
+            context.textBaseline = "bottom";
+            context.fillText(
+                String(row.name || "Video").slice(0,18),
+                x + (x > chart.left + chart.width * .72 ? -8 : 8),
+                y - 7
+            );
+        }
+
+    });
+
+    drawGraphAxisLabels(context,canvas,chart,options);
 }
 
 function buildDailyPerformanceRows(sessions,days){
@@ -8098,6 +8558,12 @@ function renderDailyPerformanceGraph(){
         ],
         {
             label:row => formatGraphDateLabel(row.date,dailyPerformanceDays > 60),
+            xAxisLabel:"Date",
+            yAxisLabel:dailyPerformanceMetric === "watchTime"
+                ? "Watch time (seconds)"
+                : dailyPerformanceMetric === "viewers"
+                    ? "Unique viewers"
+                    : "Video starts",
             formatY:dailyPerformanceMetric === "watchTime"
                 ? formatGraphDuration
                 : formatGraphCompactNumber
@@ -8287,6 +8753,8 @@ function renderAudienceRetentionGraph(){
         {
             label:row => row.label,
             maxValue:100,
+            xAxisLabel:"Watch-time milestone",
+            yAxisLabel:"Sessions remaining (%)",
             formatY:value => Math.round(value) + "%"
         }
     );
@@ -8471,6 +8939,12 @@ function renderCategoryPerformanceGraph(){
                 : categoryPerformanceMetric === "likes"
                     ? "#a78bfa"
                     : "#ff3d61",
+            xAxisLabel:"Category",
+            yAxisLabel:categoryPerformanceMetric === "watchTime"
+                ? "Total watch time (seconds)"
+                : categoryPerformanceMetric === "likes"
+                    ? "Total likes"
+                    : "Total views",
             formatY:categoryPerformanceMetric === "watchTime"
                 ? formatGraphDuration
                 : formatGraphCompactNumber
@@ -8735,6 +9209,637 @@ async function loadReturningUsersGraph(force){
     }
 }
 
+function buildTrafficSourceRows(source,days){
+
+    const rangeDates = new Set(graphDateRange(days));
+    const rows = new Map();
+
+    const ensureRow = name => {
+
+        if(!rows.has(name)){
+            rows.set(name,{
+                name:name,
+                viewerIds:new Set(),
+                sessions:0,
+                watchTime:0,
+                fallback:false
+            });
+        }
+
+        return rows.get(name);
+    };
+
+    (source.sessions || []).forEach(session => {
+
+        if(!rangeDates.has(getSessionDateKey(session))) return;
+
+        const name = normalizeGraphPlatform(session.platform) === "website"
+            ? "Website"
+            : "Telegram Mini App";
+        const row = ensureRow(name);
+        const viewerId = String(session.viewer_id || "").trim();
+
+        row.sessions += 1;
+        row.watchTime += getSessionSeconds(session);
+        if(viewerId) row.viewerIds.add(viewerId);
+
+    });
+
+    /* If historical sessions are unavailable, show the current platform presence instead of a blank graph. */
+    if(!rows.size && source.activeUsers && source.activeUsers.length){
+
+        const activeByPlatform = new Map();
+
+        source.activeUsers.forEach(user => {
+
+            const platform = String(user.platform || "").toLowerCase();
+            let name = "";
+
+            if(platform === "website") name = "Website";
+            if(platform === "mini_app") name = "Telegram Mini App";
+            if(!name) return;
+
+            if(!activeByPlatform.has(name)) activeByPlatform.set(name,new Set());
+            if(user.user_id) activeByPlatform.get(name).add(String(user.user_id));
+
+        });
+
+        activeByPlatform.forEach((viewerIds,name) => {
+            rows.set(name,{
+                name:name,
+                viewerIds:viewerIds,
+                sessions:0,
+                watchTime:0,
+                fallback:true
+            });
+        });
+
+    }
+
+    return Array.from(rows.values()).map(row => ({
+        name:row.name,
+        viewers:row.viewerIds.size,
+        sessions:row.sessions,
+        watchTime:row.watchTime,
+        fallback:row.fallback
+    }));
+}
+
+function renderTrafficSourcesGraph(){
+
+    drawBarGraph(
+        document.getElementById("trafficSourcesCanvas"),
+        trafficSourcesData,
+        {
+            value:row => row.viewers,
+            label:row => row.name,
+            color:"#38bdf8",
+            xAxisLabel:"Platform / source",
+            yAxisLabel:"Unique viewers",
+            formatY:formatGraphCompactNumber
+        }
+    );
+}
+
+function setTrafficSourcesRange(days,button){
+
+    trafficSourcesDays = Math.max(7,Number(days) || 30);
+
+    if(button){
+        document
+            .querySelectorAll("#trafficSourcesRangeControls .live-graph-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    loadTrafficSourcesGraph(true);
+}
+
+async function loadTrafficSourcesGraph(force){
+
+    setGraphStatus(
+        "trafficSourcesStatus",
+        "Loading traffic source data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),trafficSourcesDays);
+
+        trafficSourcesData = buildTrafficSourceRows(source,trafficSourcesDays);
+
+        const sortedRows = [...trafficSourcesData].sort(
+            (first,second) => second.viewers - first.viewers
+        );
+        const totalViewers = trafficSourcesData.reduce(
+            (sum,row) => sum + row.viewers,
+            0
+        );
+        const totalWatchTime = trafficSourcesData.reduce(
+            (sum,row) => sum + row.watchTime,
+            0
+        );
+        const topSourceElement = document.getElementById("trafficSourcesTopSource");
+        const viewersElement = document.getElementById("trafficSourcesViewerCount");
+        const watchTimeElement = document.getElementById("trafficSourcesWatchTime");
+
+        if(topSourceElement) topSourceElement.textContent = sortedRows[0] ? sortedRows[0].name : "—";
+        if(viewersElement) viewersElement.textContent = formatGraphNumber(totalViewers);
+        if(watchTimeElement) watchTimeElement.textContent = formatGraphDuration(totalWatchTime);
+
+        renderTrafficSourcesGraph();
+
+        const usesFallback = trafficSourcesData.some(row => row.fallback);
+
+        if(source.sessionsError && !usesFallback){
+            setGraphStatus(
+                "trafficSourcesStatus",
+                "Historical source data is unavailable. Run setup_watch_time.sql in Supabase to activate this graph.",
+                true
+            );
+        }
+        else if(usesFallback){
+            setGraphStatus(
+                "trafficSourcesStatus",
+                "Showing current active users by platform because historical viewing sessions are not available.",
+                false
+            );
+        }
+        else if(!trafficSourcesData.length){
+            setGraphStatus(
+                "trafficSourcesStatus",
+                "No traffic sessions have been recorded in this period yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("trafficSourcesStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "trafficSourcesStatus",
+            "Could not load traffic source data: " + error.message,
+            true
+        );
+
+    }
+}
+
+function buildActivityHeatmapData(source,days,metric){
+
+    const rangeDates = new Set(graphDateRange(days));
+    const matrix = Array.from(
+        {length:7},
+        () => Array.from({length:24},() => 0)
+    );
+
+    (source.sessions || []).forEach(session => {
+
+        const date = getSessionDateKey(session);
+
+        if(!rangeDates.has(date)) return;
+
+        const timestamp = new Date(session.created_at || session.updated_at);
+
+        if(Number.isNaN(timestamp.getTime())) return;
+
+        const day = (timestamp.getUTCDay() + 6) % 7;
+        const hour = timestamp.getUTCHours();
+
+        matrix[day][hour] += metric === "watchTime"
+            ? getSessionSeconds(session)
+            : 1;
+
+    });
+
+    let total = 0;
+    let peak = {value:0,day:0,hour:0};
+
+    matrix.forEach((row,day) => row.forEach((value,hour) => {
+
+        total += value;
+
+        if(value > peak.value){
+            peak = {value:value,day:day,hour:hour};
+        }
+
+    }));
+
+    return {
+        matrix:matrix,
+        maxValue:Math.max(1,...matrix.flat()),
+        total:total,
+        peak:peak,
+        metric:metric,
+        days:days
+    };
+}
+
+function renderActivityHeatmapGraph(){
+
+    if(!activityHeatmapData) return;
+
+    drawHeatmapGraph(
+        document.getElementById("activityHeatmapCanvas"),
+        activityHeatmapData,
+        {
+            xAxisLabel:"Hour of day (UTC)",
+            yAxisLabel:"Day of week"
+        }
+    );
+}
+
+function updateActivityHeatmapSummary(){
+
+    if(!activityHeatmapData) return;
+
+    const dayLabels = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+    const peak = activityHeatmapData.peak;
+    const peakDayElement = document.getElementById("activityHeatmapPeakDay");
+    const peakHourElement = document.getElementById("activityHeatmapPeakHour");
+    const totalElement = document.getElementById("activityHeatmapTotal");
+
+    if(peakDayElement) peakDayElement.textContent = peak.value ? dayLabels[peak.day] : "—";
+    if(peakHourElement){
+        peakHourElement.textContent = peak.value
+            ? String(peak.hour).padStart(2,"0") + ":00 UTC"
+            : "—";
+    }
+    if(totalElement){
+        totalElement.textContent = activityHeatmapData.metric === "watchTime"
+            ? formatGraphDuration(activityHeatmapData.total)
+            : formatGraphNumber(activityHeatmapData.total);
+    }
+}
+
+function setActivityHeatmapMetric(metric,button){
+
+    activityHeatmapMetric = metric === "watchTime" ? "watchTime" : "sessions";
+
+    if(button){
+        document
+            .querySelectorAll("#activityHeatmapMetricControls .live-graph-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    const title = document.getElementById("activityHeatmapChartTitle");
+    if(title){
+        title.textContent = activityHeatmapMetric === "watchTime"
+            ? "Watch Time by Hour"
+            : "Viewing Sessions by Hour";
+    }
+
+    if(graphSourceCache){
+        activityHeatmapData = buildActivityHeatmapData(
+            graphSourceCache,
+            activityHeatmapData ? activityHeatmapData.days : 90,
+            activityHeatmapMetric
+        );
+        updateActivityHeatmapSummary();
+        renderActivityHeatmapGraph();
+    }
+}
+
+async function loadActivityHeatmapGraph(force){
+
+    setGraphStatus(
+        "activityHeatmapStatus",
+        "Loading activity heatmap data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),90);
+
+        activityHeatmapData = buildActivityHeatmapData(
+            source,
+            90,
+            activityHeatmapMetric
+        );
+        updateActivityHeatmapSummary();
+        renderActivityHeatmapGraph();
+
+        if(source.sessionsError){
+            setGraphStatus(
+                "activityHeatmapStatus",
+                "Watch-time tracking is unavailable. Run setup_watch_time.sql in Supabase to activate this graph.",
+                true
+            );
+        }
+        else if(!activityHeatmapData.total){
+            setGraphStatus(
+                "activityHeatmapStatus",
+                "No viewing activity has been recorded in the selected period yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("activityHeatmapStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "activityHeatmapStatus",
+            "Could not load activity heatmap data: " + error.message,
+            true
+        );
+
+    }
+}
+
+function buildConversionFunnelRows(source){
+
+    const likeCounts = buildGraphLikeCounts(source.likes);
+    const totalViews = (source.videos || []).reduce(
+        (sum,video) => sum + graphNumber(video.views),
+        0
+    );
+    const viewingSessions = (source.sessions || []).filter(
+        session => getSessionSeconds(session) > 0
+    ).length;
+    const thirtySecondSessions = (source.sessions || []).filter(
+        session => getSessionSeconds(session) >= 30
+    ).length;
+    const deepWatchSessions = (source.sessions || []).filter(
+        session => getSessionSeconds(session) >= 120
+    ).length;
+    const totalLikes = Array.from(likeCounts.values()).reduce(
+        (sum,count) => sum + count,
+        0
+    );
+    const reach = totalViews || viewingSessions || 1;
+    const rows = [
+        {label:"Video views",value:totalViews},
+        {label:"Watch sessions",value:viewingSessions},
+        {label:"30s watched",value:thirtySecondSessions},
+        {label:"2m deep watch",value:deepWatchSessions},
+        {label:"Likes",value:totalLikes}
+    ];
+
+    return rows.map(row => ({
+        label:row.label,
+        value:row.value,
+        percent:row.value / reach * 100
+    }));
+}
+
+function renderConversionFunnelGraph(){
+
+    drawFunnelGraph(
+        document.getElementById("conversionFunnelCanvas"),
+        conversionFunnelData
+    );
+}
+
+async function loadConversionFunnelGraph(force){
+
+    setGraphStatus(
+        "conversionFunnelStatus",
+        "Loading conversion funnel data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),365);
+
+        conversionFunnelData = buildConversionFunnelRows(source);
+
+        const views = graphNumber(conversionFunnelData[0] && conversionFunnelData[0].value);
+        const sessions = graphNumber(conversionFunnelData[1] && conversionFunnelData[1].value);
+        const likes = graphNumber(conversionFunnelData[4] && conversionFunnelData[4].value);
+        const openRateElement = document.getElementById("conversionFunnelOpenRate");
+        const likeRateElement = document.getElementById("conversionFunnelLikeRate");
+        const largestDropElement = document.getElementById("conversionFunnelLargestDrop");
+        let largestDrop = {label:"—",drop:0};
+
+        for(let index = 1; index < conversionFunnelData.length; index++){
+
+            const previous = graphNumber(conversionFunnelData[index - 1].value);
+            const current = graphNumber(conversionFunnelData[index].value);
+            const drop = previous > 0 ? Math.max(0,1 - (current / previous)) : 0;
+
+            if(drop > largestDrop.drop){
+                largestDrop = {
+                    label:conversionFunnelData[index].label,
+                    drop:drop
+                };
+            }
+
+        }
+
+        if(openRateElement){
+            openRateElement.textContent = views
+                ? Math.round((sessions / views) * 100) + "%"
+                : "—";
+        }
+        if(likeRateElement){
+            likeRateElement.textContent = views
+                ? Math.round((likes / views) * 100) + "%"
+                : "—";
+        }
+        if(largestDropElement){
+            largestDropElement.textContent = largestDrop.drop
+                ? largestDrop.label + " · " + Math.round(largestDrop.drop * 100) + "%"
+                : "—";
+        }
+
+        renderConversionFunnelGraph();
+
+        if(source.sessionsError || source.likesError){
+            setGraphStatus(
+                "conversionFunnelStatus",
+                source.sessionsError
+                    ? "Watch-session stages are unavailable. Run setup_watch_time.sql in Supabase to activate the full funnel."
+                    : "Like data could not be read, so the final Likes stage may be incomplete.",
+                true
+            );
+        }
+        else if(!conversionFunnelData.some(row => row.value > 0)){
+            setGraphStatus(
+                "conversionFunnelStatus",
+                "No conversion activity has been recorded yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("conversionFunnelStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "conversionFunnelStatus",
+            "Could not load conversion funnel data: " + error.message,
+            true
+        );
+
+    }
+}
+
+function buildVideoQualityRows(source){
+
+    const likeCounts = buildGraphLikeCounts(source.likes);
+    const videos = new Map();
+
+    (source.videos || []).forEach(video => {
+
+        const id = String(video.id || "");
+
+        if(!id) return;
+
+        videos.set(id,{
+            id:id,
+            name:String(video.title || "Untitled Video"),
+            category:String(video.category || "Uncategorized"),
+            views:graphNumber(video.views),
+            likes:likeCounts.get(id) || 0,
+            sessions:0,
+            watchTime:0
+        });
+
+    });
+
+    (source.sessions || []).forEach(session => {
+
+        const id = String(session.video_id || "");
+        const video = videos.get(id);
+
+        if(!video) return;
+
+        video.sessions += 1;
+        video.watchTime += getSessionSeconds(session);
+
+    });
+
+    return Array.from(videos.values())
+        .filter(video => video.views > 0 || video.sessions > 0)
+        .map(video => ({
+            id:video.id,
+            name:video.name,
+            category:video.category,
+            views:video.views,
+            likes:video.likes,
+            sessions:video.sessions,
+            averageWatchTime:video.sessions
+                ? video.watchTime / video.sessions
+                : 0,
+            likeRate:video.views
+                ? (video.likes / video.views) * 100
+                : 0
+        }));
+}
+
+function renderVideoQualityGraph(){
+
+    drawScatterGraph(
+        document.getElementById("videoQualityCanvas"),
+        videoQualityData.slice(0,40).map(video => ({
+            name:video.name,
+            x:video.views,
+            y:video.averageWatchTime,
+            sessions:video.sessions
+        })),
+        {
+            xAxisLabel:"Total views",
+            yAxisLabel:"Average watch time (seconds)",
+            formatY:formatGraphDuration
+        }
+    );
+}
+
+async function loadVideoQualityGraph(force){
+
+    setGraphStatus(
+        "videoQualityStatus",
+        "Loading video quality data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),365);
+
+        videoQualityData = buildVideoQualityRows(source)
+            .sort((first,second) => {
+                return second.averageWatchTime - first.averageWatchTime ||
+                    second.views - first.views;
+            });
+
+        const qualityVideos = videoQualityData.filter(video => video.sessions > 0);
+        const totalWatchTime = qualityVideos.reduce(
+            (sum,video) => sum + (video.averageWatchTime * video.sessions),
+            0
+        );
+        const totalSessions = qualityVideos.reduce(
+            (sum,video) => sum + video.sessions,
+            0
+        );
+        const totalViews = videoQualityData.reduce(
+            (sum,video) => sum + video.views,
+            0
+        );
+        const totalLikes = videoQualityData.reduce(
+            (sum,video) => sum + video.likes,
+            0
+        );
+        const topVideoElement = document.getElementById("videoQualityTopVideo");
+        const averageWatchElement = document.getElementById("videoQualityAverageWatchTime");
+        const averageLikeElement = document.getElementById("videoQualityAverageLikeRate");
+
+        if(topVideoElement) topVideoElement.textContent = qualityVideos[0] ? qualityVideos[0].name : "—";
+        if(averageWatchElement){
+            averageWatchElement.textContent = totalSessions
+                ? formatGraphDuration(totalWatchTime / totalSessions)
+                : "—";
+        }
+        if(averageLikeElement){
+            averageLikeElement.textContent = totalViews
+                ? Math.round((totalLikes / totalViews) * 100) + "%"
+                : "—";
+        }
+
+        renderVideoQualityGraph();
+
+        if(source.sessionsError){
+            setGraphStatus(
+                "videoQualityStatus",
+                "Watch-time tracking is unavailable. Run setup_watch_time.sql in Supabase to activate this graph.",
+                true
+            );
+        }
+        else if(!qualityVideos.length){
+            setGraphStatus(
+                "videoQualityStatus",
+                "No video-watch sessions have been recorded yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("videoQualityStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "videoQualityStatus",
+            "Could not load video quality data: " + error.message,
+            true
+        );
+
+    }
+}
+
 function redrawStatisticalGraphs(){
 
     const graphsSection = document.getElementById("statisticalGraphsSection");
@@ -8756,6 +9861,22 @@ function redrawStatisticalGraphs(){
 
     if(returningUsersData.length){
         renderReturningUsersGraph();
+    }
+
+    if(trafficSourcesData.length){
+        renderTrafficSourcesGraph();
+    }
+
+    if(activityHeatmapData){
+        renderActivityHeatmapGraph();
+    }
+
+    if(conversionFunnelData.length){
+        renderConversionFunnelGraph();
+    }
+
+    if(videoQualityData.length){
+        renderVideoQualityGraph();
     }
 }
 

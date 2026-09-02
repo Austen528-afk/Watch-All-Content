@@ -1065,6 +1065,63 @@ body{
         class="categories"
         id="categories"
     >
+
+        <button
+            class="category active"
+            data-category="All"
+        >
+            All
+        </button>
+
+        <button
+            class="category"
+            data-category="BackShots"
+        >
+            BackShots
+        </button>
+
+        <button
+            class="category"
+            data-category="Masterbates"
+        >
+            Masterbates
+        </button>
+
+        <button
+            class="category"
+            data-category="RoughX"
+        >
+            RoughX
+        </button>
+
+        <button
+            class="category"
+            data-category="BBW"
+        >
+            BBW
+        </button>
+
+        <button
+            class="category"
+            data-category="Africans"
+        >
+            Africans
+        </button>
+
+        <button
+            class="category"
+            data-category="Cums"
+        >
+            Cums
+        </button>
+
+        <button
+            class="category"
+            data-category="Close Friends"
+        >
+            Close Friends
+        </button>
+
     </div>
 
 </nav>
@@ -1212,47 +1269,6 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
-/* =========================================
-   WEBSITE PRESENCE TRACKING
-========================================= */
-
-const WEBSITE_USER_ID =
-    localStorage.getItem("streamx_website_user_id") ||
-    crypto.randomUUID();
-
-localStorage.setItem(
-    "streamx_website_user_id",
-    WEBSITE_USER_ID
-);
-
-async function updateWebsitePresence(){
-
-    try{
-
-        await supabaseClient
-            .from("active_users")
-            .upsert(
-                {
-                    user_id: WEBSITE_USER_ID,
-                    platform: "website",
-                    last_seen: new Date().toISOString()
-                },
-                {
-                    onConflict: "user_id,platform"
-                }
-            );
-
-    }catch(error){
-
-        console.error(
-            "Website presence update failed:",
-            error
-        );
-
-    }
-
-}
-
 
 /* =========================
    AGE GATE ELEMENTS
@@ -1294,21 +1310,7 @@ function enterWebsite(){
     document.body.style.overflow =
         "";
 
-// Render All immediately, then load live categories and listen for changes.
-renderCategoryButtons();
-loadCategories();
-setupCategoryRealtime();
-
-// Load videos once and then keep them synchronized through Realtime.
-loadVideos();
-setupVideoRealtime();
-
-updateWebsitePresence();
-
-setInterval(
-    updateWebsitePresence,
-    15000
-);
+    loadVideos();
 
 }
 
@@ -1400,214 +1402,271 @@ const closePlayer =
 
 
 /* =========================
-   CATEGORIES
+   VIDEO WATCH-TIME TRACKING
 ========================= */
 
-let categories = ["All"];
+const WATCH_TIME_PLATFORM = "website";
+const WATCH_TIME_SAVE_INTERVAL_SECONDS = 10;
 
+let watchTimeState = null;
+let watchTimeTimer = null;
 
-/* =========================
-   LIVE CATEGORIES
-========================= */
+function createWatchTimeId(){
 
-async function loadCategories(){
+    if(
+        window.crypto &&
+        typeof window.crypto.randomUUID === "function"
+    ){
+        return window.crypto.randomUUID();
+    }
+
+    const values = new Uint8Array(16);
+
+    if(
+        window.crypto &&
+        typeof window.crypto.getRandomValues === "function"
+    ){
+        window.crypto.getRandomValues(values);
+    }
+    else{
+        for(let index = 0; index < values.length; index++){
+            values[index] = Math.floor(Math.random() * 256);
+        }
+    }
+
+    values[6] = (values[6] & 15) | 64;
+    values[8] = (values[8] & 63) | 128;
+
+    const hex = Array.from(
+        values,
+        value => value.toString(16).padStart(2,"0")
+    ).join("");
+
+    return [
+        hex.slice(0,8),
+        hex.slice(8,12),
+        hex.slice(12,16),
+        hex.slice(16,20),
+        hex.slice(20)
+    ].join("-");
+}
+
+function getWatchTimeViewerId(){
+
+    const storageKey = "streamx_website_user_id";
 
     try{
+        let viewerId = localStorage.getItem(storageKey);
 
-        const { data, error } =
-            await supabaseClient
-                .from("categories")
-                .select("*");
-
-        if(error){
-            console.error("Categories load error:", error);
-            return;
+        if(!viewerId){
+            viewerId = createWatchTimeId();
+            localStorage.setItem(storageKey,viewerId);
         }
 
-        const databaseCategories = (data || [])
-            .map(row => row.name ?? row.category ?? row.title ?? "")
-            .map(value => String(value).trim())
-            .filter(Boolean);
-
-        const uniqueCategories = [
-            ...new Map(
-                databaseCategories.map(category => [
-                    category.toLowerCase(),
-                    category
-                ])
-            ).values()
-        ];
-
-        categories = ["All", ...uniqueCategories];
-
-        if(
-            currentCategory !== "All" &&
-            !categories.some(category =>
-                category.toLowerCase() ===
-                currentCategory.toLowerCase()
-            )
-        ){
-            currentCategory = "All";
-        }
-
-        renderCategoryButtons();
-        renderVideos();
-
-    }catch(error){
-        console.error("Unexpected categories error:", error);
+        return viewerId;
+    }
+    catch(error){
+        console.warn("Could not save the watch-time viewer ID:",error);
+        return createWatchTimeId();
     }
 }
 
-function renderCategoryButtons(){
+const WATCH_TIME_VIEWER_ID = getWatchTimeViewerId();
 
-    const categoryContainer =
-        document.getElementById("categories");
+function resetWatchTimeClock(){
 
-    if(!categoryContainer) return;
+    if(!watchTimeState) return;
 
-    categoryContainer.innerHTML = "";
+    watchTimeState.lastMediaTime = Number(playerVideo.currentTime || 0);
+    watchTimeState.lastClockTime = performance.now();
+}
 
-    categories.forEach(category => {
+function captureWatchTime(allowStopped = false){
 
-        const button = document.createElement("button");
+    if(!watchTimeState) return;
 
-        button.type = "button";
-        button.className = "category";
-        button.dataset.category = category;
-        button.textContent = category;
+    const currentClockTime = performance.now();
+    const currentMediaTime = Number(playerVideo.currentTime || 0);
 
-        if(
-            category.toLowerCase() ===
-            currentCategory.toLowerCase()
-        ){
-            button.classList.add("active");
+    if(watchTimeState.lastClockTime === null){
+        watchTimeState.lastClockTime = currentClockTime;
+        watchTimeState.lastMediaTime = currentMediaTime;
+        return;
+    }
+
+    const clockDifference =
+        (currentClockTime - watchTimeState.lastClockTime) / 1000;
+
+    const mediaDifference =
+        currentMediaTime - watchTimeState.lastMediaTime;
+
+    const playerIsRunning =
+        allowStopped ||
+        (!playerVideo.paused && !playerVideo.ended);
+
+    const mediaMovedNaturally =
+        mediaDifference > 0 &&
+        mediaDifference <= Math.max(5,clockDifference * 4);
+
+    if(
+        playerIsRunning &&
+        !playerVideo.seeking &&
+        document.visibilityState === "visible" &&
+        clockDifference > 0 &&
+        clockDifference <= 5 &&
+        mediaMovedNaturally
+    ){
+        watchTimeState.watchedSeconds += Math.min(clockDifference,2);
+    }
+
+    watchTimeState.lastClockTime = currentClockTime;
+    watchTimeState.lastMediaTime = currentMediaTime;
+}
+
+function saveWatchTime(forceSave = false){
+
+    const state = watchTimeState;
+
+    if(!state) return Promise.resolve();
+
+    const seconds = Math.floor(state.watchedSeconds);
+
+    if(seconds < 1 || seconds <= state.lastQueuedSeconds){
+        return Promise.resolve();
+    }
+
+    if(
+        !forceSave &&
+        seconds - state.lastQueuedSeconds < WATCH_TIME_SAVE_INTERVAL_SECONDS
+    ){
+        return Promise.resolve();
+    }
+
+    state.lastQueuedSeconds = seconds;
+
+    return fetch(
+        SUPABASE_URL + "/rest/v1/rpc/record_video_watch_time",
+        {
+            method:"POST",
+            keepalive:true,
+            headers:{
+                "apikey":SUPABASE_KEY,
+                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                p_session_id:state.sessionId,
+                p_viewer_id:state.viewerId,
+                p_video_id:state.videoId,
+                p_platform:state.platform,
+                p_watched_seconds:seconds
+            })
+        }
+    )
+    .then(response => {
+        if(!response.ok){
+            throw new Error("Watch-time save returned " + response.status);
         }
 
-        categoryContainer.appendChild(button);
+        state.lastSavedSeconds = Math.max(
+            state.lastSavedSeconds,
+            seconds
+        );
+    })
+    .catch(error => {
+        if(state.lastQueuedSeconds === seconds){
+            state.lastQueuedSeconds = state.lastSavedSeconds;
+        }
+
+        console.warn("Could not save video watch time:",error);
     });
 }
 
-let categoryRealtimeChannel = null;
-
-function setupCategoryRealtime(){
-
-    if(categoryRealtimeChannel) return;
-
-    categoryRealtimeChannel =
-        supabaseClient
-            .channel("streamx-website-categories-realtime")
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "categories"
-                },
-                payload => {
-
-                    // If a category was renamed, immediately move the
-                    // existing videos in the local view to the new name.
-                    if(payload.eventType === "UPDATE"){
-
-                        const oldRow = payload.old || {};
-                        const newRow = payload.new || {};
-
-                        const oldName = String(
-                            oldRow.name ??
-                            oldRow.category ??
-                            oldRow.title ??
-                            ""
-                        ).trim();
-
-                        const newName = String(
-                            newRow.name ??
-                            newRow.category ??
-                            newRow.title ??
-                            ""
-                        ).trim();
-
-                        if(oldName && newName && oldName.toLowerCase() !== newName.toLowerCase()){
-                            allVideos.forEach(video => {
-                                if(String(video.category || "").toLowerCase() === oldName.toLowerCase()){
-                                    video.category = newName;
-                                }
-                            });
-                        }
-                    }
-
-                    loadCategories();
-                }
-            )
-            .subscribe(status => {
-                console.log("Website categories realtime:", status);
-            });
+function watchTimeTick(){
+    captureWatchTime();
+    saveWatchTime();
 }
+
+function startWatchTimeTracking(videoId){
+
+    stopWatchTimeTracking();
+
+    watchTimeState = {
+        sessionId:createWatchTimeId(),
+        viewerId:WATCH_TIME_VIEWER_ID,
+        videoId:videoId,
+        platform:WATCH_TIME_PLATFORM,
+        watchedSeconds:0,
+        lastQueuedSeconds:0,
+        lastSavedSeconds:0,
+        lastMediaTime:Number(playerVideo.currentTime || 0),
+        lastClockTime:performance.now()
+    };
+
+    watchTimeTimer = setInterval(watchTimeTick,1000);
+}
+
+function stopWatchTimeTracking(){
+
+    if(!watchTimeState) return;
+
+    captureWatchTime(true);
+    saveWatchTime(true);
+
+    if(watchTimeTimer){
+        clearInterval(watchTimeTimer);
+        watchTimeTimer = null;
+    }
+
+    watchTimeState = null;
+}
+
+playerVideo.addEventListener("play",resetWatchTimeClock);
+
+playerVideo.addEventListener("pause",function(){
+    captureWatchTime(true);
+    saveWatchTime(true);
+});
+
+playerVideo.addEventListener("ended",function(){
+    captureWatchTime(true);
+    saveWatchTime(true);
+});
+
+playerVideo.addEventListener("seeking",resetWatchTimeClock);
+playerVideo.addEventListener("seeked",resetWatchTimeClock);
+
+document.addEventListener("visibilitychange",function(){
+    if(document.visibilityState === "hidden"){
+        saveWatchTime(true);
+    }
+    else{
+        resetWatchTimeClock();
+    }
+});
+
+window.addEventListener("pagehide",function(){
+    captureWatchTime(true);
+    saveWatchTime(true);
+});
 
 
 /* =========================
-   LIVE VIDEO UPDATES
+   CATEGORIES
 ========================= */
 
-let videoRealtimeChannel = null;
+const categories = [
 
-function setupVideoRealtime(){
+    "All",
+    "BackShots",
+    "Masterbates",
+    "RoughX",
+    "BBW",
+    "Africans",
+    "Cums",
+    "Close Friends"
 
-    if(videoRealtimeChannel) return;
-
-    videoRealtimeChannel =
-        supabaseClient
-            .channel("streamx-website-videos-realtime")
-            .on(
-                "postgres_changes",
-                { event: "INSERT", schema: "public", table: "videos" },
-                payload => {
-                    const video = payload.new;
-                    if(!video) return;
-
-                    if(!allVideos.some(v => String(v.id) === String(video.id))){
-                        allVideos.unshift({ ...video, likes_count: 0 });
-                        renderVideos();
-                    }
-                }
-            )
-            .on(
-                "postgres_changes",
-                { event: "UPDATE", schema: "public", table: "videos" },
-                payload => {
-                    const video = payload.new;
-                    if(!video) return;
-
-                    const index = allVideos.findIndex(
-                        v => String(v.id) === String(video.id)
-                    );
-
-                    if(index >= 0){
-                        allVideos[index] = { ...allVideos[index], ...video };
-                    }else{
-                        allVideos.unshift({ ...video, likes_count: 0 });
-                    }
-
-                    renderVideos();
-                }
-            )
-            .on(
-                "postgres_changes",
-                { event: "DELETE", schema: "public", table: "videos" },
-                payload => {
-                    const video = payload.old;
-                    if(!video) return;
-
-                    allVideos = allVideos.filter(
-                        v => String(v.id) !== String(video.id)
-                    );
-
-                    renderVideos();
-                }
-            )
-            .subscribe(status => {
-                console.log("Website videos realtime:", status);
-            });
-}
+];
 
 
 /* =========================
@@ -2222,6 +2281,8 @@ async function getVideoURL(video){
 
 async function openPlayer(video){
 
+    stopWatchTimeTracking();
+
     playerTitle.textContent =
         video.title ||
         "Video";
@@ -2276,6 +2337,9 @@ async function openPlayer(video){
 
 
     playerVideo.load();
+
+
+    startWatchTimeTracking(video.id);
 
 
     try{
@@ -2635,6 +2699,8 @@ async function updateLikeButton(videoId){
 ========================= */
 
 function closeVideoPlayer(){
+
+    stopWatchTimeTracking();
 
     playerVideo.pause();
 

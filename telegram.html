@@ -1930,37 +1930,13 @@ function stopLibraryActivityTracking(){
 
 async function sendLibraryActivityHeartbeat(){
 
-    const now = Date.now();
-    const libraryIsVisible =
-        libraryViewActive &&
-        document.visibilityState === "visible";
-
-    /* Do not create network traffic while the tab is hidden. */
-    if(document.visibilityState !== "visible"){
-
-        if(
-            !libraryActivityLastSeen ||
-            now - libraryActivityLastSeen >= LIBRARY_ACTIVITY_TIMEOUT_MS
-        ){
-            stopLibraryActivityTracking();
-        }
-
-        return;
-    }
-
-    /* Keep an open, visible library session alive; other actions expire. */
-    if(
-        !libraryActivityLastSeen ||
-        (!libraryIsVisible &&
-            now - libraryActivityLastSeen >= LIBRARY_ACTIVITY_TIMEOUT_MS)
-    ){
+    /* The open My Library view is the source of truth for this status. */
+    if(!libraryViewActive){
         stopLibraryActivityTracking();
         return;
     }
 
-    if(libraryIsVisible){
-        libraryActivityLastSeen = now;
-    }
+    libraryActivityLastSeen = Date.now();
 
     /* Do not allow slow requests to overlap and write an older timestamp last. */
     if(libraryActivityRequestInFlight) return;
@@ -2000,6 +1976,11 @@ async function sendLibraryActivityHeartbeat(){
 }
 
 function recordLibraryActivity(){
+
+    if(!libraryViewActive){
+        stopLibraryActivityTracking();
+        return;
+    }
 
     libraryActivityLastSeen = Date.now();
     sendLibraryActivityHeartbeat();
@@ -2239,8 +2220,6 @@ async function loadLibrary(){
 
 function toggleLibraryView(){
 
-    recordLibraryActivity();
-
     if(!libraryViewActive){
 
         libraryPreviousCategory = currentCategory;
@@ -2251,11 +2230,13 @@ function toggleLibraryView(){
         searchInput.value = "";
         clearSearch.style.display = "none";
         categorySuggestions.style.display = "none";
+        recordLibraryActivity();
 
     }
     else{
 
         libraryViewActive = false;
+        stopLibraryActivityTracking();
         currentCategory = categories.some(
             category => category.toLowerCase() ===
                 libraryPreviousCategory.toLowerCase()
@@ -3903,6 +3884,7 @@ document
                 return;
 
             libraryViewActive = false;
+            stopLibraryActivityTracking();
 
 
             document

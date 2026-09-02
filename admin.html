@@ -2957,6 +2957,25 @@ textarea{
         </div>
 
     </div>
+
+    <div class="stat">
+
+        <div class="stat-icon">
+            ⭐
+        </div>
+
+        <div class="stat-label">
+            Library Active Users
+        </div>
+
+        <div
+            class="stat-number"
+            id="libraryUsers"
+        >
+            0
+        </div>
+
+    </div>
 </div>
 
 
@@ -3017,6 +3036,12 @@ textarea{
         <div class="stat-icon">👥</div>
         <div class="stat-label">Total Active Users</div>
         <div class="stat-number" id="totalActiveUsers">0</div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-label">Online Library Users</div>
+        <div class="stat-number" id="libraryOnline">0</div>
     </div>
 
 </div>
@@ -5239,21 +5264,37 @@ async function loadActiveUsers(){
 
     try{
 
-        const result =
-            await supabaseClient
-                .from("active_users")
-                .select("user_id, platform, last_seen");
+        const [activeResult, libraryResult] =
+            await Promise.all([
+                supabaseClient
+                    .from("active_users")
+                    .select("user_id, platform, last_seen"),
+                supabaseClient
+                    .from("library_activity")
+                    .select("viewer_id, platform, last_seen")
+            ]);
 
-        if(result.error){
+        if(activeResult.error){
 
             throw new Error(
-                result.error.message
+                activeResult.error.message
             );
 
         }
 
         const users =
-            result.data || [];
+            activeResult.data || [];
+
+        /* The activity table is optional until the setup SQL is run. */
+        const libraryActivityRows =
+            libraryResult.error ? [] : (libraryResult.data || []);
+
+        if(libraryResult.error){
+            console.warn(
+                "Could not load library activity:",
+                libraryResult.error.message
+            );
+        }
 
 
         /*
@@ -5271,6 +5312,8 @@ async function loadActiveUsers(){
 
         let websiteOnline = new Set();
         let miniAppOnline = new Set();
+        let libraryUsers = new Set();
+        let libraryOnline = new Set();
 
 
         users.forEach(user => {
@@ -5343,6 +5386,21 @@ async function loadActiveUsers(){
 
         });
 
+        libraryActivityRows.forEach(activity => {
+
+            if(!activity.viewer_id) return;
+
+            libraryUsers.add(activity.viewer_id);
+
+            if(
+                activity.last_seen &&
+                new Date(activity.last_seen).getTime() >= onlineLimit
+            ){
+                libraryOnline.add(activity.viewer_id);
+            }
+
+        });
+
 
         /*
          * TOTAL ACTIVE USERS
@@ -5369,6 +5427,12 @@ async function loadActiveUsers(){
 
 
         document.getElementById(
+            "libraryUsers"
+        ).textContent =
+            libraryUsers.size.toLocaleString();
+
+
+        document.getElementById(
             "websiteOnline"
         ).textContent =
             websiteOnline.size.toLocaleString();
@@ -5386,6 +5450,12 @@ async function loadActiveUsers(){
             totalActiveUsers.toLocaleString();
 
 
+        document.getElementById(
+            "libraryOnline"
+        ).textContent =
+            libraryOnline.size.toLocaleString();
+
+
         console.log(
             "Active users:",
             {
@@ -5399,7 +5469,13 @@ async function loadActiveUsers(){
                     websiteOnline.size,
 
                 miniAppOnline:
-                    miniAppOnline.size
+                    miniAppOnline.size,
+
+                libraryUsers:
+                    libraryUsers.size,
+
+                libraryOnline:
+                    libraryOnline.size
             }
         );
 

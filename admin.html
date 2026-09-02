@@ -1366,7 +1366,7 @@ textarea{
 .statistics-table-header,
 .statistics-row{
     display:grid;
-    grid-template-columns:90px minmax(0,1fr) 160px;
+    grid-template-columns:90px minmax(0,1fr) 220px;
     align-items:center;
     gap:16px;
 }
@@ -1453,6 +1453,14 @@ textarea{
     font-weight:600;
 }
 
+.statistics-watch-breakdown{
+    margin-top:5px;
+    color:#777;
+    font-size:10px;
+    font-weight:600;
+    line-height:1.35;
+}
+
 .statistics-status{
     padding:45px 20px;
     color:#777;
@@ -1472,7 +1480,7 @@ textarea{
 
     .statistics-table-header,
     .statistics-row{
-        grid-template-columns:48px minmax(0,1fr) 105px;
+        grid-template-columns:48px minmax(0,1fr) 135px;
         gap:10px;
         padding-left:14px;
         padding-right:14px;
@@ -2377,7 +2385,7 @@ textarea{
         <div class="topbar">
             <div>
                 <h1>Statistics</h1>
-                <p>Compare video categories by views, likes and total engagement.</p>
+                <p>Compare video categories by views, likes, engagement and watch time.</p>
             </div>
         </div>
 
@@ -2441,6 +2449,27 @@ textarea{
                     </div>
                     <div id="categoryEngagementRankingList">
                         <div class="statistics-status">Loading engagement rankings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="statistics-ranking-block">
+                <div class="section-top">
+                    <div>
+                        <h2>Category Watch-Time Ranking</h2>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Total time watched across the website and Telegram mini app.</p>
+                    </div>
+                    <span class="video-count" id="categoryWatchTimeRankingCount">0 categories</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Category</span>
+                        <span>Total Watch Time</span>
+                    </div>
+                    <div id="categoryWatchTimeRankingList">
+                        <div class="statistics-status">Loading watch-time rankings...</div>
                     </div>
                 </div>
             </div>
@@ -5029,23 +5058,38 @@ async function loadCategoryStatistics(){
         }
     ];
 
-    if(rankingTargets.some(target => !target.list || !target.count)) return;
+    const watchTimeList =
+        document.getElementById("categoryWatchTimeRankingList");
+
+    const watchTimeCount =
+        document.getElementById("categoryWatchTimeRankingCount");
+
+    if(
+        rankingTargets.some(target => !target.list || !target.count) ||
+        !watchTimeList ||
+        !watchTimeCount
+    ) return;
 
     rankingTargets.forEach(target => {
         target.list.innerHTML = `<div class="statistics-status">${target.loadingText}</div>`;
     });
 
+    watchTimeList.innerHTML =
+        '<div class="statistics-status">Loading watch-time rankings...</div>';
+
     try{
 
         await requireAuthenticatedUser();
 
-        const [categoriesResult, videosResult] = await Promise.all([
+        const [categoriesResult, videosResult, watchTimeResult] = await Promise.all([
             supabaseClient
                 .from("categories")
                 .select("name"),
             supabaseClient
                 .from("videos")
-                .select("id, category, views")
+                .select("id, category, views"),
+            supabaseClient
+                .rpc("get_category_watch_time_rankings")
         ]);
 
         if(categoriesResult.error){
@@ -5127,6 +5171,24 @@ async function loadCategoryStatistics(){
             );
         });
 
+        if(watchTimeResult.error){
+            console.error(
+                "Could not load category watch-time rankings:",
+                watchTimeResult.error
+            );
+
+            watchTimeCount.textContent = "Unavailable";
+            watchTimeList.innerHTML =
+                '<div class="statistics-status error">Watch-time statistics are not available. Run setup_watch_time.sql in Supabase first.</div>';
+        }
+        else{
+            renderCategoryWatchTimeRanking(
+                watchTimeList,
+                watchTimeCount,
+                watchTimeResult.data || []
+            );
+        }
+
     }catch(error){
         console.error("Could not load category statistics:", error);
 
@@ -5134,6 +5196,9 @@ async function loadCategoryStatistics(){
             target.count.textContent = "Unavailable";
             target.list.innerHTML = `<div class="statistics-status error">Could not load category statistics: ${escapeHTML(error.message)}</div>`;
         });
+
+        watchTimeCount.textContent = "Unavailable";
+        watchTimeList.innerHTML = `<div class="statistics-status error">Could not load watch-time statistics: ${escapeHTML(error.message)}</div>`;
     }
 }
 
@@ -5164,6 +5229,69 @@ function renderCategoryStatisticsRanking(list,count,totals,metric,unit){
                 <div class="statistics-views">
                     ${value.toLocaleString()}
                     <span>${escapeHTML(unit)}</span>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function formatWatchTime(value){
+
+    const totalSeconds = Math.max(
+        0,
+        Math.floor(Number(value) || 0)
+    );
+
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const parts = [];
+
+    if(days > 0) parts.push(days + "d");
+    if(hours > 0 || days > 0) parts.push(hours + "h");
+    if(minutes > 0 || hours > 0 || days > 0) parts.push(minutes + "m");
+    parts.push(seconds + "s");
+
+    return parts.join(" ");
+}
+
+function renderCategoryWatchTimeRanking(list,count,rows){
+
+    const rankings = (rows || [])
+        .map(row => ({
+            name:String(row.category || "Uncategorized"),
+            totalSeconds:Number(row.total_seconds || 0),
+            websiteSeconds:Number(row.website_seconds || 0),
+            miniAppSeconds:Number(row.mini_app_seconds || 0)
+        }))
+        .sort((a,b) => {
+            return b.totalSeconds - a.totalSeconds || a.name.localeCompare(b.name);
+        });
+
+    count.textContent = rankings.length + (rankings.length === 1 ? " category" : " categories");
+
+    if(rankings.length === 0){
+        list.innerHTML = '<div class="statistics-status">No watch-time statistics are available yet.</div>';
+        return;
+    }
+
+    list.innerHTML = rankings.map((category,index) => {
+        const initial = escapeHTML(category.name.charAt(0).toUpperCase() || "?");
+
+        return `
+            <div class="statistics-row">
+                <div class="statistics-rank">#${index + 1}</div>
+                <div class="statistics-category">
+                    <div class="statistics-category-icon">${initial}</div>
+                    <div class="statistics-category-name">${escapeHTML(category.name)}</div>
+                </div>
+                <div class="statistics-views">
+                    ${escapeHTML(formatWatchTime(category.totalSeconds))}
+                    <div class="statistics-watch-breakdown">
+                        Website ${escapeHTML(formatWatchTime(category.websiteSeconds))}
+                        · Mini app ${escapeHTML(formatWatchTime(category.miniAppSeconds))}
+                    </div>
                 </div>
             </div>
         `;

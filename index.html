@@ -1065,63 +1065,6 @@ body{
         class="categories"
         id="categories"
     >
-
-        <button
-            class="category active"
-            data-category="All"
-        >
-            All
-        </button>
-
-        <button
-            class="category"
-            data-category="BackShots"
-        >
-            BackShots
-        </button>
-
-        <button
-            class="category"
-            data-category="Masterbates"
-        >
-            Masterbates
-        </button>
-
-        <button
-            class="category"
-            data-category="RoughX"
-        >
-            RoughX
-        </button>
-
-        <button
-            class="category"
-            data-category="BBW"
-        >
-            BBW
-        </button>
-
-        <button
-            class="category"
-            data-category="Africans"
-        >
-            Africans
-        </button>
-
-        <button
-            class="category"
-            data-category="Cums"
-        >
-            Cums
-        </button>
-
-        <button
-            class="category"
-            data-category="Close Friends"
-        >
-            Close Friends
-        </button>
-
     </div>
 
 </nav>
@@ -1273,16 +1216,16 @@ const supabaseClient =
    WEBSITE PRESENCE TRACKING
 ========================================= */
 
-const WEBSITE_USER_ID =
-    localStorage.getItem("streamx_user_id") ||
+const MINI_APP_USER_ID =
+    localStorage.getItem("streamx_mini_app_user_id") ||
     crypto.randomUUID();
 
 localStorage.setItem(
-    "streamx_user_id",
-    WEBSITE_USER_ID
+    "streamx_mini_app_user_id",
+    MINI_APP_USER_ID
 );
 
-async function updateWebsitePresence(){
+async function updateMiniAppPresence(){
 
     try{
 
@@ -1290,8 +1233,8 @@ async function updateWebsitePresence(){
             .from("active_users")
             .upsert(
                 {
-                    user_id: WEBSITE_USER_ID,
-                    platform: "website",
+                    user_id: MINI_APP_USER_ID,
+                    platform: "mini_app",
                     last_seen: new Date().toISOString()
                 },
                 {
@@ -1302,7 +1245,7 @@ async function updateWebsitePresence(){
     }catch(error){
 
         console.error(
-            "Presence update failed:",
+            "Mini App presence update failed:",
             error
         );
 
@@ -1351,12 +1294,19 @@ function enterWebsite(){
     document.body.style.overflow =
         "";
 
-    loadVideos();
+// Render All immediately, then load live categories and listen for changes.
+renderCategoryButtons();
+loadCategories();
+setupCategoryRealtime();
 
-    updateWebsitePresence();
+// Load videos once and then keep them synchronized through Realtime.
+loadVideos();
+setupVideoRealtime();
+
+updateMiniAppPresence();
 
 setInterval(
-    updateWebsitePresence,
+    updateMiniAppPresence,
     15000
 );
 
@@ -1453,18 +1403,211 @@ const closePlayer =
    CATEGORIES
 ========================= */
 
-const categories = [
+let categories = ["All"];
 
-    "All",
-    "BackShots",
-    "Masterbates",
-    "RoughX",
-    "BBW",
-    "Africans",
-    "Cums",
-    "Close Friends"
 
-];
+/* =========================
+   LIVE CATEGORIES
+========================= */
+
+async function loadCategories(){
+
+    try{
+
+        const { data, error } =
+            await supabaseClient
+                .from("categories")
+                .select("*");
+
+        if(error){
+            console.error("Categories load error:", error);
+            return;
+        }
+
+        const databaseCategories = (data || [])
+            .map(row => row.name ?? row.category ?? row.title ?? "")
+            .map(value => String(value).trim())
+            .filter(Boolean);
+
+        const uniqueCategories = [
+            ...new Map(
+                databaseCategories.map(category => [
+                    category.toLowerCase(),
+                    category
+                ])
+            ).values()
+        ];
+
+        categories = ["All", ...uniqueCategories];
+
+        if(
+            currentCategory !== "All" &&
+            !categories.some(category =>
+                category.toLowerCase() ===
+                currentCategory.toLowerCase()
+            )
+        ){
+            currentCategory = "All";
+        }
+
+        renderCategoryButtons();
+        renderVideos();
+
+    }catch(error){
+        console.error("Unexpected categories error:", error);
+    }
+}
+
+function renderCategoryButtons(){
+
+    const categoryContainer =
+        document.getElementById("categories");
+
+    if(!categoryContainer) return;
+
+    categoryContainer.innerHTML = "";
+
+    categories.forEach(category => {
+
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "category";
+        button.dataset.category = category;
+        button.textContent = category;
+
+        if(
+            category.toLowerCase() ===
+            currentCategory.toLowerCase()
+        ){
+            button.classList.add("active");
+        }
+
+        categoryContainer.appendChild(button);
+    });
+}
+
+let categoryRealtimeChannel = null;
+
+function setupCategoryRealtime(){
+
+    if(categoryRealtimeChannel) return;
+
+    categoryRealtimeChannel =
+        supabaseClient
+            .channel("streamx-website-categories-realtime")
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "categories"
+                },
+                payload => {
+
+                    // If a category was renamed, immediately move the
+                    // existing videos in the local view to the new name.
+                    if(payload.eventType === "UPDATE"){
+
+                        const oldRow = payload.old || {};
+                        const newRow = payload.new || {};
+
+                        const oldName = String(
+                            oldRow.name ??
+                            oldRow.category ??
+                            oldRow.title ??
+                            ""
+                        ).trim();
+
+                        const newName = String(
+                            newRow.name ??
+                            newRow.category ??
+                            newRow.title ??
+                            ""
+                        ).trim();
+
+                        if(oldName && newName && oldName.toLowerCase() !== newName.toLowerCase()){
+                            allVideos.forEach(video => {
+                                if(String(video.category || "").toLowerCase() === oldName.toLowerCase()){
+                                    video.category = newName;
+                                }
+                            });
+                        }
+                    }
+
+                    loadCategories();
+                }
+            )
+            .subscribe(status => {
+                console.log("Website categories realtime:", status);
+            });
+}
+
+
+/* =========================
+   LIVE VIDEO UPDATES
+========================= */
+
+let videoRealtimeChannel = null;
+
+function setupVideoRealtime(){
+
+    if(videoRealtimeChannel) return;
+
+    videoRealtimeChannel =
+        supabaseClient
+            .channel("streamx-website-videos-realtime")
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "videos" },
+                payload => {
+                    const video = payload.new;
+                    if(!video) return;
+
+                    if(!allVideos.some(v => String(v.id) === String(video.id))){
+                        allVideos.unshift({ ...video, likes_count: 0 });
+                        renderVideos();
+                    }
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "videos" },
+                payload => {
+                    const video = payload.new;
+                    if(!video) return;
+
+                    const index = allVideos.findIndex(
+                        v => String(v.id) === String(video.id)
+                    );
+
+                    if(index >= 0){
+                        allVideos[index] = { ...allVideos[index], ...video };
+                    }else{
+                        allVideos.unshift({ ...video, likes_count: 0 });
+                    }
+
+                    renderVideos();
+                }
+            )
+            .on(
+                "postgres_changes",
+                { event: "DELETE", schema: "public", table: "videos" },
+                payload => {
+                    const video = payload.old;
+                    if(!video) return;
+
+                    allVideos = allVideos.filter(
+                        v => String(v.id) !== String(video.id)
+                    );
+
+                    renderVideos();
+                }
+            )
+            .subscribe(status => {
+                console.log("Website videos realtime:", status);
+            });
+}
 
 
 /* =========================

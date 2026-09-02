@@ -3962,6 +3962,26 @@ textarea{
                     aria-controls="videoQualityGraphPanel"
                     onclick="openStatisticalGraphPanel('videoQualityGraphPanel',this)"
                 >✨ Video Quality</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="librarySavesGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="librarySavesGraphPanel"
+                    onclick="openStatisticalGraphPanel('librarySavesGraphPanel',this)"
+                >📚 Library Saves Over Time</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="viewerTimeGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="viewerTimeGraphPanel"
+                    onclick="openStatisticalGraphPanel('viewerTimeGraphPanel',this)"
+                >⏱ Library vs Outside Time</button>
             </div>
 
             <div
@@ -4492,6 +4512,136 @@ textarea{
                     <p class="live-graph-note">The X axis is total recorded views and the Y axis is average watch time per recorded viewing session. Video names are shown in the point labels when space allows.</p>
                 </div>
             </div>
+
+            <div
+                id="librarySavesGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="librarySavesGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Library Saves Over Time</h3>
+                        <p>See when viewers save videos to My Library and when they remove them, so you can improve discovery and long-term value.</p>
+                    </div>
+                    <span class="graph-status-badge">Live data</span>
+                </div>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong>Library changes by day</strong>
+                            <p>Save and remove actions are recorded across the Website and Telegram Mini App.</p>
+                        </div>
+                        <div class="live-graph-controls" id="librarySavesRangeControls" aria-label="Library saves date range">
+                            <button type="button" class="live-graph-button" onclick="setLibrarySavesRange(7,this)">7 Days</button>
+                            <button type="button" class="live-graph-button active" onclick="setLibrarySavesRange(30,this)">30 Days</button>
+                            <button type="button" class="live-graph-button" onclick="setLibrarySavesRange(90,this)">90 Days</button>
+                            <button type="button" class="graph-refresh-button" onclick="loadLibrarySavesGraph(true)">↻ Refresh</button>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>Videos Saved</span>
+                            <strong id="librarySavesTotal">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Videos Removed</span>
+                            <strong id="libraryRemovesTotal">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Net Library Growth</span>
+                            <strong id="librarySavesNet">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="librarySavesCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="Library saves and removals line graph"
+                        ></canvas>
+                        <div class="live-graph-status" id="librarySavesStatus">
+                            Open Library Saves Over Time to load graph data.
+                        </div>
+                    </div>
+
+                    <div class="live-graph-legend" aria-label="Library saves graph legend">
+                        <span><i class="mini-app-line"></i>Videos saved</span>
+                        <span><i class="website-line"></i>Videos removed</span>
+                    </div>
+
+                    <p class="live-graph-note">The trend uses the append-only library change history. If the history migration has not been run yet, the graph falls back to the current saved rows and will become complete after setup_personal_library.sql is rerun.</p>
+                </div>
+            </div>
+
+            <div
+                id="viewerTimeGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="viewerTimeGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Time Spent in My Library vs Outside My Library</h3>
+                        <p>Compare visible browsing time while My Library is open with visible time spent elsewhere on StreamX.</p>
+                    </div>
+                    <span class="graph-status-badge">Live data</span>
+                </div>
+
+                <div class="live-graph-card">
+                    <div class="live-graph-toolbar">
+                        <div>
+                            <strong>Visible time by library context</strong>
+                            <p>Time is tracked separately on the Website and Telegram Mini App and pauses when a page is hidden.</p>
+                        </div>
+                        <div class="live-graph-controls" id="viewerTimeRangeControls" aria-label="Library time date range">
+                            <button type="button" class="live-graph-button" onclick="setViewerTimeRange(7,this)">7 Days</button>
+                            <button type="button" class="live-graph-button active" onclick="setViewerTimeRange(30,this)">30 Days</button>
+                            <button type="button" class="live-graph-button" onclick="setViewerTimeRange(90,this)">90 Days</button>
+                            <button type="button" class="graph-refresh-button" onclick="loadViewerTimeGraph(true)">↻ Refresh</button>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-summary">
+                        <div class="live-graph-summary-card">
+                            <span>My Library Time</span>
+                            <strong id="viewerTimeLibraryTotal">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Outside Library Time</span>
+                            <strong id="viewerTimeOutsideTotal">—</strong>
+                        </div>
+                        <div class="live-graph-summary-card">
+                            <span>Library Share</span>
+                            <strong id="viewerTimeLibraryShare">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="live-graph-canvas-wrap">
+                        <canvas
+                            id="viewerTimeCanvas"
+                            class="live-graph-canvas"
+                            role="img"
+                            aria-label="Visible time in My Library compared with outside My Library"
+                        ></canvas>
+                        <div class="live-graph-status" id="viewerTimeStatus">
+                            Open Library vs Outside Time to load graph data.
+                        </div>
+                    </div>
+
+                    <div class="live-graph-legend" aria-label="Library time graph legend">
+                        <span><i class="mini-app-line"></i>My Library</span>
+                        <span><i class="website-line"></i>Outside My Library</span>
+                    </div>
+
+                    <p class="live-graph-note">This graph measures visible page time by context, not video watch time. It becomes active after both connected clients use the updated time-session tracker and setup_personal_library.sql has been rerun.</p>
+                </div>
+            </div>
         </section>
     </div>
 
@@ -4638,6 +4788,12 @@ let activityHeatmapMetric = "sessions";
 let activityHeatmapData = null;
 let conversionFunnelData = [];
 let videoQualityData = [];
+let librarySavesDays = 30;
+let librarySavesData = [];
+let librarySavesLoading = false;
+let viewerTimeDays = 30;
+let viewerTimeData = [];
+let viewerTimeLoading = false;
 let recommendationsData = [];
 let recommendationsFilter = "all";
 let recommendationsLoading = false;
@@ -8261,6 +8417,12 @@ function openStatisticalGraphPanel(panelId,button){
     else if(panelId === "videoQualityGraphPanel"){
         loadVideoQualityGraph();
     }
+    else if(panelId === "librarySavesGraphPanel"){
+        loadLibrarySavesGraph();
+    }
+    else if(panelId === "viewerTimeGraphPanel"){
+        loadViewerTimeGraph();
+    }
 }
 
 /* =====================================================
@@ -8430,7 +8592,15 @@ async function loadGraphSourceData(force,requestedDays){
             Date.now() - ((requiredDays + 3) * 86400000)
         ).toISOString();
 
-        const [sessionsResult,videosResult,likesResult,activeUsersResult] =
+        const [
+            sessionsResult,
+            videosResult,
+            likesResult,
+            activeUsersResult,
+            librarySaveEventsResult,
+            libraryRowsResult,
+            viewerTimeResult
+        ] =
             await Promise.all([
                 supabaseClient
                     .from("video_watch_sessions")
@@ -8450,6 +8620,24 @@ async function loadGraphSourceData(force,requestedDays){
                 supabaseClient
                     .from("active_users")
                     .select("user_id,platform,last_seen")
+                    .limit(10000),
+                supabaseClient
+                    .from("library_save_events")
+                    .select("event_id,viewer_id,platform,video_id,action,created_at")
+                    .gte("created_at",since)
+                    .order("created_at",{ascending:true})
+                    .limit(10000),
+                supabaseClient
+                    .from("video_library")
+                    .select("viewer_id,platform,video_id,created_at")
+                    .gte("created_at",since)
+                    .order("created_at",{ascending:true})
+                    .limit(10000),
+                supabaseClient
+                    .from("viewer_time_sessions")
+                    .select("session_id,viewer_id,platform,context,duration_seconds,started_at,last_seen,ended_at")
+                    .gte("started_at",since)
+                    .order("started_at",{ascending:true})
                     .limit(10000)
             ]);
 
@@ -8474,6 +8662,18 @@ async function loadGraphSourceData(force,requestedDays){
             activeUsers:activeUsersResult.data || [],
             activeUsersError:activeUsersResult.error
                 ? activeUsersResult.error.message
+                : "",
+            librarySaveEvents:librarySaveEventsResult.data || [],
+            librarySaveEventsError:librarySaveEventsResult.error
+                ? librarySaveEventsResult.error.message
+                : "",
+            libraryRows:libraryRowsResult.data || [],
+            libraryRowsError:libraryRowsResult.error
+                ? libraryRowsResult.error.message
+                : "",
+            viewerTimeSessions:viewerTimeResult.data || [],
+            viewerTimeSessionsError:viewerTimeResult.error
+                ? viewerTimeResult.error.message
                 : ""
         };
 
@@ -10474,6 +10674,328 @@ async function loadVideoQualityGraph(force){
     }
 }
 
+function buildLibrarySavesRows(source,days){
+
+    const dates = graphDateRange(days);
+    const buckets = new Map();
+
+    dates.forEach(date => {
+        buckets.set(date,{
+            saves:0,
+            removes:0
+        });
+    });
+
+    const events = source && !source.librarySaveEventsError
+        ? (source.librarySaveEvents || [])
+        : [];
+    const rows = events.length
+        ? events
+        : source && !source.libraryRowsError
+            ? (source.libraryRows || [])
+            : [];
+
+    rows.forEach(row => {
+
+        const date = graphDateKey(row && row.created_at);
+        const bucket = buckets.get(date);
+
+        if(!bucket) return;
+
+        if(events.length && String(row.action || "save").toLowerCase() === "remove"){
+            bucket.removes += 1;
+        }
+        else{
+            bucket.saves += 1;
+        }
+
+    });
+
+    return dates.map(date => {
+
+        const bucket = buckets.get(date);
+
+        return {
+            date:date,
+            saves:bucket.saves,
+            removes:bucket.removes,
+            net:bucket.saves - bucket.removes
+        };
+
+    });
+}
+
+function renderLibrarySavesGraph(){
+
+    drawLineGraph(
+        document.getElementById("librarySavesCanvas"),
+        librarySavesData,
+        [
+            {color:"#38bdf8",value:row => row.saves},
+            {color:"#ff3d61",value:row => row.removes}
+        ],
+        {
+            label:row => formatGraphDateLabel(row.date,librarySavesDays > 60),
+            xAxisLabel:"Date",
+            yAxisLabel:"Library changes",
+            formatY:formatGraphCompactNumber
+        }
+    );
+}
+
+function setLibrarySavesRange(days,button){
+
+    librarySavesDays = Math.max(7,Number(days) || 30);
+
+    if(button){
+        document
+            .querySelectorAll("#librarySavesRangeControls .live-graph-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    loadLibrarySavesGraph(true);
+}
+
+async function loadLibrarySavesGraph(force){
+
+    if(librarySavesLoading && !force) return;
+
+    librarySavesLoading = true;
+    setGraphStatus(
+        "librarySavesStatus",
+        "Loading library save history...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(
+            Boolean(force),
+            librarySavesDays
+        );
+
+        librarySavesData = buildLibrarySavesRows(
+            source,
+            librarySavesDays
+        );
+
+        const totalSaves = librarySavesData.reduce(
+            (sum,row) => sum + row.saves,
+            0
+        );
+        const totalRemoves = librarySavesData.reduce(
+            (sum,row) => sum + row.removes,
+            0
+        );
+        const savesElement = document.getElementById("librarySavesTotal");
+        const removesElement = document.getElementById("libraryRemovesTotal");
+        const netElement = document.getElementById("librarySavesNet");
+
+        if(savesElement) savesElement.textContent = formatGraphNumber(totalSaves);
+        if(removesElement) removesElement.textContent = formatGraphNumber(totalRemoves);
+        if(netElement){
+            netElement.textContent = (totalSaves - totalRemoves >= 0 ? "+" : "") +
+                formatGraphNumber(totalSaves - totalRemoves);
+        }
+
+        renderLibrarySavesGraph();
+
+        const hasChanges = totalSaves > 0 || totalRemoves > 0;
+
+        if(source.librarySaveEventsError){
+            setGraphStatus(
+                "librarySavesStatus",
+                "Save history is unavailable. Run setup_personal_library.sql in Supabase to record the full trend. Current saved rows are shown when available.",
+                true
+            );
+        }
+        else if(!hasChanges){
+            setGraphStatus(
+                "librarySavesStatus",
+                "No library saves or removals have been recorded in this period yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("librarySavesStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "librarySavesStatus",
+            "Could not load library save history: " + error.message,
+            true
+        );
+
+    }
+    finally{
+
+        librarySavesLoading = false;
+
+    }
+}
+
+function buildViewerTimeRows(sessions,days){
+
+    const dates = graphDateRange(days);
+    const buckets = new Map();
+
+    dates.forEach(date => {
+        buckets.set(date,{
+            library:0,
+            outside:0
+        });
+    });
+
+    (sessions || []).forEach(session => {
+
+        const date = graphDateKey(
+            session && (session.started_at || session.last_seen)
+        );
+        const bucket = buckets.get(date);
+
+        if(!bucket) return;
+
+        const context = String(session.context || "").toLowerCase();
+
+        if(context !== "library" && context !== "outside") return;
+
+        bucket[context] += Math.max(
+            0,
+            Math.floor(graphNumber(session.duration_seconds))
+        );
+
+    });
+
+    return dates.map(date => {
+
+        const bucket = buckets.get(date);
+
+        return {
+            date:date,
+            librarySeconds:bucket.library,
+            outsideSeconds:bucket.outside
+        };
+
+    });
+}
+
+function renderViewerTimeGraph(){
+
+    drawLineGraph(
+        document.getElementById("viewerTimeCanvas"),
+        viewerTimeData,
+        [
+            {color:"#38bdf8",value:row => row.librarySeconds},
+            {color:"#ff3d61",value:row => row.outsideSeconds}
+        ],
+        {
+            label:row => formatGraphDateLabel(row.date,viewerTimeDays > 60),
+            xAxisLabel:"Date",
+            yAxisLabel:"Visible time (seconds)",
+            formatY:formatGraphDuration
+        }
+    );
+}
+
+function setViewerTimeRange(days,button){
+
+    viewerTimeDays = Math.max(7,Number(days) || 30);
+
+    if(button){
+        document
+            .querySelectorAll("#viewerTimeRangeControls .live-graph-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    loadViewerTimeGraph(true);
+}
+
+async function loadViewerTimeGraph(force){
+
+    if(viewerTimeLoading && !force) return;
+
+    viewerTimeLoading = true;
+    setGraphStatus(
+        "viewerTimeStatus",
+        "Loading visible time data...",
+        false
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(
+            Boolean(force),
+            viewerTimeDays
+        );
+
+        viewerTimeData = buildViewerTimeRows(
+            source.viewerTimeSessions,
+            viewerTimeDays
+        );
+
+        const librarySeconds = viewerTimeData.reduce(
+            (sum,row) => sum + row.librarySeconds,
+            0
+        );
+        const outsideSeconds = viewerTimeData.reduce(
+            (sum,row) => sum + row.outsideSeconds,
+            0
+        );
+        const totalSeconds = librarySeconds + outsideSeconds;
+        const libraryElement = document.getElementById("viewerTimeLibraryTotal");
+        const outsideElement = document.getElementById("viewerTimeOutsideTotal");
+        const shareElement = document.getElementById("viewerTimeLibraryShare");
+
+        if(libraryElement) libraryElement.textContent = formatGraphDuration(librarySeconds);
+        if(outsideElement) outsideElement.textContent = formatGraphDuration(outsideSeconds);
+        if(shareElement){
+            shareElement.textContent = totalSeconds
+                ? Math.round((librarySeconds / totalSeconds) * 100) + "%"
+                : "—";
+        }
+
+        renderViewerTimeGraph();
+
+        if(source.viewerTimeSessionsError){
+            setGraphStatus(
+                "viewerTimeStatus",
+                "Visible-time tracking is not available. Rerun setup_personal_library.sql in Supabase, then reload both connected clients.",
+                true
+            );
+        }
+        else if(!totalSeconds){
+            setGraphStatus(
+                "viewerTimeStatus",
+                "No visible library or outside time has been recorded in this period yet.",
+                false
+            );
+        }
+        else{
+            hideGraphStatus("viewerTimeStatus");
+        }
+
+    }
+    catch(error){
+
+        setGraphStatus(
+            "viewerTimeStatus",
+            "Could not load visible time data: " + error.message,
+            true
+        );
+
+    }
+    finally{
+
+        viewerTimeLoading = false;
+
+    }
+}
+
 /* =====================================================
    RECOMMENDATIONS REPORT
 ===================================================== */
@@ -11186,6 +11708,14 @@ function redrawStatisticalGraphs(){
 
     if(videoQualityData.length){
         renderVideoQualityGraph();
+    }
+
+    if(librarySavesData.length){
+        renderLibrarySavesGraph();
+    }
+
+    if(viewerTimeData.length){
+        renderViewerTimeGraph();
     }
 }
 

@@ -1740,7 +1740,7 @@ function startWebsitePresenceTracking(){
     updateWebsitePresence();
     websitePresenceTimer = setInterval(
         updateWebsitePresence,
-        15000
+        5000
     );
 }
 
@@ -1940,8 +1940,8 @@ const LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
 const LIBRARY_STORAGE_KEY =
     "streamx_" + LIBRARY_PLATFORM + "_library";
 const LIBRARY_ACTIVITY_TABLE = "library_activity";
-const LIBRARY_ACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
-const LIBRARY_ACTIVITY_HEARTBEAT_MS = 60 * 1000;
+const LIBRARY_ACTIVITY_TIMEOUT_MS = 10 * 1000;
+const LIBRARY_ACTIVITY_HEARTBEAT_MS = 5 * 1000;
 
 function stopLibraryActivityTracking(){
 

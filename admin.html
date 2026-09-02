@@ -1613,6 +1613,86 @@ textarea{
     color:#ff7188;
 }
 
+.graph-panel-intro{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:18px;
+}
+
+.graph-panel-intro h3{
+    color:#f3f3f3;
+    font-size:17px;
+}
+
+.graph-panel-intro p{
+    max-width:720px;
+    margin-top:7px;
+    color:#777;
+    font-size:12px;
+    line-height:1.55;
+}
+
+.graph-status-badge{
+    flex-shrink:0;
+    padding:7px 10px;
+    border:1px solid rgba(255,23,68,.22);
+    border-radius:999px;
+    background:rgba(255,23,68,.08);
+    color:#ff7188;
+    font-size:10px;
+    font-weight:850;
+    letter-spacing:.45px;
+    text-transform:uppercase;
+}
+
+.graph-workspace{
+    min-height:330px;
+    display:grid;
+    place-items:center;
+    padding:36px 24px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    background:
+        linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px),
+        linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+    background-size:42px 42px,42px 42px,auto;
+}
+
+.graph-placeholder{
+    max-width:560px;
+    text-align:center;
+}
+
+.graph-placeholder-icon{
+    width:58px;
+    height:58px;
+    display:grid;
+    margin:0 auto 16px;
+    place-items:center;
+    border:1px solid rgba(255,23,68,.24);
+    border-radius:17px;
+    background:rgba(255,23,68,.10);
+    color:#ff7188;
+    font-size:25px;
+}
+
+.graph-placeholder strong{
+    display:block;
+    color:#ededed;
+    font-size:15px;
+}
+
+.graph-placeholder span{
+    display:block;
+    margin-top:8px;
+    color:#777;
+    font-size:12px;
+    line-height:1.55;
+}
+
 @media(max-width:600px){
     .category-stats-tabs{
         margin-left:-4px;
@@ -1648,6 +1728,15 @@ textarea{
 
     .statistics-views{
         font-size:14px;
+    }
+
+    .graph-panel-intro{
+        flex-direction:column;
+    }
+
+    .graph-workspace{
+        min-height:280px;
+        padding:28px 18px;
     }
 }
 
@@ -2535,7 +2624,7 @@ textarea{
         <div class="topbar">
             <div>
                 <h1>Statistics</h1>
-                <p>Compare category and individual video performance across StreamX.</p>
+                <p>Compare category, video, audience and growth performance across StreamX.</p>
             </div>
         </div>
 
@@ -2854,6 +2943,286 @@ textarea{
                     </div>
                     <div id="videoWatchTimeRankingList" class="statistics-table-body">
                         <div class="statistics-status">Loading video watch-time rankings...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="statisticalGraphsSection">
+            <div class="category-stats-heading">
+                <h2>Statistical Graphs</h2>
+                <p>Select a graph below to study audience growth, viewing behaviour and content performance.</p>
+            </div>
+
+            <div class="category-stats-tabs" role="tablist" aria-label="Statistical graph views">
+                <button
+                    type="button"
+                    class="category-stats-close"
+                    onclick="hideStatisticalGraphPanels()"
+                    aria-label="Close the open statistical graph"
+                >✕ Close</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="dailyPerformanceGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="dailyPerformanceGraphPanel"
+                    onclick="openStatisticalGraphPanel('dailyPerformanceGraphPanel',this)"
+                >📈 Daily Performance</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="audienceRetentionGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="audienceRetentionGraphPanel"
+                    onclick="openStatisticalGraphPanel('audienceRetentionGraphPanel',this)"
+                >⏳ Audience Retention</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="categoryPerformanceGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="categoryPerformanceGraphPanel"
+                    onclick="openStatisticalGraphPanel('categoryPerformanceGraphPanel',this)"
+                >🗂 Category Performance</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="returningUsersGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="returningUsersGraphPanel"
+                    onclick="openStatisticalGraphPanel('returningUsersGraphPanel',this)"
+                >↩ New vs Returning</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="trafficSourcesGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="trafficSourcesGraphPanel"
+                    onclick="openStatisticalGraphPanel('trafficSourcesGraphPanel',this)"
+                >🧭 Traffic Sources</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="activityHeatmapGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="activityHeatmapGraphPanel"
+                    onclick="openStatisticalGraphPanel('activityHeatmapGraphPanel',this)"
+                >🔥 Activity Heatmap</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="conversionFunnelGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="conversionFunnelGraphPanel"
+                    onclick="openStatisticalGraphPanel('conversionFunnelGraphPanel',this)"
+                >🔻 Conversion Funnel</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="videoQualityGraphTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="videoQualityGraphPanel"
+                    onclick="openStatisticalGraphPanel('videoQualityGraphPanel',this)"
+                >✨ Video Quality</button>
+            </div>
+
+            <div
+                id="dailyPerformanceGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="dailyPerformanceGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Daily Performance Trend</h3>
+                        <p>Track views, watch time and active users by day, with Website and Telegram Mini App comparisons.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">📈</div>
+                        <strong>Daily performance graph</strong>
+                        <span>This panel is ready for the first time-series graph and date-range controls.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="audienceRetentionGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="audienceRetentionGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Audience Retention</h3>
+                        <p>Show the percentage of viewers remaining at each point in an individual video.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">⏳</div>
+                        <strong>Audience retention graph</strong>
+                        <span>This panel will expose drop-offs, strong moments and video completion behaviour.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="categoryPerformanceGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="categoryPerformanceGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Category Performance</h3>
+                        <p>Compare category reach against average watch duration and engagement quality.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">🗂</div>
+                        <strong>Category performance graph</strong>
+                        <span>This panel will identify categories that attract clicks and hold attention.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="returningUsersGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="returningUsersGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>New vs Returning Users</h3>
+                        <p>Compare newly acquired users with people who repeatedly return to the platform.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">↩</div>
+                        <strong>Audience loyalty graph</strong>
+                        <span>This panel will measure whether audience growth is turning into repeat usage.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="trafficSourcesGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="trafficSourcesGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Traffic Sources</h3>
+                        <p>Compare visitors arriving through Telegram, direct links, social platforms, search and campaigns.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">🧭</div>
+                        <strong>Traffic acquisition graph</strong>
+                        <span>This panel will reveal which promotion channels attract valuable viewers.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="activityHeatmapGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="activityHeatmapGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>User Activity Heatmap</h3>
+                        <p>Map viewing activity by day of the week and hour of the day.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">🔥</div>
+                        <strong>Activity heatmap</strong>
+                        <span>This panel will help identify the best times to publish and promote content.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="conversionFunnelGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="conversionFunnelGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Video Conversion Funnel</h3>
+                        <p>Follow users from video impressions through opens, watch milestones, completion and likes.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">🔻</div>
+                        <strong>Viewing conversion funnel</strong>
+                        <span>This panel will show the stage where the largest number of users leave.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="videoQualityGraphPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="videoQualityGraphTab"
+                aria-hidden="true"
+            >
+                <div class="graph-panel-intro">
+                    <div>
+                        <h3>Video Quality Comparison</h3>
+                        <p>Compare average watch duration, completion rate and like rate across individual videos.</p>
+                    </div>
+                    <span class="graph-status-badge">Graph workspace</span>
+                </div>
+                <div class="graph-workspace">
+                    <div class="graph-placeholder">
+                        <div class="graph-placeholder-icon">✨</div>
+                        <strong>Video quality graph</strong>
+                        <span>This panel will reveal strong videos even when their total reach is still small.</span>
                     </div>
                 </div>
             </div>
@@ -6383,6 +6752,18 @@ function hideVideoStatsPanels(){
 function openVideoStatsPanel(panelId,button){
     openStatisticsPanel(
         "videoStatsSection",
+        panelId,
+        button
+    );
+}
+
+function hideStatisticalGraphPanels(){
+    hideStatisticsPanels("statisticalGraphsSection");
+}
+
+function openStatisticalGraphPanel(panelId,button){
+    openStatisticsPanel(
+        "statisticalGraphsSection",
         panelId,
         button
     );

@@ -5083,6 +5083,18 @@ async function loadSingleVideo(
             );
 
 
+        let usingBlobFallback =
+            false;
+
+
+        let previewBlobURL =
+            null;
+
+
+        let streamingTimeout =
+            null;
+
+
         const showPlayerMessage = function(
             message,
             showPlayButton,
@@ -5117,6 +5129,230 @@ async function loadSingleVideo(
             playerMessage.classList.add(
                 "hidden"
             );
+
+        };
+
+
+        const loadVideoAsBlob = async function(){
+
+            if(usingBlobFallback) return;
+
+
+            usingBlobFallback =
+                true;
+
+
+            clearTimeout(
+                streamingTimeout
+            );
+
+
+            showPlayerMessage(
+                "Streaming is taking too long. Loading the complete video...",
+                false,
+                false
+            );
+
+
+            try{
+
+                const response =
+                    await fetch(
+                        videoURL,
+                        {
+                            cache:"no-store"
+                        }
+                    );
+
+
+                if(!response.ok){
+
+                    throw new Error(
+                        "The video server returned status " +
+                        response.status +
+                        "."
+                    );
+
+                }
+
+
+                let contentType =
+                    response.headers.get(
+                        "content-type"
+                    ) ||
+                    "";
+
+
+                if(
+                    !contentType
+                        .toLowerCase()
+                        .startsWith("video/")
+                ){
+
+                    if(/\.webm(?:$|[?#])/i.test(videoURL)){
+
+                        contentType =
+                            "video/webm";
+
+                    }else if(/\.(?:ogv|ogg)(?:$|[?#])/i.test(videoURL)){
+
+                        contentType =
+                            "video/ogg";
+
+                    }else if(/\.mov(?:$|[?#])/i.test(videoURL)){
+
+                        contentType =
+                            "video/quicktime";
+
+                    }else{
+
+                        contentType =
+                            "video/mp4";
+
+                    }
+
+                }
+
+
+                const totalBytes =
+                    Number(
+                        response.headers.get(
+                            "content-length"
+                        ) ||
+                        0
+                    );
+
+
+                let videoBlob;
+
+
+                if(
+                    response.body &&
+                    typeof response.body.getReader === "function"
+                ){
+
+                    const reader =
+                        response.body.getReader();
+
+
+                    const chunks = [];
+
+
+                    let receivedBytes =
+                        0;
+
+
+                    while(true){
+
+                        const chunk =
+                            await reader.read();
+
+
+                        if(chunk.done) break;
+
+
+                        chunks.push(
+                            chunk.value
+                        );
+
+
+                        receivedBytes +=
+                            chunk.value.byteLength;
+
+
+                        if(totalBytes > 0){
+
+                            const percent =
+                                Math.min(
+                                    99,
+                                    Math.round(
+                                        receivedBytes /
+                                        totalBytes *
+                                        100
+                                    )
+                                );
+
+
+                            showPlayerMessage(
+                                "Loading complete video... " +
+                                percent +
+                                "%",
+                                false,
+                                false
+                            );
+
+                        }
+
+                    }
+
+
+                    videoBlob =
+                        new Blob(
+                            chunks,
+                            {
+                                type:contentType
+                            }
+                        );
+
+                }else{
+
+                    videoBlob =
+                        await response.blob();
+
+                }
+
+
+                if(
+                    !preview ||
+                    preview.closed
+                ) return;
+
+
+                showPlayerMessage(
+                    "Preparing downloaded video...",
+                    false,
+                    false
+                );
+
+
+                previewBlobURL =
+                    URL.createObjectURL(
+                        videoBlob
+                    );
+
+
+                player.innerHTML =
+                    "";
+
+
+                player.src =
+                    previewBlobURL;
+
+
+                player.preload =
+                    "auto";
+
+
+                player.load();
+
+
+                tryToPlay();
+
+            }catch(error){
+
+                console.error(
+                    "Video fallback error:",
+                    error
+                );
+
+
+                showPlayerMessage(
+                    "The automatic fallback could not load this video. Use Open original video file below or upload a web-optimized MP4.",
+                    false,
+                    true
+                );
+
+            }
 
         };
 
@@ -5159,8 +5395,29 @@ async function loadSingleVideo(
 
 
         player.addEventListener(
+            "loadedmetadata",
+            function(){
+
+                clearTimeout(
+                    streamingTimeout
+                );
+
+            }
+        );
+
+
+        player.addEventListener(
             "playing",
-            hidePlayerMessage
+            function(){
+
+                clearTimeout(
+                    streamingTimeout
+                );
+
+
+                hidePlayerMessage();
+
+            }
         );
 
 
@@ -5195,6 +5452,14 @@ async function loadSingleVideo(
         player.addEventListener(
             "error",
             function(){
+
+                if(!usingBlobFallback){
+
+                    loadVideoAsBlob();
+
+                    return;
+
+                }
 
                 const mediaError =
                     player.error;
@@ -5240,6 +5505,40 @@ async function loadSingleVideo(
             "click",
             tryToPlay
         );
+
+
+        preview.addEventListener(
+            "beforeunload",
+            function(){
+
+                if(previewBlobURL){
+
+                    URL.revokeObjectURL(
+                        previewBlobURL
+                    );
+
+                }
+
+            }
+        );
+
+
+        streamingTimeout =
+            setTimeout(
+                function(){
+
+                    if(
+                        player.readyState === 0 &&
+                        !usingBlobFallback
+                    ){
+
+                        loadVideoAsBlob();
+
+                    }
+
+                },
+                8000
+            );
 
 
         tryToPlay();

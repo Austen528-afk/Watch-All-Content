@@ -4244,25 +4244,53 @@ function getStoragePath(
     }
 
 
-    const marker =
-        "/storage/v1/object/public/" +
-        bucket +
-        "/";
+    const publicMarker =
+        "/storage/v1/object/public/";
 
 
     const index =
-        value.indexOf(marker);
+        value.indexOf(publicMarker);
 
 
     if(index === -1)
         return null;
 
 
-    return decodeURIComponent(
-        value.substring(
-            index + marker.length
-        )
-    );
+    const storedLocation =
+        value
+            .substring(
+                index +
+                publicMarker.length
+            )
+            .split(/[?#]/)[0];
+
+
+    const firstSlash =
+        storedLocation.indexOf("/");
+
+
+    if(firstSlash === -1)
+        return null;
+
+
+    try{
+
+        return decodeURIComponent(
+            storedLocation.substring(
+                firstSlash + 1
+            )
+        );
+
+    }catch(error){
+
+        console.error(
+            "Storage path error:",
+            error
+        );
+
+        return null;
+
+    }
 
 }
 
@@ -4285,7 +4313,26 @@ function getPublicURL(
         value.startsWith("https://")
     ){
 
-        return value;
+        const storagePath =
+            getStoragePath(
+                value,
+                bucket
+            );
+
+
+        if(!storagePath){
+
+            return value;
+
+        }
+
+
+        return supabaseClient
+            .storage
+            .from(bucket)
+            .getPublicUrl(storagePath)
+            .data
+            .publicUrl;
 
     }
 
@@ -5167,6 +5214,14 @@ async function loadSingleVideo(
 
                 if(!response.ok){
 
+                    if(response.status === 404){
+
+                        throw new Error(
+                            "The video file was not found in the current videos bucket."
+                        );
+
+                    }
+
                     throw new Error(
                         "The video server returned status " +
                         response.status +
@@ -5347,7 +5402,9 @@ async function loadSingleVideo(
 
 
                 showPlayerMessage(
-                    "The automatic fallback could not load this video. Use Open original video file below or upload a web-optimized MP4.",
+                    (error.message ||
+                    "The automatic fallback could not load this video.") +
+                    " Use Open original video file below or upload the missing file again.",
                     false,
                     true
                 );

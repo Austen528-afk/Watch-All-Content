@@ -2096,6 +2096,363 @@ textarea{
     pointer-events:none;
 }
 
+/* =====================================================
+   RECOMMENDATIONS REPORT
+===================================================== */
+
+.recommendations-section{
+    padding:25px;
+}
+
+.recommendations-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.recommendations-heading h2{
+    color:#f3f3f3;
+    font-size:20px;
+}
+
+.recommendations-heading p{
+    max-width:760px;
+    margin-top:7px;
+    color:#777;
+    font-size:12px;
+    line-height:1.55;
+}
+
+.recommendation-summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:12px;
+    margin-bottom:24px;
+}
+
+.recommendation-summary-card{
+    min-width:0;
+    padding:16px;
+    border:1px solid rgba(255,255,255,.075);
+    border-radius:13px;
+    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.015));
+}
+
+.recommendation-summary-card span{
+    display:block;
+    overflow:hidden;
+    color:#707070;
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:.55px;
+    text-overflow:ellipsis;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.recommendation-summary-card strong{
+    display:block;
+    margin-top:8px;
+    overflow:hidden;
+    color:#f3f3f3;
+    font-size:20px;
+    font-weight:850;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.recommendation-summary-card small{
+    display:block;
+    margin-top:6px;
+    overflow:hidden;
+    color:#666;
+    font-size:10px;
+    line-height:1.35;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.recommendations-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:14px;
+}
+
+.recommendations-toolbar strong{
+    color:#ededed;
+    font-size:14px;
+}
+
+.recommendations-toolbar p{
+    margin-top:5px;
+    color:#6f6f6f;
+    font-size:11px;
+    line-height:1.45;
+}
+
+.recommendation-filter-controls{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-end;
+    gap:7px;
+}
+
+.recommendation-filter-button{
+    min-height:34px;
+    padding:7px 11px;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:8px;
+    background:rgba(255,255,255,.035);
+    color:#858585;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:10px;
+    font-weight:800;
+    white-space:nowrap;
+    transition:background .18s,border-color .18s,color .18s;
+}
+
+.recommendation-filter-button:hover{
+    border-color:rgba(255,255,255,.18);
+    background:rgba(255,255,255,.07);
+    color:#fff;
+}
+
+.recommendation-filter-button.active{
+    border-color:rgba(255,23,68,.34);
+    background:rgba(255,23,68,.13);
+    color:#ff7188;
+}
+
+.recommendation-filter-button:focus-visible{
+    outline:2px solid #ff1744;
+    outline-offset:2px;
+}
+
+.recommendation-status{
+    margin-bottom:14px;
+    padding:11px 13px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:10px;
+    background:rgba(255,255,255,.025);
+    color:#8b8b8b;
+    font-size:11px;
+    line-height:1.45;
+}
+
+.recommendation-status.warning{
+    border-color:rgba(250,204,21,.24);
+    background:rgba(250,204,21,.07);
+    color:#e7c95c;
+}
+
+.recommendation-status.error{
+    border-color:rgba(255,23,68,.28);
+    background:rgba(255,23,68,.07);
+    color:#ff7188;
+}
+
+.recommendation-status.hidden{
+    display:none;
+}
+
+.recommendation-list{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:13px;
+}
+
+.recommendation-card{
+    min-width:0;
+    padding:17px;
+    border:1px solid rgba(255,255,255,.08);
+    border-left:3px solid rgba(255,255,255,.18);
+    border-radius:13px;
+    background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+}
+
+.recommendation-card.priority-high{
+    border-left-color:#ff3d61;
+}
+
+.recommendation-card.priority-medium{
+    border-left-color:#f59e0b;
+}
+
+.recommendation-card.priority-low{
+    border-left-color:#38bdf8;
+}
+
+.recommendation-card-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.recommendation-card-labels{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:7px;
+    min-width:0;
+}
+
+.recommendation-badge,
+.recommendation-type,
+.recommendation-metric{
+    display:inline-flex;
+    align-items:center;
+    min-height:23px;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:9px;
+    font-weight:850;
+    letter-spacing:.35px;
+    white-space:nowrap;
+}
+
+.recommendation-badge{
+    text-transform:uppercase;
+}
+
+.recommendation-badge.high{
+    border:1px solid rgba(255,23,68,.28);
+    background:rgba(255,23,68,.12);
+    color:#ff7188;
+}
+
+.recommendation-badge.medium{
+    border:1px solid rgba(245,158,11,.28);
+    background:rgba(245,158,11,.10);
+    color:#f3c36a;
+}
+
+.recommendation-badge.low{
+    border:1px solid rgba(56,189,248,.28);
+    background:rgba(56,189,248,.10);
+    color:#69d2ff;
+}
+
+.recommendation-type{
+    border:1px solid rgba(255,255,255,.09);
+    background:rgba(255,255,255,.035);
+    color:#929292;
+}
+
+.recommendation-metric{
+    max-width:46%;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);
+    background:rgba(255,255,255,.025);
+    color:#aaa;
+    text-overflow:ellipsis;
+}
+
+.recommendation-card h3{
+    color:#f1f1f1;
+    font-size:15px;
+    line-height:1.35;
+}
+
+.recommendation-reason{
+    margin-top:9px;
+    color:#8a8a8a;
+    font-size:11px;
+    line-height:1.55;
+}
+
+.recommendation-reason strong{
+    color:#bdbdbd;
+}
+
+.recommendation-action{
+    margin-top:13px;
+    padding:11px 12px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:10px;
+    background:rgba(0,0,0,.18);
+}
+
+.recommendation-action span{
+    display:block;
+    color:#ff7188;
+    font-size:9px;
+    font-weight:850;
+    letter-spacing:.55px;
+    text-transform:uppercase;
+}
+
+.recommendation-action p{
+    margin-top:6px;
+    color:#d0d0d0;
+    font-size:11px;
+    line-height:1.5;
+}
+
+.recommendation-empty{
+    grid-column:1 / -1;
+    padding:42px 20px;
+    border:1px dashed rgba(255,255,255,.12);
+    border-radius:13px;
+    color:#777;
+    font-size:12px;
+    text-align:center;
+}
+
+.recommendations-note{
+    margin-top:14px;
+    color:#666;
+    font-size:10px;
+    line-height:1.5;
+}
+
+@media(max-width:900px){
+    .recommendation-summary-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .recommendation-list{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:600px){
+    .recommendations-heading,
+    .recommendations-toolbar{
+        align-items:stretch;
+        flex-direction:column;
+    }
+
+    .recommendation-filter-controls{
+        justify-content:flex-start;
+        overflow-x:auto;
+        flex-wrap:nowrap;
+    }
+
+    .recommendation-filter-button{
+        flex:0 0 auto;
+    }
+
+    .recommendations-section{
+        padding:18px;
+    }
+
+    .recommendation-summary-card{
+        padding:13px;
+    }
+
+    .recommendation-summary-card strong{
+        font-size:17px;
+    }
+}
+
 @media(max-width:600px){
     .live-graph-toolbar{
         align-items:stretch;
@@ -4044,10 +4401,78 @@ textarea{
     <div id="reportsPage" class="admin-page">
         <div class="topbar">
             <div>
-                <h1>Reports</h1>
-                <p>Reports will be added in a later step.</p>
+                <h1>Recommendations</h1>
+                <p>Turn your latest statistics into practical actions for user experience, engagement and growth.</p>
             </div>
+            <button
+                type="button"
+                class="graph-refresh-button"
+                onclick="loadRecommendationsReport(true)"
+            >↻ Refresh analysis</button>
         </div>
+
+        <section class="section recommendations-section" id="recommendationsSection">
+            <div class="recommendations-heading">
+                <div>
+                    <h2>Actionable recommendations</h2>
+                    <p>Recommendations are prioritized from the same views, likes, watch-time, audience and platform signals used in Statistics.</p>
+                </div>
+                <span class="graph-status-badge">Live analysis</span>
+            </div>
+
+            <div class="recommendation-summary-grid">
+                <div class="recommendation-summary-card">
+                    <span>Engagement health</span>
+                    <strong id="recommendationHealthScore">—</strong>
+                    <small>Heuristic score from available signals</small>
+                </div>
+                <div class="recommendation-summary-card">
+                    <span>Top opportunity</span>
+                    <strong id="recommendationTopOpportunity">—</strong>
+                    <small>Highest-priority action right now</small>
+                </div>
+                <div class="recommendation-summary-card">
+                    <span>30-day viewer return rate</span>
+                    <strong id="recommendationViewerReturnRate">—</strong>
+                    <small>Returning viewers ÷ identified viewers</small>
+                </div>
+                <div class="recommendation-summary-card">
+                    <span>Average watch time</span>
+                    <strong id="recommendationAverageWatchTime">—</strong>
+                    <small>Per recorded viewing session</small>
+                </div>
+            </div>
+
+            <div class="recommendations-toolbar">
+                <div>
+                    <strong>Focus areas</strong>
+                    <p>Filter the actions by the outcome you want to improve first.</p>
+                </div>
+                <div
+                    class="recommendation-filter-controls"
+                    id="recommendationFilterControls"
+                    role="group"
+                    aria-label="Recommendation focus area"
+                >
+                    <button type="button" class="recommendation-filter-button active" onclick="setRecommendationsFilter('all',this)">All</button>
+                    <button type="button" class="recommendation-filter-button" onclick="setRecommendationsFilter('ux',this)">UX</button>
+                    <button type="button" class="recommendation-filter-button" onclick="setRecommendationsFilter('engagement',this)">Engagement</button>
+                    <button type="button" class="recommendation-filter-button" onclick="setRecommendationsFilter('retention',this)">Retention</button>
+                    <button type="button" class="recommendation-filter-button" onclick="setRecommendationsFilter('growth',this)">Growth</button>
+                    <button type="button" class="recommendation-filter-button" onclick="setRecommendationsFilter('content',this)">Content</button>
+                </div>
+            </div>
+
+            <div class="recommendation-status" id="recommendationsStatus">
+                Open Reports to generate recommendations from current statistics.
+            </div>
+
+            <div class="recommendation-list" id="recommendationsList">
+                <div class="recommendation-empty">Recommendations will appear here after the latest statistics are loaded.</div>
+            </div>
+
+            <p class="recommendations-note">This is a decision aid, not a prediction. It uses the latest available snapshot (up to 365 days) and becomes more reliable as the connected website and Telegram Mini App continue recording viewing sessions.</p>
+        </section>
     </div>
 
     <div id="settingsPage" class="admin-page">
@@ -4116,6 +4541,9 @@ let activityHeatmapMetric = "sessions";
 let activityHeatmapData = null;
 let conversionFunnelData = [];
 let videoQualityData = [];
+let recommendationsData = [];
+let recommendationsFilter = "all";
+let recommendationsLoading = false;
 
 
 /* =====================================================
@@ -9840,6 +10268,681 @@ async function loadVideoQualityGraph(force){
     }
 }
 
+/* =====================================================
+   RECOMMENDATIONS REPORT
+===================================================== */
+
+function setRecommendationsStatus(message,kind){
+
+    const status = document.getElementById("recommendationsStatus");
+
+    if(!status) return;
+
+    status.textContent = message;
+    status.classList.remove("error","warning","hidden");
+
+    if(kind === "error" || kind === "warning"){
+        status.classList.add(kind);
+    }
+}
+
+function getRecommendationsReturningSummary(sessions,days){
+
+    const rangeDates = new Set(graphDateRange(days));
+    const firstSeen = new Map();
+    const newViewerIds = new Set();
+    const returningViewerIds = new Set();
+    const sortedSessions = [...(sessions || [])]
+        .filter(session => String(session.viewer_id || "").trim())
+        .sort((first,second) => {
+            const firstTime = new Date(first.created_at || first.updated_at).getTime();
+            const secondTime = new Date(second.created_at || second.updated_at).getTime();
+
+            return firstTime - secondTime;
+        });
+
+    sortedSessions.forEach(session => {
+
+        const viewerId = String(session.viewer_id).trim();
+        const date = getSessionDateKey(session);
+
+        if(viewerId && date && !firstSeen.has(viewerId)){
+            firstSeen.set(viewerId,date);
+        }
+
+    });
+
+    sortedSessions.forEach(session => {
+
+        const viewerId = String(session.viewer_id).trim();
+        const date = getSessionDateKey(session);
+
+        if(!viewerId || !rangeDates.has(date)) return;
+
+        if(firstSeen.get(viewerId) === date){
+            newViewerIds.add(viewerId);
+        }
+        else{
+            returningViewerIds.add(viewerId);
+        }
+
+    });
+
+    const total = newViewerIds.size + returningViewerIds.size;
+
+    return {
+        newCount:newViewerIds.size,
+        returningCount:returningViewerIds.size,
+        total:total,
+        returnRate:total
+            ? (returningViewerIds.size / total) * 100
+            : 0
+    };
+}
+
+function buildRecommendationsSnapshot(source){
+
+    const data = source || {};
+    const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+    const watchSessions = sessions.filter(
+        session => getSessionSeconds(session) > 0
+    );
+    const likeCounts = buildGraphLikeCounts(data.likes);
+    const videos = (data.videos || []).map(video => {
+
+        const id = String(video.id || "");
+
+        return {
+            id:id,
+            name:String(video.title || "Untitled Video"),
+            category:String(video.category || "Uncategorized").trim() || "Uncategorized",
+            views:graphNumber(video.views),
+            likes:likeCounts.get(id) || 0,
+            sessions:0,
+            watchTime:0
+        };
+
+    });
+    const videosById = new Map(
+        videos
+            .filter(video => video.id)
+            .map(video => [video.id,video])
+    );
+
+    sessions.forEach(session => {
+
+        const video = videosById.get(String(session.video_id || ""));
+
+        if(!video) return;
+
+        video.sessions += 1;
+        video.watchTime += getSessionSeconds(session);
+
+    });
+
+    const totalViews = videos.reduce(
+        (sum,video) => sum + video.views,
+        0
+    );
+    const totalLikes = videos.reduce(
+        (sum,video) => sum + video.likes,
+        0
+    );
+    const totalWatchTime = watchSessions.reduce(
+        (sum,session) => sum + getSessionSeconds(session),
+        0
+    );
+    const averageWatchTime = watchSessions.length
+        ? totalWatchTime / watchSessions.length
+        : 0;
+    const retentionRows = buildAudienceRetentionRows(sessions);
+    const retentionThirtyRow = retentionRows.find(
+        row => row.seconds === 30
+    );
+    const retentionThirty = retentionThirtyRow
+        ? graphNumber(retentionThirtyRow.total)
+        : 0;
+    const returnSummary = getRecommendationsReturningSummary(
+        sessions,
+        30
+    );
+    const categoryRows = buildCategoryPerformanceRows(data)
+        .filter(row => graphNumber(row.views) > 0 ||
+            graphNumber(row.likes) > 0 ||
+            graphNumber(row.watchTime) > 0);
+    const categoryWatchTimeTotal = categoryRows.reduce(
+        (sum,row) => sum + graphNumber(row.watchTime),
+        0
+    );
+    const sortedCategories = [...categoryRows].sort((first,second) => {
+        return graphNumber(second.watchTime) - graphNumber(first.watchTime) ||
+            graphNumber(second.views) - graphNumber(first.views) ||
+            first.name.localeCompare(second.name);
+    });
+    const topCategory = sortedCategories[0] || null;
+    const topCategoryShare = topCategory && categoryWatchTimeTotal
+        ? (graphNumber(topCategory.watchTime) / categoryWatchTimeTotal) * 100
+        : 0;
+    const qualityRows = buildVideoQualityRows(data);
+    const qualityCandidates = qualityRows.filter(
+        video => video.sessions >= 2 && video.views > 0
+    );
+    const qualityWatchTotal = qualityCandidates.reduce(
+        (sum,video) => sum + (video.averageWatchTime * video.sessions),
+        0
+    );
+    const qualitySessionTotal = qualityCandidates.reduce(
+        (sum,video) => sum + video.sessions,
+        0
+    );
+    const qualityAverageWatchTime = qualitySessionTotal
+        ? qualityWatchTotal / qualitySessionTotal
+        : averageWatchTime;
+    const viewValues = qualityCandidates
+        .map(video => video.views)
+        .sort((first,second) => first - second);
+    const medianViews = viewValues.length
+        ? viewValues[Math.floor((viewValues.length - 1) / 2)]
+        : 0;
+    const underDiscoveredVideo = qualityCandidates
+        .filter(video => {
+            return qualityCandidates.length >= 2 &&
+                video.averageWatchTime >= Math.max(30,qualityAverageWatchTime * 1.2) &&
+                video.views <= medianViews;
+        })
+        .sort((first,second) => {
+            return second.averageWatchTime - first.averageWatchTime ||
+                first.views - second.views;
+        })[0] || null;
+    const platformRows = buildTrafficSourceRows(data,30)
+        .filter(row => !row.fallback && row.sessions > 0)
+        .map(row => ({
+            name:row.name,
+            sessions:row.sessions,
+            viewers:row.viewers,
+            watchTime:row.watchTime,
+            averageWatchTime:row.sessions
+                ? row.watchTime / row.sessions
+                : 0
+        }));
+    const heatmap = buildActivityHeatmapData(
+        data,
+        90,
+        "sessions"
+    );
+    const identifiedViewerIds = new Set(
+        sessions
+            .map(session => String(session.viewer_id || "").trim())
+            .filter(Boolean)
+    );
+
+    return {
+        source:data,
+        sessions:sessions,
+        watchSessions:watchSessions,
+        watchSessionCount:watchSessions.length,
+        videos:videos,
+        totalViews:totalViews,
+        totalLikes:totalLikes,
+        likeRate:totalViews ? (totalLikes / totalViews) * 100 : 0,
+        totalWatchTime:totalWatchTime,
+        averageWatchTime:averageWatchTime,
+        retentionThirty:retentionThirty,
+        returnSummary:returnSummary,
+        identifiedViewerCount:identifiedViewerIds.size,
+        categoryRows:categoryRows,
+        categoryWatchTimeTotal:categoryWatchTimeTotal,
+        topCategory:topCategory,
+        topCategoryShare:topCategoryShare,
+        qualityRows:qualityRows,
+        underDiscoveredVideo:underDiscoveredVideo,
+        platformRows:platformRows,
+        heatmap:heatmap,
+        hasData:Boolean(totalViews || totalLikes || sessions.length)
+    };
+}
+
+function buildRecommendations(source){
+
+    const snapshot = buildRecommendationsSnapshot(source);
+    const recommendations = [];
+    const priorityRank = {high:3,medium:2,low:1};
+    const addRecommendation = (priority,type,title,reason,action,metric,score) => {
+
+        recommendations.push({
+            priority:priority,
+            type:type,
+            title:title,
+            reason:reason,
+            action:action,
+            metric:metric || "",
+            score:Number(score || 0)
+        });
+
+    };
+
+    if(source && source.sessionsError){
+        addRecommendation(
+            "high",
+            "ux",
+            "Activate watch-time tracking",
+            "Watch-time sessions are unavailable, so retention, platform quality and category time cannot be measured reliably yet.",
+            "Run setup_watch_time.sql in Supabase, then confirm both the Website and Telegram Mini App write to video_watch_sessions.",
+            "Watch-time unavailable",
+            120
+        );
+    }
+
+    if(!snapshot.videos.length){
+        addRecommendation(
+            "high",
+            "content",
+            "Publish the first measurable content set",
+            "There are no videos in the current catalog snapshot, so there is no content baseline to optimize.",
+            "Publish at least three videos across one or two clear categories, then review reach and watch-time after the first week.",
+            "Catalog empty",
+            115
+        );
+    }
+
+    if(!snapshot.watchSessionCount && !(source && source.sessionsError)){
+        addRecommendation(
+            "high",
+            "ux",
+            "Collect a watch-session baseline",
+            "Views and likes are present without recorded viewing sessions, which hides the moments where people stop watching.",
+            "Verify the ten-second watch-session tracking on both clients and wait for a full week of real viewing data before changing content strategy.",
+            snapshot.totalViews
+                ? formatGraphNumber(snapshot.totalViews) + " views, 0 watch sessions"
+                : "No watch sessions yet",
+            110
+        );
+    }
+
+    if(snapshot.watchSessionCount >= 5 && snapshot.averageWatchTime < 30){
+        addRecommendation(
+            "high",
+            "ux",
+            "Shorten the path to the first useful moment",
+            "Average recorded viewing is only " + formatGraphDuration(snapshot.averageWatchTime) + ", so loading time, poster clarity or an early intro may be costing attention.",
+            "Preload the poster and first playable bytes, show a clear play state, and put the strongest moment in the first 10–15 seconds.",
+            "Average watch " + formatGraphDuration(snapshot.averageWatchTime),
+            105
+        );
+    }
+
+    if(snapshot.watchSessionCount >= 5 && snapshot.retentionThirty < 55){
+        addRecommendation(
+            "high",
+            "retention",
+            "Strengthen the opening 30 seconds",
+            "Only " + Math.round(snapshot.retentionThirty) + "% of recorded sessions reach 30 seconds, indicating a large early drop-off.",
+            "Test a faster hook, remove long intros and make the value of each video obvious before the first interaction.",
+            "30s retention " + Math.round(snapshot.retentionThirty) + "%",
+            104
+        );
+    }
+
+    if(snapshot.underDiscoveredVideo){
+        const video = snapshot.underDiscoveredVideo;
+
+        addRecommendation(
+            "medium",
+            "engagement",
+            "Feature the high-quality video people are not finding",
+            video.name + " averages " + formatGraphDuration(video.averageWatchTime) + " per session but has only " + formatGraphNumber(video.views) + " views, below the catalog midpoint.",
+            "Place this video in a prominent slot, link to it from related videos and use its opening style as a template for new uploads.",
+            formatGraphDuration(video.averageWatchTime) + " average watch",
+            98
+        );
+    }
+
+    if(!(source && source.likesError) && snapshot.totalViews >= 10 && snapshot.likeRate < 2){
+        addRecommendation(
+            "medium",
+            "engagement",
+            "Make the like moment more visible",
+            "The catalog has a " + snapshot.likeRate.toFixed(1) + "% like rate across " + formatGraphNumber(snapshot.totalViews) + " views, so viewers may need a clearer prompt after a meaningful moment.",
+            "Add a low-friction like prompt after the first useful scene and test copy that asks for a reaction without interrupting playback.",
+            snapshot.likeRate.toFixed(1) + "% like rate",
+            92
+        );
+    }
+
+    if(snapshot.returnSummary.total >= 5 && snapshot.returnSummary.returnRate < 25){
+        addRecommendation(
+            "medium",
+            "retention",
+            "Create a reason to come back",
+            "Only " + Math.round(snapshot.returnSummary.returnRate) + "% of identified viewers returned within 30 days, leaving a large opportunity for repeat use.",
+            "Turn strong categories into short series, add next-video links and use follow-up notifications or messages for new episodes.",
+            "30-day return " + Math.round(snapshot.returnSummary.returnRate) + "%",
+            90
+        );
+    }
+
+    if(snapshot.topCategory && snapshot.categoryRows.length >= 2 && snapshot.topCategoryShare >= 60 && snapshot.categoryWatchTimeTotal >= 60){
+        addRecommendation(
+            "medium",
+            "content",
+            "Replicate the winning category without over-concentrating",
+                       snapshot.topCategory.name + " accounts for " + Math.round(snapshot.topCategoryShare) + "% of recorded category watch time, so it is the clearest content signal but also a concentration risk.",
+            "Make adjacent categories and follow-up videos around this theme, while keeping a small testing lane for different topics.",
+            snapshot.topCategory.name + " · " + Math.round(snapshot.topCategoryShare) + "% of watch time",
+            86
+        );
+    }
+
+    if(snapshot.platformRows.length >= 2){
+        const sortedPlatforms = [...snapshot.platformRows].sort(
+            (first,second) => second.averageWatchTime - first.averageWatchTime
+        );
+        const strongest = sortedPlatforms[0];
+        const weakest = sortedPlatforms[sortedPlatforms.length - 1];
+        const difference = strongest.averageWatchTime
+            ? (strongest.averageWatchTime - weakest.averageWatchTime) / strongest.averageWatchTime
+            : 0;
+
+        if(strongest.name !== weakest.name && difference >= .25){
+            addRecommendation(
+                "medium",
+                "ux",
+                "Bring the weaker platform up to the better experience",
+                weakest.name + " averages " + formatGraphDuration(weakest.averageWatchTime) + " per session versus " + formatGraphDuration(strongest.averageWatchTime) + " on " + strongest.name + ".",
+                "Compare startup, controls and poster behavior on the weaker platform, then retest the same videos after the fix.",
+                weakest.name + " · " + formatGraphDuration(weakest.averageWatchTime),
+                82
+            );
+        }
+    }
+
+    if(snapshot.heatmap && snapshot.heatmap.total >= 8 && snapshot.heatmap.peak.value){
+        const dayLabels = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+        const peakLabel = dayLabels[snapshot.heatmap.peak.day] || "peak day";
+        const hourLabel = String(snapshot.heatmap.peak.hour).padStart(2,"0") + ":00 UTC";
+
+        addRecommendation(
+            "low",
+            "growth",
+            "Schedule releases around peak activity",
+            "The activity heatmap peaks on " + peakLabel + " around " + hourLabel + ", giving you a practical window for launches and notifications.",
+            "Publish or promote new videos shortly before this window, then compare the next Daily Performance curve with the previous one.",
+            peakLabel + " · " + hourLabel,
+            70
+        );
+    }
+
+    if(snapshot.videos.length && snapshot.totalViews > 0 && recommendations.length < 3){
+        const topViewedVideo = [...snapshot.videos].sort(
+            (first,second) => second.views - first.views
+        )[0];
+
+        if(topViewedVideo){
+            addRecommendation(
+                "low",
+                "growth",
+                "Build a repeatable path from your top reach",
+                topViewedVideo.name + " currently leads the catalog with " + formatGraphNumber(topViewedVideo.views) + " views, making it a useful starting point for discovery tests.",
+                "Use it as the entry point to a related playlist or series and place a clear next-video action beside it.",
+                formatGraphNumber(topViewedVideo.views) + " views",
+                64
+            );
+        }
+    }
+
+    if(recommendations.length < 3){
+        addRecommendation(
+            "low",
+            "growth",
+            "Review one experiment every week",
+            "A weekly review of the same reach, retention and return metrics will make it easier to separate real improvement from normal day-to-day variation.",
+            "Choose one change, record the baseline in Statistics, and revisit it after seven days before starting the next experiment.",
+            "Weekly measurement loop",
+            45
+        );
+    }
+
+    if(recommendations.length < 3){
+        addRecommendation(
+            "low",
+            "engagement",
+            "Keep the strongest content easy to discover",
+            "Consistent placement of proven videos reduces the number of steps between a new viewer and another useful watch.",
+            "Keep a short featured row on the Website and Telegram Mini App, and refresh it when a new video beats the current watch-time benchmark.",
+            "Use video quality + category stats",
+            40
+        );
+    }
+
+    return recommendations.sort((first,second) => {
+        return (priorityRank[second.priority] || 0) - (priorityRank[first.priority] || 0) ||
+            second.score - first.score ||
+            first.title.localeCompare(second.title);
+    });
+}
+
+function updateRecommendationsSummary(snapshot,recommendations){
+
+    const healthElement = document.getElementById("recommendationHealthScore");
+    const opportunityElement = document.getElementById("recommendationTopOpportunity");
+    const returnRateElement = document.getElementById("recommendationViewerReturnRate");
+    const averageWatchElement = document.getElementById("recommendationAverageWatchTime");
+    const components = [];
+
+    if(snapshot.watchSessionCount){
+        components.push({score:Math.min(100,snapshot.retentionThirty),weight:.35});
+        components.push({
+            score:Math.min(100,(snapshot.averageWatchTime / 60) * 100),
+            weight:.20
+        });
+    }
+
+    if(snapshot.totalViews && !(snapshot.source && snapshot.source.likesError)){
+        components.push({
+            score:Math.min(100,snapshot.likeRate * 10),
+            weight:.20
+        });
+    }
+
+    if(snapshot.returnSummary.total){
+        components.push({
+            score:Math.min(100,snapshot.returnSummary.returnRate * 1.5),
+            weight:.25
+        });
+    }
+
+    if(healthElement){
+        if(components.length){
+            const totalWeight = components.reduce(
+                (sum,component) => sum + component.weight,
+                0
+            );
+            const score = components.reduce(
+                (sum,component) => sum + (component.score * component.weight),
+                0
+            ) / totalWeight;
+
+            healthElement.textContent = Math.round(score) + "/100";
+        }
+        else{
+            healthElement.textContent = "—";
+        }
+    }
+
+    if(opportunityElement){
+        opportunityElement.textContent = recommendations[0]
+            ? recommendations[0].title
+            : "Collect more data";
+    }
+
+    if(returnRateElement){
+        returnRateElement.textContent = snapshot.returnSummary.total
+            ? Math.round(snapshot.returnSummary.returnRate) + "%"
+            : "—";
+    }
+
+    if(averageWatchElement){
+        averageWatchElement.textContent = snapshot.watchSessionCount
+            ? formatGraphDuration(snapshot.averageWatchTime)
+            : "—";
+    }
+}
+
+function renderRecommendations(){
+
+    const list = document.getElementById("recommendationsList");
+
+    if(!list) return;
+
+    const visibleRecommendations = recommendationsData.filter(recommendation => {
+        return recommendationsFilter === "all" ||
+            recommendation.type === recommendationsFilter;
+    });
+    const priorityLabels = {
+        high:"High impact",
+        medium:"Medium impact",
+        low:"Keep testing"
+    };
+    const typeLabels = {
+        ux:"UX",
+        engagement:"Engagement",
+        retention:"Retention",
+        growth:"Growth",
+        content:"Content"
+    };
+
+    if(!visibleRecommendations.length){
+        list.innerHTML = '<div class="recommendation-empty">No recommendations match this focus area yet.</div>';
+        return;
+    }
+
+    list.innerHTML = visibleRecommendations.map(recommendation => {
+        const priority = ["high","medium","low"].includes(recommendation.priority)
+            ? recommendation.priority
+            : "low";
+        const metric = recommendation.metric
+            ? `<span class="recommendation-metric">${escapeHTML(recommendation.metric)}</span>`
+            : "";
+
+        return `
+            <article class="recommendation-card priority-${priority}">
+                <div class="recommendation-card-header">
+                    <div class="recommendation-card-labels">
+                        <span class="recommendation-badge ${priority}">${escapeHTML(priorityLabels[priority])}</span>
+                        <span class="recommendation-type">${escapeHTML(typeLabels[recommendation.type] || recommendation.type)}</span>
+                    </div>
+                    ${metric}
+                </div>
+                <h3>${escapeHTML(recommendation.title)}</h3>
+                <p class="recommendation-reason"><strong>Why this matters:</strong> ${escapeHTML(recommendation.reason)}</p>
+                <div class="recommendation-action">
+                    <span>Recommended action</span>
+                    <p>${escapeHTML(recommendation.action)}</p>
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+function setRecommendationsFilter(filter,button){
+
+    recommendationsFilter = ["all","ux","engagement","retention","growth","content"].includes(filter)
+        ? filter
+        : "all";
+
+    if(button){
+        document
+            .querySelectorAll("#recommendationFilterControls .recommendation-filter-button")
+            .forEach(item => item.classList.remove("active"));
+        button.classList.add("active");
+    }
+
+    renderRecommendations();
+}
+
+async function loadRecommendationsReport(force){
+
+    if(recommendationsLoading && !force) return;
+
+    recommendationsLoading = true;
+    setRecommendationsStatus(
+        "Loading recommendations from the latest statistics...",
+        ""
+    );
+
+    try{
+
+        const source = await loadGraphSourceData(Boolean(force),365);
+
+        recommendationsData = buildRecommendations(source);
+        const snapshot = buildRecommendationsSnapshot(source);
+
+        updateRecommendationsSummary(snapshot,recommendationsData);
+        renderRecommendations();
+
+        const warnings = [];
+
+        if(source.sessionsError){
+            warnings.push("watch-time tracking is unavailable");
+        }
+        if(source.likesError){
+            warnings.push("like data could not be read");
+        }
+
+        const updatedAt = new Date().toLocaleTimeString([],{
+            hour:"numeric",
+            minute:"2-digit"
+        });
+
+        if(warnings.length){
+            setRecommendationsStatus(
+                "Updated " + updatedAt + ". Some signals are limited because " + warnings.join(" and ") + ".",
+                "warning"
+            );
+        }
+        else if(!snapshot.hasData){
+            setRecommendationsStatus(
+                "No views, likes or viewing sessions have been recorded yet. The page will become more useful as both connected clients collect data.",
+                ""
+            );
+        }
+        else{
+            setRecommendationsStatus(
+                "Updated " + updatedAt + " from the latest Website and Telegram Mini App statistics.",
+                ""
+            );
+        }
+
+    }
+    catch(error){
+
+        setRecommendationsStatus(
+            "Could not generate recommendations: " + error.message,
+            "error"
+        );
+
+        recommendationsData = [];
+        renderRecommendations();
+
+        [
+            "recommendationHealthScore",
+            "recommendationTopOpportunity",
+            "recommendationViewerReturnRate",
+            "recommendationAverageWatchTime"
+        ].forEach(id => {
+            const element = document.getElementById(id);
+
+            if(element) element.textContent = "—";
+        });
+
+    }
+    finally{
+
+        recommendationsLoading = false;
+
+    }
+}
+
 function redrawStatisticalGraphs(){
 
     const graphsSection = document.getElementById("statisticalGraphsSection");
@@ -10377,6 +11480,10 @@ function openPage(pageId, button){
         hideVideoStatsPanels();
         hideStatisticalGraphPanels();
         loadCategoryStatistics();
+    }
+
+    if(pageId === "reportsPage"){
+        loadRecommendationsReport();
     }
 
     const buttons =

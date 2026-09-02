@@ -5264,14 +5264,17 @@ async function loadActiveUsers(){
 
     try{
 
-        const [activeResult, libraryResult] =
+        const [activeResult, libraryResult, libraryVideosResult] =
             await Promise.all([
                 supabaseClient
                     .from("active_users")
                     .select("user_id, platform, last_seen"),
                 supabaseClient
                     .from("library_activity")
-                    .select("viewer_id, platform, last_seen")
+                    .select("viewer_id, platform, last_seen"),
+                supabaseClient
+                    .from("video_library")
+                    .select("viewer_id, platform")
             ]);
 
         if(activeResult.error){
@@ -5296,6 +5299,17 @@ async function loadActiveUsers(){
             );
         }
 
+        /* Library Users must have at least one saved video. */
+        const savedLibraryRows =
+            libraryVideosResult.error ? [] : (libraryVideosResult.data || []);
+
+        if(libraryVideosResult.error){
+            console.warn(
+                "Could not load saved library videos:",
+                libraryVideosResult.error.message
+            );
+        }
+
 
         /*
          * A user is considered online if their
@@ -5314,6 +5328,36 @@ async function loadActiveUsers(){
         let miniAppOnline = new Set();
         let libraryUsers = new Set();
         let libraryOnline = new Set();
+
+        const normalizeLibraryPlatform = value => {
+            const platform = String(value || "")
+                .trim()
+                .toLowerCase()
+                .replace(/[\s-]+/g,"_");
+
+            return platform === "miniapp" ? "mini_app" : platform;
+        };
+
+        const savedLibraryKeys = new Set();
+
+        savedLibraryRows.forEach(row => {
+
+            const viewerId = String(row.viewer_id || "").trim();
+            const platform = normalizeLibraryPlatform(row.platform);
+
+            if(
+                viewerId &&
+                (platform === "website" || platform === "mini_app")
+            ){
+                savedLibraryKeys.add(
+                    viewerId + "::" + platform
+                );
+            }
+
+        });
+
+        /* This card represents saved-library ownership, not activity rows. */
+        libraryUsers = new Set(savedLibraryKeys);
 
 
         /*
@@ -5383,15 +5427,21 @@ async function loadActiveUsers(){
 
         libraryActivityRows.forEach(activity => {
 
-            if(!activity.viewer_id) return;
+            const viewerId = String(activity.viewer_id || "").trim();
+            const platform = normalizeLibraryPlatform(activity.platform);
+            const libraryKey = viewerId + "::" + platform;
 
-            libraryUsers.add(activity.viewer_id);
+            /* An empty library is not a Library User or online library user. */
+            if(
+                !viewerId ||
+                !savedLibraryKeys.has(libraryKey)
+            ) return;
 
             if(
                 activity.last_seen &&
                 new Date(activity.last_seen).getTime() >= onlineLimit
             ){
-                libraryOnline.add(activity.viewer_id);
+                libraryOnline.add(libraryKey);
             }
 
         });

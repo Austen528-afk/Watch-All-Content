@@ -5316,70 +5316,65 @@ async function loadActiveUsers(){
         let libraryOnline = new Set();
 
 
+        /*
+         * A device can have a legacy row written under the wrong platform
+         * from an older client. Normalize labels and use the newest row for
+         * each ID so a current Mini App session cannot appear as Website.
+         */
+        const latestPlatformByUser = new Map();
+
         users.forEach(user => {
 
-            if(!user.user_id)
+            const userId = String(user.user_id || "").trim();
+            const platform = String(user.platform || "")
+                .trim()
+                .toLowerCase()
+                .replace(/[\s-]+/g,"_");
+
+            if(
+                !userId ||
+                (platform !== "website" &&
+                    platform !== "mini_app" &&
+                    platform !== "miniapp")
+            ){
                 return;
+            }
 
+            const normalizedPlatform =
+                platform === "miniapp" ? "mini_app" : platform;
+            const lastSeenMs =
+                Date.parse(user.last_seen || "") || 0;
+            const previous = latestPlatformByUser.get(userId);
 
-            const platform =
-                String(
-                    user.platform || ""
-                ).toLowerCase();
-
-
-            /*
-             * WEBSITE
-             */
-
-            if(platform === "website"){
-
-                websiteUsers.add(
-                    user.user_id
+            if(!previous || lastSeenMs >= previous.lastSeenMs){
+                latestPlatformByUser.set(
+                    userId,
+                    {
+                        platform:normalizedPlatform,
+                        lastSeenMs:lastSeenMs
+                    }
                 );
+            }
 
+        });
 
-                if(
-                    user.last_seen &&
-                    new Date(
-                        user.last_seen
-                    ).getTime() >= onlineLimit
-                ){
+        latestPlatformByUser.forEach((entry,userId) => {
 
-                    websiteOnline.add(
-                        user.user_id
-                    );
+            if(entry.platform === "website"){
 
+                websiteUsers.add(userId);
+
+                if(entry.lastSeenMs >= onlineLimit){
+                    websiteOnline.add(userId);
                 }
 
             }
+            else if(entry.platform === "mini_app"){
 
+                miniAppUsers.add(userId);
 
-            /*
-             * MINI APP
-             */
-
-            if(
-                platform === "miniapp" ||
-                platform === "mini_app"
-            ){
-
-                miniAppUsers.add(
-                    user.user_id
-                );
-
-
-                if(
-                    user.last_seen &&
-                    new Date(
-                        user.last_seen
-                    ).getTime() >= onlineLimit
-                ){
-
-                    miniAppOnline.add(
-                        user.user_id
-                    );
-
+                if(entry.lastSeenMs >= onlineLimit){
+                    miniAppOnline.add(userId);
                 }
 
             }

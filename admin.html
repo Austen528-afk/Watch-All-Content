@@ -1547,6 +1547,20 @@ textarea{
     white-space:nowrap;
 }
 
+.statistics-item-text{
+    min-width:0;
+}
+
+.statistics-item-subtext{
+    margin-top:4px;
+    overflow:hidden;
+    color:#666;
+    font-size:10px;
+    font-weight:600;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
 .statistics-views{
     color:#fff;
     font-size:16px;
@@ -2496,11 +2510,11 @@ textarea{
         <div class="topbar">
             <div>
                 <h1>Statistics</h1>
-                <p>Compare video categories by views, likes, engagement and watch time.</p>
+                <p>Compare category and individual video performance across StreamX.</p>
             </div>
         </div>
 
-        <section class="section">
+        <section class="section" id="categoryStatsSection">
             <div class="category-stats-heading">
                 <h2>Categories Stats</h2>
                 <p>Select a ranking below to view its category statistics.</p>
@@ -2655,6 +2669,166 @@ textarea{
                     </div>
                     <div id="categoryWatchTimeRankingList" class="statistics-table-body">
                         <div class="statistics-status">Loading watch-time rankings...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="videoStatsSection">
+            <div class="category-stats-heading">
+                <h2>Video Stats</h2>
+                <p>Select a ranking below to view statistics for individual videos.</p>
+            </div>
+
+            <div class="category-stats-tabs" role="tablist" aria-label="Video statistics rankings">
+                <button
+                    type="button"
+                    class="category-stats-close"
+                    onclick="hideVideoStatsPanels()"
+                    aria-label="Close the open video ranking"
+                >✕ Close</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="videoViewsTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="videoViewsPanel"
+                    onclick="openVideoStatsPanel('videoViewsPanel',this)"
+                >📊 Video View Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="videoLikesTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="videoLikesPanel"
+                    onclick="openVideoStatsPanel('videoLikesPanel',this)"
+                >❤️ Video Like Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="videoEngagementTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="videoEngagementPanel"
+                    onclick="openVideoStatsPanel('videoEngagementPanel',this)"
+                >⚡ Video Engagement Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="videoWatchTimeTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="videoWatchTimePanel"
+                    onclick="openVideoStatsPanel('videoWatchTimePanel',this)"
+                >⏱ Video Watch-Time Ranking</button>
+            </div>
+
+            <div
+                id="videoViewsPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="videoViewsTab"
+                aria-hidden="true"
+            >
+                <div class="section-top">
+                    <div>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Individual videos are ranked from most viewed to least viewed.</p>
+                    </div>
+                    <span class="video-count" id="videoViewsRankingCount">0 videos</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Video</span>
+                        <span>Total Views</span>
+                    </div>
+                    <div id="videoViewsRankingList" class="statistics-table-body">
+                        <div class="statistics-status">Loading video view rankings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="videoLikesPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="videoLikesTab"
+                aria-hidden="true"
+            >
+                <div class="section-top">
+                    <div>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Individual videos are ranked from most liked to least liked.</p>
+                    </div>
+                    <span class="video-count" id="videoLikesRankingCount">0 videos</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Video</span>
+                        <span>Total Likes</span>
+                    </div>
+                    <div id="videoLikesRankingList" class="statistics-table-body">
+                        <div class="statistics-status">Loading video like rankings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="videoEngagementPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="videoEngagementTab"
+                aria-hidden="true"
+            >
+                <div class="section-top">
+                    <div>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Individual videos are ranked by total views plus total likes.</p>
+                    </div>
+                    <span class="video-count" id="videoEngagementRankingCount">0 videos</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Video</span>
+                        <span>Views + Likes</span>
+                    </div>
+                    <div id="videoEngagementRankingList" class="statistics-table-body">
+                        <div class="statistics-status">Loading video engagement rankings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="videoWatchTimePanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="videoWatchTimeTab"
+                aria-hidden="true"
+            >
+                <div class="section-top">
+                    <div>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Total time each video was watched across the website and Telegram mini app.</p>
+                    </div>
+                    <span class="video-count" id="videoWatchTimeRankingCount">0 videos</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Video</span>
+                        <span>Total Watch Time</span>
+                    </div>
+                    <div id="videoWatchTimeRankingList" class="statistics-table-body">
+                        <div class="statistics-status">Loading video watch-time rankings...</div>
                     </div>
                 </div>
             </div>
@@ -5190,21 +5364,21 @@ function showCategoryMessage(text,type){
    CATEGORY STATISTICS
 ===================================================== */
 
-function hideCategoryStatsPanels(){
+function hideStatisticsPanels(sectionId){
 
-    const statisticsPage =
-        document.getElementById("analyticsPage");
+    const statisticsSection =
+        document.getElementById(sectionId);
 
-    if(!statisticsPage) return;
+    if(!statisticsSection) return;
 
-    statisticsPage
+    statisticsSection
         .querySelectorAll(".category-stats-panel")
         .forEach(panel => {
             panel.classList.remove("active");
             panel.setAttribute("aria-hidden","true");
         });
 
-    statisticsPage
+    statisticsSection
         .querySelectorAll(".category-stats-tab")
         .forEach(tab => {
             tab.classList.remove("active");
@@ -5212,19 +5386,30 @@ function hideCategoryStatsPanels(){
         });
 }
 
-function openCategoryStatsPanel(panelId,button){
+function openStatisticsPanel(sectionId,panelId,button){
 
-    hideCategoryStatsPanels();
+    const statisticsSection =
+        document.getElementById(sectionId);
+
+    if(!statisticsSection) return;
+
+    hideStatisticsPanels(sectionId);
 
     const selectedPanel =
         document.getElementById(panelId);
 
-    if(selectedPanel){
+    if(
+        selectedPanel &&
+        statisticsSection.contains(selectedPanel)
+    ){
         selectedPanel.classList.add("active");
         selectedPanel.setAttribute("aria-hidden","false");
     }
 
-    if(button){
+    if(
+        button &&
+        statisticsSection.contains(button)
+    ){
         button.classList.add("active");
         button.setAttribute("aria-selected","true");
         button.scrollIntoView({
@@ -5233,6 +5418,30 @@ function openCategoryStatsPanel(panelId,button){
             inline:"center"
         });
     }
+}
+
+function hideCategoryStatsPanels(){
+    hideStatisticsPanels("categoryStatsSection");
+}
+
+function openCategoryStatsPanel(panelId,button){
+    openStatisticsPanel(
+        "categoryStatsSection",
+        panelId,
+        button
+    );
+}
+
+function hideVideoStatsPanels(){
+    hideStatisticsPanels("videoStatsSection");
+}
+
+function openVideoStatsPanel(panelId,button){
+    openStatisticsPanel(
+        "videoStatsSection",
+        panelId,
+        button
+    );
 }
 
 async function loadCategoryStatistics(){
@@ -5261,38 +5470,85 @@ async function loadCategoryStatistics(){
         }
     ];
 
+    const videoRankingTargets = [
+        {
+            list:document.getElementById("videoViewsRankingList"),
+            count:document.getElementById("videoViewsRankingCount"),
+            metric:"views",
+            unit:"views",
+            loadingText:"Loading video view rankings..."
+        },
+        {
+            list:document.getElementById("videoLikesRankingList"),
+            count:document.getElementById("videoLikesRankingCount"),
+            metric:"likes",
+            unit:"likes",
+            loadingText:"Loading video like rankings..."
+        },
+        {
+            list:document.getElementById("videoEngagementRankingList"),
+            count:document.getElementById("videoEngagementRankingCount"),
+            metric:"engagement",
+            unit:"combined",
+            loadingText:"Loading video engagement rankings..."
+        }
+    ];
+
     const watchTimeList =
         document.getElementById("categoryWatchTimeRankingList");
 
     const watchTimeCount =
         document.getElementById("categoryWatchTimeRankingCount");
 
+    const videoWatchTimeList =
+        document.getElementById("videoWatchTimeRankingList");
+
+    const videoWatchTimeCount =
+        document.getElementById("videoWatchTimeRankingCount");
+
     if(
         rankingTargets.some(target => !target.list || !target.count) ||
+        videoRankingTargets.some(target => !target.list || !target.count) ||
         !watchTimeList ||
-        !watchTimeCount
+        !watchTimeCount ||
+        !videoWatchTimeList ||
+        !videoWatchTimeCount
     ) return;
 
     rankingTargets.forEach(target => {
         target.list.innerHTML = `<div class="statistics-status">${target.loadingText}</div>`;
     });
 
+    videoRankingTargets.forEach(target => {
+        target.list.innerHTML = `<div class="statistics-status">${target.loadingText}</div>`;
+    });
+
     watchTimeList.innerHTML =
         '<div class="statistics-status">Loading watch-time rankings...</div>';
+
+    videoWatchTimeList.innerHTML =
+        '<div class="statistics-status">Loading video watch-time rankings...</div>';
 
     try{
 
         await requireAuthenticatedUser();
 
-        const [categoriesResult, videosResult, watchTimeResult] = await Promise.all([
+        const [
+            categoriesResult,
+            videosResult,
+            watchTimeResult,
+            videoWatchTimeResult
+        ] = await Promise.all([
             supabaseClient
                 .from("categories")
                 .select("name"),
             supabaseClient
                 .from("videos")
-                .select("id, category, views"),
+                .select("id, title, category, views"),
             supabaseClient
-                .rpc("get_category_watch_time_rankings")
+                .rpc("get_category_watch_time_rankings"),
+            supabaseClient
+                .rpc("get_video_watch_time_rankings")
         ]);
 
         if(categoriesResult.error){
@@ -5374,6 +5630,32 @@ async function loadCategoryStatistics(){
             );
         });
 
+        const videoTotals = videos.map((video,index) => {
+            const parsedViews = Number(video.views || 0);
+            const views = Number.isFinite(parsedViews) ? parsedViews : 0;
+            const parsedLikes = Number(videoLikeCounts[index] || 0);
+            const likes = Number.isFinite(parsedLikes) ? parsedLikes : 0;
+
+            return {
+                id:video.id,
+                name:String(video.title || "Untitled Video"),
+                category:String(video.category || "Uncategorized"),
+                views:views,
+                likes:likes,
+                engagement:views + likes
+            };
+        });
+
+        videoRankingTargets.forEach(target => {
+            renderVideoStatisticsRanking(
+                target.list,
+                target.count,
+                videoTotals,
+                target.metric,
+                target.unit
+            );
+        });
+
         if(watchTimeResult.error){
             console.error(
                 "Could not load category watch-time rankings:",
@@ -5392,6 +5674,24 @@ async function loadCategoryStatistics(){
             );
         }
 
+        if(videoWatchTimeResult.error){
+            console.error(
+                "Could not load video watch-time rankings:",
+                videoWatchTimeResult.error
+            );
+
+            videoWatchTimeCount.textContent = "Unavailable";
+            videoWatchTimeList.innerHTML =
+                '<div class="statistics-status error">Video watch-time statistics are not available. Run add_video_watch_time_rankings.sql in Supabase first.</div>';
+        }
+        else{
+            renderVideoWatchTimeRanking(
+                videoWatchTimeList,
+                videoWatchTimeCount,
+                videoWatchTimeResult.data || []
+            );
+        }
+
     }catch(error){
         console.error("Could not load category statistics:", error);
 
@@ -5400,8 +5700,16 @@ async function loadCategoryStatistics(){
             target.list.innerHTML = `<div class="statistics-status error">Could not load category statistics: ${escapeHTML(error.message)}</div>`;
         });
 
+        videoRankingTargets.forEach(target => {
+            target.count.textContent = "Unavailable";
+            target.list.innerHTML = `<div class="statistics-status error">Could not load video statistics: ${escapeHTML(error.message)}</div>`;
+        });
+
         watchTimeCount.textContent = "Unavailable";
         watchTimeList.innerHTML = `<div class="statistics-status error">Could not load watch-time statistics: ${escapeHTML(error.message)}</div>`;
+
+        videoWatchTimeCount.textContent = "Unavailable";
+        videoWatchTimeList.innerHTML = `<div class="statistics-status error">Could not load video watch-time statistics: ${escapeHTML(error.message)}</div>`;
     }
 }
 
@@ -5428,6 +5736,41 @@ function renderCategoryStatisticsRanking(list,count,totals,metric,unit){
                 <div class="statistics-category">
                     <div class="statistics-category-icon">${initial}</div>
                     <div class="statistics-category-name">${escapeHTML(category.name)}</div>
+                </div>
+                <div class="statistics-views">
+                    ${value.toLocaleString()}
+                    <span>${escapeHTML(unit)}</span>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderVideoStatisticsRanking(list,count,videos,metric,unit){
+
+    const rankings = [...videos].sort((a,b) => {
+        return b[metric] - a[metric] || a.name.localeCompare(b.name);
+    });
+
+    count.textContent = rankings.length + (rankings.length === 1 ? " video" : " videos");
+
+    if(rankings.length === 0){
+        list.innerHTML = '<div class="statistics-status">No video statistics are available yet.</div>';
+        return;
+    }
+
+    list.innerHTML = rankings.map((video,index) => {
+        const value = Number(video[metric] || 0);
+
+        return `
+            <div class="statistics-row">
+                <div class="statistics-rank">#${index + 1}</div>
+                <div class="statistics-category">
+                    <div class="statistics-category-icon">▶</div>
+                    <div class="statistics-item-text">
+                        <div class="statistics-category-name">${escapeHTML(video.name)}</div>
+                        <div class="statistics-item-subtext">${escapeHTML(video.category)}</div>
+                    </div>
                 </div>
                 <div class="statistics-views">
                     ${value.toLocaleString()}
@@ -5501,6 +5844,51 @@ function renderCategoryWatchTimeRanking(list,count,rows){
     }).join("");
 }
 
+function renderVideoWatchTimeRanking(list,count,rows){
+
+    const rankings = (rows || [])
+        .map(row => ({
+            id:row.video_id,
+            name:String(row.title || "Untitled Video"),
+            category:String(row.category || "Uncategorized"),
+            totalSeconds:Number(row.total_seconds || 0),
+            websiteSeconds:Number(row.website_seconds || 0),
+            miniAppSeconds:Number(row.mini_app_seconds || 0)
+        }))
+        .sort((a,b) => {
+            return b.totalSeconds - a.totalSeconds || a.name.localeCompare(b.name);
+        });
+
+    count.textContent = rankings.length + (rankings.length === 1 ? " video" : " videos");
+
+    if(rankings.length === 0){
+        list.innerHTML = '<div class="statistics-status">No video watch-time statistics are available yet.</div>';
+        return;
+    }
+
+    list.innerHTML = rankings.map((video,index) => {
+        return `
+            <div class="statistics-row">
+                <div class="statistics-rank">#${index + 1}</div>
+                <div class="statistics-category">
+                    <div class="statistics-category-icon">▶</div>
+                    <div class="statistics-item-text">
+                        <div class="statistics-category-name">${escapeHTML(video.name)}</div>
+                        <div class="statistics-item-subtext">${escapeHTML(video.category)}</div>
+                    </div>
+                </div>
+                <div class="statistics-views">
+                    ${escapeHTML(formatWatchTime(video.totalSeconds))}
+                    <div class="statistics-watch-breakdown">
+                        Website ${escapeHTML(formatWatchTime(video.websiteSeconds))}
+                        · Mini app ${escapeHTML(formatWatchTime(video.miniAppSeconds))}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
 /* =====================================================
    PAGE NAVIGATION
 ===================================================== */
@@ -5527,6 +5915,7 @@ function openPage(pageId, button){
 
     if(pageId === "analyticsPage"){
         hideCategoryStatsPanels();
+        hideVideoStatsPanels();
         loadCategoryStatistics();
     }
 

@@ -1349,10 +1349,74 @@ textarea{
    CATEGORY STATISTICS RANKINGS
 ===================================================== */
 
-.statistics-ranking-block + .statistics-ranking-block{
-    margin-top:32px;
-    padding-top:32px;
-    border-top:1px solid rgba(255,255,255,.08);
+.category-stats-heading{
+    margin-bottom:18px;
+}
+
+.category-stats-heading h2{
+    font-size:20px;
+}
+
+.category-stats-heading p{
+    margin-top:6px;
+    color:#777;
+    font-size:12px;
+    line-height:1.5;
+}
+
+.category-stats-tabs{
+    display:flex;
+    gap:9px;
+    width:100%;
+    margin-bottom:26px;
+    padding:7px;
+    overflow-x:auto;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;
+    background:rgba(255,255,255,.025);
+    scrollbar-width:thin;
+    scrollbar-color:#3a3a3a transparent;
+}
+
+.category-stats-tab{
+    flex:1 0 175px;
+    min-height:44px;
+    padding:9px 14px;
+    border:1px solid transparent;
+    border-radius:10px;
+    background:transparent;
+    color:#858585;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:800;
+    white-space:nowrap;
+    transition:background .18s,border-color .18s,color .18s,transform .18s;
+}
+
+.category-stats-tab:hover{
+    border-color:rgba(255,255,255,.09);
+    background:rgba(255,255,255,.045);
+    color:#fff;
+}
+
+.category-stats-tab.active{
+    border-color:rgba(255,23,68,.34);
+    background:rgba(255,23,68,.13);
+    color:#ff7188;
+    box-shadow:0 6px 18px rgba(255,23,68,.08);
+}
+
+.category-stats-tab:focus-visible{
+    outline:2px solid #ff1744;
+    outline-offset:2px;
+}
+
+.category-stats-panel{
+    display:none;
+}
+
+.category-stats-panel.active{
+    display:block;
 }
 
 .statistics-table{
@@ -1472,7 +1536,16 @@ textarea{
 }
 
 @media(max-width:600px){
-    .statistics-ranking-block .section-top{
+    .category-stats-tabs{
+        margin-left:-4px;
+        width:calc(100% + 8px);
+    }
+
+    .category-stats-tab{
+        flex-basis:160px;
+    }
+
+    .category-stats-panel .section-top{
         align-items:flex-start;
         flex-direction:column;
         gap:10px;
@@ -2390,10 +2463,62 @@ textarea{
         </div>
 
         <section class="section">
-            <div class="statistics-ranking-block">
+            <div class="category-stats-heading">
+                <h2>Categories Stats</h2>
+                <p>Select a ranking below to view its category statistics.</p>
+            </div>
+
+            <div class="category-stats-tabs" role="tablist" aria-label="Category statistics rankings">
+                <button
+                    type="button"
+                    class="category-stats-tab active"
+                    id="categoryViewsTab"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="categoryViewsPanel"
+                    onclick="openCategoryStatsPanel('categoryViewsPanel',this)"
+                >📊 Category View Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="categoryLikesTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="categoryLikesPanel"
+                    onclick="openCategoryStatsPanel('categoryLikesPanel',this)"
+                >❤️ Category Like Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="categoryEngagementTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="categoryEngagementPanel"
+                    onclick="openCategoryStatsPanel('categoryEngagementPanel',this)"
+                >⚡ Category Engagement Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="categoryWatchTimeTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="categoryWatchTimePanel"
+                    onclick="openCategoryStatsPanel('categoryWatchTimePanel',this)"
+                >⏱ Category Watch-Time Ranking</button>
+            </div>
+
+            <div
+                id="categoryViewsPanel"
+                class="category-stats-panel active"
+                role="tabpanel"
+                aria-labelledby="categoryViewsTab"
+                aria-hidden="false"
+            >
                 <div class="section-top">
                     <div>
-                        <h2>Category View Ranking</h2>
                         <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked from most viewed to least viewed.</p>
                     </div>
                     <span class="video-count" id="categoryViewsRankingCount">0 categories</span>
@@ -2411,10 +2536,15 @@ textarea{
                 </div>
             </div>
 
-            <div class="statistics-ranking-block">
+            <div
+                id="categoryLikesPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="categoryLikesTab"
+                aria-hidden="true"
+            >
                 <div class="section-top">
                     <div>
-                        <h2>Category Like Ranking</h2>
                         <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked from most liked to least liked.</p>
                     </div>
                     <span class="video-count" id="categoryLikesRankingCount">0 categories</span>
@@ -2432,10 +2562,15 @@ textarea{
                 </div>
             </div>
 
-            <div class="statistics-ranking-block">
+            <div
+                id="categoryEngagementPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="categoryEngagementTab"
+                aria-hidden="true"
+            >
                 <div class="section-top">
                     <div>
-                        <h2>Category Engagement Ranking</h2>
                         <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked by total views plus total likes.</p>
                     </div>
                     <span class="video-count" id="categoryEngagementRankingCount">0 categories</span>
@@ -2453,10 +2588,15 @@ textarea{
                 </div>
             </div>
 
-            <div class="statistics-ranking-block">
+            <div
+                id="categoryWatchTimePanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="categoryWatchTimeTab"
+                aria-hidden="true"
+            >
                 <div class="section-top">
                     <div>
-                        <h2>Category Watch-Time Ranking</h2>
                         <p style="margin-top:6px;color:#777;font-size:12px;">Total time watched across the website and Telegram mini app.</p>
                     </div>
                     <span class="video-count" id="categoryWatchTimeRankingCount">0 categories</span>
@@ -5029,8 +5169,48 @@ function showCategoryMessage(text,type){
 }
 
 /* =====================================================
-   CATEGORY VIEW STATISTICS
+   CATEGORY STATISTICS
 ===================================================== */
+
+function openCategoryStatsPanel(panelId,button){
+
+    const statisticsPage =
+        document.getElementById("analyticsPage");
+
+    if(!statisticsPage) return;
+
+    statisticsPage
+        .querySelectorAll(".category-stats-panel")
+        .forEach(panel => {
+            panel.classList.remove("active");
+            panel.setAttribute("aria-hidden","true");
+        });
+
+    statisticsPage
+        .querySelectorAll(".category-stats-tab")
+        .forEach(tab => {
+            tab.classList.remove("active");
+            tab.setAttribute("aria-selected","false");
+        });
+
+    const selectedPanel =
+        document.getElementById(panelId);
+
+    if(selectedPanel){
+        selectedPanel.classList.add("active");
+        selectedPanel.setAttribute("aria-hidden","false");
+    }
+
+    if(button){
+        button.classList.add("active");
+        button.setAttribute("aria-selected","true");
+        button.scrollIntoView({
+            behavior:"smooth",
+            block:"nearest",
+            inline:"center"
+        });
+    }
+}
 
 async function loadCategoryStatistics(){
 

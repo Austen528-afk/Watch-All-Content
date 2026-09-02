@@ -3524,6 +3524,16 @@ textarea{
                 <button
                     type="button"
                     class="category-stats-tab"
+                    id="categoryLibraryTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="categoryLibraryPanel"
+                    onclick="openCategoryStatsPanel('categoryLibraryPanel',this)"
+                >📚 Most Stored Category Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
                     id="categoryWatchTimeTab"
                     role="tab"
                     aria-selected="false"
@@ -3611,6 +3621,32 @@ textarea{
             </div>
 
             <div
+                id="categoryLibraryPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="categoryLibraryTab"
+                aria-hidden="true"
+            >
+                <div class="section-top">
+                    <div>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Categories are ranked by the number of videos saved across all personal libraries.</p>
+                    </div>
+                    <span class="video-count" id="categoryLibraryRankingCount">0 categories</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Category</span>
+                        <span>Stored Videos</span>
+                    </div>
+                    <div id="categoryLibraryRankingList" class="statistics-table-body">
+                        <div class="statistics-status">Loading library rankings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div
                 id="categoryWatchTimePanel"
                 class="category-stats-panel"
                 role="tabpanel"
@@ -3680,6 +3716,16 @@ textarea{
                     aria-controls="videoEngagementPanel"
                     onclick="openVideoStatsPanel('videoEngagementPanel',this)"
                 >⚡ Video Engagement Ranking</button>
+
+                <button
+                    type="button"
+                    class="category-stats-tab"
+                    id="videoLibraryTab"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="videoLibraryPanel"
+                    onclick="openVideoStatsPanel('videoLibraryPanel',this)"
+                >📚 Most Stored Video Ranking</button>
 
                 <button
                     type="button"
@@ -3766,6 +3812,32 @@ textarea{
                     </div>
                     <div id="videoEngagementRankingList" class="statistics-table-body">
                         <div class="statistics-status">Loading video engagement rankings...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                id="videoLibraryPanel"
+                class="category-stats-panel"
+                role="tabpanel"
+                aria-labelledby="videoLibraryTab"
+                aria-hidden="true"
+            >
+                <div class="section-top">
+                    <div>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Individual videos are ranked by how many personal libraries contain them.</p>
+                    </div>
+                    <span class="video-count" id="videoLibraryRankingCount">0 videos</span>
+                </div>
+
+                <div class="statistics-table">
+                    <div class="statistics-table-header">
+                        <span>Rank</span>
+                        <span>Video</span>
+                        <span>Libraries</span>
+                    </div>
+                    <div id="videoLibraryRankingList" class="statistics-table-body">
+                        <div class="statistics-status">Loading video library rankings...</div>
                     </div>
                 </div>
             </div>
@@ -11151,6 +11223,13 @@ async function loadCategoryStatistics(){
             metric:"engagement",
             unit:"combined",
             loadingText:"Loading engagement rankings..."
+        },
+        {
+            list:document.getElementById("categoryLibraryRankingList"),
+            count:document.getElementById("categoryLibraryRankingCount"),
+            metric:"stored",
+            unit:"saved videos",
+            loadingText:"Loading library rankings..."
         }
     ];
 
@@ -11175,6 +11254,13 @@ async function loadCategoryStatistics(){
             metric:"engagement",
             unit:"combined",
             loadingText:"Loading video engagement rankings..."
+        },
+        {
+            list:document.getElementById("videoLibraryRankingList"),
+            count:document.getElementById("videoLibraryRankingCount"),
+            metric:"stored",
+            unit:"libraries",
+            loadingText:"Loading video library rankings..."
         }
     ];
 
@@ -11220,6 +11306,7 @@ async function loadCategoryStatistics(){
         const [
             categoriesResult,
             videosResult,
+            libraryResult,
             watchTimeResult,
             videoWatchTimeResult
         ] = await Promise.all([
@@ -11229,6 +11316,9 @@ async function loadCategoryStatistics(){
             supabaseClient
                 .from("videos")
                 .select("id, title, category, views"),
+            supabaseClient
+                .from("video_library")
+                .select("video_id"),
             supabaseClient
                 .rpc("get_category_watch_time_rankings"),
             supabaseClient
@@ -11244,6 +11334,31 @@ async function loadCategoryStatistics(){
         }
 
         const videos = videosResult.data || [];
+
+        const libraryRows =
+            libraryResult.error ? [] : (libraryResult.data || []);
+
+        if(libraryResult.error){
+            console.warn(
+                "Could not load video library rankings:",
+                libraryResult.error
+            );
+        }
+
+        const libraryCountsByVideo = new Map();
+
+        libraryRows.forEach(row => {
+
+            const videoId = String(row.video_id ?? "").trim();
+
+            if(!videoId) return;
+
+            libraryCountsByVideo.set(
+                videoId,
+                (libraryCountsByVideo.get(videoId) || 0) + 1
+            );
+
+        });
 
         const videoLikeCounts = await Promise.all(
             videos.map(async video => {
@@ -11275,7 +11390,8 @@ async function loadCategoryStatistics(){
                     name:name,
                     views:0,
                     likes:0,
-                    engagement:0
+                    engagement:0,
+                    stored:0
                 });
             }
         });
@@ -11293,13 +11409,16 @@ async function loadCategoryStatistics(){
                     name:name,
                     views:0,
                     likes:0,
-                    engagement:0
+                    engagement:0,
+                    stored:0
                 });
             }
 
             categoryTotals.get(key).views += views;
             categoryTotals.get(key).likes += likes;
             categoryTotals.get(key).engagement += views + likes;
+            categoryTotals.get(key).stored +=
+                libraryCountsByVideo.get(String(video.id)) || 0;
         });
 
         const totals = Array.from(categoryTotals.values());
@@ -11326,7 +11445,8 @@ async function loadCategoryStatistics(){
                 category:String(video.category || "Uncategorized"),
                 views:views,
                 likes:likes,
-                engagement:views + likes
+                engagement:views + likes,
+                stored:libraryCountsByVideo.get(String(video.id)) || 0
             };
         });
 
@@ -11339,6 +11459,27 @@ async function loadCategoryStatistics(){
                 target.unit
             );
         });
+
+        if(libraryResult.error){
+
+            const libraryErrorMessage =
+                '<div class="statistics-status error">Library rankings are not available. Run setup_personal_library.sql in Supabase first.</div>';
+
+            rankingTargets
+                .filter(target => target.metric === "stored")
+                .forEach(target => {
+                    target.count.textContent = "Unavailable";
+                    target.list.innerHTML = libraryErrorMessage;
+                });
+
+            videoRankingTargets
+                .filter(target => target.metric === "stored")
+                .forEach(target => {
+                    target.count.textContent = "Unavailable";
+                    target.list.innerHTML = libraryErrorMessage;
+                });
+
+        }
 
         if(watchTimeResult.error){
             console.error(

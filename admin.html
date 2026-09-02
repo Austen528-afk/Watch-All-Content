@@ -4346,6 +4346,70 @@ function getPublicURL(
 
 }
 
+
+/* =====================================================
+   SIGNED VIDEO URL
+===================================================== */
+
+async function getVideoURL(video){
+
+    const rawValue =
+        video &&
+        video.video_url;
+
+
+    if(!rawValue)
+        return null;
+
+
+    const storagePath =
+        getStoragePath(
+            rawValue,
+            "videos"
+        );
+
+
+    if(!storagePath){
+
+        if(
+            rawValue.startsWith("http://") ||
+            rawValue.startsWith("https://")
+        ){
+
+            return rawValue;
+
+        }
+
+
+        return null;
+
+    }
+
+
+    const result =
+        await supabaseClient
+            .storage
+            .from("videos")
+            .createSignedUrl(
+                storagePath,
+                3600
+            );
+
+
+    if(result.error){
+
+        throw new Error(
+            "Could not create a secure video link: " +
+            result.error.message
+        );
+
+    }
+
+
+    return result.data.signedUrl;
+
+}
+
 /* =====================================================
    LOAD VIDEOS
 ===================================================== */
@@ -4820,9 +4884,8 @@ async function loadSingleVideo(
 
 
         const videoURL =
-            getPublicURL(
-                video.video_url,
-                "videos"
+            await getVideoURL(
+                video
             );
 
 

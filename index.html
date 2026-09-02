@@ -1073,55 +1073,6 @@ body{
             All
         </button>
 
-        <button
-            class="category"
-            data-category="BackShots"
-        >
-            BackShots
-        </button>
-
-        <button
-            class="category"
-            data-category="Masterbates"
-        >
-            Masterbates
-        </button>
-
-        <button
-            class="category"
-            data-category="RoughX"
-        >
-            RoughX
-        </button>
-
-        <button
-            class="category"
-            data-category="BBW"
-        >
-            BBW
-        </button>
-
-        <button
-            class="category"
-            data-category="Africans"
-        >
-            Africans
-        </button>
-
-        <button
-            class="category"
-            data-category="Cums"
-        >
-            Cums
-        </button>
-
-        <button
-            class="category"
-            data-category="Close Friends"
-        >
-            Close Friends
-        </button>
-
     </div>
 
 </nav>
@@ -1310,6 +1261,11 @@ function enterWebsite(){
     document.body.style.overflow =
         "";
 
+    /* Render the stable All button immediately while live categories load. */
+    renderCategoryButtons();
+    loadCategories();
+    setupCategoryRealtime();
+    startWebsitePresenceTracking();
     loadVideos();
 
 }
@@ -1472,6 +1428,51 @@ function getWatchTimeViewerId(){
 }
 
 const WATCH_TIME_VIEWER_ID = getWatchTimeViewerId();
+
+/* =========================================
+   WEBSITE PRESENCE TRACKING
+========================================= */
+
+const WEBSITE_PRESENCE_PLATFORM = "website";
+let websitePresenceTimer = null;
+
+async function updateWebsitePresence(){
+
+    try{
+
+        const { error } = await supabaseClient
+            .from("active_users")
+            .upsert(
+                {
+                    user_id:WATCH_TIME_VIEWER_ID,
+                    platform:WEBSITE_PRESENCE_PLATFORM,
+                    last_seen:new Date().toISOString()
+                },
+                {
+                    onConflict:"user_id,platform"
+                }
+            );
+
+        if(error){
+            console.warn("Website presence update failed:",error);
+        }
+
+    }
+    catch(error){
+        console.warn("Website presence update failed:",error);
+    }
+}
+
+function startWebsitePresenceTracking(){
+
+    if(websitePresenceTimer) return;
+
+    updateWebsitePresence();
+    websitePresenceTimer = setInterval(
+        updateWebsitePresence,
+        15000
+    );
+}
 
 function resetWatchTimeClock(){
 
@@ -1650,23 +1651,196 @@ window.addEventListener("pagehide",function(){
     saveWatchTime(true);
 });
 
+document.addEventListener("visibilitychange",function(){
+    if(
+        websitePresenceTimer &&
+        document.visibilityState === "visible"
+    ){
+        updateWebsitePresence();
+    }
+});
+
 
 /* =========================
    CATEGORIES
 ========================= */
 
-const categories = [
+let categories = ["All"];
 
-    "All",
-    "BackShots",
-    "Masterbates",
-    "RoughX",
-    "BBW",
-    "Africans",
-    "Cums",
-    "Close Friends"
+let categoryRealtimeChannel = null;
+let categoryRefreshTimer = null;
+let categoriesLoading = false;
 
-];
+function renderCategoryButtons(){
+
+    const categoryContainer =
+        document.getElementById("categories");
+
+    if(!categoryContainer) return;
+
+    categoryContainer.innerHTML = "";
+
+    categories.forEach(category => {
+
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "category";
+        button.dataset.category = category;
+        button.textContent = category;
+
+        if(
+            String(category).toLowerCase() ===
+            String(currentCategory).toLowerCase()
+        ){
+            button.classList.add("active");
+        }
+
+        categoryContainer.appendChild(button);
+
+    });
+}
+
+function mergeVideoCategoriesIntoCategoryBar(){
+
+    const videoCategories = allVideos
+        .map(video => String(video.category || "").trim())
+        .filter(Boolean);
+    const known = new Set(
+        categories.map(category => String(category).toLowerCase())
+    );
+
+    videoCategories.forEach(category => {
+        const key = category.toLowerCase();
+
+        if(!known.has(key)){
+            categories.push(category);
+            known.add(key);
+        }
+    });
+
+    renderCategoryButtons();
+}
+
+async function loadCategories(){
+
+    if(categoriesLoading) return;
+
+    categoriesLoading = true;
+
+    try{
+
+        const cached = JSON.parse(
+            localStorage.getItem("streamx_categories_cache") || "null"
+        );
+
+        if(Array.isArray(cached) && cached.length){
+            categories = [
+                "All",
+                ...cached
+                    .map(value => String(value).trim())
+                    .filter(value => value && value.toLowerCase() !== "all")
+            ];
+            mergeVideoCategoriesIntoCategoryBar();
+        }
+
+    }
+    catch(error){
+        console.warn("Unable to restore category cache:",error);
+    }
+
+    try{
+
+        const { data,error } = await supabaseClient
+            .from("categories")
+            .select("*");
+
+        if(error){
+            console.warn("Categories load error:",error);
+            mergeVideoCategoriesIntoCategoryBar();
+            return;
+        }
+
+        const databaseCategories = (data || [])
+            .map(row => row.name ?? row.category ?? row.title ?? "")
+            .map(value => String(value).trim())
+            .filter(Boolean);
+        const uniqueCategories = [];
+        const seen = new Set();
+
+        databaseCategories.forEach(category => {
+            const key = category.toLowerCase();
+
+            if(key !== "all" && !seen.has(key)){
+                seen.add(key);
+                uniqueCategories.push(category);
+            }
+        });
+
+        categories = ["All",...uniqueCategories];
+
+        try{
+            localStorage.setItem(
+                "streamx_categories_cache",
+                JSON.stringify(categories)
+            );
+        }
+        catch(cacheError){
+            console.warn("Category cache unavailable:",cacheError);
+        }
+
+        if(
+            currentCategory !== "All" &&
+            !categories.some(
+                category => category.toLowerCase() === currentCategory.toLowerCase()
+            )
+        ){
+            currentCategory = "All";
+            searchTerm = "";
+            searchInput.value = "";
+            clearSearch.style.display = "none";
+        }
+
+        mergeVideoCategoriesIntoCategoryBar();
+        renderVideos();
+
+    }
+    catch(error){
+        console.warn("Unexpected categories error:",error);
+        mergeVideoCategoriesIntoCategoryBar();
+    }
+    finally{
+        categoriesLoading = false;
+    }
+}
+
+function setupCategoryRealtime(){
+
+    if(categoryRealtimeChannel) return;
+
+    categoryRealtimeChannel = supabaseClient
+        .channel("website-categories-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event:"*",
+                schema:"public",
+                table:"categories"
+            },
+            () => loadCategories()
+        )
+        .subscribe(status => {
+            console.log("Website categories realtime status:",status);
+        });
+
+    /* Poll as a reliable fallback if Realtime is not enabled for categories. */
+    if(!categoryRefreshTimer){
+        categoryRefreshTimer = setInterval(
+            loadCategories,
+            15000
+        );
+    }
+}
 
 
 /* =========================
@@ -1709,6 +1883,10 @@ async function loadVideos(){
 
 allVideos =
     result.data || [];
+
+/* Keep category navigation useful even if the categories table is temporarily
+   unavailable; the videos table still exposes the categories in use. */
+mergeVideoCategoriesIntoCategoryBar();
 
 // Load the real like count for every video
 await Promise.all(

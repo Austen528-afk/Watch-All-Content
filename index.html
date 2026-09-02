@@ -1563,6 +1563,7 @@ let libraryStatusTimer = null;
 let currentPlayerVideoId = null;
 let libraryActivityTimer = null;
 let libraryActivityLastSeen = 0;
+let libraryActivityRequestInFlight = false;
 
 
 /* =========================
@@ -1985,7 +1986,13 @@ async function sendLibraryActivityHeartbeat(){
         libraryActivityLastSeen = now;
     }
 
+    /* Do not allow slow requests to overlap and write an older timestamp last. */
+    if(libraryActivityRequestInFlight) return;
+    libraryActivityRequestInFlight = true;
+
     try{
+
+        const heartbeatAt = new Date().toISOString();
 
         const { error } = await supabaseClient
             .from(LIBRARY_ACTIVITY_TABLE)
@@ -1993,7 +2000,7 @@ async function sendLibraryActivityHeartbeat(){
                 {
                     viewer_id:LIBRARY_VIEWER_ID,
                     platform:LIBRARY_PLATFORM,
-                    last_seen:new Date().toISOString()
+                    last_seen:heartbeatAt
                 },
                 {
                     onConflict:"viewer_id,platform"
@@ -2007,6 +2014,11 @@ async function sendLibraryActivityHeartbeat(){
 
         /* Library activity is optional; never interrupt video browsing. */
         console.warn("Could not update library activity:",error);
+
+    }
+    finally{
+
+        libraryActivityRequestInFlight = false;
 
     }
 }

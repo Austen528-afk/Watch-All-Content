@@ -1738,27 +1738,6 @@ textarea{
         </div>
 
     </div>
-
-
-    <div class="stat">
-
-        <div class="stat-icon">
-            🔵
-        </div>
-
-        <div class="stat-label">
-            Active on Both
-        </div>
-
-        <div
-            class="stat-number"
-            id="activeBoth"
-        >
-            0
-        </div>
-
-    </div>
-
 </div>
 
 
@@ -1813,6 +1792,18 @@ textarea{
             0
         </div>
 
+    </div>
+
+    <div class="stat">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Total Active Users</div>
+        <div class="stat-number" id="totalActiveUsers">0</div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-icon">🔵</div>
+        <div class="stat-label">Active on Both</div>
+        <div class="stat-number" id="activeBoth">0</div>
     </div>
 
 </div>
@@ -3103,26 +3094,29 @@ async function loadActiveUsers(){
 
         /*
          * USERS ACTIVE ON BOTH PLATFORMS
+         * Only users currently online on both platforms.
          */
 
         let activeBoth = 0;
 
-
-        websiteUsers.forEach(
+        websiteOnline.forEach(
             userId => {
-
                 if(
-                    miniAppUsers.has(
+                    miniAppOnline.has(
                         userId
                     )
                 ){
-
                     activeBoth++;
-
                 }
-
             }
         );
+
+        /*
+         * TOTAL ACTIVE USERS
+         * Website online + Mini App online.
+         */
+        const totalActiveUsers =
+            websiteOnline.size + miniAppOnline.size;
 
 
         /*
@@ -3152,6 +3146,11 @@ async function loadActiveUsers(){
         ).textContent =
             miniAppOnline.size.toLocaleString();
 
+
+        document.getElementById(
+            "totalActiveUsers"
+        ).textContent =
+            totalActiveUsers.toLocaleString();
 
         document.getElementById(
             "activeBoth"

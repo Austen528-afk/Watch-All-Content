@@ -307,7 +307,68 @@ body{
     white-space:nowrap;
 }
 
+.category-nav-inner{
+    max-width:1400px;
+    min-width:100%;
+    width:max-content;
+    margin:auto;
+    padding:12px 25px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    white-space:nowrap;
+}
+
+.category-nav-inner .categories{
+    max-width:none;
+    margin:0;
+    padding:0;
+}
+
+.library-toggle{
+    flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    border:1px solid #343434;
+    background:#181818;
+    color:#aaa;
+    padding:9px 13px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:12px;
+    transition:.2s;
+}
+
+.library-toggle:hover{
+    background:#292929;
+    color:white;
+}
+
+.library-toggle.active{
+    border-color:#ff1744;
+    background:rgba(255,23,68,.14);
+    color:#ff7188;
+}
+
+.library-toggle-icon{
+    color:#f5b942;
+    font-size:15px;
+    line-height:1;
+}
+
+.library-count{
+    min-width:18px;
+    padding:2px 5px;
+    border-radius:10px;
+    background:#292929;
+    color:#ddd;
+    font-size:10px;
+    text-align:center;
+}
+
 .category{
+    flex-shrink:0;
     border:none;
     background:#181818;
     color:#999;
@@ -418,6 +479,22 @@ body{
 
 .search-status strong{
     color:#ff1744;
+}
+
+.library-status{
+    display:none;
+    margin-top:-8px;
+    margin-bottom:18px;
+    color:#8edbb6;
+    font-size:12px;
+}
+
+.library-status.show{
+    display:block;
+}
+
+.library-status.error{
+    color:#ff8aa0;
 }
 
 
@@ -604,6 +681,31 @@ body{
     color:#ff1744 !important;
 }
 
+.library-btn{
+    margin-left:auto;
+    border:none;
+    background:none;
+    color:#777;
+    cursor:pointer;
+    font-size:21px;
+    line-height:1;
+    transition:.2s;
+}
+
+.library-btn:hover{
+    color:#f5b942;
+    transform:scale(1.12);
+}
+
+.library-btn.saved{
+    color:#f5b942;
+}
+
+.library-btn:disabled{
+    cursor:wait;
+    opacity:.55;
+}
+
 .like-count{
     color:#aaa;
     font-size:12px;
@@ -754,6 +856,33 @@ body{
     line-height:1.6;
 }
 
+.player-library-button{
+    margin-top:15px;
+    border:1px solid #353535;
+    border-radius:8px;
+    background:#1b1b1b;
+    color:#ccc;
+    padding:9px 12px;
+    cursor:pointer;
+    font-size:12px;
+    transition:.2s;
+}
+
+.player-library-button:hover{
+    border-color:#f5b942;
+    color:#f5b942;
+}
+
+.player-library-button.saved{
+    border-color:rgba(245,185,66,.55);
+    color:#f5b942;
+}
+
+.player-library-button:disabled{
+    cursor:wait;
+    opacity:.55;
+}
+
 
 /* =========================
    FOOTER
@@ -837,6 +966,11 @@ body{
 
     .categories{
         padding:10px 15px;
+    }
+
+    .category-nav-inner{
+        padding:10px 15px;
+        margin:0;
     }
 
     .main{
@@ -1061,18 +1195,39 @@ body{
 
 <nav class="category-bar">
 
-    <div
-        class="categories"
-        id="categories"
-    >
+    <div class="category-nav-inner">
 
         <button
-            class="category active"
-            data-category="All"
+            class="library-toggle"
+            id="libraryToggle"
+            type="button"
+            aria-pressed="false"
+            title="Open My Library"
         >
-            All
+            <span
+                class="library-toggle-icon"
+                id="libraryToggleIcon"
+            >☆</span>
+            <span>My Library</span>
+            <span
+                class="library-count"
+                id="libraryCount"
+            >0</span>
         </button>
 
+        <div
+            class="categories"
+            id="categories"
+        >
+
+            <button
+                class="category active"
+                data-category="All"
+            >
+                All
+            </button>
+
+        </div>
     </div>
 
 </nav>
@@ -1113,6 +1268,13 @@ body{
     <div
         id="searchStatus"
         class="search-status"
+    ></div>
+
+    <div
+        id="libraryStatus"
+        class="library-status"
+        role="status"
+        aria-live="polite"
     ></div>
 
 
@@ -1185,6 +1347,16 @@ body{
                 class="player-description"
                 id="playerDescription"
             ></p>
+
+            <button
+                class="player-library-button"
+                id="playerLibraryButton"
+                type="button"
+                aria-pressed="false"
+                disabled
+            >
+                ☆ Save to My Library
+            </button>
 
         </div>
 
@@ -1309,6 +1481,7 @@ function enterWebsite(){
     // permission/realtime problem cannot make the category bar vanish.
     loadCategories();
     setupCategoryRealtime();
+    loadLibrary();
     loadVideos();
     setupVideoRealtime();
 
@@ -1363,6 +1536,15 @@ let currentCategory = "All";
 
 let searchTerm = "";
 
+let libraryViewActive = false;
+let libraryPreviousCategory = "All";
+let libraryPreviousSearch = "";
+let libraryVideoIds = new Set();
+let libraryPendingIds = new Set();
+let libraryLoading = false;
+let libraryStatusTimer = null;
+let currentPlayerVideoId = null;
+
 
 /* =========================
    ELEMENTS
@@ -1406,6 +1588,21 @@ const playerDescription =
 
 const closePlayer =
     document.getElementById("closePlayer");
+
+const libraryToggle =
+    document.getElementById("libraryToggle");
+
+const libraryToggleIcon =
+    document.getElementById("libraryToggleIcon");
+
+const libraryCount =
+    document.getElementById("libraryCount");
+
+const libraryStatus =
+    document.getElementById("libraryStatus");
+
+const playerLibraryButton =
+    document.getElementById("playerLibraryButton");
 
 
 /* =========================
@@ -1638,6 +1835,336 @@ window.addEventListener("pagehide",function(){
 
 
 /* =========================
+   PERSONAL LIBRARY
+========================= */
+
+const LIBRARY_PLATFORM = WATCH_TIME_PLATFORM;
+const LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
+const LIBRARY_STORAGE_KEY =
+    "streamx_" + LIBRARY_PLATFORM + "_library";
+
+function normalizeLibraryIds(values){
+
+    return new Set(
+        (Array.isArray(values) ? values : [])
+            .map(value => String(value))
+            .filter(Boolean)
+    );
+}
+
+function restoreLibraryCache(){
+
+    try{
+
+        const cached = JSON.parse(
+            localStorage.getItem(LIBRARY_STORAGE_KEY) || "[]"
+        );
+
+        libraryVideoIds = normalizeLibraryIds(cached);
+
+    }
+    catch(error){
+
+        console.warn("Unable to restore My Library cache:",error);
+
+    }
+}
+
+function persistLibraryCache(){
+
+    try{
+
+        localStorage.setItem(
+            LIBRARY_STORAGE_KEY,
+            JSON.stringify(Array.from(libraryVideoIds))
+        );
+
+    }
+    catch(error){
+
+        console.warn("Unable to save My Library cache:",error);
+
+    }
+}
+
+function showLibraryStatus(message,isError = false){
+
+    if(!libraryStatus) return;
+
+    clearTimeout(libraryStatusTimer);
+
+    libraryStatus.textContent = message;
+    libraryStatus.classList.toggle("error",isError);
+    libraryStatus.classList.add("show");
+
+    libraryStatusTimer = setTimeout(
+        () => libraryStatus.classList.remove("show"),
+        3500
+    );
+}
+
+function updateLibraryButtonState(button,videoId){
+
+    if(!button) return;
+
+    const key = String(videoId);
+    const saved = libraryVideoIds.has(key);
+    const pending = libraryPendingIds.has(key);
+
+    button.textContent = saved ? "★" : "☆";
+    button.classList.toggle("saved",saved);
+    button.disabled = pending;
+    button.setAttribute("aria-pressed",String(saved));
+    button.setAttribute(
+        "aria-label",
+        saved ? "Remove from My Library" : "Save to My Library"
+    );
+    button.title = saved ? "Remove from My Library" : "Save to My Library";
+}
+
+function updatePlayerLibraryButton(){
+
+    if(!playerLibraryButton) return;
+
+    const hasVideo =
+        currentPlayerVideoId !== null &&
+        currentPlayerVideoId !== undefined;
+
+    if(!hasVideo){
+
+        playerLibraryButton.disabled = true;
+        playerLibraryButton.classList.remove("saved");
+        playerLibraryButton.setAttribute("aria-pressed","false");
+        playerLibraryButton.textContent = "☆ Save to My Library";
+        return;
+
+    }
+
+    const saved = libraryVideoIds.has(
+        String(currentPlayerVideoId)
+    );
+
+    playerLibraryButton.disabled = libraryPendingIds.has(
+        String(currentPlayerVideoId)
+    );
+    playerLibraryButton.classList.toggle("saved",saved);
+    playerLibraryButton.setAttribute("aria-pressed",String(saved));
+    playerLibraryButton.textContent = saved
+        ? "★ Remove from My Library"
+        : "☆ Save to My Library";
+}
+
+function updateLibraryUI(){
+
+    if(libraryCount){
+
+        libraryCount.textContent =
+            libraryVideoIds.size.toLocaleString();
+
+    }
+
+    if(libraryToggle){
+
+        libraryToggle.classList.toggle(
+            "active",
+            libraryViewActive
+        );
+        libraryToggle.setAttribute(
+            "aria-pressed",
+            String(libraryViewActive)
+        );
+        libraryToggle.title = libraryViewActive
+            ? "Return to all videos"
+            : "Open My Library";
+
+    }
+
+    if(libraryToggleIcon){
+
+        libraryToggleIcon.textContent =
+            libraryViewActive ? "★" : "☆";
+
+    }
+
+    document
+        .querySelectorAll(".library-btn")
+        .forEach(button => {
+            updateLibraryButtonState(
+                button,
+                button.dataset.id
+            );
+        });
+
+    updatePlayerLibraryButton();
+}
+
+async function loadLibrary(){
+
+    if(libraryLoading) return;
+
+    libraryLoading = true;
+    restoreLibraryCache();
+    updateLibraryUI();
+
+    try{
+
+        const { data,error } = await supabaseClient
+            .from("video_library")
+            .select("video_id")
+            .eq("viewer_id",LIBRARY_VIEWER_ID)
+            .eq("platform",LIBRARY_PLATFORM);
+
+        if(error) throw error;
+
+        libraryVideoIds = normalizeLibraryIds(
+            (data || []).map(row => row.video_id)
+        );
+        persistLibraryCache();
+
+    }
+    catch(error){
+
+        /* Keep the cached library usable until the table/network is ready. */
+        console.warn("My Library sync unavailable:",error);
+
+    }
+    finally{
+
+        libraryLoading = false;
+        updateLibraryUI();
+
+        if(libraryViewActive){
+            renderVideos();
+        }
+
+    }
+}
+
+function toggleLibraryView(){
+
+    if(!libraryViewActive){
+
+        libraryPreviousCategory = currentCategory;
+        libraryPreviousSearch = searchTerm;
+        libraryViewActive = true;
+        currentCategory = "All";
+        searchTerm = "";
+        searchInput.value = "";
+        clearSearch.style.display = "none";
+        categorySuggestions.style.display = "none";
+
+    }
+    else{
+
+        libraryViewActive = false;
+        currentCategory = categories.some(
+            category => category.toLowerCase() ===
+                libraryPreviousCategory.toLowerCase()
+        ) ? libraryPreviousCategory : "All";
+        searchTerm = libraryPreviousSearch;
+        searchInput.value = libraryPreviousSearch;
+        clearSearch.style.display = searchTerm ? "flex" : "none";
+
+    }
+
+    renderCategoryButtons();
+    updateLibraryUI();
+    renderVideos();
+}
+
+async function toggleLibrary(videoId){
+
+    const key = String(videoId);
+
+    if(libraryPendingIds.has(key)) return;
+
+    const wasSaved = libraryVideoIds.has(key);
+    libraryPendingIds.add(key);
+
+    if(wasSaved){
+        libraryVideoIds.delete(key);
+    }
+    else{
+        libraryVideoIds.add(key);
+    }
+
+    persistLibraryCache();
+    updateLibraryUI();
+
+    if(libraryViewActive){
+        renderVideos();
+    }
+
+    let syncError = null;
+
+    try{
+
+        if(wasSaved){
+
+            const result = await supabaseClient
+                .from("video_library")
+                .delete()
+                .eq("viewer_id",LIBRARY_VIEWER_ID)
+                .eq("platform",LIBRARY_PLATFORM)
+                .eq("video_id",videoId);
+
+            syncError = result.error;
+
+        }
+        else{
+
+            const result = await supabaseClient
+                .from("video_library")
+                .upsert(
+                    {
+                        viewer_id:LIBRARY_VIEWER_ID,
+                        platform:LIBRARY_PLATFORM,
+                        video_id:videoId
+                    },
+                    {
+                        onConflict:"viewer_id,platform,video_id",
+                        ignoreDuplicates:true
+                    }
+                );
+
+            syncError = result.error;
+
+        }
+
+    }
+    catch(error){
+
+        syncError = error;
+
+    }
+
+    if(syncError){
+        showLibraryStatus(
+            "Cloud sync is unavailable; your device library is still updated.",
+            true
+        );
+
+    }
+    else{
+
+        showLibraryStatus(
+            wasSaved
+                ? "Removed from My Library."
+                : "Added to My Library."
+        );
+
+    }
+
+    libraryPendingIds.delete(key);
+    updateLibraryUI();
+
+    if(libraryViewActive){
+        renderVideos();
+    }
+}
+
+
+/* =========================
    CATEGORIES
 ========================= */
 
@@ -1772,6 +2299,7 @@ function renderCategoryButtons(){
         button.textContent = category;
 
         if(
+            !libraryViewActive &&
             category.toLowerCase() ===
             currentCategory.toLowerCase()
         ){
@@ -2024,6 +2552,10 @@ function getFilteredVideos(){
             videoCategory.toLowerCase() ===
             currentCategory.toLowerCase();
 
+        const libraryMatch =
+            !libraryViewActive ||
+            libraryVideoIds.has(String(video.id));
+
 
         const title =
             String(
@@ -2049,6 +2581,7 @@ function getFilteredVideos(){
 
 
         return (
+            libraryMatch &&
             categoryMatch &&
             searchMatch
         );
@@ -2074,7 +2607,9 @@ function renderVideos(){
     if(searchTerm){
 
         sectionTitle.textContent =
-            "Search Results";
+            libraryViewActive
+            ? "Search My Library"
+            : "Search Results";
 
 
         searchStatus.style.display =
@@ -2082,7 +2617,9 @@ function renderVideos(){
 
 
         searchStatus.innerHTML =
-            "Searching for: <strong>" +
+            (libraryViewActive
+                ? "Searching My Library for: <strong>"
+                : "Searching for: <strong>") +
             escapeHTML(searchInput.value) +
             "</strong>";
 
@@ -2094,9 +2631,13 @@ function renderVideos(){
 
 
         sectionTitle.textContent =
-            currentCategory === "All"
-            ? "All Videos"
-            : currentCategory;
+            libraryViewActive
+            ? "My Library"
+            : (
+                currentCategory === "All"
+                ? "All Videos"
+                : currentCategory
+            );
 
     }
 
@@ -2273,6 +2814,17 @@ function createVideoCard(video){
         ${video.likes_count || 0}
     </span>
 
+    <button
+        class="library-btn"
+        data-id="${escapeHTML(String(video.id))}"
+        type="button"
+        aria-pressed="false"
+        aria-label="Save to My Library"
+        title="Save to My Library"
+    >
+        ☆
+    </button>
+
 </div>
 
         </div>
@@ -2302,6 +2854,28 @@ if(likeButton){
     updateLikeButton(video.id);
 
 }
+
+    const libraryButton =
+        card.querySelector(".library-btn");
+
+    if(libraryButton){
+
+        updateLibraryButtonState(
+            libraryButton,
+            video.id
+        );
+
+        libraryButton.addEventListener(
+            "click",
+            async function(event){
+
+                event.stopPropagation();
+                await toggleLibrary(video.id);
+
+            }
+        );
+
+    }
 
 
     card.addEventListener(
@@ -2520,6 +3094,9 @@ async function getVideoURL(video){
 async function openPlayer(video){
 
     stopWatchTimeTracking();
+
+    currentPlayerVideoId = video.id;
+    updatePlayerLibraryButton();
 
     playerTitle.textContent =
         video.title ||
@@ -2940,6 +3517,9 @@ function closeVideoPlayer(){
 
     stopWatchTimeTracking();
 
+    currentPlayerVideoId = null;
+    updatePlayerLibraryButton();
+
     playerVideo.pause();
 
 
@@ -2970,6 +3550,26 @@ closePlayer.addEventListener(
     "click",
     closeVideoPlayer
 );
+
+if(playerLibraryButton){
+
+    playerLibraryButton.addEventListener(
+        "click",
+        async function(event){
+
+            event.stopPropagation();
+
+            if(
+                currentPlayerVideoId !== null &&
+                currentPlayerVideoId !== undefined
+            ){
+                await toggleLibrary(currentPlayerVideoId);
+            }
+
+        }
+    );
+
+}
 
 
 /* =========================
@@ -3077,6 +3677,15 @@ playerVideo.addEventListener(
    CATEGORY BUTTONS
 ========================= */
 
+if(libraryToggle){
+
+    libraryToggle.addEventListener(
+        "click",
+        toggleLibraryView
+    );
+
+}
+
 document
     .getElementById("categories")
     .addEventListener(
@@ -3091,6 +3700,8 @@ document
 
             if(!button)
                 return;
+
+            libraryViewActive = false;
 
 
             document
@@ -3132,6 +3743,7 @@ document
             categorySuggestions.style.display =
                 "none";
 
+            updateLibraryUI();
 
             renderVideos();
 
@@ -3474,6 +4086,14 @@ function showLoading(){
 
 function showEmpty(){
 
+    const emptyHeading = libraryViewActive
+        ? "Your library is empty"
+        : "No videos found";
+
+    const emptyText = libraryViewActive
+        ? "Click the star on any video to save it here."
+        : "Try another category or search term.";
+
     videoGrid.innerHTML = `
 
         <div class="empty">
@@ -3483,11 +4103,11 @@ function showEmpty(){
             </div>
 
             <h3>
-                No videos found
+                ${emptyHeading}
             </h3>
 
             <p>
-                Try another category or search term.
+                ${emptyText}
             </p>
 
         </div>

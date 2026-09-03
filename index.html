@@ -3429,7 +3429,7 @@ function createVideoCard(video){
                     loop
                     autoplay
                     playsinline
-                    preload="none"
+                    preload="auto"
                     poster="${thumbnail ? escapeHTML(thumbnail) : ""}"
                     aria-hidden="true"
                     tabindex="-1"
@@ -3820,9 +3820,6 @@ function getThumbnailPreviewObserver(){
                         previewVideo.__streamxVideo
                     );
                 }
-                else{
-                    previewVideo.pause();
-                }
             });
         },
         {
@@ -3927,7 +3924,6 @@ async function loadThumbnailPreview(previewVideo,video){
 
     if(previewVideo.dataset.previewStarted === "true"){
         if(
-            previewVideo.dataset.previewVisible === "true" &&
             !thumbnailPreviewsPaused
         ){
             const playPromise = previewVideo.play();
@@ -3957,12 +3953,11 @@ async function loadThumbnailPreview(previewVideo,video){
         }
 
         previewVideo.src = videoURL;
-        previewVideo.preload = "metadata";
+        previewVideo.preload = "auto";
         previewVideo.dataset.previewStarted = "true";
         previewVideo.load();
 
         if(
-            previewVideo.dataset.previewVisible === "true" &&
             !thumbnailPreviewsPaused
         ){
             const playPromise = previewVideo.play();
@@ -3984,6 +3979,7 @@ function setupThumbnailPreview(card,previewVideo,video){
 
     previewVideo.muted = true;
     previewVideo.loop = true;
+    previewVideo.autoplay = true;
     previewVideo.playsInline = true;
     previewVideo.setAttribute("muted","");
     previewVideo.__streamxVideo = video;
@@ -3995,15 +3991,10 @@ function setupThumbnailPreview(card,previewVideo,video){
         markThumbnailPreviewFailed(previewVideo);
     });
 
-    const observer = getThumbnailPreviewObserver();
-
-    if(observer){
-        observer.observe(previewVideo);
-    }
-    else{
-        previewVideo.dataset.previewVisible = "true";
-        void loadThumbnailPreview(previewVideo,video);
-    }
+    /* Start every card together after render. Keeping this eager avoids the
+       one-at-a-time feeling caused by viewport-only observers. */
+    previewVideo.dataset.previewVisible = "true";
+    void loadThumbnailPreview(previewVideo,video);
 }
 
 function pauseThumbnailPreviews(){
@@ -4018,9 +4009,7 @@ function resumeThumbnailPreviews(){
 
     thumbnailPreviewsPaused = false;
     document
-        .querySelectorAll(
-            '.thumbnail-video[data-preview-visible="true"]'
-        )
+        .querySelectorAll(".thumbnail-video")
         .forEach(previewVideo => {
             if(previewVideo.__streamxVideo){
                 void loadThumbnailPreview(

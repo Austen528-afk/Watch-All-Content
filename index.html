@@ -1782,6 +1782,10 @@ let libraryActivityRequestInFlight = false;
 let recommendationVideos = [];
 let recommendationRefreshTimer = null;
 let recommendationLoading = false;
+let videoLikeSummary = new Map();
+let likedVideoIds = new Set();
+let likeSummaryPromise = null;
+let likeSummaryReady = false;
 
 
 /* =========================
@@ -3084,6 +3088,104 @@ function scheduleRecommendationRefresh(delay = 900){
     );
 }
 
+function setLikeButtonState(videoId,isLiked){
+
+    const button = document.querySelector(
+        `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
+    );
+
+    if(!button) return;
+
+    button.textContent = isLiked ? "♥" : "♡";
+    button.classList.toggle("liked",isLiked);
+}
+
+function updateLikeCountUI(videoId,count){
+
+    const selector =
+        `.like-btn[data-id="${CSS.escape(String(videoId))}"]`;
+
+    document
+        .querySelectorAll(selector)
+        .forEach(button => {
+            const actions =
+                button.closest(".video-actions") ||
+                button.parentElement;
+            const likeCount =
+                actions && actions.querySelector(".like-count");
+
+            if(likeCount){
+                likeCount.textContent =
+                    Number(count || 0).toLocaleString();
+            }
+        });
+}
+
+function applyLikeSummary(rows){
+
+    videoLikeSummary = new Map();
+    likedVideoIds = new Set();
+
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+
+        const key = String(row && row.video_id || "").trim();
+
+        if(!key) return;
+
+        const parsedCount = Number(row.likes_count || 0);
+        const count = Number.isFinite(parsedCount) ? parsedCount : 0;
+        const isLiked = row.liked_by_user === true;
+
+        videoLikeSummary.set(key,count);
+
+        if(isLiked){
+            likedVideoIds.add(key);
+        }
+
+        const video = allVideos.find(
+            item => String(item.id) === key
+        );
+
+        if(video){
+            video.likes_count = count;
+        }
+
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,isLiked);
+    });
+
+    likeSummaryReady = true;
+}
+
+function loadLikeSummary(){
+
+    likeSummaryReady = false;
+
+    return supabaseClient
+        .rpc(
+            "get_streamx_like_summary",
+            {
+                p_like_user_id:getLikeUserId()
+            }
+        )
+        .then(result => {
+
+            if(result.error) throw result.error;
+
+            applyLikeSummary(result.data);
+            return result.data;
+        })
+        .catch(error => {
+
+            /* Keep the older per-card query as a compatibility fallback until
+               the summary function is installed in Supabase. */
+            likeSummaryReady = false;
+            likeSummaryPromise = null;
+            console.warn("Like summary unavailable:",error);
+            throw error;
+        });
+}
+
 /* =========================
    LOAD VIDEOS
 ========================= */
@@ -3097,7 +3199,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("*")
+                .select("id,title,description,category,video_url,thumbnail_url,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -3129,45 +3231,17 @@ allVideos =
    unavailable; the videos table still exposes the categories in use. */
 mergeVideoCategoriesIntoCategoryBar();
 
-// Load the real like count for every video
-await Promise.all(
-    allVideos.map(async video => {
+/* Start the single likes request before painting cards. The grid can paint
+   immediately while the like counts and heart states arrive in the background. */
+allVideos.forEach(video => {
+    if(video.likes_count === undefined || video.likes_count === null){
+        video.likes_count = 0;
+    }
+});
 
-        const { count, error } =
-            await supabaseClient
-                .from("video_likes")
-                .select(
-                    "*",
-                    {
-                        count:"exact",
-                        head:true
-                    }
-                )
-                .eq(
-                    "video_id",
-                    video.id
-                );
-
-        if(error){
-
-            console.error(
-                "Initial like count error for video:",
-                video.id,
-                error
-            );
-
-            video.likes_count = 0;
-
-        }
-        else{
-
-            video.likes_count =
-                count || 0;
-        }
-    })
-);
-
+likeSummaryPromise = loadLikeSummary();
 renderVideos();
+void likeSummaryPromise.catch(() => {});
 
     }
     catch(error){
@@ -4250,6 +4324,13 @@ async function toggleLike(videoId){
         }
 
 
+        if(existingLike){
+            likedVideoIds.delete(String(videoId));
+        }
+        else{
+            likedVideoIds.add(String(videoId));
+        }
+
         await updateLikeCount(videoId);
         scheduleRecommendationRefresh();
 
@@ -4318,6 +4399,11 @@ async function updateLikeCount(videoId){
     const newLikeCount =
         count || 0;
 
+    videoLikeSummary.set(
+        String(videoId),
+        newLikeCount
+    );
+
     // Update the video object
     const video =
         allVideos.find(
@@ -4358,6 +4444,25 @@ async function updateLikeCount(videoId){
 
 async function updateLikeButton(videoId){
 
+    const key = String(videoId);
+
+    if(likeSummaryPromise){
+        try{
+            await likeSummaryPromise;
+        }
+        catch(error){
+            /* Fall through to the compatibility query below. */
+        }
+    }
+
+    if(likeSummaryReady && videoLikeSummary.has(key)){
+        setLikeButtonState(
+            key,
+            likedVideoIds.has(key)
+        );
+        return;
+    }
+
     const userId =
         getLikeUserId();
 
@@ -4388,36 +4493,14 @@ async function updateLikeButton(videoId){
     }
 
 
-    const button =
-        document.querySelector(
-            `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
-        );
-
-
-    if(!button)
-        return;
-
-
     if(data){
-
-        button.textContent =
-            "♥";
-
-        button.classList.add(
-            "liked"
-        );
-
+        likedVideoIds.add(key);
     }
     else{
-
-        button.textContent =
-            "♡";
-
-        button.classList.remove(
-            "liked"
-        );
-
+        likedVideoIds.delete(key);
     }
+
+    setLikeButtonState(key,Boolean(data));
 
 }
 

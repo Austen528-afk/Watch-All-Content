@@ -1632,47 +1632,6 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
-/* =========================================
-   WEBSITE PRESENCE TRACKING
-========================================= */
-
-const MINI_APP_USER_ID =
-    localStorage.getItem("streamx_mini_app_user_id") ||
-    crypto.randomUUID();
-
-localStorage.setItem(
-    "streamx_mini_app_user_id",
-    MINI_APP_USER_ID
-);
-
-async function updateMiniAppPresence(){
-
-    try{
-
-        await supabaseClient
-            .from("active_users")
-            .upsert(
-                {
-                    user_id: MINI_APP_USER_ID,
-                    platform: "mini_app",
-                    last_seen: new Date().toISOString()
-                },
-                {
-                    onConflict: "user_id,platform"
-                }
-            );
-
-    }catch(error){
-
-        console.error(
-            "Mini App presence update failed:",
-            error
-        );
-
-    }
-
-}
-
 
 /* =========================
    AGE GATE ELEMENTS
@@ -1755,25 +1714,16 @@ function enterWebsite(){
     document.body.style.overflow =
         "";
 
-    // Always render the All button immediately.
+    /* Render the stable All button immediately while live categories load. */
     renderCategoryButtons();
-
-    // Load categories and videos independently so a category-table
-    // permission/realtime problem cannot make the category bar vanish.
     loadCategories();
     setupCategoryRealtime();
-    loadLibrary();
-    loadVideos().then(() => loadRecommendations());
     setupVideoRealtime();
     setupLikeRealtime();
-
-updateMiniAppPresence();
-startViewerTimeTracking("outside");
-
-setInterval(
-    updateMiniAppPresence,
-    5000
-);
+    startWebsitePresenceTracking();
+    startViewerTimeTracking("outside");
+    loadLibrary();
+    loadVideos().then(() => loadRecommendations());
 
 }
 
@@ -1832,6 +1782,10 @@ let libraryActivityRequestInFlight = false;
 let recommendationVideos = [];
 let recommendationRefreshTimer = null;
 let recommendationLoading = false;
+let videoLikeSummary = new Map();
+let likedVideoIds = new Set();
+let likeSummaryPromise = null;
+let likeSummaryReady = false;
 
 
 /* =========================
@@ -1900,9 +1854,8 @@ const playerLibraryButton =
    VIDEO WATCH-TIME TRACKING
 ========================= */
 
-const WATCH_TIME_PLATFORM = "mini_app";
+const WATCH_TIME_PLATFORM = "website";
 const WATCH_TIME_SAVE_INTERVAL_SECONDS = 10;
-const WATCH_TIME_VIEWER_ID = MINI_APP_USER_ID;
 
 let watchTimeState = null;
 let watchTimeTimer = null;
@@ -1945,6 +1898,73 @@ function createWatchTimeId(){
         hex.slice(16,20),
         hex.slice(20)
     ].join("-");
+}
+
+function getWatchTimeViewerId(){
+
+    const storageKey = "streamx_website_user_id";
+
+    try{
+        let viewerId = localStorage.getItem(storageKey);
+
+        if(!viewerId){
+            viewerId = createWatchTimeId();
+            localStorage.setItem(storageKey,viewerId);
+        }
+
+        return viewerId;
+    }
+    catch(error){
+        console.warn("Could not save the watch-time viewer ID:",error);
+        return createWatchTimeId();
+    }
+}
+
+const WATCH_TIME_VIEWER_ID = getWatchTimeViewerId();
+
+/* =========================================
+   WEBSITE PRESENCE TRACKING
+========================================= */
+
+const WEBSITE_PRESENCE_PLATFORM = "website";
+let websitePresenceTimer = null;
+
+async function updateWebsitePresence(){
+
+    try{
+
+        const { error } = await supabaseClient
+            .from("active_users")
+            .upsert(
+                {
+                    user_id:WATCH_TIME_VIEWER_ID,
+                    platform:WEBSITE_PRESENCE_PLATFORM,
+                    last_seen:new Date().toISOString()
+                },
+                {
+                    onConflict:"user_id,platform"
+                }
+            );
+
+        if(error){
+            console.warn("Website presence update failed:",error);
+        }
+
+    }
+    catch(error){
+        console.warn("Website presence update failed:",error);
+    }
+}
+
+function startWebsitePresenceTracking(){
+
+    if(websitePresenceTimer) return;
+
+    updateWebsitePresence();
+    websitePresenceTimer = setInterval(
+        updateWebsitePresence,
+        5000
+    );
 }
 
 function resetWatchTimeClock(){
@@ -2122,6 +2142,15 @@ document.addEventListener("visibilitychange",function(){
 window.addEventListener("pagehide",function(){
     captureWatchTime(true);
     saveWatchTime(true);
+});
+
+document.addEventListener("visibilitychange",function(){
+    if(
+        websitePresenceTimer &&
+        document.visibilityState === "visible"
+    ){
+        updateWebsitePresence();
+    }
 });
 
 
@@ -2790,128 +2819,27 @@ async function toggleLibrary(videoId,sourceButton){
 
 let categories = ["All"];
 
-
-/* =========================
-   LOAD CATEGORIES
-========================= */
-
-async function loadCategories(showBusy = false){
-
-    // Restore the last known category list immediately while Supabase loads.
-    try{
-        const cached =
-            JSON.parse(
-                localStorage.getItem("streamx_categories_cache") || "null"
-            );
-
-        if(Array.isArray(cached) && cached.length){
-            categories = ["All", ...cached.filter(
-                category =>
-                    String(category).toLowerCase() !== "all"
-            )];
-            renderCategoryButtons();
-        }
-    }catch(cacheError){
-        console.warn("Unable to restore category cache:", cacheError);
-    }
-
-    try{
-
-        const { data, error } =
-            await supabaseClient
-                .from("categories")
-                .select("*");
-
-        if(error){
-            console.error(
-                "Categories load error:",
-                error
-            );
-
-            // Keep the category bar usable even if the categories table
-            // is temporarily unavailable or its SELECT policy is missing.
-            // The actual database categories will replace this as soon as
-            // the query succeeds.
-            categories = ["All"];
-            renderCategoryButtons();
-            return;
-        }
-
-        const databaseCategories = (data || [])
-            .map(row =>
-                row.name ??
-                row.category ??
-                row.title ??
-                ""
-            )
-            .map(value => String(value).trim())
-            .filter(Boolean);
-
-        categories = [
-            "All",
-            ...databaseCategories.filter(
-                (category, index, list) =>
-                    list.findIndex(
-                        item =>
-                            item.toLowerCase() ===
-                            category.toLowerCase()
-                    ) === index
-            )
-        ];
-
-        // Keep the last successful database list available during a
-        // temporary network/table-policy failure.
-        try{
-            localStorage.setItem(
-                "streamx_categories_cache",
-                JSON.stringify(categories)
-            );
-        }catch(cacheError){
-            console.warn("Category cache unavailable:", cacheError);
-        }
-
-        if(
-            currentCategory !== "All" &&
-            !categories.some(
-                category =>
-                    category.toLowerCase() ===
-                    currentCategory.toLowerCase()
-            )
-        ){
-            currentCategory = "All";
-            searchTerm = "";
-            searchInput.value = "";
-            clearSearch.style.display = "none";
-        }
-
-        renderCategoryButtons();
-        renderVideos();
-
-    }
-    catch(error){
-
-        console.error(
-            "Unexpected categories error:",
-            error
-        );
-
-    }
-}
+let categoryRealtimeChannel = null;
+let categoryRefreshTimer = null;
+let categoriesLoading = false;
+let videoRealtimeChannel = null;
+let likeRealtimeChannel = null;
+let likeRealtimeStatus = "";
+let likeCountRefreshTimer = null;
+const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
 
 function renderCategoryButtons(){
 
     const categoryContainer =
         document.getElementById("categories");
 
-    if(!categoryContainer)
-        return;
+    if(!categoryContainer) return;
 
     categoryContainer.innerHTML = "";
 
     categories.forEach(category => {
 
-        const button =
-            document.createElement("button");
+        const button = document.createElement("button");
 
         button.type = "button";
         button.className = "category";
@@ -2920,8 +2848,8 @@ function renderCategoryButtons(){
 
         if(
             !libraryViewActive &&
-            category.toLowerCase() ===
-            currentCategory.toLowerCase()
+            String(category).toLowerCase() ===
+            String(currentCategory).toLowerCase()
         ){
             button.classList.add("active");
         }
@@ -2931,43 +2859,145 @@ function renderCategoryButtons(){
     });
 }
 
-let categoryRealtimeChannel = null;
+function mergeVideoCategoriesIntoCategoryBar(){
+
+    const videoCategories = allVideos
+        .map(video => String(video.category || "").trim())
+        .filter(Boolean);
+    const known = new Set(
+        categories.map(category => String(category).toLowerCase())
+    );
+
+    videoCategories.forEach(category => {
+        const key = category.toLowerCase();
+
+        if(!known.has(key)){
+            categories.push(category);
+            known.add(key);
+        }
+    });
+
+    renderCategoryButtons();
+}
+
+async function loadCategories(){
+
+    if(categoriesLoading) return;
+
+    categoriesLoading = true;
+
+    try{
+
+        const cached = JSON.parse(
+            localStorage.getItem("streamx_categories_cache") || "null"
+        );
+
+        if(Array.isArray(cached) && cached.length){
+            categories = [
+                "All",
+                ...cached
+                    .map(value => String(value).trim())
+                    .filter(value => value && value.toLowerCase() !== "all")
+            ];
+            mergeVideoCategoriesIntoCategoryBar();
+        }
+
+    }
+    catch(error){
+        console.warn("Unable to restore category cache:",error);
+    }
+
+    try{
+
+        const { data,error } = await supabaseClient
+            .from("categories")
+            .select("*");
+
+        if(error){
+            console.warn("Categories load error:",error);
+            mergeVideoCategoriesIntoCategoryBar();
+            return;
+        }
+
+        const databaseCategories = (data || [])
+            .map(row => row.name ?? row.category ?? row.title ?? "")
+            .map(value => String(value).trim())
+            .filter(Boolean);
+        const uniqueCategories = [];
+        const seen = new Set();
+
+        databaseCategories.forEach(category => {
+            const key = category.toLowerCase();
+
+            if(key !== "all" && !seen.has(key)){
+                seen.add(key);
+                uniqueCategories.push(category);
+            }
+        });
+
+        categories = ["All",...uniqueCategories];
+
+        try{
+            localStorage.setItem(
+                "streamx_categories_cache",
+                JSON.stringify(categories)
+            );
+        }
+        catch(cacheError){
+            console.warn("Category cache unavailable:",cacheError);
+        }
+
+        if(
+            currentCategory !== "All" &&
+            !categories.some(
+                category => category.toLowerCase() === currentCategory.toLowerCase()
+            )
+        ){
+            currentCategory = "All";
+            searchTerm = "";
+            searchInput.value = "";
+            clearSearch.style.display = "none";
+        }
+
+        mergeVideoCategoriesIntoCategoryBar();
+        renderVideos();
+
+    }
+    catch(error){
+        console.warn("Unexpected categories error:",error);
+        mergeVideoCategoriesIntoCategoryBar();
+    }
+    finally{
+        categoriesLoading = false;
+    }
+}
 
 function setupCategoryRealtime(){
 
-    if(categoryRealtimeChannel){
-        return;
-    }
+    if(categoryRealtimeChannel) return;
 
-    categoryRealtimeChannel =
-        supabaseClient
-        .channel("categories-realtime")
+    categoryRealtimeChannel = supabaseClient
+        .channel("website-categories-realtime")
         .on(
             "postgres_changes",
             {
-                event: "*",
-                schema: "public",
-                table: "categories"
+                event:"*",
+                schema:"public",
+                table:"categories"
             },
-            async payload => {
-
-                console.log(
-                    "Category realtime update:",
-                    payload.eventType
-                );
-
-                await loadCategories();
-
-            }
+            () => loadCategories()
         )
         .subscribe(status => {
-
-            console.log(
-                "Categories realtime status:",
-                status
-            );
-
+            console.log("Website categories realtime status:",status);
         });
+
+    /* Poll as a reliable fallback if Realtime is not enabled for categories. */
+    if(!categoryRefreshTimer){
+        categoryRefreshTimer = setInterval(
+            loadCategories,
+            15000
+        );
+    }
 }
 
 
@@ -3003,7 +3033,82 @@ function renderRecommendations(rows){
                 video.video_url
             );
 
-    renderVideos();
+    /* Reorder the cards already on screen instead of rebuilding every card.
+       Rebuilding would restart GIF/image downloads and make the feed feel
+       slower whenever recommendations refresh. */
+    prioritizeRenderedRecommendationCards();
+}
+
+const INITIAL_THUMBNAIL_COUNT = 8;
+
+function prioritizeRenderedRecommendationCards(){
+
+    if(
+        !videoGrid ||
+        libraryViewActive ||
+        searchTerm ||
+        String(currentCategory).toLowerCase() !== "all" ||
+        recommendationVideos.length === 0
+    ){
+        return;
+    }
+
+    const cards = Array.from(
+        videoGrid.querySelectorAll(".video-card")
+    );
+
+    if(cards.length === 0){
+        return;
+    }
+
+    const cardsById = new Map(
+        cards.map(card => [
+            String(card.dataset.videoId || ""),
+            card
+        ])
+    );
+    const ordered = [];
+    const used = new Set();
+
+    recommendationVideos.forEach(recommendation => {
+
+        const card = cardsById.get(
+            String(recommendation.id)
+        );
+
+        if(card && !used.has(card)){
+            used.add(card);
+            ordered.push(card);
+        }
+
+    });
+
+    cards.forEach(card => {
+        if(!used.has(card)){
+            ordered.push(card);
+        }
+    });
+
+    const fragment = document.createDocumentFragment();
+
+    ordered.forEach((card,index) => {
+
+        if(index < INITIAL_THUMBNAIL_COUNT){
+            const image = card.querySelector(
+                ".thumbnail-fallback"
+            );
+
+            if(image){
+                image.loading = "eager";
+                image.decoding = "async";
+            }
+        }
+
+        fragment.appendChild(card);
+
+    });
+
+    videoGrid.appendChild(fragment);
 }
 
 async function loadRecommendations(){
@@ -3058,6 +3163,104 @@ function scheduleRecommendationRefresh(delay = 900){
     );
 }
 
+function setLikeButtonState(videoId,isLiked){
+
+    const button = document.querySelector(
+        `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
+    );
+
+    if(!button) return;
+
+    button.textContent = isLiked ? "♥" : "♡";
+    button.classList.toggle("liked",isLiked);
+}
+
+function updateLikeCountUI(videoId,count){
+
+    const selector =
+        `.like-btn[data-id="${CSS.escape(String(videoId))}"]`;
+
+    document
+        .querySelectorAll(selector)
+        .forEach(button => {
+            const actions =
+                button.closest(".video-actions") ||
+                button.parentElement;
+            const likeCount =
+                actions && actions.querySelector(".like-count");
+
+            if(likeCount){
+                likeCount.textContent =
+                    Number(count || 0).toLocaleString();
+            }
+        });
+}
+
+function applyLikeSummary(rows){
+
+    videoLikeSummary = new Map();
+    likedVideoIds = new Set();
+
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+
+        const key = String(row && row.video_id || "").trim();
+
+        if(!key) return;
+
+        const parsedCount = Number(row.likes_count || 0);
+        const count = Number.isFinite(parsedCount) ? parsedCount : 0;
+        const isLiked = row.liked_by_user === true;
+
+        videoLikeSummary.set(key,count);
+
+        if(isLiked){
+            likedVideoIds.add(key);
+        }
+
+        const video = allVideos.find(
+            item => String(item.id) === key
+        );
+
+        if(video){
+            video.likes_count = count;
+        }
+
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,isLiked);
+    });
+
+    likeSummaryReady = true;
+}
+
+function loadLikeSummary(){
+
+    likeSummaryReady = false;
+
+    return supabaseClient
+        .rpc(
+            "get_streamx_like_summary",
+            {
+                p_like_user_id:getLikeUserId()
+            }
+        )
+        .then(result => {
+
+            if(result.error) throw result.error;
+
+            applyLikeSummary(result.data);
+            return result.data;
+        })
+        .catch(error => {
+
+            /* Keep the older per-card query as a compatibility fallback until
+               the summary function is installed in Supabase. */
+            likeSummaryReady = false;
+            likeSummaryPromise = null;
+            console.warn("Like summary unavailable:",error);
+            throw error;
+        });
+}
+
 /* =========================
    LOAD VIDEOS
 ========================= */
@@ -3071,7 +3274,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("*")
+                .select("id,title,description,category,video_url,thumbnail_url,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -3099,73 +3302,21 @@ async function loadVideos(){
 allVideos =
     result.data || [];
 
-// If the categories table cannot be read, use categories already present
-// on videos so the category bar still works. This does not replace the
-// database as the source of truth; a successful categories query always
-// takes priority.
-if(categories.length <= 1){
+/* Keep category navigation useful even if the categories table is temporarily
+   unavailable; the videos table still exposes the categories in use. */
+mergeVideoCategoriesIntoCategoryBar();
 
-    const videoCategories = allVideos
-        .map(video => String(video.category || "").trim())
-        .filter(Boolean);
-
-    const uniqueVideoCategories = [
-        ...new Map(
-            videoCategories.map(category => [
-                category.toLowerCase(),
-                category
-            ])
-        ).values()
-    ];
-
-    if(uniqueVideoCategories.length){
-        categories = [
-            "All",
-            ...uniqueVideoCategories
-        ];
-        renderCategoryButtons();
+/* Start the single likes request before painting cards. The grid can paint
+   immediately while the like counts and heart states arrive in the background. */
+allVideos.forEach(video => {
+    if(video.likes_count === undefined || video.likes_count === null){
+        video.likes_count = 0;
     }
-}
+});
 
-// Load the real like count for every video
-await Promise.all(
-    allVideos.map(async video => {
-
-        const { count, error } =
-            await supabaseClient
-                .from("video_likes")
-                .select(
-                    "*",
-                    {
-                        count:"exact",
-                        head:true
-                    }
-                )
-                .eq(
-                    "video_id",
-                    video.id
-                );
-
-        if(error){
-
-            console.error(
-                "Initial like count error for video:",
-                video.id,
-                error
-            );
-
-            video.likes_count = 0;
-
-        }
-        else{
-
-            video.likes_count =
-                count || 0;
-        }
-    })
-);
-
+likeSummaryPromise = loadLikeSummary();
 renderVideos();
+void likeSummaryPromise.catch(() => {});
 
     }
     catch(error){
@@ -3185,14 +3336,8 @@ renderVideos();
 
 
 /* =========================
-   REALTIME VIDEO UPDATES
+   REALTIME VIDEO / LIKE UPDATES
 ========================= */
-
-let videoRealtimeChannel = null;
-let likeRealtimeChannel = null;
-let likeRealtimeStatus = "";
-let likeCountRefreshTimer = null;
-const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
 
 function updateRealtimeViewUI(videoId,views){
 
@@ -3246,6 +3391,7 @@ function mergeRealtimeVideo(video){
     }
 
     if(contentChanged){
+        mergeVideoCategoriesIntoCategoryBar();
         renderVideos();
     }
     else{
@@ -3254,37 +3400,49 @@ function mergeRealtimeVideo(video){
 }
 
 function setupVideoRealtime(){
-    if(videoRealtimeChannel){
-        return;
-    }
+
+    if(videoRealtimeChannel) return;
 
     videoRealtimeChannel = supabaseClient
-        .channel("streamx-videos-realtime")
+        .channel("website-videos-realtime")
         .on(
             "postgres_changes",
-            { event:"INSERT", schema:"public", table:"videos" },
-            payload => {
-                mergeRealtimeVideo(payload.new);
-            }
+            {
+                event:"INSERT",
+                schema:"public",
+                table:"videos"
+            },
+            payload => mergeRealtimeVideo(payload.new)
         )
         .on(
             "postgres_changes",
-            { event:"UPDATE", schema:"public", table:"videos" },
-            payload => {
-                mergeRealtimeVideo(payload.new);
-            }
+            {
+                event:"UPDATE",
+                schema:"public",
+                table:"videos"
+            },
+            payload => mergeRealtimeVideo(payload.new)
         )
         .on(
             "postgres_changes",
-            { event:"DELETE", schema:"public", table:"videos" },
+            {
+                event:"DELETE",
+                schema:"public",
+                table:"videos"
+            },
             payload => {
-                const id = payload.old?.id;
-                allVideos = allVideos.filter(v => String(v.id) !== String(id));
+                const id = payload.old && payload.old.id;
+
+                if(id === undefined || id === null) return;
+
+                allVideos = allVideos.filter(
+                    video => String(video.id) !== String(id)
+                );
                 renderVideos();
             }
         )
         .subscribe(status => {
-            console.log("Videos realtime status:", status);
+            console.log("Website videos realtime status:",status);
         });
 }
 
@@ -3336,7 +3494,7 @@ function setupLikeRealtime(){
     if(likeRealtimeChannel) return;
 
     likeRealtimeChannel = supabaseClient
-        .channel("mini-app-video-likes-realtime")
+        .channel("website-video-likes-realtime")
         .on(
             "postgres_changes",
             {
@@ -3368,7 +3526,7 @@ function setupLikeRealtime(){
                 startLikeCountFallback();
             }
 
-            console.log("Mini App likes realtime status:",status);
+            console.log("Website likes realtime status:",status);
         });
 
     /* The interval is only a fallback for projects where the table has not
@@ -3548,10 +3706,13 @@ function renderVideos(){
     }
 
 
-    videos.forEach(video => {
+    videos.forEach((video,index) => {
 
         videoGrid.appendChild(
-            createVideoCard(video)
+            createVideoCard(
+                video,
+                index < INITIAL_THUMBNAIL_COUNT
+            )
         );
 
     });
@@ -3563,7 +3724,7 @@ function renderVideos(){
    CREATE CARD
 ========================= */
 
-function createVideoCard(video){
+function createVideoCard(video,prioritizeLoad = false){
 
     const card =
         document.createElement("article");
@@ -3571,6 +3732,9 @@ function createVideoCard(video){
 
     card.className =
         "video-card";
+
+    card.dataset.videoId =
+        String(video.id);
 
 
     const thumbnail =
@@ -3627,7 +3791,8 @@ function createVideoCard(video){
                     class="thumbnail-fallback"
                     src="${escapeHTML(thumbnail)}"
                     alt="${escapeHTML(title)}"
-                    loading="lazy"
+                    loading="${prioritizeLoad ? "eager" : "lazy"}"
+                    decoding="async"
                     draggable="false"
                 >
                 `
@@ -4241,6 +4406,13 @@ async function toggleLike(videoId){
         }
 
 
+        if(existingLike){
+            likedVideoIds.delete(String(videoId));
+        }
+        else{
+            likedVideoIds.add(String(videoId));
+        }
+
         await updateLikeCount(videoId);
         scheduleRecommendationRefresh();
 
@@ -4309,6 +4481,11 @@ async function updateLikeCount(videoId){
     const newLikeCount =
         count || 0;
 
+    videoLikeSummary.set(
+        String(videoId),
+        newLikeCount
+    );
+
     // Update the video object
     const video =
         allVideos.find(
@@ -4349,6 +4526,25 @@ async function updateLikeCount(videoId){
 
 async function updateLikeButton(videoId){
 
+    const key = String(videoId);
+
+    if(likeSummaryPromise){
+        try{
+            await likeSummaryPromise;
+        }
+        catch(error){
+            /* Fall through to the compatibility query below. */
+        }
+    }
+
+    if(likeSummaryReady && videoLikeSummary.has(key)){
+        setLikeButtonState(
+            key,
+            likedVideoIds.has(key)
+        );
+        return;
+    }
+
     const userId =
         getLikeUserId();
 
@@ -4379,36 +4575,14 @@ async function updateLikeButton(videoId){
     }
 
 
-    const button =
-        document.querySelector(
-            `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
-        );
-
-
-    if(!button)
-        return;
-
-
     if(data){
-
-        button.textContent =
-            "♥";
-
-        button.classList.add(
-            "liked"
-        );
-
+        likedVideoIds.add(key);
     }
     else{
-
-        button.textContent =
-            "♡";
-
-        button.classList.remove(
-            "liked"
-        );
-
+        likedVideoIds.delete(key);
     }
+
+    setLikeButtonState(key,Boolean(data));
 
 }
 

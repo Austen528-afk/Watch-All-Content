@@ -11865,6 +11865,17 @@ async function loadCategoryStatistics(){
 
         const videos = videosResult.data || [];
 
+        /* Category statistics must use the current category list as the
+           source of truth. Videos can retain an old category name after that
+           category is deleted, but that deleted name must not reappear here. */
+        const activeCategoryKeys = new Set(
+            (categoriesResult.data || [])
+                .map(category =>
+                    String(category.name || "").trim().toLowerCase()
+                )
+                .filter(Boolean)
+        );
+
         const libraryRows =
             libraryResult.error ? [] : (libraryResult.data || []);
 
@@ -11929,6 +11940,9 @@ async function loadCategoryStatistics(){
         videos.forEach((video,index) => {
             const name = String(video.category || "Uncategorized").trim() || "Uncategorized";
             const key = name.toLowerCase();
+
+            if(!activeCategoryKeys.has(key)) return;
+
             const parsedViews = Number(video.views || 0);
             const views = Number.isFinite(parsedViews) ? parsedViews : 0;
             const parsedLikes = Number(videoLikeCounts[index] || 0);
@@ -12025,7 +12039,11 @@ async function loadCategoryStatistics(){
             renderCategoryWatchTimeRanking(
                 watchTimeList,
                 watchTimeCount,
-                watchTimeResult.data || []
+                (watchTimeResult.data || []).filter(row =>
+                    activeCategoryKeys.has(
+                        String(row.category || "").trim().toLowerCase()
+                    )
+                )
             );
         }
 

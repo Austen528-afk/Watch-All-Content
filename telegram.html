@@ -3287,6 +3287,11 @@ function renderVideos(){
         getFilteredVideos();
 
 
+    if(thumbnailPreviewObserver){
+        thumbnailPreviewObserver.disconnect();
+    }
+
+
     videoGrid.innerHTML = "";
 
 
@@ -3831,20 +3836,26 @@ function getThumbnailPreviewObserver(){
         entries => {
             entries.forEach(entry => {
                 const previewVideo = entry.target;
-                previewVideo.dataset.previewVisible =
-                    entry.isIntersecting ? "true" : "false";
+                const isVisible =
+                    entry.isIntersecting;
 
-                if(entry.isIntersecting){
+                previewVideo.dataset.previewVisible =
+                    isVisible ? "true" : "false";
+
+                if(isVisible){
                     void loadThumbnailPreview(
                         previewVideo,
                         previewVideo.__streamxVideo
                     );
                 }
+                else{
+                    previewVideo.pause();
+                }
             });
         },
         {
-            rootMargin:"140px 0px",
-            threshold:.2
+            rootMargin:"0px",
+            threshold:.15
         }
     );
 
@@ -3942,14 +3953,18 @@ async function loadThumbnailPreview(previewVideo,video){
         return;
     }
 
+    if(
+        previewVideo.dataset.previewVisible !== "true" ||
+        thumbnailPreviewsPaused
+    ){
+        previewVideo.pause();
+        return;
+    }
+
     if(previewVideo.dataset.previewStarted === "true"){
-        if(
-            !thumbnailPreviewsPaused
-        ){
-            const playPromise = previewVideo.play();
-            if(playPromise && typeof playPromise.catch === "function"){
-                playPromise.catch(() => {});
-            }
+        const playPromise = previewVideo.play();
+        if(playPromise && typeof playPromise.catch === "function"){
+            playPromise.catch(() => {});
         }
         return;
     }
@@ -3972,18 +3987,21 @@ async function loadThumbnailPreview(previewVideo,video){
             return;
         }
 
+        if(
+            previewVideo.dataset.previewVisible !== "true" ||
+            thumbnailPreviewsPaused
+        ){
+            return;
+        }
+
         previewVideo.src = videoURL;
         previewVideo.preload = "auto";
         previewVideo.dataset.previewStarted = "true";
         previewVideo.load();
 
-        if(
-            !thumbnailPreviewsPaused
-        ){
-            const playPromise = previewVideo.play();
-            if(playPromise && typeof playPromise.catch === "function"){
-                playPromise.catch(() => {});
-            }
+        const playPromise = previewVideo.play();
+        if(playPromise && typeof playPromise.catch === "function"){
+            playPromise.catch(() => {});
         }
     }
     catch(error){
@@ -4011,10 +4029,31 @@ function setupThumbnailPreview(card,previewVideo,video){
         markThumbnailPreviewFailed(previewVideo);
     });
 
-    /* Start every card together after render. Keeping this eager avoids the
-       one-at-a-time feeling caused by viewport-only observers. */
-    previewVideo.dataset.previewVisible = "true";
-    void loadThumbnailPreview(previewVideo,video);
+    previewVideo.dataset.previewVisible = "false";
+
+    const observer =
+        getThumbnailPreviewObserver();
+
+    if(observer){
+        observer.observe(previewVideo);
+    }
+    else{
+        const rect =
+            card.getBoundingClientRect();
+
+        const isVisible =
+            rect.bottom > 0 &&
+            rect.top < window.innerHeight &&
+            rect.right > 0 &&
+            rect.left < window.innerWidth;
+
+        previewVideo.dataset.previewVisible =
+            isVisible ? "true" : "false";
+
+        if(isVisible){
+            void loadThumbnailPreview(previewVideo,video);
+        }
+    }
 }
 
 function pauseThumbnailPreviews(){
@@ -4031,11 +4070,17 @@ function resumeThumbnailPreviews(){
     document
         .querySelectorAll(".thumbnail-video")
         .forEach(previewVideo => {
-            if(previewVideo.__streamxVideo){
+            if(
+                previewVideo.__streamxVideo &&
+                previewVideo.dataset.previewVisible === "true"
+            ){
                 void loadThumbnailPreview(
                     previewVideo,
                     previewVideo.__streamxVideo
                 );
+            }
+            else{
+                previewVideo.pause();
             }
         });
 }

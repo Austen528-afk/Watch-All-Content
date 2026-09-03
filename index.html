@@ -155,6 +155,7 @@ body{
 
 #siteContent{
     display:none;
+    padding-top:var(--streamx-topbar-height,0px);
 }
 
 
@@ -162,9 +163,17 @@ body{
    HEADER
 ========================= */
 
-.header{
-    position:sticky;
+.site-top{
+    position:fixed;
     top:0;
+    left:0;
+    right:0;
+    width:100%;
+    z-index:1100;
+}
+
+.header{
+    position:relative;
     z-index:1000;
     background:rgba(8,8,8,.96);
     backdrop-filter:blur(15px);
@@ -288,10 +297,12 @@ body{
 
 .category-bar{
     width:100%;
+    position:relative;
     border-bottom:1px solid #1c1c1c;
     background:#0c0c0c;
     overflow-x:auto;
     scrollbar-width:none;
+    box-shadow:0 8px 18px rgba(0,0,0,.18);
 }
 
 .category-bar::-webkit-scrollbar{
@@ -1335,6 +1346,8 @@ body{
 <div id="siteContent">
 
 
+<div class="site-top">
+
 <header class="header">
 
     <div class="header-inner">
@@ -1433,6 +1446,8 @@ body{
     </div>
 
 </nav>
+
+</div>
 
 
 <main class="main">
@@ -1642,6 +1657,44 @@ const siteContent =
     document.getElementById("siteContent");
 
 
+/* Reserve the exact space occupied by the fixed header/library row. */
+let topBarResizeObserver = null;
+
+function syncTopBarHeight(){
+
+    const topBar =
+        document.querySelector(".site-top");
+
+    if(!topBar){
+        return;
+    }
+
+    const height =
+        Math.ceil(topBar.getBoundingClientRect().height);
+
+    document.documentElement.style.setProperty(
+        "--streamx-topbar-height",
+        `${height}px`
+    );
+
+    if(
+        !topBarResizeObserver &&
+        "ResizeObserver" in window
+    ){
+        topBarResizeObserver =
+            new ResizeObserver(syncTopBarHeight);
+        topBarResizeObserver.observe(topBar);
+    }
+
+}
+
+window.addEventListener(
+    "resize",
+    syncTopBarHeight,
+    {passive:true}
+);
+
+
 /* =========================
    AGE VERIFICATION
 ========================= */
@@ -1653,6 +1706,9 @@ function enterWebsite(){
 
     siteContent.style.display =
         "block";
+
+    syncTopBarHeight();
+    requestAnimationFrame(syncTopBarHeight);
 
     document.body.style.overflow =
         "";

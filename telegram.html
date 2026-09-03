@@ -307,7 +307,137 @@ body{
     white-space:nowrap;
 }
 
+.category-nav-inner{
+    max-width:1400px;
+    min-width:100%;
+    width:max-content;
+    margin:auto;
+    padding:12px 25px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    white-space:nowrap;
+}
+
+.category-nav-inner .categories{
+    max-width:none;
+    margin:0;
+    padding:0;
+}
+
+.library-toggle{
+    position:relative;
+    overflow:visible;
+    flex-shrink:0;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    border:2px solid #ff1744;
+    background:linear-gradient(135deg,#35111a 0%,#1d1014 100%);
+    color:#fff;
+    min-height:44px;
+    padding:10px 17px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:.15px;
+    box-shadow:0 0 0 3px rgba(255,23,68,.10),0 0 22px rgba(255,23,68,.28);
+    transition:background .2s,border-color .2s,color .2s,box-shadow .2s,transform .2s;
+    animation:libraryAttention 2.8s ease-in-out infinite;
+}
+
+.library-toggle:hover{
+    background:linear-gradient(135deg,#521522 0%,#2a1118 100%);
+    color:white;
+    transform:translateY(-1px) scale(1.02);
+    box-shadow:0 0 0 4px rgba(255,23,68,.15),0 0 28px rgba(255,23,68,.42);
+}
+
+.library-toggle.active{
+    border-color:#ff1744;
+    background:linear-gradient(135deg,#ff1744 0%,#c70f35 100%);
+    color:#fff;
+    box-shadow:0 0 0 3px rgba(255,23,68,.18),0 0 24px rgba(255,23,68,.38);
+    animation:none;
+}
+
+.library-toggle::before{
+    content:"";
+    position:absolute;
+    inset:-5px;
+    border:1px solid rgba(255,23,68,.58);
+    border-radius:25px;
+    pointer-events:none;
+    animation:libraryRing 2.8s ease-out infinite;
+}
+
+.library-toggle-icon{
+    color:#f5b942;
+    font-size:20px;
+    text-shadow:0 0 10px rgba(245,185,66,.6);
+    line-height:1;
+}
+
+.library-count{
+    min-width:18px;
+    padding:2px 5px;
+    border-radius:10px;
+    background:#292929;
+    color:#ddd;
+    font-size:10px;
+    font-weight:800;
+    text-align:center;
+}
+
+.library-callout{
+    flex-shrink:0;
+    max-width:155px;
+    color:#ffb4bf;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.2;
+    white-space:normal;
+    text-shadow:0 0 10px rgba(255,23,68,.3);
+    animation:libraryCallout 2.8s ease-in-out infinite;
+}
+
+.library-callout.active{
+    color:#8be7ff;
+    text-shadow:0 0 10px rgba(139,231,255,.3);
+    animation:none;
+}
+
+@keyframes libraryAttention{
+    0%,100%{transform:scale(1);box-shadow:0 0 0 3px rgba(255,23,68,.10),0 0 22px rgba(255,23,68,.28)}
+    50%{transform:scale(1.045);box-shadow:0 0 0 5px rgba(255,23,68,.16),0 0 30px rgba(255,23,68,.46)}
+}
+
+@keyframes libraryRing{
+    0%{transform:scale(.96);opacity:.78}
+    70%,100%{transform:scale(1.14);opacity:0}
+}
+
+@keyframes libraryCallout{
+    0%,100%{opacity:.72}
+    50%{opacity:1;color:#fff}
+}
+
+@media(prefers-reduced-motion:reduce){
+    .library-toggle,
+    .library-toggle::before,
+    .library-callout,
+    .like-btn,
+    .library-btn,
+    .player-library-button,
+    .like-btn::after,
+    .library-btn::after,
+    .player-library-button::after,
+    .streamx-action-burst{animation:none!important;transition:none!important}
+}
+
 .category{
+    flex-shrink:0;
     border:none;
     background:#181818;
     color:#999;
@@ -420,6 +550,22 @@ body{
     color:#ff1744;
 }
 
+.library-status{
+    display:none;
+    margin-top:-8px;
+    margin-bottom:18px;
+    color:#8edbb6;
+    font-size:12px;
+}
+
+.library-status.show{
+    display:block;
+}
+
+.library-status.error{
+    color:#ff8aa0;
+}
+
 
 /* =========================
    VIDEO GRID
@@ -475,6 +621,64 @@ body{
     transition:transform .3s;
     user-select:none;
     -webkit-user-select:none;
+}
+
+.thumbnail-video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    background:#1d1d1d;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .35s ease;
+}
+
+.thumbnail.preview-ready .thumbnail-video{
+    opacity:1;
+}
+
+.thumbnail.preview-ready .thumbnail-fallback{
+    opacity:0;
+}
+
+.thumbnail-fallback{
+    transition:opacity .35s ease,transform .3s;
+}
+
+.thumbnail.preview-failed .thumbnail-video{
+    display:none;
+}
+
+.thumbnail-video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    background:#1d1d1d;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .35s ease;
+}
+
+.thumbnail.preview-ready .thumbnail-video{
+    opacity:1;
+}
+
+.thumbnail.preview-ready .thumbnail-fallback{
+    opacity:0;
+}
+
+.thumbnail-fallback{
+    transition:opacity .35s ease,transform .3s;
+}
+
+.thumbnail.preview-failed .thumbnail-video{
+    display:none;
 }
 
 .video-card:hover .thumbnail img{
@@ -588,12 +792,15 @@ body{
 }
 
 .like-btn{
+    position:relative;
+    overflow:visible;
     background:none;
     border:none;
     cursor:pointer;
     font-size:22px;
     color:#777;
-    transition:.2s;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
 }
 
 .like-btn:hover{
@@ -602,6 +809,97 @@ body{
 
 .like-btn.liked{
     color:#ff1744 !important;
+}
+
+.library-btn{
+    position:relative;
+    overflow:visible;
+    margin-left:auto;
+    border:none;
+    background:none;
+    color:#777;
+    cursor:pointer;
+    font-size:21px;
+    line-height:1;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
+}
+
+.library-btn:hover{
+    color:#f5b942;
+    transform:scale(1.12);
+}
+
+.library-btn.saved{
+    color:#f5b942;
+}
+
+.library-btn:disabled{
+    cursor:wait;
+    opacity:.55;
+}
+
+.player-library-button{
+    position:relative;
+    overflow:visible;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,background .22s,border-color .22s,box-shadow .22s;
+}
+
+.like-btn.streamx-action-pop,
+.library-btn.streamx-action-pop,
+.player-library-button.streamx-action-pop{
+    animation:streamxActionPop .5s cubic-bezier(.2,.75,.25,1);
+}
+
+.like-btn.streamx-action-pop::after,
+.library-btn.streamx-action-pop::after,
+.player-library-button.streamx-action-pop::after{
+    content:"";
+    position:absolute;
+    inset:-5px;
+    border:2px solid currentColor;
+    border-radius:inherit;
+    pointer-events:none;
+    animation:streamxActionRing .56s ease-out forwards;
+}
+
+.streamx-action-burst{
+    position:absolute;
+    left:50%;
+    top:50%;
+    z-index:2;
+    pointer-events:none;
+    font-size:17px;
+    line-height:1;
+    text-shadow:0 0 10px currentColor;
+    transform:translate(-50%,-50%);
+    animation:streamxActionBurst .68s cubic-bezier(.2,.75,.25,1) forwards;
+}
+
+.streamx-action-burst.like{
+    color:#ff1744;
+}
+
+.streamx-action-burst.star{
+    color:#f5b942;
+}
+
+@keyframes streamxActionPop{
+    0%,100%{transform:translateZ(0) scale(1) rotate(0)}
+    36%{transform:translateZ(0) scale(1.24) rotate(-5deg)}
+    68%{transform:translateZ(0) scale(.94) rotate(3deg)}
+}
+
+@keyframes streamxActionRing{
+    0%{transform:scale(.72);opacity:.8}
+    100%{transform:scale(1.5);opacity:0}
+}
+
+@keyframes streamxActionBurst{
+    0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}
+    22%{opacity:1}
+    100%{opacity:0;transform:translate(-50%,-145%) scale(1.12)}
 }
 
 .like-count{
@@ -754,6 +1052,34 @@ body{
     line-height:1.6;
 }
 
+.player-library-button{
+    margin-top:15px;
+    border:1px solid #353535;
+    border-radius:8px;
+    background:#1b1b1b;
+    color:#ccc;
+    padding:9px 12px;
+    cursor:pointer;
+    font-size:12px;
+    transform:translateZ(0);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
+}
+
+.player-library-button:hover{
+    border-color:#f5b942;
+    color:#f5b942;
+}
+
+.player-library-button.saved{
+    border-color:rgba(245,185,66,.55);
+    color:#f5b942;
+}
+
+.player-library-button:disabled{
+    cursor:wait;
+    opacity:.55;
+}
+
 
 /* =========================
    FOOTER
@@ -837,6 +1163,11 @@ body{
 
     .categories{
         padding:10px 15px;
+    }
+
+    .category-nav-inner{
+        padding:10px 15px;
+        margin:0;
     }
 
     .main{
@@ -1061,18 +1392,45 @@ body{
 
 <nav class="category-bar">
 
-    <div
-        class="categories"
-        id="categories"
-    >
+    <div class="category-nav-inner">
 
         <button
-            class="category active"
-            data-category="All"
+            class="library-toggle"
+            id="libraryToggle"
+            type="button"
+            aria-pressed="false"
+            title="Open My Library"
         >
-            All
+            <span
+                class="library-toggle-icon"
+                id="libraryToggleIcon"
+            >☆</span>
+            <span>My Library</span>
+            <span
+                class="library-count"
+                id="libraryCount"
+            >0</span>
         </button>
 
+        <span
+            class="library-callout"
+            id="libraryCallout"
+            aria-live="polite"
+        >Tap ☆ on a video to save it here</span>
+
+        <div
+            class="categories"
+            id="categories"
+        >
+
+            <button
+                class="category active"
+                data-category="All"
+            >
+                All
+            </button>
+
+        </div>
     </div>
 
 </nav>
@@ -1113,6 +1471,13 @@ body{
     <div
         id="searchStatus"
         class="search-status"
+    ></div>
+
+    <div
+        id="libraryStatus"
+        class="library-status"
+        role="status"
+        aria-live="polite"
     ></div>
 
 
@@ -1185,6 +1550,16 @@ body{
                 class="player-description"
                 id="playerDescription"
             ></p>
+
+            <button
+                class="player-library-button"
+                id="playerLibraryButton"
+                type="button"
+                aria-pressed="false"
+                disabled
+            >
+                ☆ Save to My Library
+            </button>
 
         </div>
 
@@ -1308,15 +1683,18 @@ function enterWebsite(){
     // Load categories and videos independently so a category-table
     // permission/realtime problem cannot make the category bar vanish.
     loadCategories();
-    startCategorySync();
-    startVideoSync();
+    setupCategoryRealtime();
+    loadLibrary();
     loadVideos();
+    setupVideoRealtime();
+    setupLikeRealtime();
 
 updateMiniAppPresence();
+startViewerTimeTracking("outside");
 
 setInterval(
     updateMiniAppPresence,
-    15000
+    5000
 );
 
 }
@@ -1358,10 +1736,26 @@ ageNo.addEventListener(
 ========================= */
 
 let allVideos = [];
+let thumbnailPreviewObserver = null;
+let thumbnailPreviewsPaused = false;
+const thumbnailPreviewURLCache = new Map();
+const thumbnailPreviewURLPending = new Map();
 
 let currentCategory = "All";
 
 let searchTerm = "";
+
+let libraryViewActive = false;
+let libraryPreviousCategory = "All";
+let libraryPreviousSearch = "";
+let libraryVideoIds = new Set();
+let libraryPendingIds = new Set();
+let libraryLoading = false;
+let libraryStatusTimer = null;
+let currentPlayerVideoId = null;
+let libraryActivityTimer = null;
+let libraryActivityLastSeen = 0;
+let libraryActivityRequestInFlight = false;
 
 
 /* =========================
@@ -1407,67 +1801,948 @@ const playerDescription =
 const closePlayer =
     document.getElementById("closePlayer");
 
+const libraryToggle =
+    document.getElementById("libraryToggle");
+
+const libraryToggleIcon =
+    document.getElementById("libraryToggleIcon");
+
+const libraryCount =
+    document.getElementById("libraryCount");
+
+const libraryCallout =
+    document.getElementById("libraryCallout");
+
+const libraryStatus =
+    document.getElementById("libraryStatus");
+
+const playerLibraryButton =
+    document.getElementById("playerLibraryButton");
+
+
+/* =========================
+   VIDEO WATCH-TIME TRACKING
+========================= */
+
+const WATCH_TIME_PLATFORM = "mini_app";
+const WATCH_TIME_SAVE_INTERVAL_SECONDS = 10;
+const WATCH_TIME_VIEWER_ID = MINI_APP_USER_ID;
+
+let watchTimeState = null;
+let watchTimeTimer = null;
+
+function createWatchTimeId(){
+
+    if(
+        window.crypto &&
+        typeof window.crypto.randomUUID === "function"
+    ){
+        return window.crypto.randomUUID();
+    }
+
+    const values = new Uint8Array(16);
+
+    if(
+        window.crypto &&
+        typeof window.crypto.getRandomValues === "function"
+    ){
+        window.crypto.getRandomValues(values);
+    }
+    else{
+        for(let index = 0; index < values.length; index++){
+            values[index] = Math.floor(Math.random() * 256);
+        }
+    }
+
+    values[6] = (values[6] & 15) | 64;
+    values[8] = (values[8] & 63) | 128;
+
+    const hex = Array.from(
+        values,
+        value => value.toString(16).padStart(2,"0")
+    ).join("");
+
+    return [
+        hex.slice(0,8),
+        hex.slice(8,12),
+        hex.slice(12,16),
+        hex.slice(16,20),
+        hex.slice(20)
+    ].join("-");
+}
+
+function resetWatchTimeClock(){
+
+    if(!watchTimeState) return;
+
+    watchTimeState.lastMediaTime = Number(playerVideo.currentTime || 0);
+    watchTimeState.lastClockTime = performance.now();
+}
+
+function captureWatchTime(allowStopped = false){
+
+    if(!watchTimeState) return;
+
+    const currentClockTime = performance.now();
+    const currentMediaTime = Number(playerVideo.currentTime || 0);
+
+    if(watchTimeState.lastClockTime === null){
+        watchTimeState.lastClockTime = currentClockTime;
+        watchTimeState.lastMediaTime = currentMediaTime;
+        return;
+    }
+
+    const clockDifference =
+        (currentClockTime - watchTimeState.lastClockTime) / 1000;
+
+    const mediaDifference =
+        currentMediaTime - watchTimeState.lastMediaTime;
+
+    const playerIsRunning =
+        allowStopped ||
+        (!playerVideo.paused && !playerVideo.ended);
+
+    const mediaMovedNaturally =
+        mediaDifference > 0 &&
+        mediaDifference <= Math.max(5,clockDifference * 4);
+
+    if(
+        playerIsRunning &&
+        !playerVideo.seeking &&
+        document.visibilityState === "visible" &&
+        clockDifference > 0 &&
+        clockDifference <= 5 &&
+        mediaMovedNaturally
+    ){
+        watchTimeState.watchedSeconds += Math.min(clockDifference,2);
+    }
+
+    watchTimeState.lastClockTime = currentClockTime;
+    watchTimeState.lastMediaTime = currentMediaTime;
+}
+
+function saveWatchTime(forceSave = false){
+
+    const state = watchTimeState;
+
+    if(!state) return Promise.resolve();
+
+    const seconds = Math.floor(state.watchedSeconds);
+
+    if(seconds < 1 || seconds <= state.lastQueuedSeconds){
+        return Promise.resolve();
+    }
+
+    if(
+        !forceSave &&
+        seconds - state.lastQueuedSeconds < WATCH_TIME_SAVE_INTERVAL_SECONDS
+    ){
+        return Promise.resolve();
+    }
+
+    state.lastQueuedSeconds = seconds;
+
+    return fetch(
+        SUPABASE_URL + "/rest/v1/rpc/record_video_watch_time",
+        {
+            method:"POST",
+            keepalive:true,
+            headers:{
+                "apikey":SUPABASE_KEY,
+                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                p_session_id:state.sessionId,
+                p_viewer_id:state.viewerId,
+                p_video_id:state.videoId,
+                p_platform:state.platform,
+                p_watched_seconds:seconds
+            })
+        }
+    )
+    .then(response => {
+        if(!response.ok){
+            throw new Error("Watch-time save returned " + response.status);
+        }
+
+        state.lastSavedSeconds = Math.max(
+            state.lastSavedSeconds,
+            seconds
+        );
+    })
+    .catch(error => {
+        if(state.lastQueuedSeconds === seconds){
+            state.lastQueuedSeconds = state.lastSavedSeconds;
+        }
+
+        console.warn("Could not save video watch time:",error);
+    });
+}
+
+function watchTimeTick(){
+    captureWatchTime();
+    saveWatchTime();
+}
+
+function startWatchTimeTracking(videoId){
+
+    stopWatchTimeTracking();
+
+    watchTimeState = {
+        sessionId:createWatchTimeId(),
+        viewerId:WATCH_TIME_VIEWER_ID,
+        videoId:videoId,
+        platform:WATCH_TIME_PLATFORM,
+        watchedSeconds:0,
+        lastQueuedSeconds:0,
+        lastSavedSeconds:0,
+        lastMediaTime:Number(playerVideo.currentTime || 0),
+        lastClockTime:performance.now()
+    };
+
+    watchTimeTimer = setInterval(watchTimeTick,1000);
+}
+
+function stopWatchTimeTracking(){
+
+    if(!watchTimeState) return;
+
+    captureWatchTime(true);
+    saveWatchTime(true);
+
+    if(watchTimeTimer){
+        clearInterval(watchTimeTimer);
+        watchTimeTimer = null;
+    }
+
+    watchTimeState = null;
+}
+
+playerVideo.addEventListener("play",resetWatchTimeClock);
+
+playerVideo.addEventListener("pause",function(){
+    captureWatchTime(true);
+    saveWatchTime(true);
+});
+
+playerVideo.addEventListener("ended",function(){
+    captureWatchTime(true);
+    saveWatchTime(true);
+});
+
+playerVideo.addEventListener("seeking",resetWatchTimeClock);
+playerVideo.addEventListener("seeked",resetWatchTimeClock);
+
+document.addEventListener("visibilitychange",function(){
+    if(document.visibilityState === "hidden"){
+        saveWatchTime(true);
+    }
+    else{
+        resetWatchTimeClock();
+    }
+});
+
+window.addEventListener("pagehide",function(){
+    captureWatchTime(true);
+    saveWatchTime(true);
+});
+
+
+/* =========================
+   PERSONAL LIBRARY
+========================= */
+
+const LIBRARY_PLATFORM = WATCH_TIME_PLATFORM;
+const LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
+const LIBRARY_STORAGE_KEY =
+    "streamx_" + LIBRARY_PLATFORM + "_library";
+const LIBRARY_ACTIVITY_TABLE = "library_activity";
+const LIBRARY_ACTIVITY_TIMEOUT_MS = 10 * 1000;
+const LIBRARY_ACTIVITY_HEARTBEAT_MS = 5 * 1000;
+const VIEWER_TIME_HEARTBEAT_MS = 10 * 1000;
+
+let viewerTimeState = null;
+let viewerTimeTimer = null;
+
+function stopLibraryActivityTracking(){
+
+    if(libraryActivityTimer){
+        clearInterval(libraryActivityTimer);
+        libraryActivityTimer = null;
+    }
+}
+
+/* =========================
+   VISIBLE TIME BY CONTEXT
+========================= */
+
+function captureViewerTime(forceVisible = false){
+
+    const state = viewerTimeState;
+
+    if(!state) return;
+
+    const now = Date.now();
+    const isVisible = forceVisible || document.visibilityState === "visible";
+
+    if(state.lastClockAt === null){
+        if(isVisible) state.lastClockAt = now;
+        return;
+    }
+
+    const elapsedMilliseconds = now - state.lastClockAt;
+
+    if(
+        isVisible &&
+        elapsedMilliseconds > 0 &&
+        elapsedMilliseconds <= 60000
+    ){
+        state.elapsedSeconds += elapsedMilliseconds / 1000;
+    }
+
+    state.lastClockAt = isVisible ? now : null;
+}
+
+function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
+
+    const state = stateOverride || viewerTimeState;
+
+    if(!state) return Promise.resolve();
+
+    if(!stateOverride) captureViewerTime();
+
+    const seconds = Math.floor(state.elapsedSeconds);
+
+    if(!ended && seconds <= state.lastSentSeconds){
+        return Promise.resolve();
+    }
+
+    state.lastSentSeconds = Math.max(
+        state.lastSentSeconds,
+        seconds
+    );
+
+    return fetch(
+        SUPABASE_URL + "/rest/v1/rpc/record_viewer_time",
+        {
+            method:"POST",
+            keepalive:true,
+            headers:{
+                "apikey":SUPABASE_KEY,
+                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                p_session_id:state.sessionId,
+                p_viewer_id:state.viewerId,
+                p_platform:state.platform,
+                p_context:state.context,
+                p_duration_seconds:seconds,
+                p_ended:ended
+            })
+        }
+    )
+    .then(response => {
+        if(!response.ok){
+            throw new Error("Visible-time save returned " + response.status);
+        }
+
+        state.lastSavedSeconds = Math.max(
+            state.lastSavedSeconds,
+            seconds
+        );
+    })
+    .catch(error => {
+        if(state.lastSentSeconds === seconds){
+            state.lastSentSeconds = state.lastSavedSeconds;
+        }
+
+        /* Analytics must never interrupt browsing. */
+        console.warn("Could not save visible time:",error);
+    });
+}
+
+function startViewerTimeTracking(context){
+
+    stopViewerTimeTracking();
+
+    const normalizedContext = context === "library"
+        ? "library"
+        : "outside";
+
+    viewerTimeState = {
+        sessionId:createWatchTimeId(),
+        viewerId:LIBRARY_VIEWER_ID,
+        platform:LIBRARY_PLATFORM,
+        context:normalizedContext,
+        elapsedSeconds:0,
+        lastSentSeconds:-1,
+        lastSavedSeconds:0,
+        lastClockAt:document.visibilityState === "visible"
+            ? Date.now()
+            : null
+    };
+
+    sendViewerTimeHeartbeat();
+
+    viewerTimeTimer = setInterval(
+        sendViewerTimeHeartbeat,
+        VIEWER_TIME_HEARTBEAT_MS
+    );
+}
+
+function switchViewerTimeContext(context){
+
+    const normalizedContext = context === "library"
+        ? "library"
+        : "outside";
+
+    if(
+        viewerTimeState &&
+        viewerTimeState.context === normalizedContext
+    ){
+        sendViewerTimeHeartbeat();
+        return;
+    }
+
+    startViewerTimeTracking(normalizedContext);
+}
+
+function stopViewerTimeTracking(){
+
+    const state = viewerTimeState;
+
+    if(!state) return;
+
+    captureViewerTime(true);
+
+    if(viewerTimeTimer){
+        clearInterval(viewerTimeTimer);
+        viewerTimeTimer = null;
+    }
+
+    viewerTimeState = null;
+    sendViewerTimeHeartbeat(true,state);
+}
+
+async function sendLibraryActivityHeartbeat(){
+
+    /* The open My Library view is the source of truth for this status. */
+    if(!libraryViewActive){
+        stopLibraryActivityTracking();
+        return;
+    }
+
+    libraryActivityLastSeen = Date.now();
+
+    /* Do not allow slow requests to overlap and write an older timestamp last. */
+    if(libraryActivityRequestInFlight) return;
+    libraryActivityRequestInFlight = true;
+
+    try{
+
+        const heartbeatAt = new Date().toISOString();
+
+        const { error } = await supabaseClient
+            .from(LIBRARY_ACTIVITY_TABLE)
+            .upsert(
+                {
+                    viewer_id:LIBRARY_VIEWER_ID,
+                    platform:LIBRARY_PLATFORM,
+                    last_seen:heartbeatAt
+                },
+                {
+                    onConflict:"viewer_id,platform"
+                }
+            );
+
+        if(error) throw error;
+
+    }
+    catch(error){
+
+        /* Library activity is optional; never interrupt video browsing. */
+        console.warn("Could not update library activity:",error);
+
+    }
+    finally{
+
+        libraryActivityRequestInFlight = false;
+
+    }
+}
+
+function recordLibraryActivity(){
+
+    if(!libraryViewActive){
+        stopLibraryActivityTracking();
+        return;
+    }
+
+    libraryActivityLastSeen = Date.now();
+    sendLibraryActivityHeartbeat();
+
+    if(!libraryActivityTimer){
+        libraryActivityTimer = setInterval(
+            sendLibraryActivityHeartbeat,
+            LIBRARY_ACTIVITY_HEARTBEAT_MS
+        );
+    }
+}
+
+document.addEventListener("visibilitychange",function(){
+
+    if(document.visibilityState === "hidden"){
+        pauseThumbnailPreviews();
+    }
+    else if(!videoModal.classList.contains("show")){
+        resumeThumbnailPreviews();
+    }
+
+    if(viewerTimeState){
+
+        if(document.visibilityState === "hidden"){
+            /* The visibility event fires after the state changes, so force
+               capture of the final visible interval before pausing. */
+            captureViewerTime(true);
+            viewerTimeState.lastClockAt = null;
+            sendViewerTimeHeartbeat();
+        }
+        else{
+            viewerTimeState.lastClockAt = Date.now();
+        }
+
+    }
+
+    if(
+        document.visibilityState === "visible" &&
+        libraryViewActive
+    ){
+        recordLibraryActivity();
+    }
+
+});
+
+window.addEventListener("pagehide",function(){
+    stopLibraryActivityTracking();
+    stopViewerTimeTracking();
+    stopLikeCountFallback();
+});
+
+function normalizeLibraryIds(values){
+
+    return new Set(
+        (Array.isArray(values) ? values : [])
+            .map(value => String(value))
+            .filter(Boolean)
+    );
+}
+
+function restoreLibraryCache(){
+
+    try{
+
+        const cached = JSON.parse(
+            localStorage.getItem(LIBRARY_STORAGE_KEY) || "[]"
+        );
+
+        libraryVideoIds = normalizeLibraryIds(cached);
+
+    }
+    catch(error){
+
+        console.warn("Unable to restore My Library cache:",error);
+
+    }
+}
+
+function persistLibraryCache(){
+
+    try{
+
+        localStorage.setItem(
+            LIBRARY_STORAGE_KEY,
+            JSON.stringify(Array.from(libraryVideoIds))
+        );
+
+    }
+    catch(error){
+
+        console.warn("Unable to save My Library cache:",error);
+
+    }
+}
+
+function showLibraryStatus(message,isError = false){
+
+    if(!libraryStatus) return;
+
+    clearTimeout(libraryStatusTimer);
+
+    libraryStatus.textContent = message;
+    libraryStatus.classList.toggle("error",isError);
+    libraryStatus.classList.add("show");
+
+    libraryStatusTimer = setTimeout(
+        () => libraryStatus.classList.remove("show"),
+        3500
+    );
+}
+
+function updateLibraryButtonState(button,videoId){
+
+    if(!button) return;
+
+    const key = String(videoId);
+    const saved = libraryVideoIds.has(key);
+    const pending = libraryPendingIds.has(key);
+
+    button.textContent = saved ? "★" : "☆";
+    button.classList.toggle("saved",saved);
+    button.disabled = pending;
+    button.setAttribute("aria-pressed",String(saved));
+    button.setAttribute(
+        "aria-label",
+        saved ? "Remove from My Library" : "Save to My Library"
+    );
+    button.title = saved ? "Remove from My Library" : "Save to My Library";
+}
+
+function animateAction(button,kind){
+
+    if(!button) return;
+
+    button.classList.remove("streamx-action-pop");
+    /* Restart the keyframes even when the user taps repeatedly. */
+    void button.offsetWidth;
+    button.classList.add("streamx-action-pop");
+
+    if(button.__streamxActionTimer){
+        clearTimeout(button.__streamxActionTimer);
+    }
+
+    button.__streamxActionTimer = setTimeout(
+        () => button.classList.remove("streamx-action-pop"),
+        620
+    );
+
+    const reducedMotion =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if(reducedMotion) return;
+
+    const burst = document.createElement("span");
+    burst.className =
+        "streamx-action-burst " +
+        (kind === "star" ? "star" : "like");
+    burst.textContent = kind === "star" ? "★" : "♥";
+    button.appendChild(burst);
+
+    setTimeout(() => burst.remove(),700);
+}
+
+function updatePlayerLibraryButton(){
+
+    if(!playerLibraryButton) return;
+
+    const hasVideo =
+        currentPlayerVideoId !== null &&
+        currentPlayerVideoId !== undefined;
+
+    if(!hasVideo){
+
+        playerLibraryButton.disabled = true;
+        playerLibraryButton.classList.remove("saved");
+        playerLibraryButton.setAttribute("aria-pressed","false");
+        playerLibraryButton.textContent = "☆ Save to My Library";
+        return;
+
+    }
+
+    const saved = libraryVideoIds.has(
+        String(currentPlayerVideoId)
+    );
+
+    playerLibraryButton.disabled = libraryPendingIds.has(
+        String(currentPlayerVideoId)
+    );
+    playerLibraryButton.classList.toggle("saved",saved);
+    playerLibraryButton.setAttribute("aria-pressed",String(saved));
+    playerLibraryButton.textContent = saved
+        ? "★ Remove from My Library"
+        : "☆ Save to My Library";
+}
+
+function updateLibraryUI(){
+
+    if(libraryCount){
+
+        libraryCount.textContent =
+            libraryVideoIds.size.toLocaleString();
+
+    }
+
+    if(libraryToggle){
+
+        libraryToggle.classList.toggle(
+            "active",
+            libraryViewActive
+        );
+        libraryToggle.setAttribute(
+            "aria-pressed",
+            String(libraryViewActive)
+        );
+        libraryToggle.title = libraryViewActive
+            ? "Return to all videos"
+            : "Open My Library";
+
+    }
+
+    if(libraryToggleIcon){
+
+        libraryToggleIcon.textContent =
+            libraryViewActive ? "★" : "☆";
+
+    }
+
+    if(libraryCallout){
+
+        libraryCallout.textContent = libraryViewActive
+            ? "Your saved videos"
+            : libraryVideoIds.size
+                ? libraryVideoIds.size.toLocaleString() +
+                    " saved • tap ☆ to add more"
+                : "Tap ☆ on a video to save it here";
+        libraryCallout.classList.toggle(
+            "active",
+            libraryViewActive || libraryVideoIds.size > 0
+        );
+
+    }
+
+    document
+        .querySelectorAll(".library-btn")
+        .forEach(button => {
+            updateLibraryButtonState(
+                button,
+                button.dataset.id
+            );
+        });
+
+    updatePlayerLibraryButton();
+}
+
+async function loadLibrary(){
+
+    if(libraryLoading) return;
+
+    libraryLoading = true;
+    restoreLibraryCache();
+    updateLibraryUI();
+
+    try{
+
+        const { data,error } = await supabaseClient
+            .from("video_library")
+            .select("video_id")
+            .eq("viewer_id",LIBRARY_VIEWER_ID)
+            .eq("platform",LIBRARY_PLATFORM);
+
+        if(error) throw error;
+
+        libraryVideoIds = normalizeLibraryIds(
+            (data || []).map(row => row.video_id)
+        );
+        persistLibraryCache();
+
+    }
+    catch(error){
+
+        /* Keep the cached library usable until the table/network is ready. */
+        console.warn("My Library sync unavailable:",error);
+
+    }
+    finally{
+
+        libraryLoading = false;
+        updateLibraryUI();
+
+        if(libraryViewActive){
+            renderVideos();
+        }
+
+    }
+}
+
+function toggleLibraryView(){
+
+    if(!libraryViewActive){
+
+        libraryPreviousCategory = currentCategory;
+        libraryPreviousSearch = searchTerm;
+        libraryViewActive = true;
+        currentCategory = "All";
+        searchTerm = "";
+        searchInput.value = "";
+        clearSearch.style.display = "none";
+        categorySuggestions.style.display = "none";
+        switchViewerTimeContext("library");
+        recordLibraryActivity();
+
+    }
+    else{
+
+        libraryViewActive = false;
+        stopLibraryActivityTracking();
+        switchViewerTimeContext("outside");
+        currentCategory = categories.some(
+            category => category.toLowerCase() ===
+                libraryPreviousCategory.toLowerCase()
+        ) ? libraryPreviousCategory : "All";
+        searchTerm = libraryPreviousSearch;
+        searchInput.value = libraryPreviousSearch;
+        clearSearch.style.display = searchTerm ? "flex" : "none";
+
+    }
+
+    renderCategoryButtons();
+    updateLibraryUI();
+    renderVideos();
+}
+
+async function toggleLibrary(videoId,sourceButton){
+
+    const key = String(videoId);
+
+    if(libraryPendingIds.has(key)) return;
+
+    recordLibraryActivity();
+
+    const wasSaved = libraryVideoIds.has(key);
+    libraryPendingIds.add(key);
+
+    if(wasSaved){
+        libraryVideoIds.delete(key);
+    }
+    else{
+        libraryVideoIds.add(key);
+    }
+
+    persistLibraryCache();
+    updateLibraryUI();
+
+    animateAction(sourceButton,"star");
+
+    if(libraryViewActive){
+        renderVideos();
+    }
+
+    let syncError = null;
+
+    try{
+
+        if(wasSaved){
+
+            const result = await supabaseClient
+                .from("video_library")
+                .delete()
+                .eq("viewer_id",LIBRARY_VIEWER_ID)
+                .eq("platform",LIBRARY_PLATFORM)
+                .eq("video_id",videoId);
+
+            syncError = result.error;
+
+        }
+        else{
+
+            const result = await supabaseClient
+                .from("video_library")
+                .upsert(
+                    {
+                        viewer_id:LIBRARY_VIEWER_ID,
+                        platform:LIBRARY_PLATFORM,
+                        video_id:videoId
+                    },
+                    {
+                        onConflict:"viewer_id,platform,video_id",
+                        ignoreDuplicates:true
+                    }
+                );
+
+            syncError = result.error;
+
+        }
+
+    }
+    catch(error){
+
+        syncError = error;
+
+    }
+
+    if(syncError){
+        showLibraryStatus(
+            "Cloud sync is unavailable; your device library is still updated.",
+            true
+        );
+
+    }
+    else{
+
+        showLibraryStatus(
+            wasSaved
+                ? "Removed from My Library."
+                : "Added to My Library."
+        );
+
+    }
+
+    libraryPendingIds.delete(key);
+    updateLibraryUI();
+
+    if(libraryViewActive){
+        renderVideos();
+
+        const replacementButton = document.querySelector(
+            `.library-btn[data-id="${CSS.escape(String(videoId))}"]`
+        );
+        animateAction(replacementButton,"star");
+    }
+}
+
 
 /* =========================
    CATEGORIES
 ========================= */
 
 let categories = ["All"];
-let categoryRealtimeChannel = null;
-let categoryPollTimer = null;
-let categorySyncInProgress = false;
-let videoRealtimeChannel = null;
-let videoPollTimer = null;
-let videoSyncInProgress = false;
-let lastCategorySignature = "";
 
 
 /* =========================
    LOAD CATEGORIES
 ========================= */
 
-function normaliseCategories(data){
+async function loadCategories(showBusy = false){
 
-    const names = (data || [])
-        .map(row =>
-            row.name ??
-            row.category ??
-            row.title ??
-            ""
-        )
-        .map(value => String(value).trim())
-        .filter(Boolean)
-        .filter(name => name.toLowerCase() !== "all");
+    // Restore the last known category list immediately while Supabase loads.
+    try{
+        const cached =
+            JSON.parse(
+                localStorage.getItem("streamx_categories_cache") || "null"
+            );
 
-    const unique = [];
-    const seen = new Set();
-
-    names.forEach(name => {
-        const key = name.toLowerCase();
-        if(!seen.has(key)){
-            seen.add(key);
-            unique.push(name);
+        if(Array.isArray(cached) && cached.length){
+            categories = ["All", ...cached.filter(
+                category =>
+                    String(category).toLowerCase() !== "all"
+            )];
+            renderCategoryButtons();
         }
-    });
-
-    return ["All", ...unique];
-}
-
-function categorySignature(list){
-    return list
-        .map(category => String(category).trim().toLowerCase())
-        .join("||");
-}
-
-async function loadCategories(options = {}){
-
-    const render = options.render !== false;
-
-    if(categorySyncInProgress){
-        return;
+    }catch(cacheError){
+        console.warn("Unable to restore category cache:", cacheError);
     }
-
-    categorySyncInProgress = true;
 
     try{
 
@@ -1477,54 +2752,54 @@ async function loadCategories(options = {}){
                 .select("*");
 
         if(error){
-
             console.error(
                 "Categories load error:",
                 error
             );
 
+            // Keep the category bar usable even if the categories table
+            // is temporarily unavailable or its SELECT policy is missing.
+            // The actual database categories will replace this as soon as
+            // the query succeeds.
+            categories = ["All"];
+            renderCategoryButtons();
             return;
         }
 
-        const newCategories = normaliseCategories(data);
-        const newSignature = categorySignature(newCategories);
+        const databaseCategories = (data || [])
+            .map(row =>
+                row.name ??
+                row.category ??
+                row.title ??
+                ""
+            )
+            .map(value => String(value).trim())
+            .filter(Boolean);
 
-        if(newSignature === lastCategorySignature){
-            return;
-        }
+        categories = [
+            "All",
+            ...databaseCategories.filter(
+                (category, index, list) =>
+                    list.findIndex(
+                        item =>
+                            item.toLowerCase() ===
+                            category.toLowerCase()
+                    ) === index
+            )
+        ];
 
-        const oldCurrentCategory = currentCategory;
-        const renamedCategory = options.renamedCategory || null;
-
-        categories = newCategories;
-        lastCategorySignature = newSignature;
-
+        // Keep the last successful database list available during a
+        // temporary network/table-policy failure.
         try{
             localStorage.setItem(
                 "streamx_categories_cache",
                 JSON.stringify(categories)
             );
         }catch(cacheError){
-            console.warn(
-                "Category cache unavailable:",
-                cacheError
-            );
+            console.warn("Category cache unavailable:", cacheError);
         }
 
-        /*
-           If an UPDATE renamed the currently selected category,
-           keep that category selected instead of jumping to All.
-        */
-        if(renamedCategory &&
-           oldCurrentCategory !== "All" &&
-           renamedCategory.oldName &&
-           renamedCategory.newName &&
-           String(oldCurrentCategory).toLowerCase() ===
-               String(renamedCategory.oldName).toLowerCase()){
-
-            currentCategory = renamedCategory.newName;
-        }
-        else if(
+        if(
             currentCategory !== "All" &&
             !categories.some(
                 category =>
@@ -1533,12 +2808,13 @@ async function loadCategories(options = {}){
             )
         ){
             currentCategory = "All";
+            searchTerm = "";
+            searchInput.value = "";
+            clearSearch.style.display = "none";
         }
 
-        if(render){
-            renderCategoryButtons();
-            renderVideos();
-        }
+        renderCategoryButtons();
+        renderVideos();
 
     }
     catch(error){
@@ -1548,9 +2824,6 @@ async function loadCategories(options = {}){
             error
         );
 
-    }
-    finally{
-        categorySyncInProgress = false;
     }
 }
 
@@ -1575,6 +2848,7 @@ function renderCategoryButtons(){
         button.textContent = category;
 
         if(
+            !libraryViewActive &&
             category.toLowerCase() ===
             currentCategory.toLowerCase()
         ){
@@ -1586,10 +2860,7 @@ function renderCategoryButtons(){
     });
 }
 
-
-/* =========================
-   REALTIME CATEGORY SYNC
-========================= */
+let categoryRealtimeChannel = null;
 
 function setupCategoryRealtime(){
 
@@ -1599,248 +2870,35 @@ function setupCategoryRealtime(){
 
     categoryRealtimeChannel =
         supabaseClient
-            .channel("streamx-categories-sync-v2")
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table: "categories"
-                },
-                async payload => {
-                    console.log(
-                        "Category INSERT received:",
-                        payload.new
-                    );
-                    await loadCategories();
-                }
-            )
-            .on(
-                "postgres_changes",
-                {
-                    event: "UPDATE",
-                    schema: "public",
-                    table: "categories"
-                },
-                async payload => {
-
-                    console.log(
-                        "Category UPDATE received:",
-                        payload.new
-                    );
-
-                    const oldName =
-                        payload.old?.name ??
-                        payload.old?.category ??
-                        payload.old?.title ??
-                        "";
-
-                    const newName =
-                        payload.new?.name ??
-                        payload.new?.category ??
-                        payload.new?.title ??
-                        "";
-
-                    await loadCategories({
-                        renamedCategory: {
-                            oldName,
-                            newName
-                        }
-                    });
-                }
-            )
-            .on(
-                "postgres_changes",
-                {
-                    event: "DELETE",
-                    schema: "public",
-                    table: "categories"
-                },
-                async payload => {
-                    console.log(
-                        "Category DELETE received:",
-                        payload.old
-                    );
-                    await loadCategories();
-                }
-            )
-            .subscribe(status => {
+        .channel("categories-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table: "categories"
+            },
+            async payload => {
 
                 console.log(
-                    "Categories realtime status:",
-                    status
+                    "Category realtime update:",
+                    payload.eventType
                 );
 
-                if(status === "SUBSCRIBED"){
-                    // Immediately verify the live database state.
-                    loadCategories();
-                }
+                await loadCategories();
 
-            });
-}
+            }
+        )
+        .subscribe(status => {
 
-
-/* =========================
-   CATEGORY SYNC FALLBACK
-========================= */
-
-function startCategorySync(){
-
-    setupCategoryRealtime();
-
-    if(categoryPollTimer){
-        return;
-    }
-
-    /*
-       Realtime is the primary mechanism. This lightweight 5-second
-       check is a fallback in case Supabase Realtime is disabled,
-       disconnected, or blocked by a project configuration issue.
-       It also guarantees admin category changes eventually appear
-       without a page refresh.
-    */
-    categoryPollTimer = setInterval(
-        () => loadCategories(),
-        5000
-    );
-}
-
-
-/* =========================
-   REALTIME VIDEO SYNC
-========================= */
-
-function setupVideoRealtime(){
-
-    if(videoRealtimeChannel){
-        return;
-    }
-
-    videoRealtimeChannel =
-        supabaseClient
-            .channel("streamx-videos-sync-v1")
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table: "videos"
-                },
-                async payload => {
-
-                    console.log(
-                        "Video INSERT received:",
-                        payload.new
-                    );
-
-                    await loadVideos();
-                }
-            )
-            .on(
-                "postgres_changes",
-                {
-                    event: "UPDATE",
-                    schema: "public",
-                    table: "videos"
-                },
-                async payload => {
-
-                    console.log(
-                        "Video UPDATE received:",
-                        payload.new
-                    );
-
-                    await loadVideos();
-                }
-            )
-            .on(
-                "postgres_changes",
-                {
-                    event: "DELETE",
-                    schema: "public",
-                    table: "videos"
-                },
-                async payload => {
-
-                    console.log(
-                        "Video DELETE received:",
-                        payload.old
-                    );
-
-                    await loadVideos();
-                }
-            )
-            .subscribe(status => {
-
-                console.log(
-                    "Videos realtime status:",
-                    status
-                );
-
-                if(status === "SUBSCRIBED"){
-                    loadVideos();
-                }
-
-            });
-}
-
-function startVideoSync(){
-
-    setupVideoRealtime();
-
-    if(videoPollTimer){
-        return;
-    }
-
-    // Realtime is primary. This is only a fallback if Realtime disconnects.
-    videoPollTimer = setInterval(
-        () => loadVideos(),
-        5000
-    );
-}
-
-
-/* =========================
-   RESTORE CACHED CATEGORIES
-========================= */
-
-(function restoreCategoryCache(){
-
-    try{
-
-        const cached =
-            JSON.parse(
-                localStorage.getItem(
-                    "streamx_categories_cache"
-                ) || "null"
+            console.log(
+                "Categories realtime status:",
+                status
             );
 
-        if(Array.isArray(cached) && cached.length){
+        });
+}
 
-            categories = [
-                "All",
-                ...cached
-                    .filter(category =>
-                        String(category).toLowerCase() !== "all"
-                    )
-                    .map(category => String(category).trim())
-                    .filter(Boolean)
-            ];
-
-            lastCategorySignature =
-                categorySignature(categories);
-
-            renderCategoryButtons();
-        }
-
-    }catch(error){
-        console.warn(
-            "Unable to restore category cache:",
-            error
-        );
-    }
-
-})();
 
 /* =========================
    LOAD VIDEOS
@@ -1969,6 +3027,199 @@ renderVideos();
 
 
 /* =========================
+   REALTIME VIDEO UPDATES
+========================= */
+
+let videoRealtimeChannel = null;
+let likeRealtimeChannel = null;
+let likeRealtimeStatus = "";
+let likeCountRefreshTimer = null;
+const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
+
+function updateRealtimeViewUI(videoId,views){
+
+    const text =
+        Number(views || 0).toLocaleString() +
+        " views";
+    const selector =
+        `.view-count-${CSS.escape(String(videoId))}`;
+
+    document
+        .querySelectorAll(selector)
+        .forEach(element => {
+            element.textContent = text;
+        });
+}
+
+function mergeRealtimeVideo(video){
+
+    if(!video || video.id === undefined || video.id === null){
+        return;
+    }
+
+    const index = allVideos.findIndex(
+        item => String(item.id) === String(video.id)
+    );
+    const previous = index >= 0 ? allVideos[index] : null;
+    const displayFields = [
+        "title",
+        "description",
+        "category",
+        "video_url",
+        "video_path",
+        "thumbnail_url",
+        "created_at"
+    ];
+    const contentChanged =
+        !previous ||
+        displayFields.some(field =>
+            String(previous[field] ?? "") !==
+            String(video[field] ?? "")
+        );
+
+    if(index >= 0){
+        allVideos[index] = {
+            ...previous,
+            ...video
+        };
+    }
+    else{
+        allVideos.unshift(video);
+    }
+
+    if(contentChanged){
+        renderVideos();
+    }
+    else{
+        updateRealtimeViewUI(video.id,video.views);
+    }
+}
+
+function setupVideoRealtime(){
+    if(videoRealtimeChannel){
+        return;
+    }
+
+    videoRealtimeChannel = supabaseClient
+        .channel("streamx-videos-realtime")
+        .on(
+            "postgres_changes",
+            { event:"INSERT", schema:"public", table:"videos" },
+            payload => {
+                mergeRealtimeVideo(payload.new);
+            }
+        )
+        .on(
+            "postgres_changes",
+            { event:"UPDATE", schema:"public", table:"videos" },
+            payload => {
+                mergeRealtimeVideo(payload.new);
+            }
+        )
+        .on(
+            "postgres_changes",
+            { event:"DELETE", schema:"public", table:"videos" },
+            payload => {
+                const id = payload.old?.id;
+                allVideos = allVideos.filter(v => String(v.id) !== String(id));
+                renderVideos();
+            }
+        )
+        .subscribe(status => {
+            console.log("Videos realtime status:", status);
+        });
+}
+
+function getVisibleLikeVideoIds(){
+
+    return Array.from(
+        new Set(
+            Array.from(
+                document.querySelectorAll(".like-btn[data-id]")
+            )
+                .map(button => button.dataset.id)
+                .filter(Boolean)
+        )
+    );
+}
+
+function refreshVisibleLikeCounts(){
+
+    getVisibleLikeVideoIds().forEach(videoId => {
+        void updateLikeCount(videoId);
+    });
+}
+
+function startLikeCountFallback(){
+
+    if(likeCountRefreshTimer) return;
+
+    refreshVisibleLikeCounts();
+    likeCountRefreshTimer = setInterval(
+        () => {
+            if(document.visibilityState === "visible"){
+                refreshVisibleLikeCounts();
+            }
+        },
+        LIKE_COUNT_FALLBACK_INTERVAL_MS
+    );
+}
+
+function stopLikeCountFallback(){
+
+    if(!likeCountRefreshTimer) return;
+
+    clearInterval(likeCountRefreshTimer);
+    likeCountRefreshTimer = null;
+}
+
+function setupLikeRealtime(){
+
+    if(likeRealtimeChannel) return;
+
+    likeRealtimeChannel = supabaseClient
+        .channel("mini-app-video-likes-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event:"*",
+                schema:"public",
+                table:"video_likes"
+            },
+            payload => {
+                const videoId =
+                    payload.new && payload.new.video_id !== undefined
+                        ? payload.new.video_id
+                        : payload.old && payload.old.video_id;
+
+                if(videoId === undefined || videoId === null){
+                    refreshVisibleLikeCounts();
+                    return;
+                }
+
+                void updateLikeCount(videoId);
+            }
+        )
+        .subscribe(status => {
+            likeRealtimeStatus = status;
+
+            if(status === "SUBSCRIBED"){
+                stopLikeCountFallback();
+            }
+            else{
+                startLikeCountFallback();
+            }
+
+            console.log("Mini App likes realtime status:",status);
+        });
+
+    /* The interval is only a fallback for projects where the table has not
+       yet been enabled in Supabase Realtime. */
+    startLikeCountFallback();
+}
+
+
+/* =========================
    FILTER
 ========================= */
 
@@ -1986,6 +3237,10 @@ function getFilteredVideos(){
             currentCategory === "All" ||
             videoCategory.toLowerCase() ===
             currentCategory.toLowerCase();
+
+        const libraryMatch =
+            !libraryViewActive ||
+            libraryVideoIds.has(String(video.id));
 
 
         const title =
@@ -2012,6 +3267,7 @@ function getFilteredVideos(){
 
 
         return (
+            libraryMatch &&
             categoryMatch &&
             searchMatch
         );
@@ -2037,7 +3293,9 @@ function renderVideos(){
     if(searchTerm){
 
         sectionTitle.textContent =
-            "Search Results";
+            libraryViewActive
+            ? "Search My Library"
+            : "Search Results";
 
 
         searchStatus.style.display =
@@ -2045,7 +3303,9 @@ function renderVideos(){
 
 
         searchStatus.innerHTML =
-            "Searching for: <strong>" +
+            (libraryViewActive
+                ? "Searching My Library for: <strong>"
+                : "Searching for: <strong>") +
             escapeHTML(searchInput.value) +
             "</strong>";
 
@@ -2057,9 +3317,13 @@ function renderVideos(){
 
 
         sectionTitle.textContent =
-            currentCategory === "All"
-            ? "All Videos"
-            : currentCategory;
+            libraryViewActive
+            ? "My Library"
+            : (
+                currentCategory === "All"
+                ? "All Videos"
+                : currentCategory
+            );
 
     }
 
@@ -2158,6 +3422,7 @@ function createVideoCard(video){
 
                 `
                 <img
+                    class="thumbnail-fallback"
                     src="${escapeHTML(thumbnail)}"
                     alt="${escapeHTML(title)}"
                     loading="lazy"
@@ -2172,6 +3437,25 @@ function createVideoCard(video){
                     🎬
                 </div>
                 `
+            }
+
+            ${
+                video.video_url
+                ?
+                `
+                <video
+                    class="thumbnail-video"
+                    muted
+                    loop
+                    autoplay
+                    playsinline
+                    preload="none"
+                    poster="${thumbnail ? escapeHTML(thumbnail) : ""}"
+                    aria-hidden="true"
+                    tabindex="-1"
+                ></video>
+                `
+                : ""
             }
 
             <div class="play-overlay">
@@ -2236,11 +3520,33 @@ function createVideoCard(video){
         ${video.likes_count || 0}
     </span>
 
+    <button
+        class="library-btn"
+        data-id="${escapeHTML(String(video.id))}"
+        type="button"
+        aria-pressed="false"
+        aria-label="Save to My Library"
+        title="Save to My Library"
+    >
+        ☆
+    </button>
+
 </div>
 
         </div>
 
     `;
+
+    const previewVideo =
+        card.querySelector(".thumbnail-video");
+
+    if(previewVideo){
+        setupThumbnailPreview(
+            card,
+            previewVideo,
+            video
+        );
+    }
 
     const likeButton =
     card.querySelector(".like-btn");
@@ -2253,6 +3559,7 @@ if(likeButton){
 
             event.stopPropagation();
 
+            animateAction(likeButton,"like");
             await toggleLike(video.id);
 
         }
@@ -2265,6 +3572,28 @@ if(likeButton){
     updateLikeButton(video.id);
 
 }
+
+    const libraryButton =
+        card.querySelector(".library-btn");
+
+    if(libraryButton){
+
+        updateLibraryButtonState(
+            libraryButton,
+            video.id
+        );
+
+        libraryButton.addEventListener(
+            "click",
+            async function(event){
+
+                event.stopPropagation();
+                await toggleLibrary(video.id,libraryButton);
+
+            }
+        );
+
+    }
 
 
     card.addEventListener(
@@ -2439,6 +3768,14 @@ async function getVideoURL(video){
 
     if(!storagePath){
 
+        /* Accept external/direct URLs as well as Supabase storage paths. */
+        if(
+            typeof rawValue === "string" &&
+            /^https?:\/\//i.test(rawValue.trim())
+        ){
+            return rawValue.trim();
+        }
+
         console.error(
             "Invalid video path:",
             rawValue
@@ -2477,10 +3814,255 @@ async function getVideoURL(video){
 
 
 /* =========================
+   MUTED CARD PREVIEWS
+========================= */
+
+function getThumbnailPreviewObserver(){
+
+    if(thumbnailPreviewObserver){
+        return thumbnailPreviewObserver;
+    }
+
+    if(!("IntersectionObserver" in window)){
+        return null;
+    }
+
+    thumbnailPreviewObserver = new IntersectionObserver(
+        entries => {
+            entries.forEach(entry => {
+                const previewVideo = entry.target;
+                previewVideo.dataset.previewVisible =
+                    entry.isIntersecting ? "true" : "false";
+
+                if(entry.isIntersecting){
+                    void loadThumbnailPreview(
+                        previewVideo,
+                        previewVideo.__streamxVideo
+                    );
+                }
+                else{
+                    previewVideo.pause();
+                }
+            });
+        },
+        {
+            rootMargin:"140px 0px",
+            threshold:.2
+        }
+    );
+
+    return thumbnailPreviewObserver;
+}
+
+function getThumbnailPreviewURL(video){
+
+    const rawValue =
+        String(video && video.video_url || "").trim();
+
+    if(!rawValue){
+        return Promise.resolve(null);
+    }
+
+    const cacheKey =
+        String(video.id ?? rawValue) + "|" + rawValue;
+    const cached = thumbnailPreviewURLCache.get(cacheKey);
+
+    if(
+        cached &&
+        cached.expiresAt > Date.now() + 60 * 1000
+    ){
+        return Promise.resolve(cached.url);
+    }
+
+    if(thumbnailPreviewURLPending.has(cacheKey)){
+        return thumbnailPreviewURLPending.get(cacheKey);
+    }
+
+    const pending = getVideoURL(video)
+        .then(url => {
+            if(url){
+                thumbnailPreviewURLCache.set(
+                    cacheKey,
+                    {
+                        url,
+                        expiresAt:Date.now() + 50 * 60 * 1000
+                    }
+                );
+            }
+
+            return url;
+        })
+        .catch(error => {
+            console.warn("Card video preview unavailable:",error);
+            return null;
+        })
+        .finally(() => {
+            thumbnailPreviewURLPending.delete(cacheKey);
+        });
+
+    thumbnailPreviewURLPending.set(cacheKey,pending);
+    return pending;
+}
+
+function markThumbnailPreviewFailed(previewVideo){
+
+    if(!previewVideo || !previewVideo.isConnected){
+        return;
+    }
+
+    const thumbnail = previewVideo.closest(".thumbnail");
+
+    if(thumbnail){
+        thumbnail.classList.remove("preview-ready");
+        thumbnail.classList.add("preview-failed");
+    }
+
+    previewVideo.dataset.previewFailed = "true";
+    previewVideo.pause();
+}
+
+function showThumbnailPreview(previewVideo){
+
+    if(!previewVideo || !previewVideo.isConnected){
+        return;
+    }
+
+    const thumbnail = previewVideo.closest(".thumbnail");
+
+    if(thumbnail){
+        thumbnail.classList.remove("preview-failed");
+        thumbnail.classList.add("preview-ready");
+    }
+}
+
+async function loadThumbnailPreview(previewVideo,video){
+
+    if(
+        !previewVideo ||
+        !video ||
+        previewVideo.dataset.previewFailed === "true"
+    ){
+        return;
+    }
+
+    if(previewVideo.dataset.previewStarted === "true"){
+        if(
+            previewVideo.dataset.previewVisible === "true" &&
+            !thumbnailPreviewsPaused
+        ){
+            const playPromise = previewVideo.play();
+            if(playPromise && typeof playPromise.catch === "function"){
+                playPromise.catch(() => {});
+            }
+        }
+        return;
+    }
+
+    if(previewVideo.dataset.previewLoading === "true"){
+        return;
+    }
+
+    previewVideo.dataset.previewLoading = "true";
+
+    try{
+        const videoURL = await getThumbnailPreviewURL(video);
+
+        if(!previewVideo.isConnected){
+            return;
+        }
+
+        if(!videoURL){
+            markThumbnailPreviewFailed(previewVideo);
+            return;
+        }
+
+        previewVideo.src = videoURL;
+        previewVideo.preload = "metadata";
+        previewVideo.dataset.previewStarted = "true";
+        previewVideo.load();
+
+        if(
+            previewVideo.dataset.previewVisible === "true" &&
+            !thumbnailPreviewsPaused
+        ){
+            const playPromise = previewVideo.play();
+            if(playPromise && typeof playPromise.catch === "function"){
+                playPromise.catch(() => {});
+            }
+        }
+    }
+    catch(error){
+        console.warn("Card video preview failed:",error);
+        markThumbnailPreviewFailed(previewVideo);
+    }
+    finally{
+        previewVideo.dataset.previewLoading = "false";
+    }
+}
+
+function setupThumbnailPreview(card,previewVideo,video){
+
+    previewVideo.muted = true;
+    previewVideo.loop = true;
+    previewVideo.playsInline = true;
+    previewVideo.setAttribute("muted","");
+    previewVideo.__streamxVideo = video;
+
+    previewVideo.addEventListener("playing",() => {
+        showThumbnailPreview(previewVideo);
+    });
+    previewVideo.addEventListener("error",() => {
+        markThumbnailPreviewFailed(previewVideo);
+    });
+
+    const observer = getThumbnailPreviewObserver();
+
+    if(observer){
+        observer.observe(previewVideo);
+    }
+    else{
+        previewVideo.dataset.previewVisible = "true";
+        void loadThumbnailPreview(previewVideo,video);
+    }
+}
+
+function pauseThumbnailPreviews(){
+
+    thumbnailPreviewsPaused = true;
+    document
+        .querySelectorAll(".thumbnail-video")
+        .forEach(previewVideo => previewVideo.pause());
+}
+
+function resumeThumbnailPreviews(){
+
+    thumbnailPreviewsPaused = false;
+    document
+        .querySelectorAll(
+            '.thumbnail-video[data-preview-visible="true"]'
+        )
+        .forEach(previewVideo => {
+            if(previewVideo.__streamxVideo){
+                void loadThumbnailPreview(
+                    previewVideo,
+                    previewVideo.__streamxVideo
+                );
+            }
+        });
+}
+
+
+/* =========================
    OPEN PLAYER
 ========================= */
 
 async function openPlayer(video){
+
+    pauseThumbnailPreviews();
+    stopWatchTimeTracking();
+
+    currentPlayerVideoId = video.id;
+    updatePlayerLibraryButton();
 
     playerTitle.textContent =
         video.title ||
@@ -2536,6 +4118,9 @@ async function openPlayer(video){
 
 
     playerVideo.load();
+
+
+    startWatchTimeTracking(video.id);
 
 
     try{
@@ -2801,25 +4386,25 @@ async function updateLikeCount(videoId){
             newLikeCount;
     }
 
-    // Update the number displayed on the card
-    const button =
-        document.querySelector(
-            `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
-        );
+    // Update every matching card without rebuilding the grid or interrupting
+    // a video that may be playing in the modal.
+    const selector =
+        `.like-btn[data-id="${CSS.escape(String(videoId))}"]`;
 
-    if(button){
+    document
+        .querySelectorAll(selector)
+        .forEach(button => {
+            const actions =
+                button.closest(".video-actions") ||
+                button.parentElement;
+            const likeCount =
+                actions && actions.querySelector(".like-count");
 
-        const likeCount =
-            button.parentElement.querySelector(
-                ".like-count"
-            );
-
-        if(likeCount){
-
-            likeCount.textContent =
-                newLikeCount;
-        }
-    }
+            if(likeCount){
+                likeCount.textContent =
+                    newLikeCount.toLocaleString();
+            }
+        });
 
     // Update heart color/status
     await updateLikeButton(videoId);
@@ -2896,6 +4481,11 @@ async function updateLikeButton(videoId){
 
 function closeVideoPlayer(){
 
+    stopWatchTimeTracking();
+
+    currentPlayerVideoId = null;
+    updatePlayerLibraryButton();
+
     playerVideo.pause();
 
 
@@ -2915,6 +4505,8 @@ function closeVideoPlayer(){
     document.body.style.overflow =
         "";
 
+    resumeThumbnailPreviews();
+
 }
 
 
@@ -2926,6 +4518,26 @@ closePlayer.addEventListener(
     "click",
     closeVideoPlayer
 );
+
+if(playerLibraryButton){
+
+    playerLibraryButton.addEventListener(
+        "click",
+        async function(event){
+
+            event.stopPropagation();
+
+            if(
+                currentPlayerVideoId !== null &&
+                currentPlayerVideoId !== undefined
+            ){
+                await toggleLibrary(currentPlayerVideoId,playerLibraryButton);
+            }
+
+        }
+    );
+
+}
 
 
 /* =========================
@@ -3033,6 +4645,15 @@ playerVideo.addEventListener(
    CATEGORY BUTTONS
 ========================= */
 
+if(libraryToggle){
+
+    libraryToggle.addEventListener(
+        "click",
+        toggleLibraryView
+    );
+
+}
+
 document
     .getElementById("categories")
     .addEventListener(
@@ -3047,6 +4668,10 @@ document
 
             if(!button)
                 return;
+
+            libraryViewActive = false;
+            stopLibraryActivityTracking();
+            switchViewerTimeContext("outside");
 
 
             document
@@ -3088,6 +4713,7 @@ document
             categorySuggestions.style.display =
                 "none";
 
+            updateLibraryUI();
 
             renderVideos();
 
@@ -3430,6 +5056,14 @@ function showLoading(){
 
 function showEmpty(){
 
+    const emptyHeading = libraryViewActive
+        ? "Your library is empty"
+        : "No videos found";
+
+    const emptyText = libraryViewActive
+        ? "Click the star on any video to save it here."
+        : "Try another category or search term.";
+
     videoGrid.innerHTML = `
 
         <div class="empty">
@@ -3439,11 +5073,11 @@ function showEmpty(){
             </div>
 
             <h3>
-                No videos found
+                ${emptyHeading}
             </h3>
 
             <p>
-                Try another category or search term.
+                ${emptyText}
             </p>
 
         </div>

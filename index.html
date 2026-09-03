@@ -3033,7 +3033,82 @@ function renderRecommendations(rows){
                 video.video_url
             );
 
-    renderVideos();
+    /* Reorder the cards already on screen instead of rebuilding every card.
+       Rebuilding would restart GIF/image downloads and make the feed feel
+       slower whenever recommendations refresh. */
+    prioritizeRenderedRecommendationCards();
+}
+
+const INITIAL_THUMBNAIL_COUNT = 8;
+
+function prioritizeRenderedRecommendationCards(){
+
+    if(
+        !videoGrid ||
+        libraryViewActive ||
+        searchTerm ||
+        String(currentCategory).toLowerCase() !== "all" ||
+        recommendationVideos.length === 0
+    ){
+        return;
+    }
+
+    const cards = Array.from(
+        videoGrid.querySelectorAll(".video-card")
+    );
+
+    if(cards.length === 0){
+        return;
+    }
+
+    const cardsById = new Map(
+        cards.map(card => [
+            String(card.dataset.videoId || ""),
+            card
+        ])
+    );
+    const ordered = [];
+    const used = new Set();
+
+    recommendationVideos.forEach(recommendation => {
+
+        const card = cardsById.get(
+            String(recommendation.id)
+        );
+
+        if(card && !used.has(card)){
+            used.add(card);
+            ordered.push(card);
+        }
+
+    });
+
+    cards.forEach(card => {
+        if(!used.has(card)){
+            ordered.push(card);
+        }
+    });
+
+    const fragment = document.createDocumentFragment();
+
+    ordered.forEach((card,index) => {
+
+        if(index < INITIAL_THUMBNAIL_COUNT){
+            const image = card.querySelector(
+                ".thumbnail-fallback"
+            );
+
+            if(image){
+                image.loading = "eager";
+                image.decoding = "async";
+            }
+        }
+
+        fragment.appendChild(card);
+
+    });
+
+    videoGrid.appendChild(fragment);
 }
 
 async function loadRecommendations(){
@@ -3631,10 +3706,13 @@ function renderVideos(){
     }
 
 
-    videos.forEach(video => {
+    videos.forEach((video,index) => {
 
         videoGrid.appendChild(
-            createVideoCard(video)
+            createVideoCard(
+                video,
+                index < INITIAL_THUMBNAIL_COUNT
+            )
         );
 
     });
@@ -3646,7 +3724,7 @@ function renderVideos(){
    CREATE CARD
 ========================= */
 
-function createVideoCard(video){
+function createVideoCard(video,prioritizeLoad = false){
 
     const card =
         document.createElement("article");
@@ -3654,6 +3732,9 @@ function createVideoCard(video){
 
     card.className =
         "video-card";
+
+    card.dataset.videoId =
+        String(video.id);
 
 
     const thumbnail =
@@ -3710,7 +3791,8 @@ function createVideoCard(video){
                     class="thumbnail-fallback"
                     src="${escapeHTML(thumbnail)}"
                     alt="${escapeHTML(title)}"
-                    loading="lazy"
+                    loading="${prioritizeLoad ? "eager" : "lazy"}"
+                    decoding="async"
                     draggable="false"
                 >
                 `

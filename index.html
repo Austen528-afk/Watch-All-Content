@@ -623,35 +623,6 @@ body{
     -webkit-user-select:none;
 }
 
-.thumbnail-video{
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:block;
-    background:#1d1d1d;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .35s ease;
-}
-
-.thumbnail.preview-ready .thumbnail-video{
-    opacity:1;
-}
-
-.thumbnail.preview-ready .thumbnail-fallback{
-    opacity:0;
-}
-
-.thumbnail-fallback{
-    transition:opacity .35s ease,transform .3s;
-}
-
-.thumbnail.preview-failed .thumbnail-video{
-    display:none;
-}
-
 .video-card:hover .thumbnail img{
     transform:scale(1.04);
 }
@@ -1657,11 +1628,6 @@ ageNo.addEventListener(
 ========================= */
 
 let allVideos = [];
-let thumbnailPreviewObserver = null;
-let thumbnailPreviewsPaused = false;
-const thumbnailPreviewURLCache = new Map();
-const thumbnailPreviewURLPending = new Map();
-
 let currentCategory = "All";
 
 let searchTerm = "";
@@ -2288,13 +2254,6 @@ function recordLibraryActivity(){
 }
 
 document.addEventListener("visibilitychange",function(){
-
-    if(document.visibilityState === "hidden"){
-        pauseThumbnailPreviews();
-    }
-    else if(!videoModal.classList.contains("show")){
-        resumeThumbnailPreviews();
-    }
 
     if(viewerTimeState){
 
@@ -3267,11 +3226,6 @@ function renderVideos(){
         getFilteredVideos();
 
 
-    if(thumbnailPreviewObserver){
-        thumbnailPreviewObserver.disconnect();
-    }
-
-
     videoGrid.innerHTML = "";
 
 
@@ -3424,25 +3378,6 @@ function createVideoCard(video){
                 `
             }
 
-            ${
-                video.video_url
-                ?
-                `
-                <video
-                    class="thumbnail-video"
-                    muted
-                    loop
-                    autoplay
-                    playsinline
-                    preload="auto"
-                    poster="${thumbnail ? escapeHTML(thumbnail) : ""}"
-                    aria-hidden="true"
-                    tabindex="-1"
-                ></video>
-                `
-                : ""
-            }
-
             <div class="play-overlay">
 
                 <div class="play-circle">
@@ -3521,17 +3456,6 @@ function createVideoCard(video){
         </div>
 
     `;
-
-    const previewVideo =
-        card.querySelector(".thumbnail-video");
-
-    if(previewVideo){
-        setupThumbnailPreview(
-            card,
-            previewVideo,
-            video
-        );
-    }
 
     const likeButton =
     card.querySelector(".like-btn");
@@ -3799,280 +3723,11 @@ async function getVideoURL(video){
 
 
 /* =========================
-   MUTED CARD PREVIEWS
-========================= */
-
-function getThumbnailPreviewObserver(){
-
-    if(thumbnailPreviewObserver){
-        return thumbnailPreviewObserver;
-    }
-
-    if(!("IntersectionObserver" in window)){
-        return null;
-    }
-
-    thumbnailPreviewObserver = new IntersectionObserver(
-        entries => {
-            entries.forEach(entry => {
-                const previewVideo = entry.target;
-                const isVisible =
-                    entry.isIntersecting;
-
-                previewVideo.dataset.previewVisible =
-                    isVisible ? "true" : "false";
-
-                if(isVisible){
-                    void loadThumbnailPreview(
-                        previewVideo,
-                        previewVideo.__streamxVideo
-                    );
-                }
-                else{
-                    previewVideo.pause();
-                }
-            });
-        },
-        {
-            rootMargin:"0px",
-            threshold:.15
-        }
-    );
-
-    return thumbnailPreviewObserver;
-}
-
-function getThumbnailPreviewURL(video){
-
-    const rawValue =
-        String(video && video.video_url || "").trim();
-
-    if(!rawValue){
-        return Promise.resolve(null);
-    }
-
-    const cacheKey =
-        String(video.id ?? rawValue) + "|" + rawValue;
-    const cached = thumbnailPreviewURLCache.get(cacheKey);
-
-    if(
-        cached &&
-        cached.expiresAt > Date.now() + 60 * 1000
-    ){
-        return Promise.resolve(cached.url);
-    }
-
-    if(thumbnailPreviewURLPending.has(cacheKey)){
-        return thumbnailPreviewURLPending.get(cacheKey);
-    }
-
-    const pending = getVideoURL(video)
-        .then(url => {
-            if(url){
-                thumbnailPreviewURLCache.set(
-                    cacheKey,
-                    {
-                        url,
-                        expiresAt:Date.now() + 50 * 60 * 1000
-                    }
-                );
-            }
-
-            return url;
-        })
-        .catch(error => {
-            console.warn("Card video preview unavailable:",error);
-            return null;
-        })
-        .finally(() => {
-            thumbnailPreviewURLPending.delete(cacheKey);
-        });
-
-    thumbnailPreviewURLPending.set(cacheKey,pending);
-    return pending;
-}
-
-function markThumbnailPreviewFailed(previewVideo){
-
-    if(!previewVideo || !previewVideo.isConnected){
-        return;
-    }
-
-    const thumbnail = previewVideo.closest(".thumbnail");
-
-    if(thumbnail){
-        thumbnail.classList.remove("preview-ready");
-        thumbnail.classList.add("preview-failed");
-    }
-
-    previewVideo.dataset.previewFailed = "true";
-    previewVideo.pause();
-}
-
-function showThumbnailPreview(previewVideo){
-
-    if(!previewVideo || !previewVideo.isConnected){
-        return;
-    }
-
-    const thumbnail = previewVideo.closest(".thumbnail");
-
-    if(thumbnail){
-        thumbnail.classList.remove("preview-failed");
-        thumbnail.classList.add("preview-ready");
-    }
-}
-
-async function loadThumbnailPreview(previewVideo,video){
-
-    if(
-        !previewVideo ||
-        !video ||
-        previewVideo.dataset.previewFailed === "true"
-    ){
-        return;
-    }
-
-    if(
-        previewVideo.dataset.previewVisible !== "true" ||
-        thumbnailPreviewsPaused
-    ){
-        previewVideo.pause();
-        return;
-    }
-
-    if(previewVideo.dataset.previewStarted === "true"){
-        const playPromise = previewVideo.play();
-        if(playPromise && typeof playPromise.catch === "function"){
-            playPromise.catch(() => {});
-        }
-        return;
-    }
-
-    if(previewVideo.dataset.previewLoading === "true"){
-        return;
-    }
-
-    previewVideo.dataset.previewLoading = "true";
-
-    try{
-        const videoURL = await getThumbnailPreviewURL(video);
-
-        if(!previewVideo.isConnected){
-            return;
-        }
-
-        if(!videoURL){
-            markThumbnailPreviewFailed(previewVideo);
-            return;
-        }
-
-        if(
-            previewVideo.dataset.previewVisible !== "true" ||
-            thumbnailPreviewsPaused
-        ){
-            return;
-        }
-
-        previewVideo.src = videoURL;
-        previewVideo.preload = "auto";
-        previewVideo.dataset.previewStarted = "true";
-        previewVideo.load();
-
-        const playPromise = previewVideo.play();
-        if(playPromise && typeof playPromise.catch === "function"){
-            playPromise.catch(() => {});
-        }
-    }
-    catch(error){
-        console.warn("Card video preview failed:",error);
-        markThumbnailPreviewFailed(previewVideo);
-    }
-    finally{
-        previewVideo.dataset.previewLoading = "false";
-    }
-}
-
-function setupThumbnailPreview(card,previewVideo,video){
-
-    previewVideo.muted = true;
-    previewVideo.loop = true;
-    previewVideo.autoplay = true;
-    previewVideo.playsInline = true;
-    previewVideo.setAttribute("muted","");
-    previewVideo.__streamxVideo = video;
-
-    previewVideo.addEventListener("playing",() => {
-        showThumbnailPreview(previewVideo);
-    });
-    previewVideo.addEventListener("error",() => {
-        markThumbnailPreviewFailed(previewVideo);
-    });
-
-    previewVideo.dataset.previewVisible = "false";
-
-    const observer =
-        getThumbnailPreviewObserver();
-
-    if(observer){
-        observer.observe(previewVideo);
-    }
-    else{
-        const rect =
-            card.getBoundingClientRect();
-
-        const isVisible =
-            rect.bottom > 0 &&
-            rect.top < window.innerHeight &&
-            rect.right > 0 &&
-            rect.left < window.innerWidth;
-
-        previewVideo.dataset.previewVisible =
-            isVisible ? "true" : "false";
-
-        if(isVisible){
-            void loadThumbnailPreview(previewVideo,video);
-        }
-    }
-}
-
-function pauseThumbnailPreviews(){
-
-    thumbnailPreviewsPaused = true;
-    document
-        .querySelectorAll(".thumbnail-video")
-        .forEach(previewVideo => previewVideo.pause());
-}
-
-function resumeThumbnailPreviews(){
-
-    thumbnailPreviewsPaused = false;
-    document
-        .querySelectorAll(".thumbnail-video")
-        .forEach(previewVideo => {
-            if(
-                previewVideo.__streamxVideo &&
-                previewVideo.dataset.previewVisible === "true"
-            ){
-                void loadThumbnailPreview(
-                    previewVideo,
-                    previewVideo.__streamxVideo
-                );
-            }
-            else{
-                previewVideo.pause();
-            }
-        });
-}
-
-
-/* =========================
    OPEN PLAYER
 ========================= */
 
 async function openPlayer(video){
 
-    pauseThumbnailPreviews();
     stopWatchTimeTracking();
 
     currentPlayerVideoId = video.id;
@@ -4518,8 +4173,6 @@ function closeVideoPlayer(){
 
     document.body.style.overflow =
         "";
-
-    resumeThumbnailPreviews();
 
 }
 

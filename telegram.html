@@ -481,6 +481,72 @@ body{
     padding:30px 25px 70px;
 }
 
+.recommendation-section{
+    margin-bottom:32px;
+    padding:20px;
+    border:1px solid rgba(255,23,68,.28);
+    border-radius:16px;
+    background:linear-gradient(135deg,#191015,#0d0d0d);
+    box-shadow:0 12px 32px rgba(0,0,0,.18),0 0 28px rgba(255,23,68,.05);
+}
+
+.recommendation-section[hidden]{
+    display:none!important;
+}
+
+.recommendation-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+    margin-bottom:16px;
+}
+
+.recommendation-header h2{
+    font-size:21px;
+}
+
+.recommendation-header p{
+    margin-top:6px;
+    color:#888;
+    font-size:12px;
+    line-height:1.4;
+}
+
+.recommendation-badge{
+    flex-shrink:0;
+    padding:6px 9px;
+    border-radius:999px;
+    background:rgba(255,23,68,.14);
+    border:1px solid rgba(255,23,68,.35);
+    color:#ff718c;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.7px;
+    text-transform:uppercase;
+}
+
+.recommendation-grid{
+    grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    gap:16px;
+}
+
+@media(max-width:800px){
+    .recommendation-section{
+        padding:18px 15px;
+        margin-bottom:24px;
+    }
+
+    .recommendation-header h2{
+        font-size:18px;
+    }
+
+    .recommendation-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:12px;
+    }
+}
+
 
 /* =========================
    HERO
@@ -1452,6 +1518,30 @@ body{
 
 <main class="main">
 
+    <section
+        class="recommendation-section"
+        id="recommendationSection"
+        aria-labelledby="recommendationTitle"
+        hidden
+    >
+        <div class="recommendation-header">
+            <div>
+                <h2 id="recommendationTitle">Recommended for you</h2>
+                <p id="recommendationSubtitle">Finding videos for you...</p>
+            </div>
+
+            <span
+                class="recommendation-badge"
+                id="recommendationBadge"
+            >For you</span>
+        </div>
+
+        <div
+            class="video-grid recommendation-grid"
+            id="recommendationGrid"
+        ></div>
+    </section>
+
     <section class="hero" aria-label="StreamX highlights">
 
         <div class="hero-rotator" aria-live="polite">
@@ -1763,7 +1853,7 @@ function enterWebsite(){
     loadCategories();
     setupCategoryRealtime();
     loadLibrary();
-    loadVideos();
+    loadVideos().then(() => loadRecommendations());
     setupVideoRealtime();
     setupLikeRealtime();
 
@@ -1829,6 +1919,9 @@ let currentPlayerVideoId = null;
 let libraryActivityTimer = null;
 let libraryActivityLastSeen = 0;
 let libraryActivityRequestInFlight = false;
+let recommendationVideos = [];
+let recommendationRefreshTimer = null;
+let recommendationLoading = false;
 
 
 /* =========================
@@ -1888,6 +1981,21 @@ const libraryCallout =
 
 const libraryStatus =
     document.getElementById("libraryStatus");
+
+const recommendationSection =
+    document.getElementById("recommendationSection");
+
+const recommendationGrid =
+    document.getElementById("recommendationGrid");
+
+const recommendationTitle =
+    document.getElementById("recommendationTitle");
+
+const recommendationSubtitle =
+    document.getElementById("recommendationSubtitle");
+
+const recommendationBadge =
+    document.getElementById("recommendationBadge");
 
 const playerLibraryButton =
     document.getElementById("playerLibraryButton");
@@ -2776,6 +2884,8 @@ async function toggleLibrary(videoId,sourceButton){
         );
         animateAction(replacementButton,"star");
     }
+
+    scheduleRecommendationRefresh();
 }
 
 
@@ -2965,6 +3075,143 @@ function setupCategoryRealtime(){
         });
 }
 
+
+/* =========================
+   RECOMMENDATIONS
+========================= */
+
+function updateRecommendationVisibility(){
+
+    if(!recommendationSection) return;
+
+    const browsingAllVideos =
+        !libraryViewActive &&
+        !searchTerm &&
+        String(currentCategory).toLowerCase() === "all";
+
+    recommendationSection.hidden =
+        !browsingAllVideos ||
+        recommendationVideos.length === 0;
+}
+
+function normalizeRecommendationVideo(row){
+
+    return {
+        id:row && row.video_id,
+        title:row && row.title || "Untitled Video",
+        description:row && row.description || "",
+        category:row && row.category || "Uncategorized",
+        video_url:row && row.video_url || "",
+        thumbnail_url:row && row.thumbnail_url || "",
+        created_at:row && row.created_at || null,
+        views:Number(row && row.views || 0),
+        likes_count:Number(row && row.likes_count || 0),
+        recommendation_score:row && row.recommendation_score,
+        recommendation_mode:row && row.recommendation_mode
+    };
+}
+
+function renderRecommendations(rows,mode){
+
+    if(!recommendationSection || !recommendationGrid) return;
+
+    recommendationVideos =
+        (Array.isArray(rows) ? rows : [])
+            .map(normalizeRecommendationVideo)
+            .filter(video =>
+                video.id !== null &&
+                video.id !== undefined &&
+                video.video_url
+            );
+
+    if(recommendationVideos.length === 0){
+        recommendationSection.hidden = true;
+        return;
+    }
+
+    const isPopular = mode === "popular";
+
+    recommendationTitle.textContent =
+        isPopular ? "Popular on StreamX" : "Recommended for you";
+    recommendationSubtitle.textContent =
+        isPopular
+            ? "Top videos based on views and likes."
+            : "Based on what you watch, like, and save.";
+    recommendationBadge.textContent =
+        isPopular ? "Popular picks" : "For you";
+
+    recommendationGrid.innerHTML = "";
+
+    recommendationVideos.forEach(video => {
+        recommendationGrid.appendChild(
+            createVideoCard(video)
+        );
+    });
+
+    updateRecommendationVisibility();
+}
+
+async function loadRecommendations(){
+
+    if(
+        recommendationLoading ||
+        !recommendationGrid
+    ) return;
+
+    recommendationLoading = true;
+
+    try{
+
+        const { data,error } =
+            await supabaseClient.rpc(
+                "get_streamx_recommendations",
+                {
+                    p_viewer_id:LIBRARY_VIEWER_ID,
+                    p_platform:LIBRARY_PLATFORM,
+                    p_like_user_id:getLikeUserId(),
+                    p_limit:8
+                }
+            );
+
+        if(error) throw error;
+
+        const rows = Array.isArray(data) ? data : [];
+        renderRecommendations(
+            rows,
+            rows[0] && rows[0].recommendation_mode
+        );
+
+    }
+    catch(error){
+
+        recommendationVideos = [];
+
+        if(recommendationSection){
+            recommendationSection.hidden = true;
+        }
+
+        /* Recommendations are optional; the normal video feed remains usable
+           when the SQL function has not been installed yet. */
+        console.warn("Recommendations unavailable:",error);
+
+    }
+    finally{
+        recommendationLoading = false;
+    }
+}
+
+function scheduleRecommendationRefresh(delay = 900){
+
+    clearTimeout(recommendationRefreshTimer);
+
+    recommendationRefreshTimer = setTimeout(
+        () => {
+            recommendationRefreshTimer = null;
+            void loadRecommendations();
+        },
+        delay
+    );
+}
 
 /* =========================
    LOAD VIDEOS
@@ -3348,6 +3595,8 @@ function getFilteredVideos(){
 ========================= */
 
 function renderVideos(){
+
+    updateRecommendationVisibility();
 
     const videos =
         getFilteredVideos();
@@ -4106,6 +4355,7 @@ async function toggleLike(videoId){
 
 
         await updateLikeCount(videoId);
+        scheduleRecommendationRefresh();
 
     }
     catch(error){
@@ -4304,6 +4554,8 @@ function closeVideoPlayer(){
 
     document.body.style.overflow =
         "";
+
+    scheduleRecommendationRefresh(1500);
 
 }
 

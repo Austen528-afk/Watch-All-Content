@@ -1571,6 +1571,7 @@ body{
             playsinline
             controlsList="nodownload noplaybackrate"
             disablePictureInPicture
+            loop
             preload="metadata"
         ></video>
 
@@ -3886,6 +3887,10 @@ async function openPlayer(video){
     playerVideo.removeAttribute(
         "src"
     );
+
+    /* Re-play opened videos continuously without forcing them muted. */
+    playerVideo.loop = true;
+    playerVideo.muted = false;
 
 
     playerVideo.load();

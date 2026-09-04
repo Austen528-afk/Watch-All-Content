@@ -9,6 +9,9 @@
 
 <title>StreamX</title>
 
+<link rel="preconnect" href="https://iojjmoywrlnzpyatahyh.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="//iojjmoywrlnzpyatahyh.supabase.co">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -1854,6 +1857,10 @@ let libraryActivityRequestInFlight = false;
 let recommendationVideos = [];
 let recommendationRefreshTimer = null;
 let recommendationLoading = false;
+let recommendationRefreshQueued = false;
+let recommendationTriggerVideoId = null;
+const RECOMMENDATION_COOLDOWN_MS = 20 * 60 * 1000;
+const RECOMMENDATION_HISTORY_LIMIT = 48;
 let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
 let likeSummaryPromise = null;
@@ -2896,7 +2903,10 @@ async function toggleLibrary(videoId,sourceButton){
         animateAction(replacementButton,"star");
     }
 
-    scheduleRecommendationRefresh();
+    scheduleRecommendationRefresh(
+        900,
+        wasSaved ? null : videoId
+    );
 }
 
 
@@ -2996,6 +3006,10 @@ async function loadCategories(){
 
     try{
 
+        const previousCategoryKey =
+            categories.join("\u0001");
+        let categorySelectionChanged = false;
+
         const { data,error } = await supabaseClient
             .from("categories")
             .select("*");
@@ -3044,10 +3058,17 @@ async function loadCategories(){
             searchTerm = "";
             searchInput.value = "";
             clearSearch.style.display = "none";
+            categorySelectionChanged = true;
         }
 
         mergeVideoCategoriesIntoCategoryBar();
-        renderVideos();
+
+        if(
+            categorySelectionChanged ||
+            previousCategoryKey !== categories.join("\u0001")
+        ){
+            renderVideos();
+        }
 
     }
     catch(error){
@@ -3109,6 +3130,114 @@ function normalizeRecommendationVideo(row){
     };
 }
 
+function getRecommendationHistoryKey(){
+
+    return "streamx_" +
+        LIBRARY_PLATFORM +
+        "_" +
+        LIBRARY_VIEWER_ID +
+        "_recommendation_history";
+
+}
+
+function readRecommendationHistory(){
+
+    const cutoff = Date.now() - RECOMMENDATION_COOLDOWN_MS;
+
+    try{
+
+        const raw = localStorage.getItem(
+            getRecommendationHistoryKey()
+        );
+        const parsed = raw ? JSON.parse(raw) : [];
+
+        if(!Array.isArray(parsed)) return [];
+
+        return parsed
+            .map(item => ({
+                id:String(item && item.id || ""),
+                shownAt:Number(item && item.shownAt || 0)
+            }))
+            .filter(item =>
+                item.id &&
+                Number.isFinite(item.shownAt) &&
+                item.shownAt >= cutoff
+            )
+            .sort((a,b) => b.shownAt - a.shownAt);
+
+    }
+    catch(error){
+
+        return [];
+
+    }
+
+}
+
+function writeRecommendationHistory(history){
+
+    try{
+
+        localStorage.setItem(
+            getRecommendationHistoryKey(),
+            JSON.stringify(history.slice(0,RECOMMENDATION_HISTORY_LIMIT))
+        );
+
+    }
+    catch(error){
+
+        /* Recommendations remain usable when storage is unavailable. */
+
+    }
+
+}
+
+function getRecentRecommendationIds(){
+
+    const seen = new Set();
+
+    return readRecommendationHistory()
+        .filter(item => {
+            if(seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+        })
+        .map(item => Number(item.id))
+        .filter(id => Number.isSafeInteger(id));
+
+}
+
+function rememberRecommendations(rows){
+
+    const now = Date.now();
+    const historyById = new Map(
+        readRecommendationHistory().map(item => [
+            item.id,
+            item.shownAt
+        ])
+    );
+
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+
+        const id = row && row.id;
+
+        if(id === null || id === undefined) return;
+
+        historyById.set(String(id),now);
+
+    });
+
+    const history = Array.from(
+        historyById,
+        ([id,shownAt]) => ({id,shownAt})
+    )
+        .sort((a,b) => b.shownAt - a.shownAt)
+        .slice(0,RECOMMENDATION_HISTORY_LIMIT);
+
+    writeRecommendationHistory(history);
+
+}
+
 function renderRecommendations(rows){
 
     recommendationVideos =
@@ -3119,6 +3248,8 @@ function renderRecommendations(rows){
                 video.id !== undefined &&
                 video.video_url
             );
+
+    rememberRecommendations(recommendationVideos);
 
     /* Reorder the cards already on screen instead of rebuilding every card.
        Rebuilding would restart GIF/image downloads and make the feed feel
@@ -3134,8 +3265,7 @@ function prioritizeRenderedRecommendationCards(){
         !videoGrid ||
         libraryViewActive ||
         searchTerm ||
-        String(currentCategory).toLowerCase() !== "all" ||
-        recommendationVideos.length === 0
+        String(currentCategory).toLowerCase() !== "all"
     ){
         return;
     }
@@ -3170,10 +3300,21 @@ function prioritizeRenderedRecommendationCards(){
 
     });
 
-    cards.forEach(card => {
-        if(!used.has(card)){
+    /* Return every other visible card to the catalog order. This prevents an
+       old recommendation order from surviving after a like/save refresh. */
+    getFilteredVideos().forEach(video => {
+
+        const card = cardsById.get(String(video.id));
+
+        if(card && !used.has(card)){
+            used.add(card);
             ordered.push(card);
         }
+
+    });
+
+    cards.forEach(card => {
+        if(!used.has(card)) ordered.push(card);
     });
 
     const fragment = document.createDocumentFragment();
@@ -3200,9 +3341,21 @@ function prioritizeRenderedRecommendationCards(){
 
 async function loadRecommendations(){
 
-    if(recommendationLoading) return;
+    if(recommendationLoading){
+        recommendationRefreshQueued = true;
+        return;
+    }
 
     recommendationLoading = true;
+
+    const triggerVideoId =
+        recommendationTriggerVideoId === null ||
+        recommendationTriggerVideoId === undefined
+            ? null
+            : Number(recommendationTriggerVideoId);
+    const excludeVideoIds = getRecentRecommendationIds();
+
+    recommendationTriggerVideoId = null;
 
     try{
 
@@ -3213,7 +3366,12 @@ async function loadRecommendations(){
                     p_viewer_id:LIBRARY_VIEWER_ID,
                     p_platform:LIBRARY_PLATFORM,
                     p_like_user_id:getLikeUserId(),
-                    p_limit:8
+                    p_limit:8,
+                    p_trigger_video_id:
+                        Number.isSafeInteger(triggerVideoId)
+                            ? triggerVideoId
+                            : null,
+                    p_exclude_video_ids:excludeVideoIds
                 }
             );
 
@@ -3226,6 +3384,7 @@ async function loadRecommendations(){
     catch(error){
 
         recommendationVideos = [];
+        prioritizeRenderedRecommendationCards();
 
         /* Recommendations are optional; the normal video feed remains usable
            when the SQL function has not been installed yet. */
@@ -3234,10 +3393,25 @@ async function loadRecommendations(){
     }
     finally{
         recommendationLoading = false;
+
+        if(recommendationRefreshQueued){
+            recommendationRefreshQueued = false;
+            scheduleRecommendationRefresh(0);
+        }
     }
 }
 
-function scheduleRecommendationRefresh(delay = 900){
+function scheduleRecommendationRefresh(
+    delay = 900,
+    triggerVideoId = undefined
+){
+
+    if(triggerVideoId !== undefined){
+        recommendationTriggerVideoId =
+            triggerVideoId === null
+                ? null
+                : String(triggerVideoId);
+    }
 
     clearTimeout(recommendationRefreshTimer);
 
@@ -3348,6 +3522,40 @@ function loadLikeSummary(){
         });
 }
 
+function scheduleLikeSummary(){
+
+    return new Promise((resolve,reject) => {
+
+        const startRequest = () => {
+
+            Promise.resolve()
+                .then(loadLikeSummary)
+                .then(
+                resolve,
+                reject
+                );
+
+        };
+
+        if(
+            typeof window.requestIdleCallback ===
+            "function"
+        ){
+            window.requestIdleCallback(
+                startRequest,
+                {timeout:1500}
+            );
+        }
+        else{
+            window.setTimeout(
+                startRequest,
+                0
+            );
+        }
+
+    });
+}
+
 /* =========================
    LOAD VIDEOS
 ========================= */
@@ -3393,15 +3601,15 @@ allVideos =
    unavailable; the videos table still exposes the categories in use. */
 mergeVideoCategoriesIntoCategoryBar();
 
-/* Start the single likes request before painting cards. The grid can paint
-   immediately while the like counts and heart states arrive in the background. */
+/* Queue the single likes request after the first paint. The grid can paint
+   immediately while counts and heart states arrive in the background. */
 allVideos.forEach(video => {
     if(video.likes_count === undefined || video.likes_count === null){
         video.likes_count = 0;
     }
 });
 
-likeSummaryPromise = loadLikeSummary();
+likeSummaryPromise = scheduleLikeSummary();
 renderVideos();
 void likeSummaryPromise.catch(() => {});
 
@@ -3887,9 +4095,11 @@ function renderVideos(){
     }
 
 
+    const cardFragment = document.createDocumentFragment();
+
     videos.forEach((video,index) => {
 
-        videoGrid.appendChild(
+        cardFragment.appendChild(
             createVideoCard(
                 video,
                 index < INITIAL_THUMBNAIL_COUNT
@@ -3897,6 +4107,8 @@ function renderVideos(){
         );
 
     });
+
+    videoGrid.appendChild(cardFragment);
 
     updateFeedPagination(
         allDisplayVideos.length,
@@ -3979,6 +4191,7 @@ function createVideoCard(video,prioritizeLoad = false){
                     alt="${escapeHTML(title)}"
                     loading="${prioritizeLoad ? "eager" : "lazy"}"
                     decoding="async"
+                    fetchpriority="${prioritizeLoad ? "high" : "auto"}"
                     draggable="false"
                 >
                 `
@@ -4600,7 +4813,10 @@ async function toggleLike(videoId){
         }
 
         await updateLikeCount(videoId);
-        scheduleRecommendationRefresh();
+        scheduleRecommendationRefresh(
+            900,
+            existingLike ? null : videoId
+        );
 
     }
     catch(error){
@@ -4780,6 +4996,7 @@ function closeVideoPlayer(){
 
     stopWatchTimeTracking();
 
+    const recentlyWatchedVideoId = currentPlayerVideoId;
     currentPlayerVideoId = null;
     updatePlayerLibraryButton();
 
@@ -4802,7 +5019,10 @@ function closeVideoPlayer(){
     document.body.style.overflow =
         "";
 
-    scheduleRecommendationRefresh(1500);
+    scheduleRecommendationRefresh(
+        1500,
+        recentlyWatchedVideoId
+    );
 
 }
 

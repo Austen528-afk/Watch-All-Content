@@ -2228,11 +2228,20 @@ async function updateWebsitePresence(){
 
     try{
 
+        /* Presence is security-bound to the authenticated anonymous Supabase UID.
+           Never trust a stale/local viewer ID for active_users writes. */
+        const session = await ensurePublicAuthSession();
+        const authUserId =
+            session?.user?.id ||
+            publicAuthUserId;
+
+        if(!authUserId) return;
+
         const { error } = await supabaseClient
             .from("active_users")
             .upsert(
                 {
-                    user_id:WATCH_TIME_VIEWER_ID,
+                    user_id:authUserId,
                     platform:WEBSITE_PRESENCE_PLATFORM,
                     last_seen:new Date().toISOString()
                 },

@@ -1865,11 +1865,23 @@ async function updateMiniAppPresence(){
 
     try{
 
-        await supabaseClient
+        /* Presence is security-bound to the authenticated anonymous Supabase UID.
+           Wait for Auth before writing active_users so strict RLS cannot be
+           bypassed with a local/device ID. */
+        const session = await ensureMiniAppAuthSession();
+        const authUserId =
+            session?.user?.id ||
+            miniAppAuthUserId;
+
+        if(!authUserId) return;
+
+        MINI_APP_USER_ID = authUserId;
+
+        const { error } = await supabaseClient
             .from("active_users")
             .upsert(
                 {
-                    user_id: MINI_APP_USER_ID,
+                    user_id: authUserId,
                     platform: "mini_app",
                     last_seen: new Date().toISOString()
                 },
@@ -1877,6 +1889,13 @@ async function updateMiniAppPresence(){
                     onConflict: "user_id,platform"
                 }
             );
+
+        if(error){
+            console.warn(
+                "Mini App presence update failed:",
+                error
+            );
+        }
 
     }catch(error){
 

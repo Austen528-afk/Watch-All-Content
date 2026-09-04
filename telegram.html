@@ -9,6 +9,9 @@
 
 <title>StreamX</title>
 
+<link rel="preconnect" href="https://iojjmoywrlnzpyatahyh.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="//iojjmoywrlnzpyatahyh.supabase.co">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -2908,6 +2911,10 @@ async function loadCategories(showBusy = false){
 
     try{
 
+        const previousCategoryKey =
+            categories.join("\u0001");
+        let categorySelectionChanged = false;
+
         const { data, error } =
             await supabaseClient
                 .from("categories")
@@ -2973,10 +2980,17 @@ async function loadCategories(showBusy = false){
             searchTerm = "";
             searchInput.value = "";
             clearSearch.style.display = "none";
+            categorySelectionChanged = true;
         }
 
         renderCategoryButtons();
-        renderVideos();
+
+        if(
+            categorySelectionChanged ||
+            previousCategoryKey !== categories.join("\u0001")
+        ){
+            renderVideos();
+        }
 
     }
     catch(error){
@@ -3322,6 +3336,40 @@ function loadLikeSummary(){
         });
 }
 
+function scheduleLikeSummary(){
+
+    return new Promise((resolve,reject) => {
+
+        const startRequest = () => {
+
+            Promise.resolve()
+                .then(loadLikeSummary)
+                .then(
+                resolve,
+                reject
+                );
+
+        };
+
+        if(
+            typeof window.requestIdleCallback ===
+            "function"
+        ){
+            window.requestIdleCallback(
+                startRequest,
+                {timeout:1500}
+            );
+        }
+        else{
+            window.setTimeout(
+                startRequest,
+                0
+            );
+        }
+
+    });
+}
+
 /* =========================
    LOAD VIDEOS
 ========================= */
@@ -3391,15 +3439,15 @@ if(categories.length <= 1){
     }
 }
 
-/* Start the single likes request before painting cards. The grid can paint
-   immediately while the like counts and heart states arrive in the background. */
+/* Queue the single likes request after the first paint. The grid can paint
+   immediately while counts and heart states arrive in the background. */
 allVideos.forEach(video => {
     if(video.likes_count === undefined || video.likes_count === null){
         video.likes_count = 0;
     }
 });
 
-likeSummaryPromise = loadLikeSummary();
+likeSummaryPromise = scheduleLikeSummary();
 renderVideos();
 void likeSummaryPromise.catch(() => {});
 
@@ -3878,9 +3926,11 @@ function renderVideos(){
     }
 
 
+    const cardFragment = document.createDocumentFragment();
+
     videos.forEach((video,index) => {
 
-        videoGrid.appendChild(
+        cardFragment.appendChild(
             createVideoCard(
                 video,
                 index < INITIAL_THUMBNAIL_COUNT
@@ -3888,6 +3938,8 @@ function renderVideos(){
         );
 
     });
+
+    videoGrid.appendChild(cardFragment);
 
     updateFeedPagination(
         allDisplayVideos.length,
@@ -3970,6 +4022,7 @@ function createVideoCard(video,prioritizeLoad = false){
                     alt="${escapeHTML(title)}"
                     loading="${prioritizeLoad ? "eager" : "lazy"}"
                     decoding="async"
+                    fetchpriority="${prioritizeLoad ? "high" : "auto"}"
                     draggable="false"
                 >
                 `

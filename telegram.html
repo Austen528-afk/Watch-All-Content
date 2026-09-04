@@ -1667,64 +1667,17 @@ async function migrateLegacyMiniAppIdentity(authUserId){
                 localStorage.getItem("streamx_mini_app_user_id");
 
             if(!alreadyMigrated){
+                const {error:migrationError} =
+                    await supabaseClient.rpc(
+                        "claim_streamx_legacy_identity",
+                        {
+                            p_legacy_like_user_id:legacyLikeUserId || null,
+                            p_legacy_viewer_id:legacyViewerId || null,
+                            p_platform:"mini_app"
+                        }
+                    );
 
-                if(legacyLikeUserId && legacyLikeUserId !== authUserId){
-                    const {data:legacyLikes,error:legacyLikesError} =
-                        await supabaseClient
-                            .from("video_likes")
-                            .select("video_id")
-                            .eq("user_id",legacyLikeUserId);
-
-                    if(legacyLikesError) throw legacyLikesError;
-
-                    if(legacyLikes && legacyLikes.length){
-                        const {error:copyLikesError} =
-                            await supabaseClient
-                                .from("video_likes")
-                                .upsert(
-                                    legacyLikes.map(row => ({
-                                        video_id:row.video_id,
-                                        user_id:authUserId
-                                    })),
-                                    {
-                                        onConflict:"video_id,user_id",
-                                        ignoreDuplicates:true
-                                    }
-                                );
-
-                        if(copyLikesError) throw copyLikesError;
-                    }
-                }
-
-                if(legacyViewerId && legacyViewerId !== authUserId){
-                    const {data:legacyLibrary,error:legacyLibraryError} =
-                        await supabaseClient
-                            .from("video_library")
-                            .select("video_id")
-                            .eq("viewer_id",legacyViewerId)
-                            .eq("platform","mini_app");
-
-                    if(legacyLibraryError) throw legacyLibraryError;
-
-                    if(legacyLibrary && legacyLibrary.length){
-                        const {error:copyLibraryError} =
-                            await supabaseClient
-                                .from("video_library")
-                                .upsert(
-                                    legacyLibrary.map(row => ({
-                                        viewer_id:authUserId,
-                                        platform:"mini_app",
-                                        video_id:row.video_id
-                                    })),
-                                    {
-                                        onConflict:"viewer_id,platform,video_id",
-                                        ignoreDuplicates:true
-                                    }
-                                );
-
-                        if(copyLibraryError) throw copyLibraryError;
-                    }
-                }
+                if(migrationError) throw migrationError;
 
                 localStorage.setItem(migrationKey,"1");
             }

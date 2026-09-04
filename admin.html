@@ -4754,6 +4754,95 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
+/* =====================================================
+   STREAMX ADMIN AUTHORIZATION
+===================================================== */
+
+const STREAMX_ADMIN_CACHE_MS = 60 * 1000;
+let streamXVerifiedAdminUserId = null;
+let streamXVerifiedAdminAt = 0;
+
+function clearStreamXAdminVerification(){
+    streamXVerifiedAdminUserId = null;
+    streamXVerifiedAdminAt = 0;
+}
+
+async function verifyStreamXAdmin(session, force = false){
+
+    if(!session || !session.user || !session.user.id){
+        clearStreamXAdminVerification();
+        return false;
+    }
+
+    const userId = String(session.user.id);
+
+    if(
+        !force &&
+        streamXVerifiedAdminUserId === userId &&
+        Date.now() - streamXVerifiedAdminAt < STREAMX_ADMIN_CACHE_MS
+    ){
+        return true;
+    }
+
+    const { data, error } =
+        await supabaseClient.rpc("is_streamx_admin");
+
+    if(error){
+        clearStreamXAdminVerification();
+        throw new Error(
+            "Could not verify StreamX admin access: " +
+            error.message
+        );
+    }
+
+    if(data !== true){
+        clearStreamXAdminVerification();
+        return false;
+    }
+
+    streamXVerifiedAdminUserId = userId;
+    streamXVerifiedAdminAt = Date.now();
+
+    return true;
+}
+
+async function requireStreamXAdminSession(){
+
+    const result =
+        await supabaseClient.auth.getSession();
+
+    if(result.error){
+        clearStreamXAdminVerification();
+        throw new Error(
+            "Could not verify your login: " +
+            result.error.message
+        );
+    }
+
+    const session = result.data.session;
+
+    if(!session){
+        clearStreamXAdminVerification();
+        showLogin();
+        throw new Error(
+            "Your login session has expired. Please log in again."
+        );
+    }
+
+    const allowed =
+        await verifyStreamXAdmin(session);
+
+    if(!allowed){
+        clearStreamXAdminVerification();
+        showLogin();
+        throw new Error(
+            "This account is not authorized to access the StreamX Admin panel."
+        );
+    }
+
+    return session;
+}
+
 
 /* =====================================================
    VARIABLES
@@ -4908,6 +4997,23 @@ async function login(){
 
         }
 
+        const isAuthorizedAdmin =
+            await verifyStreamXAdmin(
+                result.data.session,
+                true
+            );
+
+        if(!isAuthorizedAdmin){
+
+            await supabaseClient.auth.signOut();
+            clearStreamXAdminVerification();
+
+            throw new Error(
+                "This account is not authorized to access the StreamX Admin panel."
+            );
+
+        }
+
 
 console.log(
     "Supabase authentication successful:",
@@ -4953,7 +5059,7 @@ if(activeUserError){
 }
 
 
-showApplication(
+await showApplication(
     result.data.session
 );
 
@@ -5023,11 +5129,26 @@ if(session){
         session.user.email
     );
 
-    await updateActiveUser();
+    try{
 
-    showApplication(
-        session
-    );
+        await showApplication(
+            session
+        );
+
+        await updateActiveUser();
+
+    }catch(error){
+
+        console.warn(
+            "Existing session is not authorized for StreamX Admin:",
+            error
+        );
+
+        await supabaseClient.auth.signOut();
+        clearStreamXAdminVerification();
+        showLogin();
+
+    }
 
         }else{
 
@@ -5086,6 +5207,17 @@ async function showApplication(session){
         return;
     }
 
+    const isAuthorizedAdmin =
+        await verifyStreamXAdmin(session);
+
+    if(!isAuthorizedAdmin){
+        clearStreamXAdminVerification();
+        showLogin();
+        throw new Error(
+            "This account is not authorized to access the StreamX Admin panel."
+        );
+    }
+
     console.log(
         "Opening StreamX Admin:",
         session.user.email
@@ -5134,6 +5266,8 @@ async function logout(){
     const result =
         await supabaseClient.auth.signOut();
 
+    clearStreamXAdminVerification();
+
 
     if(result.error){
 
@@ -5174,8 +5308,16 @@ supabaseClient.auth.onAuthStateChange(
             event === "SIGNED_OUT"
         ){
 
+            clearStreamXAdminVerification();
             showLogin();
 
+        }
+
+        if(
+            event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED"
+        ){
+            clearStreamXAdminVerification();
         }
 
     }
@@ -5387,43 +5529,15 @@ function cleanFileName(
 
 async function requireAuthenticatedUser(){
 
-    const result =
-        await supabaseClient.auth.getSession();
-
-
-    if(result.error){
-
-        throw new Error(
-            "Could not verify your login: " +
-            result.error.message
-        );
-
-    }
-
-
     const session =
-        result.data.session;
-
-
-    if(!session){
-
-        showLogin();
-
-        throw new Error(
-            "Your login session has expired. Please log in again."
-        );
-
-    }
-
+        await requireStreamXAdminSession();
 
     console.log(
-        "Upload authenticated as:",
+        "Admin operation authorized as:",
         session.user.email
     );
 
-
     return session;
-
 }
 
 /* =====================================================
@@ -5441,8 +5555,18 @@ async function updateActiveUser(){
             return;
         }
 
+        const session =
+            result.data.session;
+
+        const isAuthorizedAdmin =
+            await verifyStreamXAdmin(session);
+
+        if(!isAuthorizedAdmin){
+            return;
+        }
+
         const user =
-            result.data.session.user;
+            session.user;
 
         const { error } =
             await supabaseClient
@@ -5491,6 +5615,8 @@ async function updateActiveUser(){
 async function loadActiveUsers(){
 
     try{
+
+        await requireStreamXAdminSession();
 
         const [activeResult, libraryResult, libraryVideosResult] =
             await Promise.all([

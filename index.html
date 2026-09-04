@@ -1910,8 +1910,14 @@ let librarySummaryReady = false;
 let libraryRealtimeChannel = null;
 const VIDEO_URL_CACHE_TTL_MS = 55 * 60 * 1000;
 const VIDEO_URL_PREFETCH_COUNT = 4;
+const VIDEO_BYTE_WARM_COUNT = 2;
+const VIDEO_BYTE_WARM_DELAY_MS = 2800;
+const VIDEO_BYTE_WARM_TIMEOUT_MS = 6500;
 const videoURLCache = new Map();
 const videoURLPromiseCache = new Map();
+const videoByteWarmCache = new Set();
+const videoByteWarmPromiseCache = new Map();
+let videoByteWarmScheduleId = 0;
 const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
@@ -4411,6 +4417,7 @@ function renderVideos(){
     );
 
     scheduleVideoURLPrefetch(videos);
+    scheduleVideoByteWarm(videos);
 
 }
 
@@ -4644,6 +4651,17 @@ if(likeButton){
 
     }
 
+
+    /* On desktop, hovering a card is a strong signal that it may be opened
+       next. Warm only that video's opening bytes; this does not affect GIF
+       priority because it happens after the user's direct interaction. */
+    card.addEventListener(
+        "pointerenter",
+        function(){
+            void warmVideoBytes(video);
+        },
+        {once:true,passive:true}
+    );
 
     card.addEventListener(
         "click",
@@ -4917,6 +4935,197 @@ function scheduleVideoURLPrefetch(videos){
             });
         },
         1800
+    );
+}
+
+function getVideoWarmCacheKey(video){
+
+    return String(video && video.id || "") + "|" +
+        String(video && video.video_url || "");
+}
+
+function shouldWarmVideoBytes(){
+
+    if(document.visibilityState !== "visible"){
+        return false;
+    }
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+    if(connection){
+
+        if(connection.saveData){
+            return false;
+        }
+
+        const effectiveType =
+            String(connection.effectiveType || "").toLowerCase();
+
+        if(
+            effectiveType === "slow-2g" ||
+            effectiveType === "2g"
+        ){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+async function warmVideoBytes(video){
+
+    if(!video || !video.video_url || !shouldWarmVideoBytes()){
+        return;
+    }
+
+    const cacheKey = getVideoWarmCacheKey(video);
+
+    if(videoByteWarmCache.has(cacheKey)){
+        return;
+    }
+
+    if(videoByteWarmPromiseCache.has(cacheKey)){
+        return videoByteWarmPromiseCache.get(cacheKey);
+    }
+
+    const warmRequest = (async () => {
+
+        const videoURL = await getVideoURL(video);
+
+        if(!videoURL){
+            return;
+        }
+
+        await new Promise(resolve => {
+
+            const warmer = document.createElement("video");
+            let finished = false;
+            let timeoutId = null;
+
+            const finish = warmed => {
+
+                if(finished){
+                    return;
+                }
+
+                finished = true;
+
+                if(timeoutId !== null){
+                    window.clearTimeout(timeoutId);
+                }
+
+                warmer.pause();
+                warmer.removeAttribute("src");
+                warmer.load();
+                warmer.remove();
+
+                if(warmed){
+                    videoByteWarmCache.add(cacheKey);
+                }
+
+                resolve();
+            };
+
+            warmer.preload = "auto";
+            warmer.muted = true;
+            warmer.playsInline = true;
+            warmer.setAttribute("aria-hidden","true");
+            warmer.style.position = "fixed";
+            warmer.style.width = "1px";
+            warmer.style.height = "1px";
+            warmer.style.opacity = "0";
+            warmer.style.pointerEvents = "none";
+            warmer.style.left = "-9999px";
+            warmer.src = videoURL;
+
+            warmer.addEventListener(
+                "loadeddata",
+                () => finish(true),
+                {once:true}
+            );
+            warmer.addEventListener(
+                "canplay",
+                () => finish(true),
+                {once:true}
+            );
+            warmer.addEventListener(
+                "error",
+                () => finish(false),
+                {once:true}
+            );
+
+            document.body.appendChild(warmer);
+            warmer.load();
+
+            timeoutId = window.setTimeout(
+                () => finish(false),
+                VIDEO_BYTE_WARM_TIMEOUT_MS
+            );
+        });
+    })();
+
+    videoByteWarmPromiseCache.set(cacheKey,warmRequest);
+
+    try{
+        await warmRequest;
+    }
+    finally{
+        videoByteWarmPromiseCache.delete(cacheKey);
+    }
+}
+
+function scheduleVideoByteWarm(videos){
+
+    if(
+        !Array.isArray(videos) ||
+        videos.length === 0 ||
+        !shouldWarmVideoBytes()
+    ){
+        return;
+    }
+
+    /* GIFs on the active page remain priority #1. Only after that initial
+       window do we warm a very small number of likely-to-open videos. */
+    const scheduleId = ++videoByteWarmScheduleId;
+    const candidates = videos.slice(
+        0,
+        Math.min(VIDEO_BYTE_WARM_COUNT,videos.length)
+    );
+
+    const beginWarm = () => {
+
+        if(scheduleId !== videoByteWarmScheduleId){
+            return;
+        }
+
+        candidates.forEach((video,index) => {
+            window.setTimeout(
+                () => {
+                    if(scheduleId === videoByteWarmScheduleId){
+                        void warmVideoBytes(video);
+                    }
+                },
+                index * 700
+            );
+        });
+    };
+
+    window.setTimeout(
+        () => {
+            if("requestIdleCallback" in window){
+                window.requestIdleCallback(
+                    beginWarm,
+                    {timeout:2200}
+                );
+            }
+            else{
+                beginWarm();
+            }
+        },
+        VIDEO_BYTE_WARM_DELAY_MS
     );
 }
 

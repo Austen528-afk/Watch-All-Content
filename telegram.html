@@ -2562,13 +2562,22 @@ async function sendLibraryActivityHeartbeat(){
 
     try{
 
+        const session = await ensureMiniAppAuthSession();
+        const authenticatedViewerId = session?.user?.id;
+
+        if(!authenticatedViewerId){
+            throw new Error("Authenticated StreamX Mini App viewer ID is unavailable");
+        }
+
+        LIBRARY_VIEWER_ID = authenticatedViewerId;
+
         const heartbeatAt = new Date().toISOString();
 
         const { error } = await supabaseClient
             .from(LIBRARY_ACTIVITY_TABLE)
             .upsert(
                 {
-                    viewer_id:LIBRARY_VIEWER_ID,
+                    viewer_id:authenticatedViewerId,
                     platform:LIBRARY_PLATFORM,
                     last_seen:heartbeatAt
                 },

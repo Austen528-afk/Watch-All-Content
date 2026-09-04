@@ -9,6 +9,9 @@
 
 <title>StreamX</title>
 
+<link rel="preconnect" href="https://iojjmoywrlnzpyatahyh.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="//iojjmoywrlnzpyatahyh.supabase.co">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -645,6 +648,48 @@ body{
     gap:20px;
 }
 
+.feed-pagination{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin:30px 0 10px;
+}
+
+.feed-pagination.show{
+    display:flex;
+}
+
+.feed-pagination-button{
+    min-width:100px;
+    padding:10px 16px;
+    border:1px solid #333;
+    border-radius:9px;
+    background:#171717;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s ease;
+}
+
+.feed-pagination-button:hover:not(:disabled){
+    border-color:#ff1744;
+    background:#241018;
+}
+
+.feed-pagination-button:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+}
+
+.feed-pagination-status{
+    min-width:82px;
+    color:#999;
+    font-size:12px;
+    text-align:center;
+}
+
 
 /* =========================
    VIDEO CARD
@@ -825,23 +870,39 @@ body{
     position:relative;
     overflow:visible;
     margin-left:auto;
-    border:none;
-    background:none;
-    color:#777;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    min-height:30px;
+    padding:6px 10px;
+    border:1px solid rgba(245,185,66,.48);
+    border-radius:999px;
+    background:linear-gradient(135deg,#3b2810 0%,#21170a 100%);
+    color:#ffe18a;
     cursor:pointer;
-    font-size:21px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2px;
     line-height:1;
     transform:translateZ(0);
-    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
+    box-shadow:0 0 0 2px rgba(245,185,66,.08),0 4px 14px rgba(245,185,66,.14);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,background .22s,border-color .22s,box-shadow .22s,filter .22s;
 }
 
 .library-btn:hover{
-    color:#f5b942;
-    transform:scale(1.12);
+    color:#fff4c4;
+    border-color:#f5b942;
+    background:linear-gradient(135deg,#5a3b12 0%,#2d1d0b 100%);
+    transform:translateY(-1px) scale(1.05);
+    box-shadow:0 0 0 3px rgba(245,185,66,.12),0 6px 20px rgba(245,185,66,.28);
 }
 
 .library-btn.saved{
-    color:#f5b942;
+    border-color:#f5b942;
+    background:linear-gradient(135deg,#f5b942 0%,#c98619 100%);
+    color:#1a1104;
+    box-shadow:0 0 0 3px rgba(245,185,66,.14),0 5px 18px rgba(245,185,66,.3);
 }
 
 .library-btn:disabled{
@@ -916,6 +977,14 @@ body{
     color:#aaa;
     font-size:12px;
     font-weight:bold;
+}
+
+.save-count{
+    min-width:14px;
+    color:#d6b35a;
+    font-size:12px;
+    font-weight:bold;
+    text-align:center;
 }
 
 
@@ -1211,6 +1280,19 @@ body{
 
     .video-meta{
         font-size:9px;
+    }
+
+    .video-actions{
+        gap:5px;
+    }
+
+    .library-btn{
+        padding:5px 7px;
+        font-size:11px;
+    }
+
+    .save-count{
+        font-size:11px;
     }
 
     .age-gate-box{
@@ -1534,6 +1616,36 @@ body{
 
     </div>
 
+    <nav
+        class="feed-pagination"
+        id="feedPagination"
+        aria-label="Video pages"
+    >
+        <button
+            class="feed-pagination-button"
+            id="feedPageBack"
+            type="button"
+        >
+            ← Back
+        </button>
+
+        <span
+            class="feed-pagination-status"
+            id="feedPageStatus"
+            aria-live="polite"
+        >
+            Page 1 of 1
+        </span>
+
+        <button
+            class="feed-pagination-button"
+            id="feedPageNext"
+            type="button"
+        >
+            Next →
+        </button>
+    </nav>
+
 </main>
 
 
@@ -1687,47 +1799,6 @@ async function ensureStreamXUserSession(){
 
 }
 
-/* =========================================
-   WEBSITE PRESENCE TRACKING
-========================================= */
-
-const MINI_APP_USER_ID =
-    localStorage.getItem("streamx_mini_app_user_id") ||
-    crypto.randomUUID();
-
-localStorage.setItem(
-    "streamx_mini_app_user_id",
-    MINI_APP_USER_ID
-);
-
-async function updateMiniAppPresence(){
-
-    try{
-
-        await supabaseClient
-            .from("active_users")
-            .upsert(
-                {
-                    user_id: MINI_APP_USER_ID,
-                    platform: "mini_app",
-                    last_seen: new Date().toISOString()
-                },
-                {
-                    onConflict: "user_id,platform"
-                }
-            );
-
-    }catch(error){
-
-        console.error(
-            "Mini App presence update failed:",
-            error
-        );
-
-    }
-
-}
-
 
 /* =========================
    AGE GATE ELEMENTS
@@ -1815,25 +1886,17 @@ async function enterWebsite(){
     document.body.style.overflow =
         "";
 
-    // Always render the All button immediately.
+    /* Render the stable All button immediately while live categories load. */
     renderCategoryButtons();
-
-    // Load categories and videos independently so a category-table
-    // permission/realtime problem cannot make the category bar vanish.
     loadCategories();
     setupCategoryRealtime();
-    loadLibrary();
-    loadVideos().then(() => loadRecommendations());
     setupVideoRealtime();
     setupLikeRealtime();
-
-updateMiniAppPresence();
-startViewerTimeTracking("outside");
-
-setInterval(
-    updateMiniAppPresence,
-    5000
-);
+    setupLibraryRealtime();
+    startWebsitePresenceTracking();
+    startViewerTimeTracking("outside");
+    loadLibrary();
+    loadVideos().then(() => loadRecommendations());
 
 }
 
@@ -1892,10 +1955,32 @@ let libraryActivityRequestInFlight = false;
 let recommendationVideos = [];
 let recommendationRefreshTimer = null;
 let recommendationLoading = false;
+let recommendationRefreshQueued = false;
+let recommendationTriggerVideoId = null;
+const RECOMMENDATION_COOLDOWN_MS = 20 * 60 * 1000;
+const RECOMMENDATION_HISTORY_LIMIT = 48;
 let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
+let likeOptimisticState = new Map();
 let likeSummaryPromise = null;
 let likeSummaryReady = false;
+let videoLibrarySummary = new Map();
+let librarySummaryPromise = null;
+let librarySummaryReady = false;
+let libraryRealtimeChannel = null;
+const VIDEO_URL_CACHE_TTL_MS = 55 * 60 * 1000;
+const VIDEO_URL_PREFETCH_COUNT = 4;
+const VIDEO_BYTE_WARM_COUNT = 2;
+const VIDEO_BYTE_WARM_DELAY_MS = 2800;
+const VIDEO_BYTE_WARM_TIMEOUT_MS = 6500;
+const videoURLCache = new Map();
+const videoURLPromiseCache = new Map();
+const videoByteWarmCache = new Set();
+const videoByteWarmPromiseCache = new Map();
+let videoByteWarmScheduleId = 0;
+const VIDEOS_PER_PAGE = 20;
+let currentVideoPage = 1;
+let paginationFilterKey = "";
 
 
 /* =========================
@@ -1904,6 +1989,18 @@ let likeSummaryReady = false;
 
 const videoGrid =
     document.getElementById("videoGrid");
+
+const feedPagination =
+    document.getElementById("feedPagination");
+
+const feedPageBack =
+    document.getElementById("feedPageBack");
+
+const feedPageNext =
+    document.getElementById("feedPageNext");
+
+const feedPageStatus =
+    document.getElementById("feedPageStatus");
 
 const resultCount =
     document.getElementById("resultCount");
@@ -1964,9 +2061,8 @@ const playerLibraryButton =
    VIDEO WATCH-TIME TRACKING
 ========================= */
 
-const WATCH_TIME_PLATFORM = "mini_app";
+const WATCH_TIME_PLATFORM = "website";
 const WATCH_TIME_SAVE_INTERVAL_SECONDS = 10;
-const WATCH_TIME_VIEWER_ID = MINI_APP_USER_ID;
 
 let watchTimeState = null;
 let watchTimeTimer = null;
@@ -2009,6 +2105,73 @@ function createWatchTimeId(){
         hex.slice(16,20),
         hex.slice(20)
     ].join("-");
+}
+
+function getWatchTimeViewerId(){
+
+    const storageKey = "streamx_website_user_id";
+
+    try{
+        let viewerId = localStorage.getItem(storageKey);
+
+        if(!viewerId){
+            viewerId = createWatchTimeId();
+            localStorage.setItem(storageKey,viewerId);
+        }
+
+        return viewerId;
+    }
+    catch(error){
+        console.warn("Could not save the watch-time viewer ID:",error);
+        return createWatchTimeId();
+    }
+}
+
+const WATCH_TIME_VIEWER_ID = getWatchTimeViewerId();
+
+/* =========================================
+   WEBSITE PRESENCE TRACKING
+========================================= */
+
+const WEBSITE_PRESENCE_PLATFORM = "website";
+let websitePresenceTimer = null;
+
+async function updateWebsitePresence(){
+
+    try{
+
+        const { error } = await supabaseClient
+            .from("active_users")
+            .upsert(
+                {
+                    user_id:WATCH_TIME_VIEWER_ID,
+                    platform:WEBSITE_PRESENCE_PLATFORM,
+                    last_seen:new Date().toISOString()
+                },
+                {
+                    onConflict:"user_id,platform"
+                }
+            );
+
+        if(error){
+            console.warn("Website presence update failed:",error);
+        }
+
+    }
+    catch(error){
+        console.warn("Website presence update failed:",error);
+    }
+}
+
+function startWebsitePresenceTracking(){
+
+    if(websitePresenceTimer) return;
+
+    updateWebsitePresence();
+    websitePresenceTimer = setInterval(
+        updateWebsitePresence,
+        5000
+    );
 }
 
 function resetWatchTimeClock(){
@@ -2186,6 +2349,15 @@ document.addEventListener("visibilitychange",function(){
 window.addEventListener("pagehide",function(){
     captureWatchTime(true);
     saveWatchTime(true);
+});
+
+document.addEventListener("visibilitychange",function(){
+    if(
+        websitePresenceTimer &&
+        document.visibilityState === "visible"
+    ){
+        updateWebsitePresence();
+    }
 });
 
 
@@ -2507,6 +2679,169 @@ function persistLibraryCache(){
     }
 }
 
+function getLibrarySaveCount(videoId){
+
+    const key = String(videoId);
+
+    if(videoLibrarySummary.has(key)){
+        return videoLibrarySummary.get(key);
+    }
+
+    const video = allVideos.find(
+        item => String(item.id) === key
+    );
+    const fallback = Number(video && video.saves_count || 0);
+
+    return Number.isFinite(fallback)
+        ? Math.max(0,Math.floor(fallback))
+        : 0;
+}
+
+function updateLibrarySaveCountUI(videoId,count){
+
+    const key = String(videoId);
+    const parsed = Number(count);
+    const normalized = Number.isFinite(parsed)
+        ? Math.max(0,Math.floor(parsed))
+        : 0;
+
+    videoLibrarySummary.set(key,normalized);
+
+    allVideos.forEach(video => {
+        if(String(video.id) === key){
+            video.saves_count = normalized;
+        }
+    });
+
+    recommendationVideos.forEach(video => {
+        if(String(video.id) === key){
+            video.saves_count = normalized;
+        }
+    });
+
+    const selector =
+        `.save-count[data-id="${CSS.escape(key)}"]`;
+
+    document
+        .querySelectorAll(selector)
+        .forEach(element => {
+            element.textContent = normalized.toLocaleString();
+        });
+}
+
+function applyLibrarySummary(rows){
+
+    videoLibrarySummary = new Map();
+
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+
+        const key = String(row && row.video_id || "").trim();
+
+        if(!key) return;
+
+        const parsed = Number(row.saves_count || 0);
+        const count = Number.isFinite(parsed)
+            ? Math.max(0,Math.floor(parsed))
+            : 0;
+
+        videoLibrarySummary.set(key,count);
+
+    });
+
+    allVideos.forEach(video => {
+
+        const key = String(video.id);
+
+        if(videoLibrarySummary.has(key)){
+            video.saves_count = videoLibrarySummary.get(key);
+        }
+
+    });
+
+    recommendationVideos.forEach(video => {
+
+        const key = String(video.id);
+
+        if(videoLibrarySummary.has(key)){
+            video.saves_count = videoLibrarySummary.get(key);
+        }
+
+    });
+
+    document
+        .querySelectorAll(".save-count[data-id]")
+        .forEach(element => {
+
+            const count = getLibrarySaveCount(
+                element.dataset.id
+            );
+
+            element.textContent = count.toLocaleString();
+
+        });
+
+    librarySummaryReady = true;
+}
+
+function loadLibrarySummary(){
+
+    librarySummaryReady = false;
+
+    return supabaseClient
+        .rpc(
+            "get_streamx_library_summary",
+            {
+                p_viewer_id:LIBRARY_VIEWER_ID,
+                p_platform:LIBRARY_PLATFORM
+            }
+        )
+        .then(result => {
+
+            if(result.error) throw result.error;
+
+            applyLibrarySummary(result.data);
+            return result.data;
+
+        })
+        .catch(error => {
+
+            librarySummaryReady = false;
+            librarySummaryPromise = null;
+            console.warn("Library save summary unavailable:",error);
+            throw error;
+
+        });
+}
+
+function scheduleLibrarySummary(){
+
+    if(librarySummaryPromise) return librarySummaryPromise;
+
+    librarySummaryPromise = new Promise((resolve,reject) => {
+
+        const startRequest = () => {
+
+            Promise.resolve()
+                .then(loadLibrarySummary)
+                .then(resolve,reject);
+
+        };
+
+        if(typeof window.requestIdleCallback === "function"){
+            window.requestIdleCallback(
+                startRequest,
+                {timeout:1800}
+            );
+        }
+        else{
+            window.setTimeout(startRequest,0);
+        }
+
+    });
+
+    return librarySummaryPromise;
+}
+
 function showLibraryStatus(message,isError = false){
 
     if(!libraryStatus) return;
@@ -2531,7 +2866,7 @@ function updateLibraryButtonState(button,videoId){
     const saved = libraryVideoIds.has(key);
     const pending = libraryPendingIds.has(key);
 
-    button.textContent = saved ? "★" : "☆";
+    button.textContent = saved ? "★ save" : "☆ save";
     button.classList.toggle("saved",saved);
     button.disabled = pending;
     button.setAttribute("aria-pressed",String(saved));
@@ -2754,6 +3089,11 @@ async function toggleLibrary(videoId,sourceButton){
     recordLibraryActivity();
 
     const wasSaved = libraryVideoIds.has(key);
+    const previousSaveCount = getLibrarySaveCount(videoId);
+    const optimisticSaveCount = Math.max(
+        0,
+        previousSaveCount + (wasSaved ? -1 : 1)
+    );
     libraryPendingIds.add(key);
 
     if(wasSaved){
@@ -2763,6 +3103,10 @@ async function toggleLibrary(videoId,sourceButton){
         libraryVideoIds.add(key);
     }
 
+    updateLibrarySaveCountUI(
+        videoId,
+        optimisticSaveCount
+    );
     persistLibraryCache();
     updateLibraryUI();
 
@@ -2816,6 +3160,10 @@ async function toggleLibrary(videoId,sourceButton){
     }
 
     if(syncError){
+        updateLibrarySaveCountUI(
+            videoId,
+            previousSaveCount
+        );
         showLibraryStatus(
             "Cloud sync is unavailable; your device library is still updated.",
             true
@@ -2844,7 +3192,10 @@ async function toggleLibrary(videoId,sourceButton){
         animateAction(replacementButton,"star");
     }
 
-    scheduleRecommendationRefresh();
+    scheduleRecommendationRefresh(
+        900,
+        wasSaved ? null : videoId
+    );
 }
 
 
@@ -2854,128 +3205,28 @@ async function toggleLibrary(videoId,sourceButton){
 
 let categories = ["All"];
 
-
-/* =========================
-   LOAD CATEGORIES
-========================= */
-
-async function loadCategories(showBusy = false){
-
-    // Restore the last known category list immediately while Supabase loads.
-    try{
-        const cached =
-            JSON.parse(
-                localStorage.getItem("streamx_categories_cache") || "null"
-            );
-
-        if(Array.isArray(cached) && cached.length){
-            categories = ["All", ...cached.filter(
-                category =>
-                    String(category).toLowerCase() !== "all"
-            )];
-            renderCategoryButtons();
-        }
-    }catch(cacheError){
-        console.warn("Unable to restore category cache:", cacheError);
-    }
-
-    try{
-
-        const { data, error } =
-            await supabaseClient
-                .from("categories")
-                .select("*");
-
-        if(error){
-            console.error(
-                "Categories load error:",
-                error
-            );
-
-            // Keep the category bar usable even if the categories table
-            // is temporarily unavailable or its SELECT policy is missing.
-            // The actual database categories will replace this as soon as
-            // the query succeeds.
-            categories = ["All"];
-            renderCategoryButtons();
-            return;
-        }
-
-        const databaseCategories = (data || [])
-            .map(row =>
-                row.name ??
-                row.category ??
-                row.title ??
-                ""
-            )
-            .map(value => String(value).trim())
-            .filter(Boolean);
-
-        categories = [
-            "All",
-            ...databaseCategories.filter(
-                (category, index, list) =>
-                    list.findIndex(
-                        item =>
-                            item.toLowerCase() ===
-                            category.toLowerCase()
-                    ) === index
-            )
-        ];
-
-        // Keep the last successful database list available during a
-        // temporary network/table-policy failure.
-        try{
-            localStorage.setItem(
-                "streamx_categories_cache",
-                JSON.stringify(categories)
-            );
-        }catch(cacheError){
-            console.warn("Category cache unavailable:", cacheError);
-        }
-
-        if(
-            currentCategory !== "All" &&
-            !categories.some(
-                category =>
-                    category.toLowerCase() ===
-                    currentCategory.toLowerCase()
-            )
-        ){
-            currentCategory = "All";
-            searchTerm = "";
-            searchInput.value = "";
-            clearSearch.style.display = "none";
-        }
-
-        renderCategoryButtons();
-        renderVideos();
-
-    }
-    catch(error){
-
-        console.error(
-            "Unexpected categories error:",
-            error
-        );
-
-    }
-}
+let categoryRealtimeChannel = null;
+let categoryRefreshTimer = null;
+let categoriesLoading = false;
+let videoRealtimeChannel = null;
+let likeRealtimeChannel = null;
+let libraryRealtimeStatus = "";
+let likeRealtimeStatus = "";
+let likeCountRefreshTimer = null;
+const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
 
 function renderCategoryButtons(){
 
     const categoryContainer =
         document.getElementById("categories");
 
-    if(!categoryContainer)
-        return;
+    if(!categoryContainer) return;
 
     categoryContainer.innerHTML = "";
 
     categories.forEach(category => {
 
-        const button =
-            document.createElement("button");
+        const button = document.createElement("button");
 
         button.type = "button";
         button.className = "category";
@@ -2984,8 +3235,8 @@ function renderCategoryButtons(){
 
         if(
             !libraryViewActive &&
-            category.toLowerCase() ===
-            currentCategory.toLowerCase()
+            String(category).toLowerCase() ===
+            String(currentCategory).toLowerCase()
         ){
             button.classList.add("active");
         }
@@ -2995,43 +3246,156 @@ function renderCategoryButtons(){
     });
 }
 
-let categoryRealtimeChannel = null;
+function mergeVideoCategoriesIntoCategoryBar(){
+
+    const videoCategories = allVideos
+        .map(video => String(video.category || "").trim())
+        .filter(Boolean);
+    const known = new Set(
+        categories.map(category => String(category).toLowerCase())
+    );
+
+    videoCategories.forEach(category => {
+        const key = category.toLowerCase();
+
+        if(!known.has(key)){
+            categories.push(category);
+            known.add(key);
+        }
+    });
+
+    renderCategoryButtons();
+}
+
+async function loadCategories(){
+
+    if(categoriesLoading) return;
+
+    categoriesLoading = true;
+
+    try{
+
+        const cached = JSON.parse(
+            localStorage.getItem("streamx_categories_cache") || "null"
+        );
+
+        if(Array.isArray(cached) && cached.length){
+            categories = [
+                "All",
+                ...cached
+                    .map(value => String(value).trim())
+                    .filter(value => value && value.toLowerCase() !== "all")
+            ];
+            mergeVideoCategoriesIntoCategoryBar();
+        }
+
+    }
+    catch(error){
+        console.warn("Unable to restore category cache:",error);
+    }
+
+    try{
+
+        const previousCategoryKey =
+            categories.join("\u0001");
+        let categorySelectionChanged = false;
+
+        const { data,error } = await supabaseClient
+            .from("categories")
+            .select("*");
+
+        if(error){
+            console.warn("Categories load error:",error);
+            mergeVideoCategoriesIntoCategoryBar();
+            return;
+        }
+
+        const databaseCategories = (data || [])
+            .map(row => row.name ?? row.category ?? row.title ?? "")
+            .map(value => String(value).trim())
+            .filter(Boolean);
+        const uniqueCategories = [];
+        const seen = new Set();
+
+        databaseCategories.forEach(category => {
+            const key = category.toLowerCase();
+
+            if(key !== "all" && !seen.has(key)){
+                seen.add(key);
+                uniqueCategories.push(category);
+            }
+        });
+
+        categories = ["All",...uniqueCategories];
+
+        try{
+            localStorage.setItem(
+                "streamx_categories_cache",
+                JSON.stringify(categories)
+            );
+        }
+        catch(cacheError){
+            console.warn("Category cache unavailable:",cacheError);
+        }
+
+        if(
+            currentCategory !== "All" &&
+            !categories.some(
+                category => category.toLowerCase() === currentCategory.toLowerCase()
+            )
+        ){
+            currentCategory = "All";
+            searchTerm = "";
+            searchInput.value = "";
+            clearSearch.style.display = "none";
+            categorySelectionChanged = true;
+        }
+
+        mergeVideoCategoriesIntoCategoryBar();
+
+        if(
+            categorySelectionChanged ||
+            previousCategoryKey !== categories.join("\u0001")
+        ){
+            renderVideos();
+        }
+
+    }
+    catch(error){
+        console.warn("Unexpected categories error:",error);
+        mergeVideoCategoriesIntoCategoryBar();
+    }
+    finally{
+        categoriesLoading = false;
+    }
+}
 
 function setupCategoryRealtime(){
 
-    if(categoryRealtimeChannel){
-        return;
-    }
+    if(categoryRealtimeChannel) return;
 
-    categoryRealtimeChannel =
-        supabaseClient
-        .channel("categories-realtime")
+    categoryRealtimeChannel = supabaseClient
+        .channel("website-categories-realtime")
         .on(
             "postgres_changes",
             {
-                event: "*",
-                schema: "public",
-                table: "categories"
+                event:"*",
+                schema:"public",
+                table:"categories"
             },
-            async payload => {
-
-                console.log(
-                    "Category realtime update:",
-                    payload.eventType
-                );
-
-                await loadCategories();
-
-            }
+            () => loadCategories()
         )
         .subscribe(status => {
-
-            console.log(
-                "Categories realtime status:",
-                status
-            );
-
+            console.log("Website categories realtime status:",status);
         });
+
+    /* Poll as a reliable fallback if Realtime is not enabled for categories. */
+    if(!categoryRefreshTimer){
+        categoryRefreshTimer = setInterval(
+            loadCategories,
+            15000
+        );
+    }
 }
 
 
@@ -3056,6 +3420,114 @@ function normalizeRecommendationVideo(row){
     };
 }
 
+function getRecommendationHistoryKey(){
+
+    return "streamx_" +
+        LIBRARY_PLATFORM +
+        "_" +
+        LIBRARY_VIEWER_ID +
+        "_recommendation_history";
+
+}
+
+function readRecommendationHistory(){
+
+    const cutoff = Date.now() - RECOMMENDATION_COOLDOWN_MS;
+
+    try{
+
+        const raw = localStorage.getItem(
+            getRecommendationHistoryKey()
+        );
+        const parsed = raw ? JSON.parse(raw) : [];
+
+        if(!Array.isArray(parsed)) return [];
+
+        return parsed
+            .map(item => ({
+                id:String(item && item.id || ""),
+                shownAt:Number(item && item.shownAt || 0)
+            }))
+            .filter(item =>
+                item.id &&
+                Number.isFinite(item.shownAt) &&
+                item.shownAt >= cutoff
+            )
+            .sort((a,b) => b.shownAt - a.shownAt);
+
+    }
+    catch(error){
+
+        return [];
+
+    }
+
+}
+
+function writeRecommendationHistory(history){
+
+    try{
+
+        localStorage.setItem(
+            getRecommendationHistoryKey(),
+            JSON.stringify(history.slice(0,RECOMMENDATION_HISTORY_LIMIT))
+        );
+
+    }
+    catch(error){
+
+        /* Recommendations remain usable when storage is unavailable. */
+
+    }
+
+}
+
+function getRecentRecommendationIds(){
+
+    const seen = new Set();
+
+    return readRecommendationHistory()
+        .filter(item => {
+            if(seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+        })
+        .map(item => Number(item.id))
+        .filter(id => Number.isSafeInteger(id));
+
+}
+
+function rememberRecommendations(rows){
+
+    const now = Date.now();
+    const historyById = new Map(
+        readRecommendationHistory().map(item => [
+            item.id,
+            item.shownAt
+        ])
+    );
+
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+
+        const id = row && row.id;
+
+        if(id === null || id === undefined) return;
+
+        historyById.set(String(id),now);
+
+    });
+
+    const history = Array.from(
+        historyById,
+        ([id,shownAt]) => ({id,shownAt})
+    )
+        .sort((a,b) => b.shownAt - a.shownAt)
+        .slice(0,RECOMMENDATION_HISTORY_LIMIT);
+
+    writeRecommendationHistory(history);
+
+}
+
 function renderRecommendations(rows){
 
     recommendationVideos =
@@ -3067,13 +3539,18 @@ function renderRecommendations(rows){
                 video.video_url
             );
 
+    rememberRecommendations(recommendationVideos);
+
     /* Reorder the cards already on screen instead of rebuilding every card.
        Rebuilding would restart GIF/image downloads and make the feed feel
        slower whenever recommendations refresh. */
     prioritizeRenderedRecommendationCards();
 }
 
-const INITIAL_THUMBNAIL_COUNT = 8;
+/* Every card on the active page gets an eager GIF request. Only the first
+   handful receive high network priority so the page remains responsive. */
+const CURRENT_PAGE_THUMBNAIL_COUNT = VIDEOS_PER_PAGE;
+const HIGH_PRIORITY_THUMBNAIL_COUNT = Math.min(8,VIDEOS_PER_PAGE);
 
 function prioritizeRenderedRecommendationCards(){
 
@@ -3081,8 +3558,7 @@ function prioritizeRenderedRecommendationCards(){
         !videoGrid ||
         libraryViewActive ||
         searchTerm ||
-        String(currentCategory).toLowerCase() !== "all" ||
-        recommendationVideos.length === 0
+        String(currentCategory).toLowerCase() !== "all"
     ){
         return;
     }
@@ -3117,17 +3593,28 @@ function prioritizeRenderedRecommendationCards(){
 
     });
 
-    cards.forEach(card => {
-        if(!used.has(card)){
+    /* Return every other visible card to the catalog order. This prevents an
+       old recommendation order from surviving after a like/save refresh. */
+    getFilteredVideos().forEach(video => {
+
+        const card = cardsById.get(String(video.id));
+
+        if(card && !used.has(card)){
+            used.add(card);
             ordered.push(card);
         }
+
+    });
+
+    cards.forEach(card => {
+        if(!used.has(card)) ordered.push(card);
     });
 
     const fragment = document.createDocumentFragment();
 
     ordered.forEach((card,index) => {
 
-        if(index < INITIAL_THUMBNAIL_COUNT){
+        if(index < CURRENT_PAGE_THUMBNAIL_COUNT){
             const image = card.querySelector(
                 ".thumbnail-fallback"
             );
@@ -3135,6 +3622,9 @@ function prioritizeRenderedRecommendationCards(){
             if(image){
                 image.loading = "eager";
                 image.decoding = "async";
+                image.fetchPriority = index < HIGH_PRIORITY_THUMBNAIL_COUNT
+                    ? "high"
+                    : "auto";
             }
         }
 
@@ -3147,9 +3637,21 @@ function prioritizeRenderedRecommendationCards(){
 
 async function loadRecommendations(){
 
-    if(recommendationLoading) return;
+    if(recommendationLoading){
+        recommendationRefreshQueued = true;
+        return;
+    }
 
     recommendationLoading = true;
+
+    const triggerVideoId =
+        recommendationTriggerVideoId === null ||
+        recommendationTriggerVideoId === undefined
+            ? null
+            : Number(recommendationTriggerVideoId);
+    const excludeVideoIds = getRecentRecommendationIds();
+
+    recommendationTriggerVideoId = null;
 
     try{
 
@@ -3160,7 +3662,12 @@ async function loadRecommendations(){
                     p_viewer_id:LIBRARY_VIEWER_ID,
                     p_platform:LIBRARY_PLATFORM,
                     p_like_user_id:getLikeUserId(),
-                    p_limit:8
+                    p_limit:8,
+                    p_trigger_video_id:
+                        Number.isSafeInteger(triggerVideoId)
+                            ? triggerVideoId
+                            : null,
+                    p_exclude_video_ids:excludeVideoIds
                 }
             );
 
@@ -3173,6 +3680,7 @@ async function loadRecommendations(){
     catch(error){
 
         recommendationVideos = [];
+        prioritizeRenderedRecommendationCards();
 
         /* Recommendations are optional; the normal video feed remains usable
            when the SQL function has not been installed yet. */
@@ -3181,10 +3689,25 @@ async function loadRecommendations(){
     }
     finally{
         recommendationLoading = false;
+
+        if(recommendationRefreshQueued){
+            recommendationRefreshQueued = false;
+            scheduleRecommendationRefresh(0);
+        }
     }
 }
 
-function scheduleRecommendationRefresh(delay = 900){
+function scheduleRecommendationRefresh(
+    delay = 900,
+    triggerVideoId = undefined
+){
+
+    if(triggerVideoId !== undefined){
+        recommendationTriggerVideoId =
+            triggerVideoId === null
+                ? null
+                : String(triggerVideoId);
+    }
 
     clearTimeout(recommendationRefreshTimer);
 
@@ -3199,14 +3722,14 @@ function scheduleRecommendationRefresh(delay = 900){
 
 function setLikeButtonState(videoId,isLiked){
 
-    const button = document.querySelector(
+    const buttons = document.querySelectorAll(
         `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
     );
 
-    if(!button) return;
-
-    button.textContent = isLiked ? "♥" : "♡";
-    button.classList.toggle("liked",isLiked);
+    buttons.forEach(button => {
+        button.textContent = isLiked ? "♥" : "♡";
+        button.classList.toggle("liked",isLiked);
+    });
 }
 
 function updateLikeCountUI(videoId,count){
@@ -3242,8 +3765,13 @@ function applyLikeSummary(rows){
         if(!key) return;
 
         const parsedCount = Number(row.likes_count || 0);
-        const count = Number.isFinite(parsedCount) ? parsedCount : 0;
-        const isLiked = row.liked_by_user === true;
+        const optimistic = likeOptimisticState.get(key);
+        const count = optimistic && Number.isFinite(optimistic.count)
+            ? optimistic.count
+            : Number.isFinite(parsedCount) ? parsedCount : 0;
+        const isLiked = optimistic
+            ? optimistic.liked
+            : row.liked_by_user === true;
 
         videoLikeSummary.set(key,count);
 
@@ -3295,6 +3823,40 @@ function loadLikeSummary(){
         });
 }
 
+function scheduleLikeSummary(){
+
+    return new Promise((resolve,reject) => {
+
+        const startRequest = () => {
+
+            Promise.resolve()
+                .then(loadLikeSummary)
+                .then(
+                resolve,
+                reject
+                );
+
+        };
+
+        if(
+            typeof window.requestIdleCallback ===
+            "function"
+        ){
+            window.requestIdleCallback(
+                startRequest,
+                {timeout:1500}
+            );
+        }
+        else{
+            window.setTimeout(
+                startRequest,
+                0
+            );
+        }
+
+    });
+}
+
 /* =========================
    LOAD VIDEOS
 ========================= */
@@ -3336,45 +3898,23 @@ async function loadVideos(){
 allVideos =
     result.data || [];
 
-// If the categories table cannot be read, use categories already present
-// on videos so the category bar still works. This does not replace the
-// database as the source of truth; a successful categories query always
-// takes priority.
-if(categories.length <= 1){
+/* Keep category navigation useful even if the categories table is temporarily
+   unavailable; the videos table still exposes the categories in use. */
+mergeVideoCategoriesIntoCategoryBar();
 
-    const videoCategories = allVideos
-        .map(video => String(video.category || "").trim())
-        .filter(Boolean);
-
-    const uniqueVideoCategories = [
-        ...new Map(
-            videoCategories.map(category => [
-                category.toLowerCase(),
-                category
-            ])
-        ).values()
-    ];
-
-    if(uniqueVideoCategories.length){
-        categories = [
-            "All",
-            ...uniqueVideoCategories
-        ];
-        renderCategoryButtons();
-    }
-}
-
-/* Start the single likes request before painting cards. The grid can paint
-   immediately while the like counts and heart states arrive in the background. */
+/* Queue the single likes request after the first paint. The grid can paint
+   immediately while counts and heart states arrive in the background. */
 allVideos.forEach(video => {
     if(video.likes_count === undefined || video.likes_count === null){
         video.likes_count = 0;
     }
 });
 
-likeSummaryPromise = loadLikeSummary();
+likeSummaryPromise = scheduleLikeSummary();
 renderVideos();
 void likeSummaryPromise.catch(() => {});
+librarySummaryPromise = scheduleLibrarySummary();
+void librarySummaryPromise.catch(() => {});
 
     }
     catch(error){
@@ -3394,14 +3934,8 @@ void likeSummaryPromise.catch(() => {});
 
 
 /* =========================
-   REALTIME VIDEO UPDATES
+   REALTIME VIDEO / LIKE UPDATES
 ========================= */
-
-let videoRealtimeChannel = null;
-let likeRealtimeChannel = null;
-let likeRealtimeStatus = "";
-let likeCountRefreshTimer = null;
-const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
 
 function updateRealtimeViewUI(videoId,views){
 
@@ -3455,6 +3989,7 @@ function mergeRealtimeVideo(video){
     }
 
     if(contentChanged){
+        mergeVideoCategoriesIntoCategoryBar();
         renderVideos();
     }
     else{
@@ -3463,37 +3998,49 @@ function mergeRealtimeVideo(video){
 }
 
 function setupVideoRealtime(){
-    if(videoRealtimeChannel){
-        return;
-    }
+
+    if(videoRealtimeChannel) return;
 
     videoRealtimeChannel = supabaseClient
-        .channel("streamx-videos-realtime")
+        .channel("website-videos-realtime")
         .on(
             "postgres_changes",
-            { event:"INSERT", schema:"public", table:"videos" },
-            payload => {
-                mergeRealtimeVideo(payload.new);
-            }
+            {
+                event:"INSERT",
+                schema:"public",
+                table:"videos"
+            },
+            payload => mergeRealtimeVideo(payload.new)
         )
         .on(
             "postgres_changes",
-            { event:"UPDATE", schema:"public", table:"videos" },
-            payload => {
-                mergeRealtimeVideo(payload.new);
-            }
+            {
+                event:"UPDATE",
+                schema:"public",
+                table:"videos"
+            },
+            payload => mergeRealtimeVideo(payload.new)
         )
         .on(
             "postgres_changes",
-            { event:"DELETE", schema:"public", table:"videos" },
+            {
+                event:"DELETE",
+                schema:"public",
+                table:"videos"
+            },
             payload => {
-                const id = payload.old?.id;
-                allVideos = allVideos.filter(v => String(v.id) !== String(id));
+                const id = payload.old && payload.old.id;
+
+                if(id === undefined || id === null) return;
+
+                allVideos = allVideos.filter(
+                    video => String(video.id) !== String(id)
+                );
                 renderVideos();
             }
         )
         .subscribe(status => {
-            console.log("Videos realtime status:", status);
+            console.log("Website videos realtime status:",status);
         });
 }
 
@@ -3545,7 +4092,7 @@ function setupLikeRealtime(){
     if(likeRealtimeChannel) return;
 
     likeRealtimeChannel = supabaseClient
-        .channel("mini-app-video-likes-realtime")
+        .channel("website-video-likes-realtime")
         .on(
             "postgres_changes",
             {
@@ -3577,12 +4124,69 @@ function setupLikeRealtime(){
                 startLikeCountFallback();
             }
 
-            console.log("Mini App likes realtime status:",status);
+            console.log("Website likes realtime status:",status);
         });
 
     /* The interval is only a fallback for projects where the table has not
        yet been enabled in Supabase Realtime. */
     startLikeCountFallback();
+}
+
+function setupLibraryRealtime(){
+
+    if(libraryRealtimeChannel) return;
+
+    libraryRealtimeChannel = supabaseClient
+        .channel("website-video-library-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event:"*",
+                schema:"public",
+                table:"video_library"
+            },
+            payload => {
+
+                const eventType =
+                    String(payload.eventType || "").toUpperCase();
+                const row =
+                    eventType === "DELETE"
+                        ? payload.old
+                        : payload.new;
+                const videoId = row && row.video_id;
+
+                if(videoId === undefined || videoId === null){
+                    return;
+                }
+
+                /* The click handler already updates this viewer immediately.
+                   Ignore its echo so one save is never counted twice. */
+                if(
+                    row &&
+                    String(row.viewer_id || "") === String(LIBRARY_VIEWER_ID) &&
+                    String(row.platform || "") === String(LIBRARY_PLATFORM)
+                ){
+                    return;
+                }
+
+                if(eventType === "INSERT"){
+                    updateLibrarySaveCountUI(
+                        videoId,
+                        getLibrarySaveCount(videoId) + 1
+                    );
+                }
+                else if(eventType === "DELETE"){
+                    updateLibrarySaveCountUI(
+                        videoId,
+                        Math.max(0,getLibrarySaveCount(videoId) - 1)
+                    );
+                }
+            }
+        )
+        .subscribe(status => {
+            libraryRealtimeStatus = status;
+            console.log("Website library realtime status:",status);
+        });
 }
 
 
@@ -3692,10 +4296,103 @@ function getVideosForDisplay(){
     ];
 }
 
+function getPaginationFilterKey(){
+
+    return [
+        libraryViewActive ? "library" : "feed",
+        String(currentCategory || "All").toLowerCase(),
+        String(searchTerm || "")
+    ].join("\u0001");
+}
+
+function hideFeedPagination(){
+
+    if(feedPagination){
+        feedPagination.classList.remove("show");
+    }
+}
+
+function updateFeedPagination(totalItems,totalPages){
+
+    if(
+        !feedPagination ||
+        totalItems <= VIDEOS_PER_PAGE ||
+        totalPages <= 1
+    ){
+        hideFeedPagination();
+        return;
+    }
+
+    feedPagination.classList.add("show");
+
+    if(feedPageStatus){
+        feedPageStatus.textContent =
+            "Page " + currentVideoPage + " of " + totalPages;
+    }
+
+    if(feedPageBack){
+        feedPageBack.disabled = currentVideoPage <= 1;
+    }
+
+    if(feedPageNext){
+        feedPageNext.disabled = currentVideoPage >= totalPages;
+    }
+}
+
+function changeVideoPage(direction){
+
+    const totalItems = getVideosForDisplay().length;
+    const totalPages = Math.max(
+        1,
+        Math.ceil(totalItems / VIDEOS_PER_PAGE)
+    );
+    const nextPage = Math.min(
+        totalPages,
+        Math.max(1,currentVideoPage + direction)
+    );
+
+    if(nextPage === currentVideoPage){
+        return;
+    }
+
+    currentVideoPage = nextPage;
+    renderVideos();
+
+    if(videoGrid){
+        videoGrid.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+    }
+}
+
 function renderVideos(){
 
-    const videos =
+    const allDisplayVideos =
         getVideosForDisplay();
+
+    const filterKey = getPaginationFilterKey();
+
+    if(filterKey !== paginationFilterKey){
+        currentVideoPage = 1;
+        paginationFilterKey = filterKey;
+    }
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(allDisplayVideos.length / VIDEOS_PER_PAGE)
+    );
+
+    if(currentVideoPage > totalPages){
+        currentVideoPage = totalPages;
+    }
+
+    const pageStart =
+        (currentVideoPage - 1) * VIDEOS_PER_PAGE;
+    const videos = allDisplayVideos.slice(
+        pageStart,
+        pageStart + VIDEOS_PER_PAGE
+    );
 
 
     videoGrid.innerHTML = "";
@@ -3740,9 +4437,9 @@ function renderVideos(){
 
 
     resultCount.textContent =
-        videos.length +
+        allDisplayVideos.length +
         (
-            videos.length === 1
+            allDisplayVideos.length === 1
             ? " video"
             : " videos"
         );
@@ -3750,6 +4447,7 @@ function renderVideos(){
 
     if(videos.length === 0){
 
+        hideFeedPagination();
         showEmpty();
 
         return;
@@ -3757,16 +4455,29 @@ function renderVideos(){
     }
 
 
+    const cardFragment = document.createDocumentFragment();
+
     videos.forEach((video,index) => {
 
-        videoGrid.appendChild(
+        cardFragment.appendChild(
             createVideoCard(
                 video,
-                index < INITIAL_THUMBNAIL_COUNT
+                index < CURRENT_PAGE_THUMBNAIL_COUNT,
+                index < HIGH_PRIORITY_THUMBNAIL_COUNT
             )
         );
 
     });
+
+    videoGrid.appendChild(cardFragment);
+
+    updateFeedPagination(
+        allDisplayVideos.length,
+        totalPages
+    );
+
+    scheduleVideoURLPrefetch(videos);
+    scheduleVideoByteWarm(videos);
 
 }
 
@@ -3775,7 +4486,11 @@ function renderVideos(){
    CREATE CARD
 ========================= */
 
-function createVideoCard(video,prioritizeLoad = false){
+function createVideoCard(
+    video,
+    prioritizeLoad = false,
+    highPriority = prioritizeLoad
+){
 
     const card =
         document.createElement("article");
@@ -3815,6 +4530,9 @@ function createVideoCard(video,prioritizeLoad = false){
             video.views || 0
         ).toLocaleString();
 
+    const saves =
+        getLibrarySaveCount(video.id).toLocaleString();
+
 
     let date = "";
 
@@ -3844,6 +4562,7 @@ function createVideoCard(video,prioritizeLoad = false){
                     alt="${escapeHTML(title)}"
                     loading="${prioritizeLoad ? "eager" : "lazy"}"
                     decoding="async"
+                    fetchpriority="${highPriority ? "high" : "auto"}"
                     draggable="false"
                 >
                 `
@@ -3927,8 +4646,17 @@ function createVideoCard(video,prioritizeLoad = false){
         aria-label="Save to My Library"
         title="Save to My Library"
     >
-        ☆
+        ☆ save
     </button>
+
+    <span
+        class="save-count"
+        data-id="${escapeHTML(String(video.id))}"
+        aria-label="Total saves"
+        title="Total saves"
+    >
+        ${saves}
+    </span>
 
 </div>
 
@@ -3983,6 +4711,17 @@ if(likeButton){
 
     }
 
+
+    /* On desktop, hovering a card is a strong signal that it may be opened
+       next. Warm only that video's opening bytes; this does not affect GIF
+       priority because it happens after the user's direct interaction. */
+    card.addEventListener(
+        "pointerenter",
+        function(){
+            void warmVideoBytes(video);
+        },
+        {once:true,passive:true}
+    );
 
     card.addEventListener(
         "click",
@@ -4137,67 +4876,317 @@ function getStoragePath(
 async function getVideoURL(video){
 
     const rawValue =
-        video.video_url;
-
+        typeof video.video_url === "string"
+            ? video.video_url.trim()
+            : video.video_url;
 
     if(!rawValue){
-
         return null;
-
     }
 
+    /* Signed URLs are reused between opens so replaying a video does not
+       wait for another storage request. */
+    const cacheKey =
+        String(video.id || "") + "|" + String(rawValue);
+    const cached = videoURLCache.get(cacheKey);
 
-    const storagePath =
-        getStoragePath(
-            rawValue,
-            "videos"
-        );
-
-
-    if(!storagePath){
-
-        /* Accept external/direct URLs as well as Supabase storage paths. */
-        if(
-            typeof rawValue === "string" &&
-            /^https?:\/\//i.test(rawValue.trim())
-        ){
-            return rawValue.trim();
-        }
-
-        console.error(
-            "Invalid video path:",
-            rawValue
-        );
-
-        return null;
-
+    if(cached && cached.expiresAt > Date.now() + 30000){
+        return cached.url;
     }
 
+    if(videoURLPromiseCache.has(cacheKey)){
+        return videoURLPromiseCache.get(cacheKey);
+    }
 
-    const result =
-        await supabaseClient
-            .storage
-            .from("videos")
-            .createSignedUrl(
-                storagePath,
-                3600
+    const request = (async () => {
+
+        const storagePath =
+            getStoragePath(
+                rawValue,
+                "videos"
             );
 
+        if(!storagePath){
 
-    if(result.error){
+            /* Accept external/direct URLs as well as Supabase storage paths. */
+            if(/^https?:\/\//i.test(String(rawValue))){
+                const directURL = String(rawValue);
+                videoURLCache.set(
+                    cacheKey,
+                    {
+                        url:directURL,
+                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                    }
+                );
+                return directURL;
+            }
 
-        console.error(
-            "Signed URL error:",
-            result.error
-        );
+            console.error(
+                "Invalid video path:",
+                rawValue
+            );
 
-        return null;
+            return null;
+        }
 
+        const result =
+            await supabaseClient
+                .storage
+                .from("videos")
+                .createSignedUrl(
+                    storagePath,
+                    3600
+                );
+
+        if(result.error){
+
+            console.error(
+                "Signed URL error:",
+                result.error
+            );
+
+            return null;
+        }
+
+        const signedURL =
+            result.data && result.data.signedUrl;
+
+        if(signedURL){
+            videoURLCache.set(
+                cacheKey,
+                {
+                    url:signedURL,
+                    expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                }
+            );
+        }
+
+        return signedURL || null;
+    })();
+
+    videoURLPromiseCache.set(cacheKey,request);
+
+    try{
+        return await request;
+    }
+    finally{
+        videoURLPromiseCache.delete(cacheKey);
     }
 
+}
 
-    return result.data.signedUrl;
+function scheduleVideoURLPrefetch(videos){
 
+    if(!Array.isArray(videos) || videos.length === 0){
+        return;
+    }
+
+    /* Let the current-page GIF requests win the first paint. These are only
+       signed-URL requests; the video bytes are still fetched on play. */
+    const candidates = videos.slice(
+        0,
+        Math.min(VIDEO_URL_PREFETCH_COUNT, videos.length)
+    );
+
+    window.setTimeout(
+        () => {
+            candidates.forEach(video => {
+                void getVideoURL(video);
+            });
+        },
+        1800
+    );
+}
+
+function getVideoWarmCacheKey(video){
+
+    return String(video && video.id || "") + "|" +
+        String(video && video.video_url || "");
+}
+
+function shouldWarmVideoBytes(){
+
+    if(document.visibilityState !== "visible"){
+        return false;
+    }
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+    if(connection){
+
+        if(connection.saveData){
+            return false;
+        }
+
+        const effectiveType =
+            String(connection.effectiveType || "").toLowerCase();
+
+        if(
+            effectiveType === "slow-2g" ||
+            effectiveType === "2g"
+        ){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+async function warmVideoBytes(video){
+
+    if(!video || !video.video_url || !shouldWarmVideoBytes()){
+        return;
+    }
+
+    const cacheKey = getVideoWarmCacheKey(video);
+
+    if(videoByteWarmCache.has(cacheKey)){
+        return;
+    }
+
+    if(videoByteWarmPromiseCache.has(cacheKey)){
+        return videoByteWarmPromiseCache.get(cacheKey);
+    }
+
+    const warmRequest = (async () => {
+
+        const videoURL = await getVideoURL(video);
+
+        if(!videoURL){
+            return;
+        }
+
+        await new Promise(resolve => {
+
+            const warmer = document.createElement("video");
+            let finished = false;
+            let timeoutId = null;
+
+            const finish = warmed => {
+
+                if(finished){
+                    return;
+                }
+
+                finished = true;
+
+                if(timeoutId !== null){
+                    window.clearTimeout(timeoutId);
+                }
+
+                warmer.pause();
+                warmer.removeAttribute("src");
+                warmer.load();
+                warmer.remove();
+
+                if(warmed){
+                    videoByteWarmCache.add(cacheKey);
+                }
+
+                resolve();
+            };
+
+            warmer.preload = "auto";
+            warmer.muted = true;
+            warmer.playsInline = true;
+            warmer.setAttribute("aria-hidden","true");
+            warmer.style.position = "fixed";
+            warmer.style.width = "1px";
+            warmer.style.height = "1px";
+            warmer.style.opacity = "0";
+            warmer.style.pointerEvents = "none";
+            warmer.style.left = "-9999px";
+            warmer.src = videoURL;
+
+            warmer.addEventListener(
+                "loadeddata",
+                () => finish(true),
+                {once:true}
+            );
+            warmer.addEventListener(
+                "canplay",
+                () => finish(true),
+                {once:true}
+            );
+            warmer.addEventListener(
+                "error",
+                () => finish(false),
+                {once:true}
+            );
+
+            document.body.appendChild(warmer);
+            warmer.load();
+
+            timeoutId = window.setTimeout(
+                () => finish(false),
+                VIDEO_BYTE_WARM_TIMEOUT_MS
+            );
+        });
+    })();
+
+    videoByteWarmPromiseCache.set(cacheKey,warmRequest);
+
+    try{
+        await warmRequest;
+    }
+    finally{
+        videoByteWarmPromiseCache.delete(cacheKey);
+    }
+}
+
+function scheduleVideoByteWarm(videos){
+
+    if(
+        !Array.isArray(videos) ||
+        videos.length === 0 ||
+        !shouldWarmVideoBytes()
+    ){
+        return;
+    }
+
+    /* GIFs on the active page remain priority #1. Only after that initial
+       window do we warm a very small number of likely-to-open videos. */
+    const scheduleId = ++videoByteWarmScheduleId;
+    const candidates = videos.slice(
+        0,
+        Math.min(VIDEO_BYTE_WARM_COUNT,videos.length)
+    );
+
+    const beginWarm = () => {
+
+        if(scheduleId !== videoByteWarmScheduleId){
+            return;
+        }
+
+        candidates.forEach((video,index) => {
+            window.setTimeout(
+                () => {
+                    if(scheduleId === videoByteWarmScheduleId){
+                        void warmVideoBytes(video);
+                    }
+                },
+                index * 700
+            );
+        });
+    };
+
+    window.setTimeout(
+        () => {
+            if("requestIdleCallback" in window){
+                window.requestIdleCallback(
+                    beginWarm,
+                    {timeout:2200}
+                );
+            }
+            else{
+                beginWarm();
+            }
+        },
+        VIDEO_BYTE_WARM_DELAY_MS
+    );
 }
 
 
@@ -4234,6 +5223,7 @@ async function openPlayer(video){
     /* Re-play opened videos continuously without forcing them muted. */
     playerVideo.loop = true;
     playerVideo.muted = false;
+    playerVideo.preload = "auto";
 
 
     playerVideo.load();
@@ -4376,10 +5366,69 @@ async function toggleLike(videoId){
 
     console.log("Like clicked:", videoId);
 
-    try{
+    const key = String(videoId);
+    const userId = getLikeUserId();
+    const likeButton = document.querySelector(
+        `.like-btn[data-id="${CSS.escape(key)}"]`
+    );
+    const wasLiked =
+        likedVideoIds.has(key) ||
+        Boolean(likeButton && likeButton.classList.contains("liked"));
+    const video = allVideos.find(
+        item => String(item.id) === key
+    );
+    const previousCountValue = videoLikeSummary.has(key)
+        ? videoLikeSummary.get(key)
+        : video && video.likes_count;
+    const previousCount = Number.isFinite(Number(previousCountValue))
+        ? Math.max(0,Math.floor(Number(previousCountValue)))
+        : 0;
 
-        const userId =
-            getLikeUserId();
+    const applyOptimisticLike = (liked,count) => {
+        likeOptimisticState.set(
+            key,
+            {
+                liked,
+                count
+            }
+        );
+        if(liked){
+            likedVideoIds.add(key);
+        }
+        else{
+            likedVideoIds.delete(key);
+        }
+        videoLikeSummary.set(key,count);
+        if(video){
+            video.likes_count = count;
+        }
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,liked);
+    };
+
+    const rollbackLike = (liked,count) => {
+        likeOptimisticState.delete(key);
+        if(liked){
+            likedVideoIds.add(key);
+        }
+        else{
+            likedVideoIds.delete(key);
+        }
+        videoLikeSummary.set(key,count);
+        if(video){
+            video.likes_count = count;
+        }
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,liked);
+    };
+
+    /* Paint the new heart/count before any network round trip. */
+    applyOptimisticLike(
+        !wasLiked,
+        Math.max(0,previousCount + (wasLiked ? -1 : 1))
+    );
+
+    try{
 
         const { data: existingLike, error: checkError } =
             await supabaseClient
@@ -4396,6 +5445,8 @@ async function toggleLike(videoId){
                 checkError
             );
 
+            rollbackLike(wasLiked,previousCount);
+
             alert(
                 "Unable to check like status."
             );
@@ -4404,68 +5455,79 @@ async function toggleLike(videoId){
 
         }
 
+        const serverWasLiked = Boolean(existingLike);
+        const nextLiked = !serverWasLiked;
+        const optimisticCount = Math.max(
+            0,
+            previousCount + (nextLiked ? 1 : -1)
+        );
 
-        if(existingLike){
+        /* Correct a stale local heart if another tab changed it. */
+        if(nextLiked !== !wasLiked){
+            applyOptimisticLike(nextLiked,optimisticCount);
+        }
 
-            const { error } =
-                await supabaseClient
-                    .from("video_likes")
-                    .delete()
-                    .eq("id", existingLike.id);
+        let syncError = null;
 
-            if(error){
+        try{
 
-                console.error(
-                    "Unlike error:",
-                    error
-                );
+            if(existingLike){
 
-                alert(
-                    "Unable to remove like."
-                );
+                const { error } =
+                    await supabaseClient
+                        .from("video_likes")
+                        .delete()
+                        .eq("id", existingLike.id);
 
-                return;
+                syncError = error;
+
+            }
+            else{
+
+                const { error } =
+                    await supabaseClient
+                        .from("video_likes")
+                        .insert({
+                            video_id: videoId,
+                            user_id: userId
+                        });
+
+                syncError = error;
 
             }
 
         }
-        else{
+        catch(error){
+            syncError = error;
+        }
 
-            const { error } =
-                await supabaseClient
-                    .from("video_likes")
-                    .insert({
-                        video_id: videoId,
-                        user_id: userId
-                    });
+        if(syncError){
 
-            if(error){
+            console.error(
+                nextLiked ? "Like insert error:" : "Unlike error:",
+                syncError
+            );
 
-                console.error(
-                    "Like insert error:",
-                    error
-                );
+            rollbackLike(serverWasLiked,previousCount);
+            alert(
+                nextLiked
+                    ? "Unable to like this video."
+                    : "Unable to remove like."
+            );
+            return;
+        }
 
-                alert(
-                    "Unable to like this video."
-                );
-
-                return;
-
+        /* Reconcile with the authoritative count in the background. */
+        void updateLikeCount(videoId).finally(() => {
+            const optimistic = likeOptimisticState.get(key);
+            if(optimistic && optimistic.liked === nextLiked){
+                likeOptimisticState.delete(key);
             }
-
-        }
-
-
-        if(existingLike){
-            likedVideoIds.delete(String(videoId));
-        }
-        else{
-            likedVideoIds.add(String(videoId));
-        }
-
-        await updateLikeCount(videoId);
-        scheduleRecommendationRefresh();
+        });
+        scheduleRecommendationRefresh(
+            900,
+            serverWasLiked ? null : videoId
+        );
 
     }
     catch(error){
@@ -4474,6 +5536,8 @@ async function toggleLike(videoId){
             "Unexpected like error:",
             error
         );
+
+        rollbackLike(wasLiked,previousCount);
 
     }
 
@@ -4588,6 +5652,14 @@ async function updateLikeButton(videoId){
         }
     }
 
+    if(likeOptimisticState.has(key)){
+        setLikeButtonState(
+            key,
+            likeOptimisticState.get(key).liked
+        );
+        return;
+    }
+
     if(likeSummaryReady && videoLikeSummary.has(key)){
         setLikeButtonState(
             key,
@@ -4645,6 +5717,7 @@ function closeVideoPlayer(){
 
     stopWatchTimeTracking();
 
+    const recentlyWatchedVideoId = currentPlayerVideoId;
     currentPlayerVideoId = null;
     updatePlayerLibraryButton();
 
@@ -4655,7 +5728,7 @@ function closeVideoPlayer(){
         "src"
     );
 
-
+    playerVideo.preload = "metadata";
     playerVideo.load();
 
 
@@ -4667,7 +5740,10 @@ function closeVideoPlayer(){
     document.body.style.overflow =
         "";
 
-    scheduleRecommendationRefresh(1500);
+    scheduleRecommendationRefresh(
+        1500,
+        recentlyWatchedVideoId
+    );
 
 }
 
@@ -4814,6 +5890,20 @@ if(libraryToggle){
         toggleLibraryView
     );
 
+}
+
+if(feedPageBack){
+    feedPageBack.addEventListener(
+        "click",
+        () => changeVideoPage(-1)
+    );
+}
+
+if(feedPageNext){
+    feedPageNext.addEventListener(
+        "click",
+        () => changeVideoPage(1)
+    );
 }
 
 document
@@ -5195,6 +6285,8 @@ document.addEventListener(
 
 function showLoading(){
 
+    hideFeedPagination();
+
     videoGrid.innerHTML = `
 
         <div class="loading">
@@ -5217,6 +6309,8 @@ function showLoading(){
 ========================= */
 
 function showEmpty(){
+
+    hideFeedPagination();
 
     const emptyHeading = libraryViewActive
         ? "Your library is empty"
@@ -5254,6 +6348,8 @@ function showEmpty(){
 ========================= */
 
 function showError(message){
+
+    hideFeedPagination();
 
     videoGrid.innerHTML = `
 

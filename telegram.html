@@ -4724,6 +4724,16 @@ async function updateViews(video){
             video.id
         );
 
+        /* The hardened view-counter RPC is authenticated-only.
+           Wait for the silent anonymous Supabase session before counting. */
+        const session =
+            await ensureMiniAppAuthSession();
+
+        if(!session?.user?.id){
+            console.warn("View counter skipped: authentication unavailable.");
+            return;
+        }
+
 
         const { data, error } =
             await supabaseClient.rpc(

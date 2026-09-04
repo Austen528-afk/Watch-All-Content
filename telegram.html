@@ -1714,6 +1714,7 @@ const supabaseClient =
 
 let miniAppAuthSessionPromise = null;
 let miniAppAuthUserId = null;
+let miniAppAuthAccessToken = null;
 let miniAppIdentityMigrationPromise = null;
 
 async function migrateLegacyMiniAppIdentity(authUserId){
@@ -1790,9 +1791,27 @@ async function adoptMiniAppAuthSession(session){
 
     if(!authUserId) return session || null;
 
+    /* Keep the current JWT available synchronously for keepalive analytics
+       requests, including pagehide/visibility events. */
+    miniAppAuthAccessToken =
+        session?.access_token || null;
+
     await migrateLegacyMiniAppIdentity(authUserId);
     return session;
 }
+
+/* Keep the cached JWT fresh when Supabase refreshes the anonymous session. */
+supabaseClient.auth.onAuthStateChange((_event,session) => {
+    miniAppAuthAccessToken =
+        session?.access_token || null;
+
+    if(session?.user?.id){
+        miniAppAuthUserId =
+            session.user.id;
+        MINI_APP_USER_ID =
+            session.user.id;
+    }
+});
 
 async function ensureMiniAppAuthSession(){
 
@@ -2279,6 +2298,16 @@ function saveWatchTime(forceSave = false){
         return Promise.resolve();
     }
 
+    /* The security-hardened RPC requires the real anonymous Auth JWT.
+       If Auth is still initializing, retry after the session is ready. */
+    const accessToken = miniAppAuthAccessToken;
+    const authViewerId = miniAppAuthUserId;
+
+    if(!accessToken || !authViewerId){
+        return ensureMiniAppAuthSession()
+            .then(() => saveWatchTime(forceSave));
+    }
+
     state.lastQueuedSeconds = seconds;
 
     return fetch(
@@ -2288,12 +2317,12 @@ function saveWatchTime(forceSave = false){
             keepalive:true,
             headers:{
                 "apikey":SUPABASE_KEY,
-                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Authorization":"Bearer " + accessToken,
                 "Content-Type":"application/json"
             },
             body:JSON.stringify({
                 p_session_id:state.sessionId,
-                p_viewer_id:state.viewerId,
+                p_viewer_id:authViewerId,
                 p_video_id:state.videoId,
                 p_platform:state.platform,
                 p_watched_seconds:seconds
@@ -2457,6 +2486,14 @@ function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
         return Promise.resolve();
     }
 
+    const accessToken = miniAppAuthAccessToken;
+    const authViewerId = miniAppAuthUserId;
+
+    if(!accessToken || !authViewerId){
+        return ensureMiniAppAuthSession()
+            .then(() => sendViewerTimeHeartbeat(ended,stateOverride));
+    }
+
     state.lastSentSeconds = Math.max(
         state.lastSentSeconds,
         seconds
@@ -2469,12 +2506,12 @@ function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
             keepalive:true,
             headers:{
                 "apikey":SUPABASE_KEY,
-                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Authorization":"Bearer " + accessToken,
                 "Content-Type":"application/json"
             },
             body:JSON.stringify({
                 p_session_id:state.sessionId,
-                p_viewer_id:state.viewerId,
+                p_viewer_id:authViewerId,
                 p_platform:state.platform,
                 p_context:state.context,
                 p_duration_seconds:seconds,

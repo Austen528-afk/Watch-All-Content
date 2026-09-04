@@ -1753,6 +1753,132 @@ const supabaseClient =
     );
 
 let publicAuthSessionPromise = null;
+let publicAuthUserId = null;
+let publicIdentityMigrationPromise = null;
+
+async function migrateLegacyPublicIdentity(authUserId){
+
+    if(!authUserId) return false;
+
+    if(publicIdentityMigrationPromise){
+        return publicIdentityMigrationPromise;
+    }
+
+    publicIdentityMigrationPromise = (async () => {
+
+        const migrationKey =
+            "streamx_public_identity_migrated_v1_" + authUserId;
+
+        try{
+            const alreadyMigrated =
+                localStorage.getItem(migrationKey) === "1";
+
+            const legacyLikeUserId =
+                localStorage.getItem("streamx_like_user_id");
+            const legacyViewerId =
+                localStorage.getItem("streamx_website_user_id");
+
+            if(!alreadyMigrated){
+
+                if(legacyLikeUserId && legacyLikeUserId !== authUserId){
+                    const {data:legacyLikes,error:legacyLikesError} =
+                        await supabaseClient
+                            .from("video_likes")
+                            .select("video_id")
+                            .eq("user_id",legacyLikeUserId);
+
+                    if(legacyLikesError) throw legacyLikesError;
+
+                    if(legacyLikes && legacyLikes.length){
+                        const {error:copyLikesError} =
+                            await supabaseClient
+                                .from("video_likes")
+                                .upsert(
+                                    legacyLikes.map(row => ({
+                                        video_id:row.video_id,
+                                        user_id:authUserId
+                                    })),
+                                    {
+                                        onConflict:"video_id,user_id",
+                                        ignoreDuplicates:true
+                                    }
+                                );
+
+                        if(copyLikesError) throw copyLikesError;
+                    }
+                }
+
+                if(legacyViewerId && legacyViewerId !== authUserId){
+                    const {data:legacyLibrary,error:legacyLibraryError} =
+                        await supabaseClient
+                            .from("video_library")
+                            .select("video_id")
+                            .eq("viewer_id",legacyViewerId)
+                            .eq("platform","website");
+
+                    if(legacyLibraryError) throw legacyLibraryError;
+
+                    if(legacyLibrary && legacyLibrary.length){
+                        const {error:copyLibraryError} =
+                            await supabaseClient
+                                .from("video_library")
+                                .upsert(
+                                    legacyLibrary.map(row => ({
+                                        viewer_id:authUserId,
+                                        platform:"website",
+                                        video_id:row.video_id
+                                    })),
+                                    {
+                                        onConflict:"viewer_id,platform,video_id",
+                                        ignoreDuplicates:true
+                                    }
+                                );
+
+                        if(copyLibraryError) throw copyLibraryError;
+                    }
+                }
+
+                localStorage.setItem(migrationKey,"1");
+            }
+
+            /* Keep the old storage keys for compatibility, but from this point
+               they contain the server-verifiable Supabase Auth UID. */
+            localStorage.setItem("streamx_like_user_id",authUserId);
+            localStorage.setItem("streamx_website_user_id",authUserId);
+
+            publicAuthUserId = authUserId;
+
+            if(typeof LIBRARY_VIEWER_ID !== "undefined"){
+                LIBRARY_VIEWER_ID = authUserId;
+            }
+
+            return true;
+        }
+        catch(error){
+            console.warn(
+                "StreamX public identity migration failed:",
+                error?.message || error
+            );
+            return false;
+        }
+        finally{
+            publicIdentityMigrationPromise = null;
+        }
+
+    })();
+
+    return publicIdentityMigrationPromise;
+}
+
+async function adoptPublicAuthSession(session){
+
+    const authUserId = session?.user?.id;
+
+    if(!authUserId) return session || null;
+
+    await migrateLegacyPublicIdentity(authUserId);
+    return session;
+}
 
 async function ensurePublicAuthSession(){
 
@@ -1774,7 +1900,7 @@ async function ensurePublicAuthSession(){
             }
 
             if(data?.session?.user?.id){
-                return data.session;
+                return adoptPublicAuthSession(data.session);
             }
 
             const {data:anonymousData,error:anonymousError} =
@@ -1788,7 +1914,9 @@ async function ensurePublicAuthSession(){
                 return null;
             }
 
-            return anonymousData?.session || null;
+            return adoptPublicAuthSession(
+                anonymousData?.session || null
+            );
         }
         catch(error){
             console.warn(
@@ -2373,7 +2501,7 @@ document.addEventListener("visibilitychange",function(){
 ========================= */
 
 const LIBRARY_PLATFORM = WATCH_TIME_PLATFORM;
-const LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
+let LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
 const LIBRARY_STORAGE_KEY =
     "streamx_" + LIBRARY_PLATFORM + "_library";
 const LIBRARY_ACTIVITY_TABLE = "library_activity";
@@ -2790,34 +2918,33 @@ function applyLibrarySummary(rows){
     librarySummaryReady = true;
 }
 
-function loadLibrarySummary(){
+async function loadLibrarySummary(){
 
     librarySummaryReady = false;
 
-    return supabaseClient
-        .rpc(
-            "get_streamx_library_summary",
-            {
-                p_viewer_id:LIBRARY_VIEWER_ID,
-                p_platform:LIBRARY_PLATFORM
-            }
-        )
-        .then(result => {
+    await ensurePublicAuthSession();
 
-            if(result.error) throw result.error;
+    try{
+        const result = await supabaseClient
+            .rpc(
+                "get_streamx_library_summary",
+                {
+                    p_viewer_id:LIBRARY_VIEWER_ID,
+                    p_platform:LIBRARY_PLATFORM
+                }
+            );
 
-            applyLibrarySummary(result.data);
-            return result.data;
+        if(result.error) throw result.error;
 
-        })
-        .catch(error => {
-
-            librarySummaryReady = false;
-            librarySummaryPromise = null;
-            console.warn("Library save summary unavailable:",error);
-            throw error;
-
-        });
+        applyLibrarySummary(result.data);
+        return result.data;
+    }
+    catch(error){
+        librarySummaryReady = false;
+        librarySummaryPromise = null;
+        console.warn("Library save summary unavailable:",error);
+        throw error;
+    }
 }
 
 function scheduleLibrarySummary(){
@@ -3014,6 +3141,10 @@ async function loadLibrary(){
     if(libraryLoading) return;
 
     libraryLoading = true;
+
+    /* Wait only for identity adoption; cached library UI is still painted
+       immediately below, so this does not delay the visible page/video grid. */
+    await ensurePublicAuthSession();
     restoreLibraryCache();
     updateLibraryUI();
 
@@ -3122,6 +3253,8 @@ async function toggleLibrary(videoId,sourceButton){
     if(libraryViewActive){
         renderVideos();
     }
+
+    await ensurePublicAuthSession();
 
     let syncError = null;
 
@@ -3662,6 +3795,8 @@ async function loadRecommendations(){
 
     try{
 
+        await ensurePublicAuthSession();
+
         const { data,error } =
             await supabaseClient.rpc(
                 "get_streamx_recommendations",
@@ -3801,33 +3936,34 @@ function applyLikeSummary(rows){
     likeSummaryReady = true;
 }
 
-function loadLikeSummary(){
+async function loadLikeSummary(){
 
     likeSummaryReady = false;
 
-    return supabaseClient
-        .rpc(
-            "get_streamx_like_summary",
-            {
-                p_like_user_id:getLikeUserId()
-            }
-        )
-        .then(result => {
+    await ensurePublicAuthSession();
 
-            if(result.error) throw result.error;
+    try{
+        const result = await supabaseClient
+            .rpc(
+                "get_streamx_like_summary",
+                {
+                    p_like_user_id:getLikeUserId()
+                }
+            );
 
-            applyLikeSummary(result.data);
-            return result.data;
-        })
-        .catch(error => {
+        if(result.error) throw result.error;
 
-            /* Keep the older per-card query as a compatibility fallback until
-               the summary function is installed in Supabase. */
-            likeSummaryReady = false;
-            likeSummaryPromise = null;
-            console.warn("Like summary unavailable:",error);
-            throw error;
-        });
+        applyLikeSummary(result.data);
+        return result.data;
+    }
+    catch(error){
+        /* Keep the older per-card query as a compatibility fallback until
+           the summary function is installed in Supabase. */
+        likeSummaryReady = false;
+        likeSummaryPromise = null;
+        console.warn("Like summary unavailable:",error);
+        throw error;
+    }
 }
 
 function scheduleLikeSummary(){
@@ -5374,7 +5510,6 @@ async function toggleLike(videoId){
     console.log("Like clicked:", videoId);
 
     const key = String(videoId);
-    const userId = getLikeUserId();
     const likeButton = document.querySelector(
         `.like-btn[data-id="${CSS.escape(key)}"]`
     );
@@ -5434,6 +5569,9 @@ async function toggleLike(videoId){
         !wasLiked,
         Math.max(0,previousCount + (wasLiked ? -1 : 1))
     );
+
+    await ensurePublicAuthSession();
+    const userId = getLikeUserId();
 
     try{
 
@@ -5551,6 +5689,10 @@ async function toggleLike(videoId){
 }
 
 function getLikeUserId(){
+
+    if(publicAuthUserId){
+        return publicAuthUserId;
+    }
 
     let userId =
         localStorage.getItem(

@@ -645,6 +645,48 @@ body{
     gap:20px;
 }
 
+.feed-pagination{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin:30px 0 10px;
+}
+
+.feed-pagination.show{
+    display:flex;
+}
+
+.feed-pagination-button{
+    min-width:100px;
+    padding:10px 16px;
+    border:1px solid #333;
+    border-radius:9px;
+    background:#171717;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s ease;
+}
+
+.feed-pagination-button:hover:not(:disabled){
+    border-color:#ff1744;
+    background:#241018;
+}
+
+.feed-pagination-button:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+}
+
+.feed-pagination-status{
+    min-width:82px;
+    color:#999;
+    font-size:12px;
+    text-align:center;
+}
+
 
 /* =========================
    VIDEO CARD
@@ -1534,6 +1576,36 @@ body{
 
     </div>
 
+    <nav
+        class="feed-pagination"
+        id="feedPagination"
+        aria-label="Video pages"
+    >
+        <button
+            class="feed-pagination-button"
+            id="feedPageBack"
+            type="button"
+        >
+            ← Back
+        </button>
+
+        <span
+            class="feed-pagination-status"
+            id="feedPageStatus"
+            aria-live="polite"
+        >
+            Page 1 of 1
+        </span>
+
+        <button
+            class="feed-pagination-button"
+            id="feedPageNext"
+            type="button"
+        >
+            Next →
+        </button>
+    </nav>
+
 </main>
 
 
@@ -1786,6 +1858,9 @@ let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
 let likeSummaryPromise = null;
 let likeSummaryReady = false;
+const VIDEOS_PER_PAGE = 20;
+let currentVideoPage = 1;
+let paginationFilterKey = "";
 
 
 /* =========================
@@ -1794,6 +1869,18 @@ let likeSummaryReady = false;
 
 const videoGrid =
     document.getElementById("videoGrid");
+
+const feedPagination =
+    document.getElementById("feedPagination");
+
+const feedPageBack =
+    document.getElementById("feedPageBack");
+
+const feedPageNext =
+    document.getElementById("feedPageNext");
+
+const feedPageStatus =
+    document.getElementById("feedPageStatus");
 
 const resultCount =
     document.getElementById("resultCount");
@@ -3641,10 +3728,103 @@ function getVideosForDisplay(){
     ];
 }
 
+function getPaginationFilterKey(){
+
+    return [
+        libraryViewActive ? "library" : "feed",
+        String(currentCategory || "All").toLowerCase(),
+        String(searchTerm || "")
+    ].join("\u0001");
+}
+
+function hideFeedPagination(){
+
+    if(feedPagination){
+        feedPagination.classList.remove("show");
+    }
+}
+
+function updateFeedPagination(totalItems,totalPages){
+
+    if(
+        !feedPagination ||
+        totalItems <= VIDEOS_PER_PAGE ||
+        totalPages <= 1
+    ){
+        hideFeedPagination();
+        return;
+    }
+
+    feedPagination.classList.add("show");
+
+    if(feedPageStatus){
+        feedPageStatus.textContent =
+            "Page " + currentVideoPage + " of " + totalPages;
+    }
+
+    if(feedPageBack){
+        feedPageBack.disabled = currentVideoPage <= 1;
+    }
+
+    if(feedPageNext){
+        feedPageNext.disabled = currentVideoPage >= totalPages;
+    }
+}
+
+function changeVideoPage(direction){
+
+    const totalItems = getVideosForDisplay().length;
+    const totalPages = Math.max(
+        1,
+        Math.ceil(totalItems / VIDEOS_PER_PAGE)
+    );
+    const nextPage = Math.min(
+        totalPages,
+        Math.max(1,currentVideoPage + direction)
+    );
+
+    if(nextPage === currentVideoPage){
+        return;
+    }
+
+    currentVideoPage = nextPage;
+    renderVideos();
+
+    if(videoGrid){
+        videoGrid.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+    }
+}
+
 function renderVideos(){
 
-    const videos =
+    const allDisplayVideos =
         getVideosForDisplay();
+
+    const filterKey = getPaginationFilterKey();
+
+    if(filterKey !== paginationFilterKey){
+        currentVideoPage = 1;
+        paginationFilterKey = filterKey;
+    }
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(allDisplayVideos.length / VIDEOS_PER_PAGE)
+    );
+
+    if(currentVideoPage > totalPages){
+        currentVideoPage = totalPages;
+    }
+
+    const pageStart =
+        (currentVideoPage - 1) * VIDEOS_PER_PAGE;
+    const videos = allDisplayVideos.slice(
+        pageStart,
+        pageStart + VIDEOS_PER_PAGE
+    );
 
 
     videoGrid.innerHTML = "";
@@ -3689,9 +3869,9 @@ function renderVideos(){
 
 
     resultCount.textContent =
-        videos.length +
+        allDisplayVideos.length +
         (
-            videos.length === 1
+            allDisplayVideos.length === 1
             ? " video"
             : " videos"
         );
@@ -3699,6 +3879,7 @@ function renderVideos(){
 
     if(videos.length === 0){
 
+        hideFeedPagination();
         showEmpty();
 
         return;
@@ -3716,6 +3897,11 @@ function renderVideos(){
         );
 
     });
+
+    updateFeedPagination(
+        allDisplayVideos.length,
+        totalPages
+    );
 
 }
 
@@ -4765,6 +4951,20 @@ if(libraryToggle){
 
 }
 
+if(feedPageBack){
+    feedPageBack.addEventListener(
+        "click",
+        () => changeVideoPage(-1)
+    );
+}
+
+if(feedPageNext){
+    feedPageNext.addEventListener(
+        "click",
+        () => changeVideoPage(1)
+    );
+}
+
 document
     .getElementById("categories")
     .addEventListener(
@@ -5144,6 +5344,8 @@ document.addEventListener(
 
 function showLoading(){
 
+    hideFeedPagination();
+
     videoGrid.innerHTML = `
 
         <div class="loading">
@@ -5166,6 +5368,8 @@ function showLoading(){
 ========================= */
 
 function showEmpty(){
+
+    hideFeedPagination();
 
     const emptyHeading = libraryViewActive
         ? "Your library is empty"
@@ -5203,6 +5407,8 @@ function showEmpty(){
 ========================= */
 
 function showError(message){
+
+    hideFeedPagination();
 
     videoGrid.innerHTML = `
 

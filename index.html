@@ -1744,6 +1744,61 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
+/* =========================
+   SILENT USER AUTHENTICATION
+========================= */
+
+let streamXUserSessionPromise = null;
+
+async function ensureStreamXUserSession(){
+
+    if(streamXUserSessionPromise){
+        return streamXUserSessionPromise;
+    }
+
+    streamXUserSessionPromise = (async () => {
+
+        const {
+            data: { session },
+            error: sessionError
+        } = await supabaseClient.auth.getSession();
+
+        if(sessionError){
+            throw sessionError;
+        }
+
+        if(session?.user){
+            return session;
+        }
+
+        const {
+            data,
+            error
+        } = await supabaseClient.auth.signInAnonymously();
+
+        if(error){
+            throw error;
+        }
+
+        return data.session;
+
+    })().catch(error => {
+
+        streamXUserSessionPromise = null;
+
+        console.error(
+            "StreamX anonymous authentication failed:",
+            error
+        );
+
+        return null;
+
+    });
+
+    return streamXUserSessionPromise;
+
+}
+
 
 /* =========================
    AGE GATE ELEMENTS
@@ -1812,7 +1867,12 @@ window.addEventListener(
    AGE VERIFICATION
 ========================= */
 
-function enterWebsite(){
+async function enterWebsite(){
+
+    /* Establish a silent Supabase anonymous session before user data
+       operations begin. Existing visitors still keep their current local
+       StreamX IDs during this staged security migration. */
+    await ensureStreamXUserSession();
 
     ageGate.style.display =
         "none";

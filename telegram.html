@@ -1629,62 +1629,69 @@ const SUPABASE_KEY =
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
-        SUPABASE_KEY
+        SUPABASE_KEY,
+        {
+            auth:{
+                storageKey:"streamx_mini_app_auth",
+                persistSession:true,
+                autoRefreshToken:true,
+                detectSessionInUrl:false
+            }
+        }
     );
 
-/* =========================
-   SILENT USER AUTHENTICATION
-========================= */
+let miniAppAuthSessionPromise = null;
 
-let streamXUserSessionPromise = null;
+async function ensureMiniAppAuthSession(){
 
-async function ensureStreamXUserSession(){
-
-    if(streamXUserSessionPromise){
-        return streamXUserSessionPromise;
+    if(miniAppAuthSessionPromise){
+        return miniAppAuthSessionPromise;
     }
 
-    streamXUserSessionPromise = (async () => {
+    miniAppAuthSessionPromise = (async () => {
 
-        const {
-            data: { session },
-            error: sessionError
-        } = await supabaseClient.auth.getSession();
+        try{
+            const {data,error} =
+                await supabaseClient.auth.getSession();
 
-        if(sessionError){
-            throw sessionError;
+            if(error){
+                console.warn(
+                    "StreamX Mini App auth session check failed:",
+                    error.message || error
+                );
+            }
+
+            if(data?.session?.user?.id){
+                return data.session;
+            }
+
+            const {data:anonymousData,error:anonymousError} =
+                await supabaseClient.auth.signInAnonymously();
+
+            if(anonymousError){
+                console.warn(
+                    "StreamX Mini App anonymous sign-in failed:",
+                    anonymousError.message || anonymousError
+                );
+                return null;
+            }
+
+            return anonymousData?.session || null;
+        }
+        catch(error){
+            console.warn(
+                "StreamX Mini App auth initialization failed:",
+                error
+            );
+            return null;
+        }
+        finally{
+            miniAppAuthSessionPromise = null;
         }
 
-        if(session?.user){
-            return session;
-        }
+    })();
 
-        const {
-            data,
-            error
-        } = await supabaseClient.auth.signInAnonymously();
-
-        if(error){
-            throw error;
-        }
-
-        return data.session;
-
-    })().catch(error => {
-
-        streamXUserSessionPromise = null;
-
-        console.error(
-            "StreamX anonymous authentication failed:",
-            error
-        );
-
-        return null;
-
-    });
-
-    return streamXUserSessionPromise;
-
+    return miniAppAuthSessionPromise;
 }
 
 /* =========================================
@@ -1796,12 +1803,7 @@ window.addEventListener(
    AGE VERIFICATION
 ========================= */
 
-async function enterWebsite(){
-
-    /* Establish a silent Supabase anonymous session before user data
-       operations begin. Existing visitors still keep their current local
-       StreamX IDs during this staged security migration. */
-    await ensureStreamXUserSession();
+function enterWebsite(){
 
     ageGate.style.display =
         "none";
@@ -1814,6 +1816,10 @@ async function enterWebsite(){
 
     document.body.style.overflow =
         "";
+
+    /* Create/restore a silent Supabase anonymous Auth session for the
+       Telegram Mini App. Existing local IDs remain unchanged in this step. */
+    void ensureMiniAppAuthSession();
 
     // Always render the All button immediately.
     renderCategoryButtons();

@@ -5670,19 +5670,17 @@ function getLikeUserId(){
 
 async function updateLikeCount(videoId){
 
-    const { count, error } =
+    /* Global totals are read through a server RPC so video_likes can be
+       protected by per-user RLS without losing the public like count. */
+    await ensurePublicAuthSession();
+
+    const { data,error } =
         await supabaseClient
-            .from("video_likes")
-            .select(
-                "*",
+            .rpc(
+                "get_streamx_video_like_count",
                 {
-                    count:"exact",
-                    head:true
+                    p_video_id:videoId
                 }
-            )
-            .eq(
-                "video_id",
-                videoId
             );
 
     if(error){
@@ -5695,8 +5693,11 @@ async function updateLikeCount(videoId){
         return;
     }
 
+    const parsedLikeCount = Number(data);
     const newLikeCount =
-        count || 0;
+        Number.isFinite(parsedLikeCount)
+            ? Math.max(0,Math.floor(parsedLikeCount))
+            : 0;
 
     videoLikeSummary.set(
         String(videoId),

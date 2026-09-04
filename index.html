@@ -1832,6 +1832,7 @@ function enterWebsite(){
     setupCategoryRealtime();
     setupVideoRealtime();
     setupLikeRealtime();
+    setupLibraryRealtime();
     startWebsitePresenceTracking();
     startViewerTimeTracking("outside");
     loadLibrary();
@@ -1900,11 +1901,17 @@ const RECOMMENDATION_COOLDOWN_MS = 20 * 60 * 1000;
 const RECOMMENDATION_HISTORY_LIMIT = 48;
 let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
+let likeOptimisticState = new Map();
 let likeSummaryPromise = null;
 let likeSummaryReady = false;
 let videoLibrarySummary = new Map();
 let librarySummaryPromise = null;
 let librarySummaryReady = false;
+let libraryRealtimeChannel = null;
+const VIDEO_URL_CACHE_TTL_MS = 55 * 60 * 1000;
+const VIDEO_URL_PREFETCH_COUNT = 4;
+const videoURLCache = new Map();
+const videoURLPromiseCache = new Map();
 const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
@@ -3137,6 +3144,7 @@ let categoryRefreshTimer = null;
 let categoriesLoading = false;
 let videoRealtimeChannel = null;
 let likeRealtimeChannel = null;
+let libraryRealtimeStatus = "";
 let likeRealtimeStatus = "";
 let likeCountRefreshTimer = null;
 const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
@@ -3648,14 +3656,14 @@ function scheduleRecommendationRefresh(
 
 function setLikeButtonState(videoId,isLiked){
 
-    const button = document.querySelector(
+    const buttons = document.querySelectorAll(
         `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
     );
 
-    if(!button) return;
-
-    button.textContent = isLiked ? "♥" : "♡";
-    button.classList.toggle("liked",isLiked);
+    buttons.forEach(button => {
+        button.textContent = isLiked ? "♥" : "♡";
+        button.classList.toggle("liked",isLiked);
+    });
 }
 
 function updateLikeCountUI(videoId,count){
@@ -3691,8 +3699,13 @@ function applyLikeSummary(rows){
         if(!key) return;
 
         const parsedCount = Number(row.likes_count || 0);
-        const count = Number.isFinite(parsedCount) ? parsedCount : 0;
-        const isLiked = row.liked_by_user === true;
+        const optimistic = likeOptimisticState.get(key);
+        const count = optimistic && Number.isFinite(optimistic.count)
+            ? optimistic.count
+            : Number.isFinite(parsedCount) ? parsedCount : 0;
+        const isLiked = optimistic
+            ? optimistic.liked
+            : row.liked_by_user === true;
 
         videoLikeSummary.set(key,count);
 
@@ -4053,6 +4066,63 @@ function setupLikeRealtime(){
     startLikeCountFallback();
 }
 
+function setupLibraryRealtime(){
+
+    if(libraryRealtimeChannel) return;
+
+    libraryRealtimeChannel = supabaseClient
+        .channel("website-video-library-realtime")
+        .on(
+            "postgres_changes",
+            {
+                event:"*",
+                schema:"public",
+                table:"video_library"
+            },
+            payload => {
+
+                const eventType =
+                    String(payload.eventType || "").toUpperCase();
+                const row =
+                    eventType === "DELETE"
+                        ? payload.old
+                        : payload.new;
+                const videoId = row && row.video_id;
+
+                if(videoId === undefined || videoId === null){
+                    return;
+                }
+
+                /* The click handler already updates this viewer immediately.
+                   Ignore its echo so one save is never counted twice. */
+                if(
+                    row &&
+                    String(row.viewer_id || "") === String(LIBRARY_VIEWER_ID) &&
+                    String(row.platform || "") === String(LIBRARY_PLATFORM)
+                ){
+                    return;
+                }
+
+                if(eventType === "INSERT"){
+                    updateLibrarySaveCountUI(
+                        videoId,
+                        getLibrarySaveCount(videoId) + 1
+                    );
+                }
+                else if(eventType === "DELETE"){
+                    updateLibrarySaveCountUI(
+                        videoId,
+                        Math.max(0,getLibrarySaveCount(videoId) - 1)
+                    );
+                }
+            }
+        )
+        .subscribe(status => {
+            libraryRealtimeStatus = status;
+            console.log("Website library realtime status:",status);
+        });
+}
+
 
 /* =========================
    FILTER
@@ -4339,6 +4409,8 @@ function renderVideos(){
         allDisplayVideos.length,
         totalPages
     );
+
+    scheduleVideoURLPrefetch(videos);
 
 }
 
@@ -4726,67 +4798,126 @@ function getStoragePath(
 async function getVideoURL(video){
 
     const rawValue =
-        video.video_url;
-
+        typeof video.video_url === "string"
+            ? video.video_url.trim()
+            : video.video_url;
 
     if(!rawValue){
-
         return null;
-
     }
 
+    /* Signed URLs are reused between opens so replaying a video does not
+       wait for another storage request. */
+    const cacheKey =
+        String(video.id || "") + "|" + String(rawValue);
+    const cached = videoURLCache.get(cacheKey);
 
-    const storagePath =
-        getStoragePath(
-            rawValue,
-            "videos"
-        );
-
-
-    if(!storagePath){
-
-        /* Accept external/direct URLs as well as Supabase storage paths. */
-        if(
-            typeof rawValue === "string" &&
-            /^https?:\/\//i.test(rawValue.trim())
-        ){
-            return rawValue.trim();
-        }
-
-        console.error(
-            "Invalid video path:",
-            rawValue
-        );
-
-        return null;
-
+    if(cached && cached.expiresAt > Date.now() + 30000){
+        return cached.url;
     }
 
+    if(videoURLPromiseCache.has(cacheKey)){
+        return videoURLPromiseCache.get(cacheKey);
+    }
 
-    const result =
-        await supabaseClient
-            .storage
-            .from("videos")
-            .createSignedUrl(
-                storagePath,
-                3600
+    const request = (async () => {
+
+        const storagePath =
+            getStoragePath(
+                rawValue,
+                "videos"
             );
 
+        if(!storagePath){
 
-    if(result.error){
+            /* Accept external/direct URLs as well as Supabase storage paths. */
+            if(/^https?:\/\//i.test(String(rawValue))){
+                const directURL = String(rawValue);
+                videoURLCache.set(
+                    cacheKey,
+                    {
+                        url:directURL,
+                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                    }
+                );
+                return directURL;
+            }
 
-        console.error(
-            "Signed URL error:",
-            result.error
-        );
+            console.error(
+                "Invalid video path:",
+                rawValue
+            );
 
-        return null;
+            return null;
+        }
 
+        const result =
+            await supabaseClient
+                .storage
+                .from("videos")
+                .createSignedUrl(
+                    storagePath,
+                    3600
+                );
+
+        if(result.error){
+
+            console.error(
+                "Signed URL error:",
+                result.error
+            );
+
+            return null;
+        }
+
+        const signedURL =
+            result.data && result.data.signedUrl;
+
+        if(signedURL){
+            videoURLCache.set(
+                cacheKey,
+                {
+                    url:signedURL,
+                    expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                }
+            );
+        }
+
+        return signedURL || null;
+    })();
+
+    videoURLPromiseCache.set(cacheKey,request);
+
+    try{
+        return await request;
+    }
+    finally{
+        videoURLPromiseCache.delete(cacheKey);
     }
 
+}
 
-    return result.data.signedUrl;
+function scheduleVideoURLPrefetch(videos){
 
+    if(!Array.isArray(videos) || videos.length === 0){
+        return;
+    }
+
+    /* Let the current-page GIF requests win the first paint. These are only
+       signed-URL requests; the video bytes are still fetched on play. */
+    const candidates = videos.slice(
+        0,
+        Math.min(VIDEO_URL_PREFETCH_COUNT, videos.length)
+    );
+
+    window.setTimeout(
+        () => {
+            candidates.forEach(video => {
+                void getVideoURL(video);
+            });
+        },
+        1800
+    );
 }
 
 
@@ -4823,6 +4954,7 @@ async function openPlayer(video){
     /* Re-play opened videos continuously without forcing them muted. */
     playerVideo.loop = true;
     playerVideo.muted = false;
+    playerVideo.preload = "auto";
 
 
     playerVideo.load();
@@ -4965,10 +5097,69 @@ async function toggleLike(videoId){
 
     console.log("Like clicked:", videoId);
 
-    try{
+    const key = String(videoId);
+    const userId = getLikeUserId();
+    const likeButton = document.querySelector(
+        `.like-btn[data-id="${CSS.escape(key)}"]`
+    );
+    const wasLiked =
+        likedVideoIds.has(key) ||
+        Boolean(likeButton && likeButton.classList.contains("liked"));
+    const video = allVideos.find(
+        item => String(item.id) === key
+    );
+    const previousCountValue = videoLikeSummary.has(key)
+        ? videoLikeSummary.get(key)
+        : video && video.likes_count;
+    const previousCount = Number.isFinite(Number(previousCountValue))
+        ? Math.max(0,Math.floor(Number(previousCountValue)))
+        : 0;
 
-        const userId =
-            getLikeUserId();
+    const applyOptimisticLike = (liked,count) => {
+        likeOptimisticState.set(
+            key,
+            {
+                liked,
+                count
+            }
+        );
+        if(liked){
+            likedVideoIds.add(key);
+        }
+        else{
+            likedVideoIds.delete(key);
+        }
+        videoLikeSummary.set(key,count);
+        if(video){
+            video.likes_count = count;
+        }
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,liked);
+    };
+
+    const rollbackLike = (liked,count) => {
+        likeOptimisticState.delete(key);
+        if(liked){
+            likedVideoIds.add(key);
+        }
+        else{
+            likedVideoIds.delete(key);
+        }
+        videoLikeSummary.set(key,count);
+        if(video){
+            video.likes_count = count;
+        }
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,liked);
+    };
+
+    /* Paint the new heart/count before any network round trip. */
+    applyOptimisticLike(
+        !wasLiked,
+        Math.max(0,previousCount + (wasLiked ? -1 : 1))
+    );
+
+    try{
 
         const { data: existingLike, error: checkError } =
             await supabaseClient
@@ -4985,6 +5176,8 @@ async function toggleLike(videoId){
                 checkError
             );
 
+            rollbackLike(wasLiked,previousCount);
+
             alert(
                 "Unable to check like status."
             );
@@ -4993,70 +5186,78 @@ async function toggleLike(videoId){
 
         }
 
+        const serverWasLiked = Boolean(existingLike);
+        const nextLiked = !serverWasLiked;
+        const optimisticCount = Math.max(
+            0,
+            previousCount + (nextLiked ? 1 : -1)
+        );
 
-        if(existingLike){
+        /* Correct a stale local heart if another tab changed it. */
+        if(nextLiked !== !wasLiked){
+            applyOptimisticLike(nextLiked,optimisticCount);
+        }
 
-            const { error } =
-                await supabaseClient
-                    .from("video_likes")
-                    .delete()
-                    .eq("id", existingLike.id);
+        let syncError = null;
 
-            if(error){
+        try{
 
-                console.error(
-                    "Unlike error:",
-                    error
-                );
+            if(existingLike){
 
-                alert(
-                    "Unable to remove like."
-                );
+                const { error } =
+                    await supabaseClient
+                        .from("video_likes")
+                        .delete()
+                        .eq("id", existingLike.id);
 
-                return;
+                syncError = error;
+
+            }
+            else{
+
+                const { error } =
+                    await supabaseClient
+                        .from("video_likes")
+                        .insert({
+                            video_id: videoId,
+                            user_id: userId
+                        });
+
+                syncError = error;
 
             }
 
         }
-        else{
+        catch(error){
+            syncError = error;
+        }
 
-            const { error } =
-                await supabaseClient
-                    .from("video_likes")
-                    .insert({
-                        video_id: videoId,
-                        user_id: userId
-                    });
+        if(syncError){
 
-            if(error){
+            console.error(
+                nextLiked ? "Like insert error:" : "Unlike error:",
+                syncError
+            );
 
-                console.error(
-                    "Like insert error:",
-                    error
-                );
+            rollbackLike(serverWasLiked,previousCount);
+            alert(
+                nextLiked
+                    ? "Unable to like this video."
+                    : "Unable to remove like."
+            );
+            return;
+        }
 
-                alert(
-                    "Unable to like this video."
-                );
-
-                return;
-
+        /* Reconcile with the authoritative count in the background. */
+        void updateLikeCount(videoId).finally(() => {
+            const optimistic = likeOptimisticState.get(key);
+            if(optimistic && optimistic.liked === nextLiked){
+                likeOptimisticState.delete(key);
             }
-
-        }
-
-
-        if(existingLike){
-            likedVideoIds.delete(String(videoId));
-        }
-        else{
-            likedVideoIds.add(String(videoId));
-        }
-
-        await updateLikeCount(videoId);
+        });
         scheduleRecommendationRefresh(
             900,
-            existingLike ? null : videoId
+            serverWasLiked ? null : videoId
         );
 
     }
@@ -5066,6 +5267,8 @@ async function toggleLike(videoId){
             "Unexpected like error:",
             error
         );
+
+        rollbackLike(wasLiked,previousCount);
 
     }
 
@@ -5180,6 +5383,14 @@ async function updateLikeButton(videoId){
         }
     }
 
+    if(likeOptimisticState.has(key)){
+        setLikeButtonState(
+            key,
+            likeOptimisticState.get(key).liked
+        );
+        return;
+    }
+
     if(likeSummaryReady && videoLikeSummary.has(key)){
         setLikeButtonState(
             key,
@@ -5248,7 +5459,7 @@ function closeVideoPlayer(){
         "src"
     );
 
-
+    playerVideo.preload = "metadata";
     playerVideo.load();
 
 

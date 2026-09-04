@@ -870,23 +870,39 @@ body{
     position:relative;
     overflow:visible;
     margin-left:auto;
-    border:none;
-    background:none;
-    color:#777;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    min-height:30px;
+    padding:6px 10px;
+    border:1px solid rgba(245,185,66,.48);
+    border-radius:999px;
+    background:linear-gradient(135deg,#3b2810 0%,#21170a 100%);
+    color:#ffe18a;
     cursor:pointer;
-    font-size:21px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.2px;
     line-height:1;
     transform:translateZ(0);
-    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
+    box-shadow:0 0 0 2px rgba(245,185,66,.08),0 4px 14px rgba(245,185,66,.14);
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,background .22s,border-color .22s,box-shadow .22s,filter .22s;
 }
 
 .library-btn:hover{
-    color:#f5b942;
-    transform:scale(1.12);
+    color:#fff4c4;
+    border-color:#f5b942;
+    background:linear-gradient(135deg,#5a3b12 0%,#2d1d0b 100%);
+    transform:translateY(-1px) scale(1.05);
+    box-shadow:0 0 0 3px rgba(245,185,66,.12),0 6px 20px rgba(245,185,66,.28);
 }
 
 .library-btn.saved{
-    color:#f5b942;
+    border-color:#f5b942;
+    background:linear-gradient(135deg,#f5b942 0%,#c98619 100%);
+    color:#1a1104;
+    box-shadow:0 0 0 3px rgba(245,185,66,.14),0 5px 18px rgba(245,185,66,.3);
 }
 
 .library-btn:disabled{
@@ -961,6 +977,14 @@ body{
     color:#aaa;
     font-size:12px;
     font-weight:bold;
+}
+
+.save-count{
+    min-width:14px;
+    color:#d6b35a;
+    font-size:12px;
+    font-weight:bold;
+    text-align:center;
 }
 
 
@@ -1256,6 +1280,19 @@ body{
 
     .video-meta{
         font-size:9px;
+    }
+
+    .video-actions{
+        gap:5px;
+    }
+
+    .library-btn{
+        padding:5px 7px;
+        font-size:11px;
+    }
+
+    .save-count{
+        font-size:11px;
     }
 
     .age-gate-box{
@@ -1915,6 +1952,9 @@ let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
 let likeSummaryPromise = null;
 let likeSummaryReady = false;
+let videoLibrarySummary = new Map();
+let librarySummaryPromise = null;
+let librarySummaryReady = false;
 const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
@@ -2541,6 +2581,169 @@ function persistLibraryCache(){
     }
 }
 
+function getLibrarySaveCount(videoId){
+
+    const key = String(videoId);
+
+    if(videoLibrarySummary.has(key)){
+        return videoLibrarySummary.get(key);
+    }
+
+    const video = allVideos.find(
+        item => String(item.id) === key
+    );
+    const fallback = Number(video && video.saves_count || 0);
+
+    return Number.isFinite(fallback)
+        ? Math.max(0,Math.floor(fallback))
+        : 0;
+}
+
+function updateLibrarySaveCountUI(videoId,count){
+
+    const key = String(videoId);
+    const parsed = Number(count);
+    const normalized = Number.isFinite(parsed)
+        ? Math.max(0,Math.floor(parsed))
+        : 0;
+
+    videoLibrarySummary.set(key,normalized);
+
+    allVideos.forEach(video => {
+        if(String(video.id) === key){
+            video.saves_count = normalized;
+        }
+    });
+
+    recommendationVideos.forEach(video => {
+        if(String(video.id) === key){
+            video.saves_count = normalized;
+        }
+    });
+
+    const selector =
+        `.save-count[data-id="${CSS.escape(key)}"]`;
+
+    document
+        .querySelectorAll(selector)
+        .forEach(element => {
+            element.textContent = normalized.toLocaleString();
+        });
+}
+
+function applyLibrarySummary(rows){
+
+    videoLibrarySummary = new Map();
+
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+
+        const key = String(row && row.video_id || "").trim();
+
+        if(!key) return;
+
+        const parsed = Number(row.saves_count || 0);
+        const count = Number.isFinite(parsed)
+            ? Math.max(0,Math.floor(parsed))
+            : 0;
+
+        videoLibrarySummary.set(key,count);
+
+    });
+
+    allVideos.forEach(video => {
+
+        const key = String(video.id);
+
+        if(videoLibrarySummary.has(key)){
+            video.saves_count = videoLibrarySummary.get(key);
+        }
+
+    });
+
+    recommendationVideos.forEach(video => {
+
+        const key = String(video.id);
+
+        if(videoLibrarySummary.has(key)){
+            video.saves_count = videoLibrarySummary.get(key);
+        }
+
+    });
+
+    document
+        .querySelectorAll(".save-count[data-id]")
+        .forEach(element => {
+
+            const count = getLibrarySaveCount(
+                element.dataset.id
+            );
+
+            element.textContent = count.toLocaleString();
+
+        });
+
+    librarySummaryReady = true;
+}
+
+function loadLibrarySummary(){
+
+    librarySummaryReady = false;
+
+    return supabaseClient
+        .rpc(
+            "get_streamx_library_summary",
+            {
+                p_viewer_id:LIBRARY_VIEWER_ID,
+                p_platform:LIBRARY_PLATFORM
+            }
+        )
+        .then(result => {
+
+            if(result.error) throw result.error;
+
+            applyLibrarySummary(result.data);
+            return result.data;
+
+        })
+        .catch(error => {
+
+            librarySummaryReady = false;
+            librarySummaryPromise = null;
+            console.warn("Library save summary unavailable:",error);
+            throw error;
+
+        });
+}
+
+function scheduleLibrarySummary(){
+
+    if(librarySummaryPromise) return librarySummaryPromise;
+
+    librarySummaryPromise = new Promise((resolve,reject) => {
+
+        const startRequest = () => {
+
+            Promise.resolve()
+                .then(loadLibrarySummary)
+                .then(resolve,reject);
+
+        };
+
+        if(typeof window.requestIdleCallback === "function"){
+            window.requestIdleCallback(
+                startRequest,
+                {timeout:1800}
+            );
+        }
+        else{
+            window.setTimeout(startRequest,0);
+        }
+
+    });
+
+    return librarySummaryPromise;
+}
+
 function showLibraryStatus(message,isError = false){
 
     if(!libraryStatus) return;
@@ -2565,7 +2768,7 @@ function updateLibraryButtonState(button,videoId){
     const saved = libraryVideoIds.has(key);
     const pending = libraryPendingIds.has(key);
 
-    button.textContent = saved ? "★" : "☆";
+    button.textContent = saved ? "★ save" : "☆ save";
     button.classList.toggle("saved",saved);
     button.disabled = pending;
     button.setAttribute("aria-pressed",String(saved));
@@ -2788,6 +2991,11 @@ async function toggleLibrary(videoId,sourceButton){
     recordLibraryActivity();
 
     const wasSaved = libraryVideoIds.has(key);
+    const previousSaveCount = getLibrarySaveCount(videoId);
+    const optimisticSaveCount = Math.max(
+        0,
+        previousSaveCount + (wasSaved ? -1 : 1)
+    );
     libraryPendingIds.add(key);
 
     if(wasSaved){
@@ -2797,6 +3005,10 @@ async function toggleLibrary(videoId,sourceButton){
         libraryVideoIds.add(key);
     }
 
+    updateLibrarySaveCountUI(
+        videoId,
+        optimisticSaveCount
+    );
     persistLibraryCache();
     updateLibraryUI();
 
@@ -2850,6 +3062,10 @@ async function toggleLibrary(videoId,sourceButton){
     }
 
     if(syncError){
+        updateLibrarySaveCountUI(
+            videoId,
+            previousSaveCount
+        );
         showLibraryStatus(
             "Cloud sync is unavailable; your device library is still updated.",
             true
@@ -3231,7 +3447,10 @@ function renderRecommendations(rows){
     prioritizeRenderedRecommendationCards();
 }
 
-const INITIAL_THUMBNAIL_COUNT = 8;
+/* Every card on the active page gets an eager GIF request. Only the first
+   handful receive high network priority so the page remains responsive. */
+const CURRENT_PAGE_THUMBNAIL_COUNT = VIDEOS_PER_PAGE;
+const HIGH_PRIORITY_THUMBNAIL_COUNT = Math.min(8,VIDEOS_PER_PAGE);
 
 function prioritizeRenderedRecommendationCards(){
 
@@ -3295,7 +3514,7 @@ function prioritizeRenderedRecommendationCards(){
 
     ordered.forEach((card,index) => {
 
-        if(index < INITIAL_THUMBNAIL_COUNT){
+        if(index < CURRENT_PAGE_THUMBNAIL_COUNT){
             const image = card.querySelector(
                 ".thumbnail-fallback"
             );
@@ -3303,6 +3522,9 @@ function prioritizeRenderedRecommendationCards(){
             if(image){
                 image.loading = "eager";
                 image.decoding = "async";
+                image.fetchPriority = index < HIGH_PRIORITY_THUMBNAIL_COUNT
+                    ? "high"
+                    : "auto";
             }
         }
 
@@ -3610,6 +3832,8 @@ allVideos.forEach(video => {
 likeSummaryPromise = scheduleLikeSummary();
 renderVideos();
 void likeSummaryPromise.catch(() => {});
+librarySummaryPromise = scheduleLibrarySummary();
+void librarySummaryPromise.catch(() => {});
 
     }
     catch(error){
@@ -4093,7 +4317,8 @@ function renderVideos(){
         cardFragment.appendChild(
             createVideoCard(
                 video,
-                index < INITIAL_THUMBNAIL_COUNT
+                index < CURRENT_PAGE_THUMBNAIL_COUNT,
+                index < HIGH_PRIORITY_THUMBNAIL_COUNT
             )
         );
 
@@ -4113,7 +4338,11 @@ function renderVideos(){
    CREATE CARD
 ========================= */
 
-function createVideoCard(video,prioritizeLoad = false){
+function createVideoCard(
+    video,
+    prioritizeLoad = false,
+    highPriority = prioritizeLoad
+){
 
     const card =
         document.createElement("article");
@@ -4153,6 +4382,9 @@ function createVideoCard(video,prioritizeLoad = false){
             video.views || 0
         ).toLocaleString();
 
+    const saves =
+        getLibrarySaveCount(video.id).toLocaleString();
+
 
     let date = "";
 
@@ -4182,7 +4414,7 @@ function createVideoCard(video,prioritizeLoad = false){
                     alt="${escapeHTML(title)}"
                     loading="${prioritizeLoad ? "eager" : "lazy"}"
                     decoding="async"
-                    fetchpriority="${prioritizeLoad ? "high" : "auto"}"
+                    fetchpriority="${highPriority ? "high" : "auto"}"
                     draggable="false"
                 >
                 `
@@ -4266,8 +4498,17 @@ function createVideoCard(video,prioritizeLoad = false){
         aria-label="Save to My Library"
         title="Save to My Library"
     >
-        ☆
+        ☆ save
     </button>
+
+    <span
+        class="save-count"
+        data-id="${escapeHTML(String(video.id))}"
+        aria-label="Total saves"
+        title="Total saves"
+    >
+        ${saves}
+    </span>
 
 </div>
 

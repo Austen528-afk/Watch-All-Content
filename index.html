@@ -1754,6 +1754,7 @@ const supabaseClient =
 
 let publicAuthSessionPromise = null;
 let publicAuthUserId = null;
+let publicAuthAccessToken = null;
 let publicIdentityMigrationPromise = null;
 
 async function migrateLegacyPublicIdentity(authUserId){
@@ -1829,9 +1830,25 @@ async function adoptPublicAuthSession(session){
 
     if(!authUserId) return session || null;
 
+    /* Keep the current JWT available synchronously for keepalive analytics
+       requests, including pagehide/visibility events. */
+    publicAuthAccessToken =
+        session?.access_token || null;
+
     await migrateLegacyPublicIdentity(authUserId);
     return session;
 }
+
+/* Keep the cached JWT fresh when Supabase refreshes the anonymous session. */
+supabaseClient.auth.onAuthStateChange((_event,session) => {
+    publicAuthAccessToken =
+        session?.access_token || null;
+
+    if(session?.user?.id){
+        publicAuthUserId =
+            session.user.id;
+    }
+});
 
 async function ensurePublicAuthSession(){
 
@@ -2340,6 +2357,16 @@ function saveWatchTime(forceSave = false){
         return Promise.resolve();
     }
 
+    /* The security-hardened RPC requires the real anonymous Auth JWT.
+       If Auth is still initializing, retry after the session is ready. */
+    const accessToken = publicAuthAccessToken;
+    const authViewerId = publicAuthUserId;
+
+    if(!accessToken || !authViewerId){
+        return ensurePublicAuthSession()
+            .then(() => saveWatchTime(forceSave));
+    }
+
     state.lastQueuedSeconds = seconds;
 
     return fetch(
@@ -2349,12 +2376,12 @@ function saveWatchTime(forceSave = false){
             keepalive:true,
             headers:{
                 "apikey":SUPABASE_KEY,
-                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Authorization":"Bearer " + accessToken,
                 "Content-Type":"application/json"
             },
             body:JSON.stringify({
                 p_session_id:state.sessionId,
-                p_viewer_id:state.viewerId,
+                p_viewer_id:authViewerId,
                 p_video_id:state.videoId,
                 p_platform:state.platform,
                 p_watched_seconds:seconds
@@ -2527,6 +2554,14 @@ function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
         return Promise.resolve();
     }
 
+    const accessToken = publicAuthAccessToken;
+    const authViewerId = publicAuthUserId;
+
+    if(!accessToken || !authViewerId){
+        return ensurePublicAuthSession()
+            .then(() => sendViewerTimeHeartbeat(ended,stateOverride));
+    }
+
     state.lastSentSeconds = Math.max(
         state.lastSentSeconds,
         seconds
@@ -2539,12 +2574,12 @@ function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
             keepalive:true,
             headers:{
                 "apikey":SUPABASE_KEY,
-                "Authorization":"Bearer " + SUPABASE_KEY,
+                "Authorization":"Bearer " + accessToken,
                 "Content-Type":"application/json"
             },
             body:JSON.stringify({
                 p_session_id:state.sessionId,
-                p_viewer_id:state.viewerId,
+                p_viewer_id:authViewerId,
                 p_platform:state.platform,
                 p_context:state.context,
                 p_duration_seconds:seconds,

@@ -645,6 +645,48 @@ body{
     gap:20px;
 }
 
+.feed-pagination{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin:30px 0 10px;
+}
+
+.feed-pagination.show{
+    display:flex;
+}
+
+.feed-pagination-button{
+    min-width:100px;
+    padding:10px 16px;
+    border:1px solid #333;
+    border-radius:9px;
+    background:#171717;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s ease;
+}
+
+.feed-pagination-button:hover:not(:disabled){
+    border-color:#ff1744;
+    background:#241018;
+}
+
+.feed-pagination-button:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+}
+
+.feed-pagination-status{
+    min-width:82px;
+    color:#999;
+    font-size:12px;
+    text-align:center;
+}
+
 
 /* =========================
    VIDEO CARD
@@ -1534,6 +1576,36 @@ body{
 
     </div>
 
+    <nav
+        class="feed-pagination"
+        id="feedPagination"
+        aria-label="Video pages"
+    >
+        <button
+            class="feed-pagination-button"
+            id="feedPageBack"
+            type="button"
+        >
+            ← Back
+        </button>
+
+        <span
+            class="feed-pagination-status"
+            id="feedPageStatus"
+            aria-live="polite"
+        >
+            Page 1 of 1
+        </span>
+
+        <button
+            class="feed-pagination-button"
+            id="feedPageNext"
+            type="button"
+        >
+            Next →
+        </button>
+    </nav>
+
 </main>
 
 
@@ -1667,73 +1739,28 @@ async function migrateLegacyMiniAppIdentity(authUserId){
                 localStorage.getItem("streamx_mini_app_user_id");
 
             if(!alreadyMigrated){
+                const {error:migrationError} =
+                    await supabaseClient.rpc(
+                        "claim_streamx_legacy_identity",
+                        {
+                            p_legacy_like_user_id:legacyLikeUserId || null,
+                            p_legacy_viewer_id:legacyViewerId || null,
+                            p_platform:"mini_app"
+                        }
+                    );
 
-                if(legacyLikeUserId && legacyLikeUserId !== authUserId){
-                    const {data:legacyLikes,error:legacyLikesError} =
-                        await supabaseClient
-                            .from("video_likes")
-                            .select("video_id")
-                            .eq("user_id",legacyLikeUserId);
-
-                    if(legacyLikesError) throw legacyLikesError;
-
-                    if(legacyLikes && legacyLikes.length){
-                        const {error:copyLikesError} =
-                            await supabaseClient
-                                .from("video_likes")
-                                .upsert(
-                                    legacyLikes.map(row => ({
-                                        video_id:row.video_id,
-                                        user_id:authUserId
-                                    })),
-                                    {
-                                        onConflict:"video_id,user_id",
-                                        ignoreDuplicates:true
-                                    }
-                                );
-
-                        if(copyLikesError) throw copyLikesError;
-                    }
-                }
-
-                if(legacyViewerId && legacyViewerId !== authUserId){
-                    const {data:legacyLibrary,error:legacyLibraryError} =
-                        await supabaseClient
-                            .from("video_library")
-                            .select("video_id")
-                            .eq("viewer_id",legacyViewerId)
-                            .eq("platform","mini_app");
-
-                    if(legacyLibraryError) throw legacyLibraryError;
-
-                    if(legacyLibrary && legacyLibrary.length){
-                        const {error:copyLibraryError} =
-                            await supabaseClient
-                                .from("video_library")
-                                .upsert(
-                                    legacyLibrary.map(row => ({
-                                        viewer_id:authUserId,
-                                        platform:"mini_app",
-                                        video_id:row.video_id
-                                    })),
-                                    {
-                                        onConflict:"viewer_id,platform,video_id",
-                                        ignoreDuplicates:true
-                                    }
-                                );
-
-                        if(copyLibraryError) throw copyLibraryError;
-                    }
-                }
+                if(migrationError) throw migrationError;
 
                 localStorage.setItem(migrationKey,"1");
             }
 
-            /* Likes and My Library now use the server-verifiable Supabase UID.
-               The legacy mini-app device ID stays in place for presence/watch
-               time until those systems are migrated in the next security step. */
+            /* Keep the old keys for compatibility, but after migration they
+               contain the server-verifiable Supabase Auth UID. */
             localStorage.setItem("streamx_like_user_id",authUserId);
+            localStorage.setItem("streamx_mini_app_user_id",authUserId);
+
             miniAppAuthUserId = authUserId;
+            MINI_APP_USER_ID = authUserId;
 
             if(typeof LIBRARY_VIEWER_ID !== "undefined"){
                 LIBRARY_VIEWER_ID = authUserId;
@@ -1825,7 +1852,7 @@ async function ensureMiniAppAuthSession(){
    WEBSITE PRESENCE TRACKING
 ========================================= */
 
-const MINI_APP_USER_ID =
+let MINI_APP_USER_ID =
     localStorage.getItem("streamx_mini_app_user_id") ||
     crypto.randomUUID();
 
@@ -2027,8 +2054,12 @@ let recommendationRefreshTimer = null;
 let recommendationLoading = false;
 let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
+let likeOptimisticState = new Map();
 let likeSummaryPromise = null;
 let likeSummaryReady = false;
+const VIDEOS_PER_PAGE = 20;
+let currentVideoPage = 1;
+let paginationFilterKey = "";
 
 
 /* =========================
@@ -2037,6 +2068,18 @@ let likeSummaryReady = false;
 
 const videoGrid =
     document.getElementById("videoGrid");
+
+const feedPagination =
+    document.getElementById("feedPagination");
+
+const feedPageBack =
+    document.getElementById("feedPageBack");
+
+const feedPageNext =
+    document.getElementById("feedPageNext");
+
+const feedPageStatus =
+    document.getElementById("feedPageStatus");
 
 const resultCount =
     document.getElementById("resultCount");
@@ -2805,7 +2848,6 @@ async function loadLibrary(){
     if(libraryLoading) return;
 
     libraryLoading = true;
-    await ensureMiniAppAuthSession();
     restoreLibraryCache();
     updateLibraryUI();
 
@@ -2905,8 +2947,6 @@ async function toggleLibrary(videoId,sourceButton){
     if(libraryViewActive){
         renderVideos();
     }
-
-    await ensureMiniAppAuthSession();
 
     let syncError = null;
 
@@ -3289,8 +3329,6 @@ async function loadRecommendations(){
 
     try{
 
-        await ensureMiniAppAuthSession();
-
         const { data,error } =
             await supabaseClient.rpc(
                 "get_streamx_recommendations",
@@ -3337,14 +3375,14 @@ function scheduleRecommendationRefresh(delay = 900){
 
 function setLikeButtonState(videoId,isLiked){
 
-    const button = document.querySelector(
+    const buttons = document.querySelectorAll(
         `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
     );
 
-    if(!button) return;
-
-    button.textContent = isLiked ? "♥" : "♡";
-    button.classList.toggle("liked",isLiked);
+    buttons.forEach(button => {
+        button.textContent = isLiked ? "♥" : "♡";
+        button.classList.toggle("liked",isLiked);
+    });
 }
 
 function updateLikeCountUI(videoId,count){
@@ -3380,8 +3418,13 @@ function applyLikeSummary(rows){
         if(!key) return;
 
         const parsedCount = Number(row.likes_count || 0);
-        const count = Number.isFinite(parsedCount) ? parsedCount : 0;
-        const isLiked = row.liked_by_user === true;
+        const optimistic = likeOptimisticState.get(key);
+        const count = optimistic && Number.isFinite(optimistic.count)
+            ? optimistic.count
+            : Number.isFinite(parsedCount) ? parsedCount : 0;
+        const isLiked = optimistic
+            ? optimistic.liked
+            : row.liked_by_user === true;
 
         videoLikeSummary.set(key,count);
 
@@ -3404,35 +3447,33 @@ function applyLikeSummary(rows){
     likeSummaryReady = true;
 }
 
-async function loadLikeSummary(){
+function loadLikeSummary(){
 
     likeSummaryReady = false;
 
-    await ensureMiniAppAuthSession();
+    return supabaseClient
+        .rpc(
+            "get_streamx_like_summary",
+            {
+                p_like_user_id:getLikeUserId()
+            }
+        )
+        .then(result => {
 
-    try{
-        const result = await supabaseClient
-            .rpc(
-                "get_streamx_like_summary",
-                {
-                    p_like_user_id:getLikeUserId()
-                }
-            );
+            if(result.error) throw result.error;
 
-        if(result.error) throw result.error;
+            applyLikeSummary(result.data);
+            return result.data;
+        })
+        .catch(error => {
 
-        applyLikeSummary(result.data);
-        return result.data;
-    }
-    catch(error){
-
-        /* Keep the older per-card query as a compatibility fallback until
-           the summary function is installed in Supabase. */
-        likeSummaryReady = false;
-        likeSummaryPromise = null;
-        console.warn("Like summary unavailable:",error);
-        throw error;
-    }
+            /* Keep the older per-card query as a compatibility fallback until
+               the summary function is installed in Supabase. */
+            likeSummaryReady = false;
+            likeSummaryPromise = null;
+            console.warn("Like summary unavailable:",error);
+            throw error;
+        });
 }
 
 /* =========================
@@ -3832,10 +3873,103 @@ function getVideosForDisplay(){
     ];
 }
 
+function getPaginationFilterKey(){
+
+    return [
+        libraryViewActive ? "library" : "feed",
+        String(currentCategory || "All").toLowerCase(),
+        String(searchTerm || "")
+    ].join("\u0001");
+}
+
+function hideFeedPagination(){
+
+    if(feedPagination){
+        feedPagination.classList.remove("show");
+    }
+}
+
+function updateFeedPagination(totalItems,totalPages){
+
+    if(
+        !feedPagination ||
+        totalItems <= VIDEOS_PER_PAGE ||
+        totalPages <= 1
+    ){
+        hideFeedPagination();
+        return;
+    }
+
+    feedPagination.classList.add("show");
+
+    if(feedPageStatus){
+        feedPageStatus.textContent =
+            "Page " + currentVideoPage + " of " + totalPages;
+    }
+
+    if(feedPageBack){
+        feedPageBack.disabled = currentVideoPage <= 1;
+    }
+
+    if(feedPageNext){
+        feedPageNext.disabled = currentVideoPage >= totalPages;
+    }
+}
+
+function changeVideoPage(direction){
+
+    const totalItems = getVideosForDisplay().length;
+    const totalPages = Math.max(
+        1,
+        Math.ceil(totalItems / VIDEOS_PER_PAGE)
+    );
+    const nextPage = Math.min(
+        totalPages,
+        Math.max(1,currentVideoPage + direction)
+    );
+
+    if(nextPage === currentVideoPage){
+        return;
+    }
+
+    currentVideoPage = nextPage;
+    renderVideos();
+
+    if(videoGrid){
+        videoGrid.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+    }
+}
+
 function renderVideos(){
 
-    const videos =
+    const allDisplayVideos =
         getVideosForDisplay();
+
+    const filterKey = getPaginationFilterKey();
+
+    if(filterKey !== paginationFilterKey){
+        currentVideoPage = 1;
+        paginationFilterKey = filterKey;
+    }
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(allDisplayVideos.length / VIDEOS_PER_PAGE)
+    );
+
+    if(currentVideoPage > totalPages){
+        currentVideoPage = totalPages;
+    }
+
+    const pageStart =
+        (currentVideoPage - 1) * VIDEOS_PER_PAGE;
+    const videos = allDisplayVideos.slice(
+        pageStart,
+        pageStart + VIDEOS_PER_PAGE
+    );
 
 
     videoGrid.innerHTML = "";
@@ -3880,9 +4014,9 @@ function renderVideos(){
 
 
     resultCount.textContent =
-        videos.length +
+        allDisplayVideos.length +
         (
-            videos.length === 1
+            allDisplayVideos.length === 1
             ? " video"
             : " videos"
         );
@@ -3890,6 +4024,7 @@ function renderVideos(){
 
     if(videos.length === 0){
 
+        hideFeedPagination();
         showEmpty();
 
         return;
@@ -3897,9 +4032,11 @@ function renderVideos(){
     }
 
 
+    const cardFragment = document.createDocumentFragment();
+
     videos.forEach((video,index) => {
 
-        videoGrid.appendChild(
+        cardFragment.appendChild(
             createVideoCard(
                 video,
                 index < INITIAL_THUMBNAIL_COUNT
@@ -3907,6 +4044,13 @@ function renderVideos(){
         );
 
     });
+
+    videoGrid.appendChild(cardFragment);
+
+    updateFeedPagination(
+        allDisplayVideos.length,
+        totalPages
+    );
 
 }
 
@@ -4516,12 +4660,71 @@ async function toggleLike(videoId){
 
     console.log("Like clicked:", videoId);
 
+    const key = String(videoId);
+    const likeButton = document.querySelector(
+        `.like-btn[data-id="${CSS.escape(key)}"]`
+    );
+    const wasLiked =
+        likedVideoIds.has(key) ||
+        Boolean(likeButton && likeButton.classList.contains("liked"));
+    const video = allVideos.find(
+        item => String(item.id) === key
+    );
+    const previousCountValue = videoLikeSummary.has(key)
+        ? videoLikeSummary.get(key)
+        : video && video.likes_count;
+    const previousCount = Number.isFinite(Number(previousCountValue))
+        ? Math.max(0,Math.floor(Number(previousCountValue)))
+        : 0;
+
+    const applyOptimisticLike = (liked,count) => {
+        likeOptimisticState.set(
+            key,
+            {
+                liked,
+                count
+            }
+        );
+        if(liked){
+            likedVideoIds.add(key);
+        }
+        else{
+            likedVideoIds.delete(key);
+        }
+        videoLikeSummary.set(key,count);
+        if(video){
+            video.likes_count = count;
+        }
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,liked);
+    };
+
+    const rollbackLike = (liked,count) => {
+        likeOptimisticState.delete(key);
+        if(liked){
+            likedVideoIds.add(key);
+        }
+        else{
+            likedVideoIds.delete(key);
+        }
+        videoLikeSummary.set(key,count);
+        if(video){
+            video.likes_count = count;
+        }
+        updateLikeCountUI(key,count);
+        setLikeButtonState(key,liked);
+    };
+
+    /* Update the heart and count before any network round trip. */
+    applyOptimisticLike(
+        !wasLiked,
+        Math.max(0,previousCount + (wasLiked ? -1 : 1))
+    );
+
+    await ensureMiniAppAuthSession();
+    const userId = getLikeUserId();
+
     try{
-
-        await ensureMiniAppAuthSession();
-
-        const userId =
-            getLikeUserId();
 
         const { data: existingLike, error: checkError } =
             await supabaseClient
@@ -4538,6 +4741,8 @@ async function toggleLike(videoId){
                 checkError
             );
 
+            rollbackLike(wasLiked,previousCount);
+
             alert(
                 "Unable to check like status."
             );
@@ -4546,67 +4751,75 @@ async function toggleLike(videoId){
 
         }
 
+        const serverWasLiked = Boolean(existingLike);
+        const nextLiked = !serverWasLiked;
+        const optimisticCount = Math.max(
+            0,
+            previousCount + (nextLiked ? 1 : -1)
+        );
 
-        if(existingLike){
+        /* Correct a stale local heart if another session changed it. */
+        if(nextLiked !== !wasLiked){
+            applyOptimisticLike(nextLiked,optimisticCount);
+        }
 
-            const { error } =
-                await supabaseClient
-                    .from("video_likes")
-                    .delete()
-                    .eq("id", existingLike.id);
+        let syncError = null;
 
-            if(error){
+        try{
 
-                console.error(
-                    "Unlike error:",
-                    error
-                );
+            if(existingLike){
 
-                alert(
-                    "Unable to remove like."
-                );
+                const { error } =
+                    await supabaseClient
+                        .from("video_likes")
+                        .delete()
+                        .eq("id", existingLike.id);
 
-                return;
+                syncError = error;
+
+            }
+            else{
+
+                const { error } =
+                    await supabaseClient
+                        .from("video_likes")
+                        .insert({
+                            video_id: videoId,
+                            user_id: userId
+                        });
+
+                syncError = error;
 
             }
 
         }
-        else{
+        catch(error){
+            syncError = error;
+        }
 
-            const { error } =
-                await supabaseClient
-                    .from("video_likes")
-                    .insert({
-                        video_id: videoId,
-                        user_id: userId
-                    });
+        if(syncError){
 
-            if(error){
+            console.error(
+                nextLiked ? "Like insert error:" : "Unlike error:",
+                syncError
+            );
 
-                console.error(
-                    "Like insert error:",
-                    error
-                );
+            rollbackLike(serverWasLiked,previousCount);
+            alert(
+                nextLiked
+                    ? "Unable to like this video."
+                    : "Unable to remove like."
+            );
+            return;
+        }
 
-                alert(
-                    "Unable to like this video."
-                );
-
-                return;
-
+        /* Reconcile the exact global count in the background. */
+        void updateLikeCount(videoId).finally(() => {
+            const optimistic = likeOptimisticState.get(key);
+            if(optimistic && optimistic.liked === nextLiked){
+                likeOptimisticState.delete(key);
             }
-
-        }
-
-
-        if(existingLike){
-            likedVideoIds.delete(String(videoId));
-        }
-        else{
-            likedVideoIds.add(String(videoId));
-        }
-
-        await updateLikeCount(videoId);
+        });
         scheduleRecommendationRefresh();
 
     }
@@ -4616,6 +4829,8 @@ async function toggleLike(videoId){
             "Unexpected like error:",
             error
         );
+
+        rollbackLike(wasLiked,previousCount);
 
     }
 
@@ -4732,6 +4947,14 @@ async function updateLikeButton(videoId){
         catch(error){
             /* Fall through to the compatibility query below. */
         }
+    }
+
+    if(likeOptimisticState.has(key)){
+        setLikeButtonState(
+            key,
+            likeOptimisticState.get(key).liked
+        );
+        return;
     }
 
     if(likeSummaryReady && videoLikeSummary.has(key)){
@@ -4960,6 +5183,20 @@ if(libraryToggle){
         toggleLibraryView
     );
 
+}
+
+if(feedPageBack){
+    feedPageBack.addEventListener(
+        "click",
+        () => changeVideoPage(-1)
+    );
+}
+
+if(feedPageNext){
+    feedPageNext.addEventListener(
+        "click",
+        () => changeVideoPage(1)
+    );
 }
 
 document
@@ -5341,6 +5578,8 @@ document.addEventListener(
 
 function showLoading(){
 
+    hideFeedPagination();
+
     videoGrid.innerHTML = `
 
         <div class="loading">
@@ -5363,6 +5602,8 @@ function showLoading(){
 ========================= */
 
 function showEmpty(){
+
+    hideFeedPagination();
 
     const emptyHeading = libraryViewActive
         ? "Your library is empty"
@@ -5400,6 +5641,8 @@ function showEmpty(){
 ========================= */
 
 function showError(message){
+
+    hideFeedPagination();
 
     videoGrid.innerHTML = `
 

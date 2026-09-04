@@ -2743,10 +2743,13 @@ function animateAction(button,kind){
     if(reducedMotion) return;
 
     const burst = document.createElement("span");
+    const isStarAction = kind === "star" || kind === "unstar";
     burst.className =
         "streamx-action-burst " +
-        (kind === "star" ? "star" : "like");
-    burst.textContent = kind === "star" ? "★" : "♥";
+        (isStarAction ? "star" : "like");
+    burst.textContent =
+        kind === "unstar" ? "☆" :
+        kind === "star" ? "★" : "♥";
     button.appendChild(burst);
 
     setTimeout(() => burst.remove(),700);
@@ -2946,7 +2949,7 @@ async function toggleLibrary(videoId,sourceButton){
     persistLibraryCache();
     updateLibraryUI();
 
-    animateAction(sourceButton,"star");
+    animateAction(sourceButton,wasSaved ? "unstar" : "star");
 
     if(libraryViewActive){
         renderVideos();
@@ -3025,7 +3028,7 @@ async function toggleLibrary(videoId,sourceButton){
         const replacementButton = document.querySelector(
             `.library-btn[data-id="${CSS.escape(String(videoId))}"]`
         );
-        animateAction(replacementButton,"star");
+        animateAction(replacementButton,wasSaved ? "unstar" : "star");
     }
 
     scheduleRecommendationRefresh();

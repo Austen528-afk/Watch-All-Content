@@ -1641,6 +1641,133 @@ const supabaseClient =
     );
 
 let miniAppAuthSessionPromise = null;
+let miniAppAuthUserId = null;
+let miniAppIdentityMigrationPromise = null;
+
+async function migrateLegacyMiniAppIdentity(authUserId){
+
+    if(!authUserId) return false;
+
+    if(miniAppIdentityMigrationPromise){
+        return miniAppIdentityMigrationPromise;
+    }
+
+    miniAppIdentityMigrationPromise = (async () => {
+
+        const migrationKey =
+            "streamx_mini_app_identity_migrated_v1_" + authUserId;
+
+        try{
+            const alreadyMigrated =
+                localStorage.getItem(migrationKey) === "1";
+
+            const legacyLikeUserId =
+                localStorage.getItem("streamx_like_user_id");
+            const legacyViewerId =
+                localStorage.getItem("streamx_mini_app_user_id");
+
+            if(!alreadyMigrated){
+
+                if(legacyLikeUserId && legacyLikeUserId !== authUserId){
+                    const {data:legacyLikes,error:legacyLikesError} =
+                        await supabaseClient
+                            .from("video_likes")
+                            .select("video_id")
+                            .eq("user_id",legacyLikeUserId);
+
+                    if(legacyLikesError) throw legacyLikesError;
+
+                    if(legacyLikes && legacyLikes.length){
+                        const {error:copyLikesError} =
+                            await supabaseClient
+                                .from("video_likes")
+                                .upsert(
+                                    legacyLikes.map(row => ({
+                                        video_id:row.video_id,
+                                        user_id:authUserId
+                                    })),
+                                    {
+                                        onConflict:"video_id,user_id",
+                                        ignoreDuplicates:true
+                                    }
+                                );
+
+                        if(copyLikesError) throw copyLikesError;
+                    }
+                }
+
+                if(legacyViewerId && legacyViewerId !== authUserId){
+                    const {data:legacyLibrary,error:legacyLibraryError} =
+                        await supabaseClient
+                            .from("video_library")
+                            .select("video_id")
+                            .eq("viewer_id",legacyViewerId)
+                            .eq("platform","mini_app");
+
+                    if(legacyLibraryError) throw legacyLibraryError;
+
+                    if(legacyLibrary && legacyLibrary.length){
+                        const {error:copyLibraryError} =
+                            await supabaseClient
+                                .from("video_library")
+                                .upsert(
+                                    legacyLibrary.map(row => ({
+                                        viewer_id:authUserId,
+                                        platform:"mini_app",
+                                        video_id:row.video_id
+                                    })),
+                                    {
+                                        onConflict:"viewer_id,platform,video_id",
+                                        ignoreDuplicates:true
+                                    }
+                                );
+
+                        if(copyLibraryError) throw copyLibraryError;
+                    }
+                }
+
+                localStorage.setItem(migrationKey,"1");
+            }
+
+            /* Keep the old keys for compatibility, but after migration they
+               contain the server-verifiable Supabase Auth UID. */
+            localStorage.setItem("streamx_like_user_id",authUserId);
+            localStorage.setItem("streamx_mini_app_user_id",authUserId);
+
+            miniAppAuthUserId = authUserId;
+            MINI_APP_USER_ID = authUserId;
+
+            if(typeof LIBRARY_VIEWER_ID !== "undefined"){
+                LIBRARY_VIEWER_ID = authUserId;
+            }
+
+            return true;
+        }
+        catch(error){
+            console.warn(
+                "StreamX Mini App identity migration failed:",
+                error?.message || error
+            );
+            return false;
+        }
+        finally{
+            miniAppIdentityMigrationPromise = null;
+        }
+
+    })();
+
+    return miniAppIdentityMigrationPromise;
+}
+
+async function adoptMiniAppAuthSession(session){
+
+    const authUserId = session?.user?.id;
+
+    if(!authUserId) return session || null;
+
+    await migrateLegacyMiniAppIdentity(authUserId);
+    return session;
+}
 
 async function ensureMiniAppAuthSession(){
 
@@ -1662,7 +1789,7 @@ async function ensureMiniAppAuthSession(){
             }
 
             if(data?.session?.user?.id){
-                return data.session;
+                return adoptMiniAppAuthSession(data.session);
             }
 
             const {data:anonymousData,error:anonymousError} =
@@ -1676,7 +1803,9 @@ async function ensureMiniAppAuthSession(){
                 return null;
             }
 
-            return anonymousData?.session || null;
+            return adoptMiniAppAuthSession(
+                anonymousData?.session || null
+            );
         }
         catch(error){
             console.warn(
@@ -1698,7 +1827,7 @@ async function ensureMiniAppAuthSession(){
    WEBSITE PRESENCE TRACKING
 ========================================= */
 
-const MINI_APP_USER_ID =
+let MINI_APP_USER_ID =
     localStorage.getItem("streamx_mini_app_user_id") ||
     crypto.randomUUID();
 
@@ -2200,7 +2329,7 @@ window.addEventListener("pagehide",function(){
 ========================= */
 
 const LIBRARY_PLATFORM = WATCH_TIME_PLATFORM;
-const LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
+let LIBRARY_VIEWER_ID = WATCH_TIME_VIEWER_ID;
 const LIBRARY_STORAGE_KEY =
     "streamx_" + LIBRARY_PLATFORM + "_library";
 const LIBRARY_ACTIVITY_TABLE = "library_activity";
@@ -4486,6 +4615,10 @@ async function toggleLike(videoId){
 }
 
 function getLikeUserId(){
+
+    if(miniAppAuthUserId){
+        return miniAppAuthUserId;
+    }
 
     let userId =
         localStorage.getItem(

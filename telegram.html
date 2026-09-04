@@ -2043,6 +2043,10 @@ let libraryPreviousCategory = "All";
 let libraryPreviousSearch = "";
 let libraryVideoIds = new Set();
 let libraryPendingIds = new Set();
+/* Keep the newest local Save/Unsave intent authoritative while an older
+   library fetch or cloud write is still finishing. */
+let libraryLocalOverrides = new Map();
+let librarySyncChains = new Map();
 let libraryLoading = false;
 let libraryStatusTimer = null;
 let currentPlayerVideoId = null;
@@ -2709,7 +2713,10 @@ function updateLibraryButtonState(button,videoId){
 
     button.textContent = saved ? "★" : "☆";
     button.classList.toggle("saved",saved);
-    button.disabled = pending;
+    /* Do not lock the control while Supabase is syncing. The sync queue below
+       serializes repeated taps so Save -> Unsave (and the reverse) stays instant. */
+    button.disabled = false;
+    button.setAttribute("aria-busy",String(pending));
     button.setAttribute("aria-pressed",String(saved));
     button.setAttribute(
         "aria-label",
@@ -2777,8 +2784,10 @@ function updatePlayerLibraryButton(){
         String(currentPlayerVideoId)
     );
 
-    playerLibraryButton.disabled = libraryPendingIds.has(
-        String(currentPlayerVideoId)
+    playerLibraryButton.disabled = false;
+    playerLibraryButton.setAttribute(
+        "aria-busy",
+        String(libraryPendingIds.has(String(currentPlayerVideoId)))
     );
     playerLibraryButton.classList.toggle("saved",saved);
     playerLibraryButton.setAttribute("aria-pressed",String(saved));
@@ -2868,9 +2877,31 @@ async function loadLibrary(){
 
         if(error) throw error;
 
-        libraryVideoIds = normalizeLibraryIds(
+        const serverLibraryIds = normalizeLibraryIds(
             (data || []).map(row => row.video_id)
         );
+
+        /* A user may tap Save/Unsave while this opening fetch is still in
+           flight. Never let that older response undo the newer local intent. */
+        libraryLocalOverrides.forEach((shouldSave,overrideKey) => {
+            if(shouldSave){
+                serverLibraryIds.add(String(overrideKey));
+            }
+            else{
+                serverLibraryIds.delete(String(overrideKey));
+            }
+        });
+
+        libraryVideoIds = serverLibraryIds;
+
+        /* Overrides whose cloud queue has already completed were only needed
+           to protect this opening fetch and can now be released. */
+        Array.from(libraryLocalOverrides.keys()).forEach(overrideKey => {
+            if(!libraryPendingIds.has(String(overrideKey))){
+                libraryLocalOverrides.delete(String(overrideKey));
+            }
+        });
+
         persistLibraryCache();
 
     }
@@ -2928,112 +2959,132 @@ function toggleLibraryView(){
     renderVideos();
 }
 
-async function toggleLibrary(videoId,sourceButton){
+function queueLibraryCloudSync(videoId,shouldSave){
 
     const key = String(videoId);
+    const previousChain =
+        librarySyncChains.get(key) || Promise.resolve();
 
-    if(libraryPendingIds.has(key)) return;
+    libraryPendingIds.add(key);
+
+    const nextChain = previousChain
+        .catch(() => {})
+        .then(async () => {
+
+            await ensureMiniAppAuthSession();
+
+            let result;
+
+            if(shouldSave){
+                result = await supabaseClient
+                    .from("video_library")
+                    .upsert(
+                        {
+                            viewer_id:LIBRARY_VIEWER_ID,
+                            platform:LIBRARY_PLATFORM,
+                            video_id:videoId
+                        },
+                        {
+                            onConflict:"viewer_id,platform,video_id",
+                            ignoreDuplicates:true
+                        }
+                    );
+            }
+            else{
+                result = await supabaseClient
+                    .from("video_library")
+                    .delete()
+                    .eq("viewer_id",LIBRARY_VIEWER_ID)
+                    .eq("platform",LIBRARY_PLATFORM)
+                    .eq("video_id",videoId);
+            }
+
+            if(result && result.error){
+                throw result.error;
+            }
+
+            /* Only show a status message when this completed operation is still
+               the user's current state. Older queued operations stay silent. */
+            if(libraryVideoIds.has(key) === shouldSave){
+                showLibraryStatus(
+                    shouldSave
+                        ? "Added to My Library."
+                        : "Removed from My Library."
+                );
+            }
+
+        })
+        .catch(error => {
+
+            console.warn("My Library cloud sync unavailable:",error);
+
+            if(libraryVideoIds.has(key) === shouldSave){
+                showLibraryStatus(
+                    "Cloud sync is unavailable; your device library is still updated.",
+                    true
+                );
+            }
+
+        })
+        .finally(() => {
+
+            /* A newer tap may already have extended the queue. Only the last
+               queued operation is allowed to mark this video as fully synced. */
+            if(librarySyncChains.get(key) === nextChain){
+                librarySyncChains.delete(key);
+                libraryPendingIds.delete(key);
+
+                if(!libraryLoading){
+                    libraryLocalOverrides.delete(key);
+                }
+
+                updateLibraryUI();
+
+                if(libraryViewActive){
+                    renderVideos();
+                }
+
+                scheduleRecommendationRefresh();
+            }
+
+        });
+
+    librarySyncChains.set(key,nextChain);
+    return nextChain;
+}
+
+function toggleLibrary(videoId,sourceButton){
+
+    const key = String(videoId);
 
     recordLibraryActivity();
 
     const wasSaved = libraryVideoIds.has(key);
-    libraryPendingIds.add(key);
+    const shouldSave = !wasSaved;
 
-    if(wasSaved){
-        libraryVideoIds.delete(key);
-    }
-    else{
+    if(shouldSave){
         libraryVideoIds.add(key);
     }
+    else{
+        libraryVideoIds.delete(key);
+    }
+
+    /* Remember this exact newest state so an opening loadLibrary() response
+       cannot paint an older state over the user's tap. */
+    libraryLocalOverrides.set(key,shouldSave);
 
     persistLibraryCache();
     updateLibraryUI();
 
-    animateAction(sourceButton,wasSaved ? "unstar" : "star");
+    animateAction(sourceButton,shouldSave ? "star" : "unstar");
 
     if(libraryViewActive){
         renderVideos();
     }
 
-    /* Preserve the instant local save response, then authenticate before
-       the protected Supabase write. */
-    await ensureMiniAppAuthSession();
-
-    let syncError = null;
-
-    try{
-
-        if(wasSaved){
-
-            const result = await supabaseClient
-                .from("video_library")
-                .delete()
-                .eq("viewer_id",LIBRARY_VIEWER_ID)
-                .eq("platform",LIBRARY_PLATFORM)
-                .eq("video_id",videoId);
-
-            syncError = result.error;
-
-        }
-        else{
-
-            const result = await supabaseClient
-                .from("video_library")
-                .upsert(
-                    {
-                        viewer_id:LIBRARY_VIEWER_ID,
-                        platform:LIBRARY_PLATFORM,
-                        video_id:videoId
-                    },
-                    {
-                        onConflict:"viewer_id,platform,video_id",
-                        ignoreDuplicates:true
-                    }
-                );
-
-            syncError = result.error;
-
-        }
-
-    }
-    catch(error){
-
-        syncError = error;
-
-    }
-
-    if(syncError){
-        showLibraryStatus(
-            "Cloud sync is unavailable; your device library is still updated.",
-            true
-        );
-
-    }
-    else{
-
-        showLibraryStatus(
-            wasSaved
-                ? "Removed from My Library."
-                : "Added to My Library."
-        );
-
-    }
-
-    libraryPendingIds.delete(key);
-    updateLibraryUI();
-
-    if(libraryViewActive){
-        renderVideos();
-
-        const replacementButton = document.querySelector(
-            `.library-btn[data-id="${CSS.escape(String(videoId))}"]`
-        );
-        animateAction(replacementButton,wasSaved ? "unstar" : "star");
-    }
-
-    scheduleRecommendationRefresh();
+    /* Cloud work is serialized per video, but the UI above never waits for it. */
+    return queueLibraryCloudSync(videoId,shouldSave);
 }
-
 
 /* =========================
    CATEGORIES

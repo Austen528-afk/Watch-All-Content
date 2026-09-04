@@ -9,9 +9,6 @@
 
 <title>StreamX</title>
 
-<link rel="preconnect" href="https://iojjmoywrlnzpyatahyh.supabase.co" crossorigin>
-<link rel="dns-prefetch" href="//iojjmoywrlnzpyatahyh.supabase.co">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -648,48 +645,6 @@ body{
     gap:20px;
 }
 
-.feed-pagination{
-    display:none;
-    align-items:center;
-    justify-content:center;
-    gap:12px;
-    margin:30px 0 10px;
-}
-
-.feed-pagination.show{
-    display:flex;
-}
-
-.feed-pagination-button{
-    min-width:100px;
-    padding:10px 16px;
-    border:1px solid #333;
-    border-radius:9px;
-    background:#171717;
-    color:#fff;
-    font-size:12px;
-    font-weight:700;
-    cursor:pointer;
-    transition:.2s ease;
-}
-
-.feed-pagination-button:hover:not(:disabled){
-    border-color:#ff1744;
-    background:#241018;
-}
-
-.feed-pagination-button:disabled{
-    opacity:.35;
-    cursor:not-allowed;
-}
-
-.feed-pagination-status{
-    min-width:82px;
-    color:#999;
-    font-size:12px;
-    text-align:center;
-}
-
 
 /* =========================
    VIDEO CARD
@@ -870,39 +825,23 @@ body{
     position:relative;
     overflow:visible;
     margin-left:auto;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:4px;
-    min-height:30px;
-    padding:6px 10px;
-    border:1px solid rgba(245,185,66,.48);
-    border-radius:999px;
-    background:linear-gradient(135deg,#3b2810 0%,#21170a 100%);
-    color:#ffe18a;
+    border:none;
+    background:none;
+    color:#777;
     cursor:pointer;
-    font-size:12px;
-    font-weight:800;
-    letter-spacing:.2px;
+    font-size:21px;
     line-height:1;
     transform:translateZ(0);
-    box-shadow:0 0 0 2px rgba(245,185,66,.08),0 4px 14px rgba(245,185,66,.14);
-    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,background .22s,border-color .22s,box-shadow .22s,filter .22s;
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
 }
 
 .library-btn:hover{
-    color:#fff4c4;
-    border-color:#f5b942;
-    background:linear-gradient(135deg,#5a3b12 0%,#2d1d0b 100%);
-    transform:translateY(-1px) scale(1.05);
-    box-shadow:0 0 0 3px rgba(245,185,66,.12),0 6px 20px rgba(245,185,66,.28);
+    color:#f5b942;
+    transform:scale(1.12);
 }
 
 .library-btn.saved{
-    border-color:#f5b942;
-    background:linear-gradient(135deg,#f5b942 0%,#c98619 100%);
-    color:#1a1104;
-    box-shadow:0 0 0 3px rgba(245,185,66,.14),0 5px 18px rgba(245,185,66,.3);
+    color:#f5b942;
 }
 
 .library-btn:disabled{
@@ -977,14 +916,6 @@ body{
     color:#aaa;
     font-size:12px;
     font-weight:bold;
-}
-
-.save-count{
-    min-width:14px;
-    color:#d6b35a;
-    font-size:12px;
-    font-weight:bold;
-    text-align:center;
 }
 
 
@@ -1280,19 +1211,6 @@ body{
 
     .video-meta{
         font-size:9px;
-    }
-
-    .video-actions{
-        gap:5px;
-    }
-
-    .library-btn{
-        padding:5px 7px;
-        font-size:11px;
-    }
-
-    .save-count{
-        font-size:11px;
     }
 
     .age-gate-box{
@@ -1616,36 +1534,6 @@ body{
 
     </div>
 
-    <nav
-        class="feed-pagination"
-        id="feedPagination"
-        aria-label="Video pages"
-    >
-        <button
-            class="feed-pagination-button"
-            id="feedPageBack"
-            type="button"
-        >
-            ← Back
-        </button>
-
-        <span
-            class="feed-pagination-status"
-            id="feedPageStatus"
-            aria-live="polite"
-        >
-            Page 1 of 1
-        </span>
-
-        <button
-            class="feed-pagination-button"
-            id="feedPageNext"
-            type="button"
-        >
-            Next →
-        </button>
-    </nav>
-
 </main>
 
 
@@ -1743,6 +1631,61 @@ const supabaseClient =
         SUPABASE_URL,
         SUPABASE_KEY
     );
+
+/* =========================
+   SILENT USER AUTHENTICATION
+========================= */
+
+let streamXUserSessionPromise = null;
+
+async function ensureStreamXUserSession(){
+
+    if(streamXUserSessionPromise){
+        return streamXUserSessionPromise;
+    }
+
+    streamXUserSessionPromise = (async () => {
+
+        const {
+            data: { session },
+            error: sessionError
+        } = await supabaseClient.auth.getSession();
+
+        if(sessionError){
+            throw sessionError;
+        }
+
+        if(session?.user){
+            return session;
+        }
+
+        const {
+            data,
+            error
+        } = await supabaseClient.auth.signInAnonymously();
+
+        if(error){
+            throw error;
+        }
+
+        return data.session;
+
+    })().catch(error => {
+
+        streamXUserSessionPromise = null;
+
+        console.error(
+            "StreamX anonymous authentication failed:",
+            error
+        );
+
+        return null;
+
+    });
+
+    return streamXUserSessionPromise;
+
+}
 
 /* =========================================
    WEBSITE PRESENCE TRACKING
@@ -1853,7 +1796,12 @@ window.addEventListener(
    AGE VERIFICATION
 ========================= */
 
-function enterWebsite(){
+async function enterWebsite(){
+
+    /* Establish a silent Supabase anonymous session before user data
+       operations begin. Existing visitors still keep their current local
+       StreamX IDs during this staged security migration. */
+    await ensureStreamXUserSession();
 
     ageGate.style.display =
         "none";
@@ -1878,7 +1826,6 @@ function enterWebsite(){
     loadVideos().then(() => loadRecommendations());
     setupVideoRealtime();
     setupLikeRealtime();
-    setupLibraryRealtime();
 
 updateMiniAppPresence();
 startViewerTimeTracking("outside");
@@ -1945,26 +1892,10 @@ let libraryActivityRequestInFlight = false;
 let recommendationVideos = [];
 let recommendationRefreshTimer = null;
 let recommendationLoading = false;
-let recommendationRefreshQueued = false;
-let recommendationTriggerVideoId = null;
-const RECOMMENDATION_COOLDOWN_MS = 20 * 60 * 1000;
-const RECOMMENDATION_HISTORY_LIMIT = 48;
 let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
-let likeOptimisticState = new Map();
 let likeSummaryPromise = null;
 let likeSummaryReady = false;
-let videoLibrarySummary = new Map();
-let librarySummaryPromise = null;
-let librarySummaryReady = false;
-let libraryRealtimeChannel = null;
-const VIDEO_URL_CACHE_TTL_MS = 55 * 60 * 1000;
-const VIDEO_URL_PREFETCH_COUNT = 4;
-const videoURLCache = new Map();
-const videoURLPromiseCache = new Map();
-const VIDEOS_PER_PAGE = 20;
-let currentVideoPage = 1;
-let paginationFilterKey = "";
 
 
 /* =========================
@@ -1973,18 +1904,6 @@ let paginationFilterKey = "";
 
 const videoGrid =
     document.getElementById("videoGrid");
-
-const feedPagination =
-    document.getElementById("feedPagination");
-
-const feedPageBack =
-    document.getElementById("feedPageBack");
-
-const feedPageNext =
-    document.getElementById("feedPageNext");
-
-const feedPageStatus =
-    document.getElementById("feedPageStatus");
 
 const resultCount =
     document.getElementById("resultCount");
@@ -2588,169 +2507,6 @@ function persistLibraryCache(){
     }
 }
 
-function getLibrarySaveCount(videoId){
-
-    const key = String(videoId);
-
-    if(videoLibrarySummary.has(key)){
-        return videoLibrarySummary.get(key);
-    }
-
-    const video = allVideos.find(
-        item => String(item.id) === key
-    );
-    const fallback = Number(video && video.saves_count || 0);
-
-    return Number.isFinite(fallback)
-        ? Math.max(0,Math.floor(fallback))
-        : 0;
-}
-
-function updateLibrarySaveCountUI(videoId,count){
-
-    const key = String(videoId);
-    const parsed = Number(count);
-    const normalized = Number.isFinite(parsed)
-        ? Math.max(0,Math.floor(parsed))
-        : 0;
-
-    videoLibrarySummary.set(key,normalized);
-
-    allVideos.forEach(video => {
-        if(String(video.id) === key){
-            video.saves_count = normalized;
-        }
-    });
-
-    recommendationVideos.forEach(video => {
-        if(String(video.id) === key){
-            video.saves_count = normalized;
-        }
-    });
-
-    const selector =
-        `.save-count[data-id="${CSS.escape(key)}"]`;
-
-    document
-        .querySelectorAll(selector)
-        .forEach(element => {
-            element.textContent = normalized.toLocaleString();
-        });
-}
-
-function applyLibrarySummary(rows){
-
-    videoLibrarySummary = new Map();
-
-    (Array.isArray(rows) ? rows : []).forEach(row => {
-
-        const key = String(row && row.video_id || "").trim();
-
-        if(!key) return;
-
-        const parsed = Number(row.saves_count || 0);
-        const count = Number.isFinite(parsed)
-            ? Math.max(0,Math.floor(parsed))
-            : 0;
-
-        videoLibrarySummary.set(key,count);
-
-    });
-
-    allVideos.forEach(video => {
-
-        const key = String(video.id);
-
-        if(videoLibrarySummary.has(key)){
-            video.saves_count = videoLibrarySummary.get(key);
-        }
-
-    });
-
-    recommendationVideos.forEach(video => {
-
-        const key = String(video.id);
-
-        if(videoLibrarySummary.has(key)){
-            video.saves_count = videoLibrarySummary.get(key);
-        }
-
-    });
-
-    document
-        .querySelectorAll(".save-count[data-id]")
-        .forEach(element => {
-
-            const count = getLibrarySaveCount(
-                element.dataset.id
-            );
-
-            element.textContent = count.toLocaleString();
-
-        });
-
-    librarySummaryReady = true;
-}
-
-function loadLibrarySummary(){
-
-    librarySummaryReady = false;
-
-    return supabaseClient
-        .rpc(
-            "get_streamx_library_summary",
-            {
-                p_viewer_id:LIBRARY_VIEWER_ID,
-                p_platform:LIBRARY_PLATFORM
-            }
-        )
-        .then(result => {
-
-            if(result.error) throw result.error;
-
-            applyLibrarySummary(result.data);
-            return result.data;
-
-        })
-        .catch(error => {
-
-            librarySummaryReady = false;
-            librarySummaryPromise = null;
-            console.warn("Library save summary unavailable:",error);
-            throw error;
-
-        });
-}
-
-function scheduleLibrarySummary(){
-
-    if(librarySummaryPromise) return librarySummaryPromise;
-
-    librarySummaryPromise = new Promise((resolve,reject) => {
-
-        const startRequest = () => {
-
-            Promise.resolve()
-                .then(loadLibrarySummary)
-                .then(resolve,reject);
-
-        };
-
-        if(typeof window.requestIdleCallback === "function"){
-            window.requestIdleCallback(
-                startRequest,
-                {timeout:1800}
-            );
-        }
-        else{
-            window.setTimeout(startRequest,0);
-        }
-
-    });
-
-    return librarySummaryPromise;
-}
-
 function showLibraryStatus(message,isError = false){
 
     if(!libraryStatus) return;
@@ -2775,7 +2531,7 @@ function updateLibraryButtonState(button,videoId){
     const saved = libraryVideoIds.has(key);
     const pending = libraryPendingIds.has(key);
 
-    button.textContent = saved ? "★ save" : "☆ save";
+    button.textContent = saved ? "★" : "☆";
     button.classList.toggle("saved",saved);
     button.disabled = pending;
     button.setAttribute("aria-pressed",String(saved));
@@ -2998,11 +2754,6 @@ async function toggleLibrary(videoId,sourceButton){
     recordLibraryActivity();
 
     const wasSaved = libraryVideoIds.has(key);
-    const previousSaveCount = getLibrarySaveCount(videoId);
-    const optimisticSaveCount = Math.max(
-        0,
-        previousSaveCount + (wasSaved ? -1 : 1)
-    );
     libraryPendingIds.add(key);
 
     if(wasSaved){
@@ -3012,10 +2763,6 @@ async function toggleLibrary(videoId,sourceButton){
         libraryVideoIds.add(key);
     }
 
-    updateLibrarySaveCountUI(
-        videoId,
-        optimisticSaveCount
-    );
     persistLibraryCache();
     updateLibraryUI();
 
@@ -3069,10 +2816,6 @@ async function toggleLibrary(videoId,sourceButton){
     }
 
     if(syncError){
-        updateLibrarySaveCountUI(
-            videoId,
-            previousSaveCount
-        );
         showLibraryStatus(
             "Cloud sync is unavailable; your device library is still updated.",
             true
@@ -3101,10 +2844,7 @@ async function toggleLibrary(videoId,sourceButton){
         animateAction(replacementButton,"star");
     }
 
-    scheduleRecommendationRefresh(
-        900,
-        wasSaved ? null : videoId
-    );
+    scheduleRecommendationRefresh();
 }
 
 
@@ -3140,10 +2880,6 @@ async function loadCategories(showBusy = false){
     }
 
     try{
-
-        const previousCategoryKey =
-            categories.join("\u0001");
-        let categorySelectionChanged = false;
 
         const { data, error } =
             await supabaseClient
@@ -3210,17 +2946,10 @@ async function loadCategories(showBusy = false){
             searchTerm = "";
             searchInput.value = "";
             clearSearch.style.display = "none";
-            categorySelectionChanged = true;
         }
 
         renderCategoryButtons();
-
-        if(
-            categorySelectionChanged ||
-            previousCategoryKey !== categories.join("\u0001")
-        ){
-            renderVideos();
-        }
+        renderVideos();
 
     }
     catch(error){
@@ -3327,114 +3056,6 @@ function normalizeRecommendationVideo(row){
     };
 }
 
-function getRecommendationHistoryKey(){
-
-    return "streamx_" +
-        LIBRARY_PLATFORM +
-        "_" +
-        LIBRARY_VIEWER_ID +
-        "_recommendation_history";
-
-}
-
-function readRecommendationHistory(){
-
-    const cutoff = Date.now() - RECOMMENDATION_COOLDOWN_MS;
-
-    try{
-
-        const raw = localStorage.getItem(
-            getRecommendationHistoryKey()
-        );
-        const parsed = raw ? JSON.parse(raw) : [];
-
-        if(!Array.isArray(parsed)) return [];
-
-        return parsed
-            .map(item => ({
-                id:String(item && item.id || ""),
-                shownAt:Number(item && item.shownAt || 0)
-            }))
-            .filter(item =>
-                item.id &&
-                Number.isFinite(item.shownAt) &&
-                item.shownAt >= cutoff
-            )
-            .sort((a,b) => b.shownAt - a.shownAt);
-
-    }
-    catch(error){
-
-        return [];
-
-    }
-
-}
-
-function writeRecommendationHistory(history){
-
-    try{
-
-        localStorage.setItem(
-            getRecommendationHistoryKey(),
-            JSON.stringify(history.slice(0,RECOMMENDATION_HISTORY_LIMIT))
-        );
-
-    }
-    catch(error){
-
-        /* Recommendations remain usable when storage is unavailable. */
-
-    }
-
-}
-
-function getRecentRecommendationIds(){
-
-    const seen = new Set();
-
-    return readRecommendationHistory()
-        .filter(item => {
-            if(seen.has(item.id)) return false;
-            seen.add(item.id);
-            return true;
-        })
-        .map(item => Number(item.id))
-        .filter(id => Number.isSafeInteger(id));
-
-}
-
-function rememberRecommendations(rows){
-
-    const now = Date.now();
-    const historyById = new Map(
-        readRecommendationHistory().map(item => [
-            item.id,
-            item.shownAt
-        ])
-    );
-
-    (Array.isArray(rows) ? rows : []).forEach(row => {
-
-        const id = row && row.id;
-
-        if(id === null || id === undefined) return;
-
-        historyById.set(String(id),now);
-
-    });
-
-    const history = Array.from(
-        historyById,
-        ([id,shownAt]) => ({id,shownAt})
-    )
-        .sort((a,b) => b.shownAt - a.shownAt)
-        .slice(0,RECOMMENDATION_HISTORY_LIMIT);
-
-    writeRecommendationHistory(history);
-
-}
-
 function renderRecommendations(rows){
 
     recommendationVideos =
@@ -3446,18 +3067,13 @@ function renderRecommendations(rows){
                 video.video_url
             );
 
-    rememberRecommendations(recommendationVideos);
-
     /* Reorder the cards already on screen instead of rebuilding every card.
        Rebuilding would restart GIF/image downloads and make the feed feel
        slower whenever recommendations refresh. */
     prioritizeRenderedRecommendationCards();
 }
 
-/* Every card on the active page gets an eager GIF request. Only the first
-   handful receive high network priority so the page remains responsive. */
-const CURRENT_PAGE_THUMBNAIL_COUNT = VIDEOS_PER_PAGE;
-const HIGH_PRIORITY_THUMBNAIL_COUNT = Math.min(8,VIDEOS_PER_PAGE);
+const INITIAL_THUMBNAIL_COUNT = 8;
 
 function prioritizeRenderedRecommendationCards(){
 
@@ -3465,7 +3081,8 @@ function prioritizeRenderedRecommendationCards(){
         !videoGrid ||
         libraryViewActive ||
         searchTerm ||
-        String(currentCategory).toLowerCase() !== "all"
+        String(currentCategory).toLowerCase() !== "all" ||
+        recommendationVideos.length === 0
     ){
         return;
     }
@@ -3500,28 +3117,17 @@ function prioritizeRenderedRecommendationCards(){
 
     });
 
-    /* Return every other visible card to the catalog order. This prevents an
-       old recommendation order from surviving after a like/save refresh. */
-    getFilteredVideos().forEach(video => {
-
-        const card = cardsById.get(String(video.id));
-
-        if(card && !used.has(card)){
-            used.add(card);
+    cards.forEach(card => {
+        if(!used.has(card)){
             ordered.push(card);
         }
-
-    });
-
-    cards.forEach(card => {
-        if(!used.has(card)) ordered.push(card);
     });
 
     const fragment = document.createDocumentFragment();
 
     ordered.forEach((card,index) => {
 
-        if(index < CURRENT_PAGE_THUMBNAIL_COUNT){
+        if(index < INITIAL_THUMBNAIL_COUNT){
             const image = card.querySelector(
                 ".thumbnail-fallback"
             );
@@ -3529,9 +3135,6 @@ function prioritizeRenderedRecommendationCards(){
             if(image){
                 image.loading = "eager";
                 image.decoding = "async";
-                image.fetchPriority = index < HIGH_PRIORITY_THUMBNAIL_COUNT
-                    ? "high"
-                    : "auto";
             }
         }
 
@@ -3544,21 +3147,9 @@ function prioritizeRenderedRecommendationCards(){
 
 async function loadRecommendations(){
 
-    if(recommendationLoading){
-        recommendationRefreshQueued = true;
-        return;
-    }
+    if(recommendationLoading) return;
 
     recommendationLoading = true;
-
-    const triggerVideoId =
-        recommendationTriggerVideoId === null ||
-        recommendationTriggerVideoId === undefined
-            ? null
-            : Number(recommendationTriggerVideoId);
-    const excludeVideoIds = getRecentRecommendationIds();
-
-    recommendationTriggerVideoId = null;
 
     try{
 
@@ -3569,12 +3160,7 @@ async function loadRecommendations(){
                     p_viewer_id:LIBRARY_VIEWER_ID,
                     p_platform:LIBRARY_PLATFORM,
                     p_like_user_id:getLikeUserId(),
-                    p_limit:8,
-                    p_trigger_video_id:
-                        Number.isSafeInteger(triggerVideoId)
-                            ? triggerVideoId
-                            : null,
-                    p_exclude_video_ids:excludeVideoIds
+                    p_limit:8
                 }
             );
 
@@ -3587,7 +3173,6 @@ async function loadRecommendations(){
     catch(error){
 
         recommendationVideos = [];
-        prioritizeRenderedRecommendationCards();
 
         /* Recommendations are optional; the normal video feed remains usable
            when the SQL function has not been installed yet. */
@@ -3596,25 +3181,10 @@ async function loadRecommendations(){
     }
     finally{
         recommendationLoading = false;
-
-        if(recommendationRefreshQueued){
-            recommendationRefreshQueued = false;
-            scheduleRecommendationRefresh(0);
-        }
     }
 }
 
-function scheduleRecommendationRefresh(
-    delay = 900,
-    triggerVideoId = undefined
-){
-
-    if(triggerVideoId !== undefined){
-        recommendationTriggerVideoId =
-            triggerVideoId === null
-                ? null
-                : String(triggerVideoId);
-    }
+function scheduleRecommendationRefresh(delay = 900){
 
     clearTimeout(recommendationRefreshTimer);
 
@@ -3629,14 +3199,14 @@ function scheduleRecommendationRefresh(
 
 function setLikeButtonState(videoId,isLiked){
 
-    const buttons = document.querySelectorAll(
+    const button = document.querySelector(
         `.like-btn[data-id="${CSS.escape(String(videoId))}"]`
     );
 
-    buttons.forEach(button => {
-        button.textContent = isLiked ? "♥" : "♡";
-        button.classList.toggle("liked",isLiked);
-    });
+    if(!button) return;
+
+    button.textContent = isLiked ? "♥" : "♡";
+    button.classList.toggle("liked",isLiked);
 }
 
 function updateLikeCountUI(videoId,count){
@@ -3672,13 +3242,8 @@ function applyLikeSummary(rows){
         if(!key) return;
 
         const parsedCount = Number(row.likes_count || 0);
-        const optimistic = likeOptimisticState.get(key);
-        const count = optimistic && Number.isFinite(optimistic.count)
-            ? optimistic.count
-            : Number.isFinite(parsedCount) ? parsedCount : 0;
-        const isLiked = optimistic
-            ? optimistic.liked
-            : row.liked_by_user === true;
+        const count = Number.isFinite(parsedCount) ? parsedCount : 0;
+        const isLiked = row.liked_by_user === true;
 
         videoLikeSummary.set(key,count);
 
@@ -3728,40 +3293,6 @@ function loadLikeSummary(){
             console.warn("Like summary unavailable:",error);
             throw error;
         });
-}
-
-function scheduleLikeSummary(){
-
-    return new Promise((resolve,reject) => {
-
-        const startRequest = () => {
-
-            Promise.resolve()
-                .then(loadLikeSummary)
-                .then(
-                resolve,
-                reject
-                );
-
-        };
-
-        if(
-            typeof window.requestIdleCallback ===
-            "function"
-        ){
-            window.requestIdleCallback(
-                startRequest,
-                {timeout:1500}
-            );
-        }
-        else{
-            window.setTimeout(
-                startRequest,
-                0
-            );
-        }
-
-    });
 }
 
 /* =========================
@@ -3833,19 +3364,17 @@ if(categories.length <= 1){
     }
 }
 
-/* Queue the single likes request after the first paint. The grid can paint
-   immediately while counts and heart states arrive in the background. */
+/* Start the single likes request before painting cards. The grid can paint
+   immediately while the like counts and heart states arrive in the background. */
 allVideos.forEach(video => {
     if(video.likes_count === undefined || video.likes_count === null){
         video.likes_count = 0;
     }
 });
 
-likeSummaryPromise = scheduleLikeSummary();
+likeSummaryPromise = loadLikeSummary();
 renderVideos();
 void likeSummaryPromise.catch(() => {});
-librarySummaryPromise = scheduleLibrarySummary();
-void librarySummaryPromise.catch(() => {});
 
     }
     catch(error){
@@ -3870,7 +3399,6 @@ void librarySummaryPromise.catch(() => {});
 
 let videoRealtimeChannel = null;
 let likeRealtimeChannel = null;
-let libraryRealtimeStatus = "";
 let likeRealtimeStatus = "";
 let likeCountRefreshTimer = null;
 const LIKE_COUNT_FALLBACK_INTERVAL_MS = 10000;
@@ -4057,63 +3585,6 @@ function setupLikeRealtime(){
     startLikeCountFallback();
 }
 
-function setupLibraryRealtime(){
-
-    if(libraryRealtimeChannel) return;
-
-    libraryRealtimeChannel = supabaseClient
-        .channel("mini-app-video-library-realtime")
-        .on(
-            "postgres_changes",
-            {
-                event:"*",
-                schema:"public",
-                table:"video_library"
-            },
-            payload => {
-
-                const eventType =
-                    String(payload.eventType || "").toUpperCase();
-                const row =
-                    eventType === "DELETE"
-                        ? payload.old
-                        : payload.new;
-                const videoId = row && row.video_id;
-
-                if(videoId === undefined || videoId === null){
-                    return;
-                }
-
-                /* The click handler already updates this viewer immediately.
-                   Ignore its echo so one save is never counted twice. */
-                if(
-                    row &&
-                    String(row.viewer_id || "") === String(LIBRARY_VIEWER_ID) &&
-                    String(row.platform || "") === String(LIBRARY_PLATFORM)
-                ){
-                    return;
-                }
-
-                if(eventType === "INSERT"){
-                    updateLibrarySaveCountUI(
-                        videoId,
-                        getLibrarySaveCount(videoId) + 1
-                    );
-                }
-                else if(eventType === "DELETE"){
-                    updateLibrarySaveCountUI(
-                        videoId,
-                        Math.max(0,getLibrarySaveCount(videoId) - 1)
-                    );
-                }
-            }
-        )
-        .subscribe(status => {
-            libraryRealtimeStatus = status;
-            console.log("Mini App library realtime status:",status);
-        });
-}
-
 
 /* =========================
    FILTER
@@ -4221,103 +3692,10 @@ function getVideosForDisplay(){
     ];
 }
 
-function getPaginationFilterKey(){
-
-    return [
-        libraryViewActive ? "library" : "feed",
-        String(currentCategory || "All").toLowerCase(),
-        String(searchTerm || "")
-    ].join("\u0001");
-}
-
-function hideFeedPagination(){
-
-    if(feedPagination){
-        feedPagination.classList.remove("show");
-    }
-}
-
-function updateFeedPagination(totalItems,totalPages){
-
-    if(
-        !feedPagination ||
-        totalItems <= VIDEOS_PER_PAGE ||
-        totalPages <= 1
-    ){
-        hideFeedPagination();
-        return;
-    }
-
-    feedPagination.classList.add("show");
-
-    if(feedPageStatus){
-        feedPageStatus.textContent =
-            "Page " + currentVideoPage + " of " + totalPages;
-    }
-
-    if(feedPageBack){
-        feedPageBack.disabled = currentVideoPage <= 1;
-    }
-
-    if(feedPageNext){
-        feedPageNext.disabled = currentVideoPage >= totalPages;
-    }
-}
-
-function changeVideoPage(direction){
-
-    const totalItems = getVideosForDisplay().length;
-    const totalPages = Math.max(
-        1,
-        Math.ceil(totalItems / VIDEOS_PER_PAGE)
-    );
-    const nextPage = Math.min(
-        totalPages,
-        Math.max(1,currentVideoPage + direction)
-    );
-
-    if(nextPage === currentVideoPage){
-        return;
-    }
-
-    currentVideoPage = nextPage;
-    renderVideos();
-
-    if(videoGrid){
-        videoGrid.scrollIntoView({
-            behavior:"smooth",
-            block:"start"
-        });
-    }
-}
-
 function renderVideos(){
 
-    const allDisplayVideos =
+    const videos =
         getVideosForDisplay();
-
-    const filterKey = getPaginationFilterKey();
-
-    if(filterKey !== paginationFilterKey){
-        currentVideoPage = 1;
-        paginationFilterKey = filterKey;
-    }
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(allDisplayVideos.length / VIDEOS_PER_PAGE)
-    );
-
-    if(currentVideoPage > totalPages){
-        currentVideoPage = totalPages;
-    }
-
-    const pageStart =
-        (currentVideoPage - 1) * VIDEOS_PER_PAGE;
-    const videos = allDisplayVideos.slice(
-        pageStart,
-        pageStart + VIDEOS_PER_PAGE
-    );
 
 
     videoGrid.innerHTML = "";
@@ -4362,9 +3740,9 @@ function renderVideos(){
 
 
     resultCount.textContent =
-        allDisplayVideos.length +
+        videos.length +
         (
-            allDisplayVideos.length === 1
+            videos.length === 1
             ? " video"
             : " videos"
         );
@@ -4372,7 +3750,6 @@ function renderVideos(){
 
     if(videos.length === 0){
 
-        hideFeedPagination();
         showEmpty();
 
         return;
@@ -4380,28 +3757,16 @@ function renderVideos(){
     }
 
 
-    const cardFragment = document.createDocumentFragment();
-
     videos.forEach((video,index) => {
 
-        cardFragment.appendChild(
+        videoGrid.appendChild(
             createVideoCard(
                 video,
-                index < CURRENT_PAGE_THUMBNAIL_COUNT,
-                index < HIGH_PRIORITY_THUMBNAIL_COUNT
+                index < INITIAL_THUMBNAIL_COUNT
             )
         );
 
     });
-
-    videoGrid.appendChild(cardFragment);
-
-    updateFeedPagination(
-        allDisplayVideos.length,
-        totalPages
-    );
-
-    scheduleVideoURLPrefetch(videos);
 
 }
 
@@ -4410,11 +3775,7 @@ function renderVideos(){
    CREATE CARD
 ========================= */
 
-function createVideoCard(
-    video,
-    prioritizeLoad = false,
-    highPriority = prioritizeLoad
-){
+function createVideoCard(video,prioritizeLoad = false){
 
     const card =
         document.createElement("article");
@@ -4454,9 +3815,6 @@ function createVideoCard(
             video.views || 0
         ).toLocaleString();
 
-    const saves =
-        getLibrarySaveCount(video.id).toLocaleString();
-
 
     let date = "";
 
@@ -4486,7 +3844,6 @@ function createVideoCard(
                     alt="${escapeHTML(title)}"
                     loading="${prioritizeLoad ? "eager" : "lazy"}"
                     decoding="async"
-                    fetchpriority="${highPriority ? "high" : "auto"}"
                     draggable="false"
                 >
                 `
@@ -4570,17 +3927,8 @@ function createVideoCard(
         aria-label="Save to My Library"
         title="Save to My Library"
     >
-        ☆ save
+        ☆
     </button>
-
-    <span
-        class="save-count"
-        data-id="${escapeHTML(String(video.id))}"
-        aria-label="Total saves"
-        title="Total saves"
-    >
-        ${saves}
-    </span>
 
 </div>
 
@@ -4789,126 +4137,67 @@ function getStoragePath(
 async function getVideoURL(video){
 
     const rawValue =
-        typeof video.video_url === "string"
-            ? video.video_url.trim()
-            : video.video_url;
+        video.video_url;
+
 
     if(!rawValue){
+
         return null;
+
     }
 
-    /* Signed URLs are reused between opens so replaying a video does not
-       wait for another storage request. */
-    const cacheKey =
-        String(video.id || "") + "|" + String(rawValue);
-    const cached = videoURLCache.get(cacheKey);
 
-    if(cached && cached.expiresAt > Date.now() + 30000){
-        return cached.url;
-    }
+    const storagePath =
+        getStoragePath(
+            rawValue,
+            "videos"
+        );
 
-    if(videoURLPromiseCache.has(cacheKey)){
-        return videoURLPromiseCache.get(cacheKey);
-    }
 
-    const request = (async () => {
+    if(!storagePath){
 
-        const storagePath =
-            getStoragePath(
-                rawValue,
-                "videos"
-            );
-
-        if(!storagePath){
-
-            /* Accept external/direct URLs as well as Supabase storage paths. */
-            if(/^https?:\/\//i.test(String(rawValue))){
-                const directURL = String(rawValue);
-                videoURLCache.set(
-                    cacheKey,
-                    {
-                        url:directURL,
-                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
-                    }
-                );
-                return directURL;
-            }
-
-            console.error(
-                "Invalid video path:",
-                rawValue
-            );
-
-            return null;
+        /* Accept external/direct URLs as well as Supabase storage paths. */
+        if(
+            typeof rawValue === "string" &&
+            /^https?:\/\//i.test(rawValue.trim())
+        ){
+            return rawValue.trim();
         }
 
-        const result =
-            await supabaseClient
-                .storage
-                .from("videos")
-                .createSignedUrl(
-                    storagePath,
-                    3600
-                );
+        console.error(
+            "Invalid video path:",
+            rawValue
+        );
 
-        if(result.error){
+        return null;
 
-            console.error(
-                "Signed URL error:",
-                result.error
+    }
+
+
+    const result =
+        await supabaseClient
+            .storage
+            .from("videos")
+            .createSignedUrl(
+                storagePath,
+                3600
             );
 
-            return null;
-        }
 
-        const signedURL =
-            result.data && result.data.signedUrl;
+    if(result.error){
 
-        if(signedURL){
-            videoURLCache.set(
-                cacheKey,
-                {
-                    url:signedURL,
-                    expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
-                }
-            );
-        }
+        console.error(
+            "Signed URL error:",
+            result.error
+        );
 
-        return signedURL || null;
-    })();
+        return null;
 
-    videoURLPromiseCache.set(cacheKey,request);
-
-    try{
-        return await request;
-    }
-    finally{
-        videoURLPromiseCache.delete(cacheKey);
     }
 
-}
 
-function scheduleVideoURLPrefetch(videos){
+    return result.data.signedUrl;
 
-    if(!Array.isArray(videos) || videos.length === 0){
-        return;
-    }
-
-    /* Let the current-page GIF requests win the first paint. These are only
-       signed-URL requests; the video bytes are still fetched on play. */
-    const candidates = videos.slice(
-        0,
-        Math.min(VIDEO_URL_PREFETCH_COUNT, videos.length)
-    );
-
-    window.setTimeout(
-        () => {
-            candidates.forEach(video => {
-                void getVideoURL(video);
-            });
-        },
-        1800
-    );
 }
 
 
@@ -4945,7 +4234,6 @@ async function openPlayer(video){
     /* Re-play opened videos continuously without forcing them muted. */
     playerVideo.loop = true;
     playerVideo.muted = false;
-    playerVideo.preload = "auto";
 
 
     playerVideo.load();
@@ -5088,69 +4376,10 @@ async function toggleLike(videoId){
 
     console.log("Like clicked:", videoId);
 
-    const key = String(videoId);
-    const userId = getLikeUserId();
-    const likeButton = document.querySelector(
-        `.like-btn[data-id="${CSS.escape(key)}"]`
-    );
-    const wasLiked =
-        likedVideoIds.has(key) ||
-        Boolean(likeButton && likeButton.classList.contains("liked"));
-    const video = allVideos.find(
-        item => String(item.id) === key
-    );
-    const previousCountValue = videoLikeSummary.has(key)
-        ? videoLikeSummary.get(key)
-        : video && video.likes_count;
-    const previousCount = Number.isFinite(Number(previousCountValue))
-        ? Math.max(0,Math.floor(Number(previousCountValue)))
-        : 0;
-
-    const applyOptimisticLike = (liked,count) => {
-        likeOptimisticState.set(
-            key,
-            {
-                liked,
-                count
-            }
-        );
-        if(liked){
-            likedVideoIds.add(key);
-        }
-        else{
-            likedVideoIds.delete(key);
-        }
-        videoLikeSummary.set(key,count);
-        if(video){
-            video.likes_count = count;
-        }
-        updateLikeCountUI(key,count);
-        setLikeButtonState(key,liked);
-    };
-
-    const rollbackLike = (liked,count) => {
-        likeOptimisticState.delete(key);
-        if(liked){
-            likedVideoIds.add(key);
-        }
-        else{
-            likedVideoIds.delete(key);
-        }
-        videoLikeSummary.set(key,count);
-        if(video){
-            video.likes_count = count;
-        }
-        updateLikeCountUI(key,count);
-        setLikeButtonState(key,liked);
-    };
-
-    /* Paint the new heart/count before any network round trip. */
-    applyOptimisticLike(
-        !wasLiked,
-        Math.max(0,previousCount + (wasLiked ? -1 : 1))
-    );
-
     try{
+
+        const userId =
+            getLikeUserId();
 
         const { data: existingLike, error: checkError } =
             await supabaseClient
@@ -5167,8 +4396,6 @@ async function toggleLike(videoId){
                 checkError
             );
 
-            rollbackLike(wasLiked,previousCount);
-
             alert(
                 "Unable to check like status."
             );
@@ -5177,79 +4404,68 @@ async function toggleLike(videoId){
 
         }
 
-        const serverWasLiked = Boolean(existingLike);
-        const nextLiked = !serverWasLiked;
-        const optimisticCount = Math.max(
-            0,
-            previousCount + (nextLiked ? 1 : -1)
-        );
 
-        /* Correct a stale local heart if another tab changed it. */
-        if(nextLiked !== !wasLiked){
-            applyOptimisticLike(nextLiked,optimisticCount);
-        }
+        if(existingLike){
 
-        let syncError = null;
+            const { error } =
+                await supabaseClient
+                    .from("video_likes")
+                    .delete()
+                    .eq("id", existingLike.id);
 
-        try{
+            if(error){
 
-            if(existingLike){
+                console.error(
+                    "Unlike error:",
+                    error
+                );
 
-                const { error } =
-                    await supabaseClient
-                        .from("video_likes")
-                        .delete()
-                        .eq("id", existingLike.id);
+                alert(
+                    "Unable to remove like."
+                );
 
-                syncError = error;
-
-            }
-            else{
-
-                const { error } =
-                    await supabaseClient
-                        .from("video_likes")
-                        .insert({
-                            video_id: videoId,
-                            user_id: userId
-                        });
-
-                syncError = error;
+                return;
 
             }
 
         }
-        catch(error){
-            syncError = error;
-        }
+        else{
 
-        if(syncError){
+            const { error } =
+                await supabaseClient
+                    .from("video_likes")
+                    .insert({
+                        video_id: videoId,
+                        user_id: userId
+                    });
 
-            console.error(
-                nextLiked ? "Like insert error:" : "Unlike error:",
-                syncError
-            );
+            if(error){
 
-            rollbackLike(serverWasLiked,previousCount);
-            alert(
-                nextLiked
-                    ? "Unable to like this video."
-                    : "Unable to remove like."
-            );
-            return;
-        }
+                console.error(
+                    "Like insert error:",
+                    error
+                );
 
-        /* Reconcile with the authoritative count in the background. */
-        void updateLikeCount(videoId).finally(() => {
-            const optimistic = likeOptimisticState.get(key);
-            if(optimistic && optimistic.liked === nextLiked){
-                likeOptimisticState.delete(key);
+                alert(
+                    "Unable to like this video."
+                );
+
+                return;
+
             }
-        });
-        scheduleRecommendationRefresh(
-            900,
-            serverWasLiked ? null : videoId
-        );
+
+        }
+
+
+        if(existingLike){
+            likedVideoIds.delete(String(videoId));
+        }
+        else{
+            likedVideoIds.add(String(videoId));
+        }
+
+        await updateLikeCount(videoId);
+        scheduleRecommendationRefresh();
 
     }
     catch(error){
@@ -5372,14 +4588,6 @@ async function updateLikeButton(videoId){
         }
     }
 
-    if(likeOptimisticState.has(key)){
-        setLikeButtonState(
-            key,
-            likeOptimisticState.get(key).liked
-        );
-        return;
-    }
-
     if(likeSummaryReady && videoLikeSummary.has(key)){
         setLikeButtonState(
             key,
@@ -5437,7 +4645,6 @@ function closeVideoPlayer(){
 
     stopWatchTimeTracking();
 
-    const recentlyWatchedVideoId = currentPlayerVideoId;
     currentPlayerVideoId = null;
     updatePlayerLibraryButton();
 
@@ -5448,7 +4655,7 @@ function closeVideoPlayer(){
         "src"
     );
 
-    playerVideo.preload = "metadata";
+
     playerVideo.load();
 
 
@@ -5460,10 +4667,7 @@ function closeVideoPlayer(){
     document.body.style.overflow =
         "";
 
-    scheduleRecommendationRefresh(
-        1500,
-        recentlyWatchedVideoId
-    );
+    scheduleRecommendationRefresh(1500);
 
 }
 
@@ -5610,20 +4814,6 @@ if(libraryToggle){
         toggleLibraryView
     );
 
-}
-
-if(feedPageBack){
-    feedPageBack.addEventListener(
-        "click",
-        () => changeVideoPage(-1)
-    );
-}
-
-if(feedPageNext){
-    feedPageNext.addEventListener(
-        "click",
-        () => changeVideoPage(1)
-    );
 }
 
 document
@@ -6005,8 +5195,6 @@ document.addEventListener(
 
 function showLoading(){
 
-    hideFeedPagination();
-
     videoGrid.innerHTML = `
 
         <div class="loading">
@@ -6029,8 +5217,6 @@ function showLoading(){
 ========================= */
 
 function showEmpty(){
-
-    hideFeedPagination();
 
     const emptyHeading = libraryViewActive
         ? "Your library is empty"
@@ -6068,8 +5254,6 @@ function showEmpty(){
 ========================= */
 
 function showError(message){
-
-    hideFeedPagination();
 
     videoGrid.innerHTML = `
 

@@ -2851,6 +2851,10 @@ async function loadLibrary(){
     restoreLibraryCache();
     updateLibraryUI();
 
+    /* Strict RLS requires the silent anonymous Auth session before the
+       server library query. Cached saves can still paint immediately. */
+    await ensureMiniAppAuthSession();
+
     try{
 
         const { data,error } = await supabaseClient
@@ -2947,6 +2951,10 @@ async function toggleLibrary(videoId,sourceButton){
     if(libraryViewActive){
         renderVideos();
     }
+
+    /* Preserve the instant local save response, then authenticate before
+       the protected Supabase write. */
+    await ensureMiniAppAuthSession();
 
     let syncError = null;
 
@@ -3329,6 +3337,8 @@ async function loadRecommendations(){
 
     try{
 
+        await ensureMiniAppAuthSession();
+
         const { data,error } =
             await supabaseClient.rpc(
                 "get_streamx_recommendations",
@@ -3447,9 +3457,13 @@ function applyLikeSummary(rows){
     likeSummaryReady = true;
 }
 
-function loadLikeSummary(){
+async function loadLikeSummary(){
 
     likeSummaryReady = false;
+
+    /* Wait for the authenticated anonymous UID before reading the user's
+       protected like state under strict RLS. */
+    await ensureMiniAppAuthSession();
 
     return supabaseClient
         .rpc(

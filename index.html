@@ -701,6 +701,9 @@ body{
     border-radius:12px;
     overflow:hidden;
     cursor:pointer;
+    /* Let the browser skip layout/paint work for cards outside the viewport. */
+    content-visibility:auto;
+    contain-intrinsic-size:320px 360px;
     transition:
         transform .2s,
         border-color .2s,
@@ -2074,16 +2077,29 @@ let librarySummaryPromise = null;
 let librarySummaryReady = false;
 let libraryRealtimeChannel = null;
 const VIDEO_URL_CACHE_TTL_MS = 55 * 60 * 1000;
-const VIDEO_URL_PREFETCH_COUNT = 4;
-const VIDEO_BYTE_WARM_COUNT = 2;
-const VIDEO_BYTE_WARM_DELAY_MS = 2800;
-const VIDEO_BYTE_WARM_TIMEOUT_MS = 6500;
+
+/* Keep the first feed page intentionally small so the browser has fewer
+   cards, GIFs and signed video URLs competing during startup. */
+const VIDEOS_PER_PAGE = 15;
+
+/* Resolve signed URLs for the whole visible page in one small batch request.
+   This does NOT download the actual videos. */
+const VIDEO_URL_PREFETCH_COUNT = VIDEOS_PER_PAGE;
+const VIDEO_URL_PREFETCH_DELAY_MS = 700;
+
+/* First paint gets only 15 video metadata rows. The full catalog is hydrated
+   shortly afterwards, once current-page GIF requests have had first priority. */
+const FULL_CATALOG_HYDRATE_DELAY_MS = 900;
+let fullCatalogHydrationPromise = null;
+
+/* Actual byte warming remains selective/adaptive so current-page GIFs
+   keep priority and slow/mobile-data connections are protected. */
+const VIDEO_BYTE_WARM_TIMEOUT_MS = 4500;
 const videoURLCache = new Map();
 const videoURLPromiseCache = new Map();
 const videoByteWarmCache = new Set();
 const videoByteWarmPromiseCache = new Map();
 let videoByteWarmScheduleId = 0;
-const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
 
@@ -4010,9 +4026,45 @@ function scheduleLikeSummary(){
    LOAD VIDEOS
 ========================= */
 
-async function loadVideos(){
+function applyKnownEngagementToVideos(videos){
 
-    showLoading();
+    (Array.isArray(videos) ? videos : []).forEach(video => {
+
+        const key = String(video.id);
+
+        if(videoLikeSummary.has(key)){
+            video.likes_count = videoLikeSummary.get(key);
+        }
+        else if(video.likes_count === undefined || video.likes_count === null){
+            video.likes_count = 0;
+        }
+
+        if(videoLibrarySummary.has(key)){
+            video.saves_count = videoLibrarySummary.get(key);
+        }
+
+    });
+}
+
+function refreshFeedTotalsWithoutRebuild(){
+
+    const allDisplayVideos = getVideosForDisplay();
+    const totalPages = Math.max(
+        1,
+        Math.ceil(allDisplayVideos.length / VIDEOS_PER_PAGE)
+    );
+
+    resultCount.textContent =
+        allDisplayVideos.length +
+        (allDisplayVideos.length === 1 ? " video" : " videos");
+
+    updateFeedPagination(
+        allDisplayVideos.length,
+        totalPages
+    );
+}
+
+async function hydrateFullVideoCatalog(){
 
     try{
 
@@ -4026,6 +4078,87 @@ async function loadVideos(){
                         ascending:false
                     }
                 );
+
+        if(result.error){
+            throw result.error;
+        }
+
+        const hydratedVideos = result.data || [];
+
+        applyKnownEngagementToVideos(hydratedVideos);
+        allVideos = hydratedVideos;
+
+        mergeVideoCategoriesIntoCategoryBar();
+
+        /* Do not rebuild page 1 just because the background catalog arrived.
+           Rebuilding would restart GIF/image downloads. Only refresh totals
+           and pagination; later filters/pages use the fully hydrated catalog. */
+        if(
+            currentVideoPage === 1 &&
+            !libraryViewActive &&
+            !searchTerm &&
+            String(currentCategory).toLowerCase() === "all"
+        ){
+            refreshFeedTotalsWithoutRebuild();
+        }
+        else{
+            renderVideos();
+        }
+
+    }
+    catch(error){
+
+        /* The first 15 videos remain fully usable even if background catalog
+           hydration fails. */
+        console.warn(
+            "Full video catalog hydration unavailable:",
+            error
+        );
+
+    }
+    finally{
+        fullCatalogHydrationPromise = null;
+    }
+}
+
+function scheduleFullVideoCatalogHydration(){
+
+    if(fullCatalogHydrationPromise){
+        return fullCatalogHydrationPromise;
+    }
+
+    fullCatalogHydrationPromise = new Promise(resolve => {
+
+        window.setTimeout(
+            () => {
+                Promise.resolve(hydrateFullVideoCatalog()).then(resolve);
+            },
+            FULL_CATALOG_HYDRATE_DELAY_MS
+        );
+
+    });
+
+    return fullCatalogHydrationPromise;
+}
+
+async function loadVideos(){
+
+    showLoading();
+
+    try{
+
+        /* Fast startup path: request only what page 1 can actually display. */
+        const result =
+            await supabaseClient
+                .from("videos")
+                .select("id,title,description,category,video_url,thumbnail_url,created_at,views")
+                .order(
+                    "created_at",
+                    {
+                        ascending:false
+                    }
+                )
+                .range(0,VIDEOS_PER_PAGE - 1);
 
 
         if(result.error){
@@ -4044,26 +4177,23 @@ async function loadVideos(){
         }
 
 
-allVideos =
-    result.data || [];
+        allVideos = result.data || [];
 
-/* Keep category navigation useful even if the categories table is temporarily
-   unavailable; the videos table still exposes the categories in use. */
-mergeVideoCategoriesIntoCategoryBar();
+        /* Keep category navigation useful even if the categories table is temporarily
+           unavailable; the visible videos still expose categories in use. */
+        mergeVideoCategoriesIntoCategoryBar();
 
-/* Queue the single likes request after the first paint. The grid can paint
-   immediately while counts and heart states arrive in the background. */
-allVideos.forEach(video => {
-    if(video.likes_count === undefined || video.likes_count === null){
-        video.likes_count = 0;
-    }
-});
+        /* Paint the first 15 immediately. Likes/saves arrive after first paint. */
+        applyKnownEngagementToVideos(allVideos);
 
-likeSummaryPromise = scheduleLikeSummary();
-renderVideos();
-void likeSummaryPromise.catch(() => {});
-librarySummaryPromise = scheduleLibrarySummary();
-void librarySummaryPromise.catch(() => {});
+        likeSummaryPromise = scheduleLikeSummary();
+        renderVideos();
+        void likeSummaryPromise.catch(() => {});
+        librarySummaryPromise = scheduleLibrarySummary();
+        void librarySummaryPromise.catch(() => {});
+
+        /* Hydrate the rest only after current-page GIF requests have started. */
+        void scheduleFullVideoCatalogHydration();
 
     }
     catch(error){
@@ -4872,6 +5002,17 @@ if(likeButton){
         {once:true,passive:true}
     );
 
+    /* On touch/mobile, pointer-down happens before click. Start only the tiny
+       signed-URL request here (not video bytes), so playback can begin sooner
+       without stealing bandwidth from current-page GIFs while the user scrolls. */
+    card.addEventListener(
+        "pointerdown",
+        function(){
+            void getVideoURL(video);
+        },
+        {once:true,passive:true}
+    );
+
     card.addEventListener(
         "click",
         function(){
@@ -5124,26 +5265,140 @@ async function getVideoURL(video){
 
 }
 
+async function prefetchVideoURLs(videos){
+
+    if(!Array.isArray(videos) || videos.length === 0){
+        return;
+    }
+
+    const candidates = videos.slice(
+        0,
+        Math.min(VIDEO_URL_PREFETCH_COUNT,videos.length)
+    );
+
+    const batchItems = [];
+
+    candidates.forEach(video => {
+
+        const rawValue =
+            typeof video.video_url === "string"
+                ? video.video_url.trim()
+                : video.video_url;
+
+        if(!rawValue){
+            return;
+        }
+
+        const cacheKey =
+            String(video.id || "") + "|" + String(rawValue);
+
+        const cached = videoURLCache.get(cacheKey);
+
+        if(cached && cached.expiresAt > Date.now() + 30000){
+            return;
+        }
+
+        const storagePath =
+            getStoragePath(
+                rawValue,
+                "videos"
+            );
+
+        if(!storagePath){
+
+            if(/^https?:\/\//i.test(String(rawValue))){
+                videoURLCache.set(
+                    cacheKey,
+                    {
+                        url:String(rawValue),
+                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                    }
+                );
+            }
+
+            return;
+        }
+
+        batchItems.push({
+            video,
+            cacheKey,
+            storagePath
+        });
+    });
+
+    if(batchItems.length === 0){
+        return;
+    }
+
+    try{
+
+        /*
+         * One batch signing call prepares every visible-page storage URL.
+         * Previously this required several individual network round trips.
+         */
+        const {data,error} =
+            await supabaseClient
+                .storage
+                .from("videos")
+                .createSignedUrls(
+                    batchItems.map(item => item.storagePath),
+                    3600
+                );
+
+        if(error || !Array.isArray(data)){
+            throw error || new Error("Signed URL batch returned no data");
+        }
+
+        batchItems.forEach((item,index) => {
+
+            const row = data[index];
+            const signedURL =
+                row && row.signedUrl;
+
+            if(signedURL){
+                videoURLCache.set(
+                    item.cacheKey,
+                    {
+                        url:signedURL,
+                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                    }
+                );
+            }
+            else{
+                /* Rare partial failure: fall back only for that video. */
+                void getVideoURL(item.video);
+            }
+        });
+
+    }
+    catch(error){
+
+        console.warn(
+            "Batch video URL prefetch unavailable; using individual fallback.",
+            error?.message || error
+        );
+
+        candidates.forEach(video => {
+            void getVideoURL(video);
+        });
+    }
+}
+
 function scheduleVideoURLPrefetch(videos){
 
     if(!Array.isArray(videos) || videos.length === 0){
         return;
     }
 
-    /* Let the current-page GIF requests win the first paint. These are only
-       signed-URL requests; the video bytes are still fetched on play. */
-    const candidates = videos.slice(
-        0,
-        Math.min(VIDEO_URL_PREFETCH_COUNT, videos.length)
-    );
-
+    /*
+     * Give GIF/thumbnail requests the first paint, then prepare every URL on
+     * the current 15-video page in ONE lightweight signing request.
+     */
     window.setTimeout(
         () => {
-            candidates.forEach(video => {
-                void getVideoURL(video);
-            });
+            void prefetchVideoURLs(videos);
         },
-        1800
+        VIDEO_URL_PREFETCH_DELAY_MS
     );
 }
 
@@ -5286,6 +5541,46 @@ async function warmVideoBytes(video){
     }
 }
 
+function getVideoByteWarmPlan(){
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+    const effectiveType =
+        String(connection?.effectiveType || "").toLowerCase();
+
+    /*
+     * Faster networks can safely prepare more likely videos earlier.
+     * 3G stays conservative; 2G/Save-Data was already blocked above.
+     */
+    if(effectiveType === "4g"){
+        return {
+            count:3,
+            delay:1400,
+            stagger:350,
+            idleTimeout:1000
+        };
+    }
+
+    if(effectiveType === "3g"){
+        return {
+            count:1,
+            delay:2400,
+            stagger:0,
+            idleTimeout:1600
+        };
+    }
+
+    return {
+        count:2,
+        delay:1800,
+        stagger:450,
+        idleTimeout:1300
+    };
+}
+
 function scheduleVideoByteWarm(videos){
 
     if(
@@ -5296,12 +5591,12 @@ function scheduleVideoByteWarm(videos){
         return;
     }
 
-    /* GIFs on the active page remain priority #1. Only after that initial
-       window do we warm a very small number of likely-to-open videos. */
     const scheduleId = ++videoByteWarmScheduleId;
+    const plan = getVideoByteWarmPlan();
+
     const candidates = videos.slice(
         0,
-        Math.min(VIDEO_BYTE_WARM_COUNT,videos.length)
+        Math.min(plan.count,videos.length)
     );
 
     const beginWarm = () => {
@@ -5311,30 +5606,32 @@ function scheduleVideoByteWarm(videos){
         }
 
         candidates.forEach((video,index) => {
+
             window.setTimeout(
                 () => {
                     if(scheduleId === videoByteWarmScheduleId){
                         void warmVideoBytes(video);
                     }
                 },
-                index * 700
+                index * plan.stagger
             );
         });
     };
 
     window.setTimeout(
         () => {
+
             if("requestIdleCallback" in window){
                 window.requestIdleCallback(
                     beginWarm,
-                    {timeout:2200}
+                    {timeout:plan.idleTimeout}
                 );
             }
             else{
                 beginWarm();
             }
         },
-        VIDEO_BYTE_WARM_DELAY_MS
+        plan.delay
     );
 }
 
@@ -5344,6 +5641,10 @@ function scheduleVideoByteWarm(videos){
 ========================= */
 
 async function openPlayer(video){
+
+    /* Start URL resolution immediately and overlap it with the modal/player
+       setup below. Cached/prefetched URLs resolve almost instantly. */
+    const videoURLPromise = getVideoURL(video);
 
     stopWatchTimeTracking();
 
@@ -5388,7 +5689,7 @@ async function openPlayer(video){
 
 
     const videoURL =
-        await getVideoURL(video);
+        await videoURLPromise;
 
 
     if(!videoURL){

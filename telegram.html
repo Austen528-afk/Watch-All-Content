@@ -4203,6 +4203,12 @@ function renderVideos(){
 
     videoGrid.appendChild(cardFragment);
 
+    /*
+     * Keep only near-viewport animated GIFs active in Telegram.
+     * This prevents lower cards from freezing after scrolling.
+     */
+    setupTelegramGifScrollWindow();
+
     updateFeedPagination(
         allDisplayVideos.length,
         totalPages
@@ -4212,6 +4218,432 @@ function renderVideos(){
     scheduleVideoURLPrefetch(videos);
     scheduleVideoByteWarm(videos);
 
+}
+
+
+/* =========================================================
+   TELEGRAM SMART GIF BUDGET
+   ---------------------------------------------------------
+   Telegram WebView can struggle when several animated GIFs decode
+   at the same time. Keep a very small animation budget:
+   - visible GIFs always get first priority
+   - then the nearest GIFs in the user's scroll direction
+   - maximum 4 active GIFs at once
+   - GIFs are prepared before they enter the viewport
+   - static JPG/PNG thumbnails are never touched
+========================================================= */
+
+let streamxGifObserver = null;
+let streamxGifBudgetRAF = 0;
+let streamxGifScrollListenerInstalled = false;
+let streamxLastGifScrollY = window.scrollY || 0;
+let streamxGifScrollDirection = 1;
+const streamxNearGifCards = new Set();
+
+const STREAMX_MAX_ACTIVE_GIFS = 4;
+
+const STREAMX_GIF_PLACEHOLDER =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+function isAnimatedGifThumbnailURL(url){
+
+    if(!url){
+        return false;
+    }
+
+    try{
+
+        const parsed =
+            new URL(
+                url,
+                window.location.href
+            );
+
+        return parsed.pathname
+            .toLowerCase()
+            .endsWith(".gif");
+
+    }
+    catch(error){
+
+        return String(url)
+            .split("?")[0]
+            .toLowerCase()
+            .endsWith(".gif");
+    }
+}
+
+function activateFeedGif(image){
+
+    if(!image){
+        return;
+    }
+
+    const storedSource =
+        image.dataset.streamxGifSource;
+
+    /*
+     * Restore only when this GIF was actually suspended.
+     * Reassigning src on every scroll event would restart the animation.
+     */
+    if(
+        storedSource &&
+        (
+            image.dataset.streamxGifSuspended === "1" ||
+            image.getAttribute("src") === STREAMX_GIF_PLACEHOLDER
+        )
+    ){
+
+        image.src =
+            storedSource;
+
+        delete image.dataset.streamxGifSuspended;
+    }
+
+    image.loading =
+        "eager";
+
+    try{
+        image.fetchPriority =
+            "auto";
+    }
+    catch(error){}
+}
+
+function suspendFeedGif(image){
+
+    if(
+        !image ||
+        image.dataset.streamxGifSuspended === "1"
+    ){
+        return;
+    }
+
+    const currentSource =
+        image.dataset.streamxGifSource ||
+        image.getAttribute("src");
+
+    if(
+        !currentSource ||
+        currentSource === STREAMX_GIF_PLACEHOLDER ||
+        !isAnimatedGifThumbnailURL(currentSource)
+    ){
+        return;
+    }
+
+    image.dataset.streamxGifSource =
+        currentSource;
+
+    image.dataset.streamxGifSuspended =
+        "1";
+
+    /*
+     * Stop off-screen/low-priority GIF decoding.
+     * The source remains cached and is restored when the card becomes
+     * one of the four highest-priority GIFs.
+     */
+    image.src =
+        STREAMX_GIF_PLACEHOLDER;
+}
+
+function getGifCardPriority(card){
+
+    const rect =
+        card.getBoundingClientRect();
+
+    const viewportHeight =
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        800;
+
+    const visible =
+        rect.bottom > 0 &&
+        rect.top < viewportHeight;
+
+    if(visible){
+
+        /*
+         * Visible cards are always first.
+         * Within the viewport, favor the one closest to the center.
+         */
+        const cardCenter =
+            rect.top + (rect.height / 2);
+
+        const viewportCenter =
+            viewportHeight / 2;
+
+        return Math.abs(
+            cardCenter - viewportCenter
+        );
+    }
+
+    /*
+     * For nearby off-screen cards, favor the direction the user is moving.
+     * This effectively reserves spare GIF capacity for what is coming next.
+     */
+    if(streamxGifScrollDirection >= 0){
+
+        if(rect.top >= viewportHeight){
+            return 10000 + (rect.top - viewportHeight);
+        }
+
+        return 20000 + Math.abs(rect.bottom);
+    }
+
+    if(rect.bottom <= 0){
+        return 10000 + Math.abs(rect.bottom);
+    }
+
+    return 20000 + Math.abs(rect.top - viewportHeight);
+}
+
+function rebalanceTelegramGifBudget(){
+
+    streamxGifBudgetRAF = 0;
+
+    if(!videoGrid){
+        return;
+    }
+
+    const candidates =
+        Array.from(streamxNearGifCards)
+            .filter(card =>
+                card &&
+                card.isConnected
+            )
+            .map(card => {
+
+                const image =
+                    card.querySelector(
+                        ".thumbnail-fallback"
+                    );
+
+                if(!image){
+                    return null;
+                }
+
+                const source =
+                    image.dataset.streamxGifSource ||
+                    image.getAttribute("src");
+
+                if(
+                    !isAnimatedGifThumbnailURL(
+                        source
+                    )
+                ){
+                    return null;
+                }
+
+                return {
+                    card,
+                    image,
+                    priority:getGifCardPriority(card)
+                };
+            })
+            .filter(Boolean)
+            .sort(
+                (a,b) =>
+                    a.priority - b.priority
+            );
+
+    const active =
+        new Set(
+            candidates
+                .slice(
+                    0,
+                    STREAMX_MAX_ACTIVE_GIFS
+                )
+                .map(item => item.card)
+        );
+
+    candidates.forEach(item => {
+
+        if(active.has(item.card)){
+
+            activateFeedGif(
+                item.image
+            );
+
+        }
+        else{
+
+            suspendFeedGif(
+                item.image
+            );
+        }
+    });
+}
+
+function scheduleTelegramGifBudget(){
+
+    if(streamxGifBudgetRAF){
+        return;
+    }
+
+    streamxGifBudgetRAF =
+        window.requestAnimationFrame(
+            rebalanceTelegramGifBudget
+        );
+}
+
+function installTelegramGifScrollTracking(){
+
+    if(streamxGifScrollListenerInstalled){
+        return;
+    }
+
+    streamxGifScrollListenerInstalled =
+        true;
+
+    window.addEventListener(
+        "scroll",
+        () => {
+
+            const currentY =
+                window.scrollY || 0;
+
+            const delta =
+                currentY -
+                streamxLastGifScrollY;
+
+            if(Math.abs(delta) > 2){
+
+                streamxGifScrollDirection =
+                    delta >= 0
+                        ? 1
+                        : -1;
+
+                streamxLastGifScrollY =
+                    currentY;
+            }
+
+            scheduleTelegramGifBudget();
+        },
+        {passive:true}
+    );
+
+    window.addEventListener(
+        "resize",
+        scheduleTelegramGifBudget,
+        {passive:true}
+    );
+}
+
+function setupTelegramGifScrollWindow(){
+
+    if(streamxGifObserver){
+
+        streamxGifObserver.disconnect();
+
+        streamxGifObserver =
+            null;
+    }
+
+    streamxNearGifCards.clear();
+
+    if(
+        !videoGrid ||
+        typeof IntersectionObserver !== "function"
+    ){
+        return;
+    }
+
+    installTelegramGifScrollTracking();
+
+    streamxGifObserver =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(entry => {
+
+                    const card =
+                        entry.target;
+
+                    const image =
+                        card.querySelector(
+                            ".thumbnail-fallback"
+                        );
+
+                    if(!image){
+                        return;
+                    }
+
+                    const candidateURL =
+                        image.dataset.streamxGifSource ||
+                        image.getAttribute("src");
+
+                    if(
+                        !isAnimatedGifThumbnailURL(
+                            candidateURL
+                        )
+                    ){
+                        return;
+                    }
+
+                    if(entry.isIntersecting){
+
+                        streamxNearGifCards.add(
+                            card
+                        );
+
+                    }
+                    else{
+
+                        streamxNearGifCards.delete(
+                            card
+                        );
+
+                        suspendFeedGif(
+                            image
+                        );
+                    }
+                });
+
+                scheduleTelegramGifBudget();
+            },
+            {
+                /*
+                 * Prepare upcoming GIFs before they enter the screen, but do
+                 * not let all 20 cards become active decoders.
+                 */
+                root:null,
+                rootMargin:"750px 0px 750px 0px",
+                threshold:0
+            }
+        );
+
+    videoGrid
+        .querySelectorAll(".video-card")
+        .forEach(card => {
+
+            const image =
+                card.querySelector(
+                    ".thumbnail-fallback"
+                );
+
+            if(!image){
+                return;
+            }
+
+            const source =
+                image.getAttribute("src");
+
+            if(
+                isAnimatedGifThumbnailURL(
+                    source
+                )
+            ){
+
+                image.dataset.streamxGifSource =
+                    source;
+
+                streamxGifObserver.observe(
+                    card
+                );
+            }
+        });
+
+    scheduleTelegramGifBudget();
 }
 
 

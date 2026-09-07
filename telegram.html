@@ -1289,6 +1289,14 @@ body{
 
 }
 
+
+/* Telegram Step 7: keep feed GIF animation alive while player is active. */
+#videoGrid.streamx-playback-priority .thumbnail-fallback,
+.video-grid.streamx-playback-priority .thumbnail-fallback{
+    display:block !important;
+    visibility:visible !important;
+}
+
 </style>
 
 </head>
@@ -4434,16 +4442,12 @@ if(likeButton){
     card.addEventListener(
         "pointerdown",
         function(){
+            /*
+             * Keep touch interaction lightweight in Telegram.
+             * Resolve only the URL here; HLS.js is attached after the click.
+             * This avoids a script-parse hitch that can pause GIF animation.
+             */
             void getVideoURL(video);
-
-            const rawVideoURL =
-                typeof video?.video_url === "string"
-                    ? video.video_url.trim()
-                    : "";
-
-            if(isHLSVideoURL(rawVideoURL)){
-                void ensureHlsLibrary();
-            }
         },
         {once:true,passive:true}
     );
@@ -5511,81 +5515,31 @@ const STREAMX_EMPTY_IMAGE =
 
 function suspendFeedMediaForPlayback(){
 
-    if(!videoGrid){
-        return;
+    /*
+     * Telegram-specific balance:
+     * leave already-rendered GIFs completely untouched.
+     *
+     * The previous version hid every GIF and replaced unfinished image
+     * sources while a video was open. In Telegram WebView this could make
+     * GIF animation appear frozen or restart after closing the player.
+     *
+     * Video startup is now handled by HLS.js itself, so we do not need to
+     * mutate feed images.
+     */
+    if(videoGrid){
+        videoGrid.classList.add(
+            "streamx-playback-priority"
+        );
     }
-
-    videoGrid.classList.add(
-        "streamx-playback-priority"
-    );
-
-    videoGrid
-        .querySelectorAll(".thumbnail-fallback")
-        .forEach(image => {
-
-            if(
-                !image.dataset.streamxOriginalDisplay
-            ){
-                image.dataset.streamxOriginalDisplay =
-                    image.style.display || "";
-            }
-
-            /*
-             * If a GIF/image is still downloading, stop that request so the
-             * just-opened video receives the available bandwidth immediately.
-             * Already-loaded GIFs are only hidden, not re-requested.
-             */
-            if(!image.complete){
-
-                const source =
-                    image.getAttribute("src");
-
-                if(
-                    source &&
-                    source !== STREAMX_EMPTY_IMAGE
-                ){
-                    image.dataset.streamxSuspendedSrc =
-                        source;
-
-                    image.src =
-                        STREAMX_EMPTY_IMAGE;
-                }
-            }
-
-            image.style.display =
-                "none";
-        });
 }
 
 function resumeFeedMediaAfterPlayback(){
 
-    if(!videoGrid){
-        return;
+    if(videoGrid){
+        videoGrid.classList.remove(
+            "streamx-playback-priority"
+        );
     }
-
-    videoGrid.classList.remove(
-        "streamx-playback-priority"
-    );
-
-    videoGrid
-        .querySelectorAll(".thumbnail-fallback")
-        .forEach(image => {
-
-            const suspendedSource =
-                image.dataset.streamxSuspendedSrc;
-
-            if(suspendedSource){
-                image.src =
-                    suspendedSource;
-
-                delete image.dataset.streamxSuspendedSrc;
-            }
-
-            image.style.display =
-                image.dataset.streamxOriginalDisplay || "";
-
-            delete image.dataset.streamxOriginalDisplay;
-        });
 }
 
 

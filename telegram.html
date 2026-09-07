@@ -1308,6 +1308,40 @@ body{
     background:#171717 !important;
 }
 
+
+/* =====================================================
+   LIGHTWEIGHT VIDEO PREVIEWS
+===================================================== */
+
+.thumbnail-preview-video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+    background:#171717;
+    opacity:0;
+    transition:opacity .12s ease;
+    pointer-events:none;
+}
+
+.thumbnail-preview-video.streamx-preview-ready{
+    opacity:1;
+}
+
+.thumbnail-preview-loading{
+    position:absolute;
+    inset:0;
+    background:#171717;
+    pointer-events:none;
+}
+
+.thumbnail-preview-video.streamx-preview-ready
+    + .thumbnail-preview-loading{
+    display:none;
+}
+
 </style>
 
 </head>
@@ -3385,6 +3419,7 @@ function normalizeRecommendationVideo(row){
         category:row && row.category || "Uncategorized",
         video_url:row && row.video_url || "",
         thumbnail_url:row && row.thumbnail_url || "",
+        preview_video_url:row && row.preview_video_url || "",
         created_at:row && row.created_at || null,
         views:Number(row && row.views || 0),
         likes_count:Number(row && row.likes_count || 0),
@@ -3656,7 +3691,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,created_at,views")
+                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -4215,8 +4250,15 @@ function renderVideos(){
     videoGrid.appendChild(cardFragment);
 
     /*
+     * New processed videos use lightweight MP4 previews.
+     * Older videos continue using the existing GIF system.
+     */
+    setupTelegramVideoPreviewWindow();
+
+
+    /*
      * Keep only near-viewport animated GIFs active in Telegram.
-     * This prevents lower cards from freezing after scrolling.
+     * This now applies only to legacy videos without preview_video_url.
      */
     setupTelegramGifScrollWindow();
 
@@ -4229,6 +4271,317 @@ function renderVideos(){
     scheduleVideoURLPrefetch(videos);
     scheduleVideoByteWarm(videos);
 
+}
+
+
+/* =========================================================
+   TELEGRAM LIGHTWEIGHT VIDEO PREVIEW WINDOW
+   ---------------------------------------------------------
+   New processed uploads use tiny muted MP4 previews instead of GIF.
+   The files are small, so we preload them well before they reach the
+   viewport, but only play previews that are actually visible.
+========================================================= */
+
+let streamxPreviewPreloadObserver = null;
+let streamxPreviewPlayObserver = null;
+let streamxFeedPreviewPlaybackSuspended = false;
+
+function prepareThumbnailVideoPreview(video){
+
+    if(
+        !video ||
+        video.dataset.streamxPreviewPrepared === "1"
+    ){
+        return;
+    }
+
+    const source =
+        video.dataset.previewSrc;
+
+    if(!source){
+        return;
+    }
+
+    video.dataset.streamxPreviewPrepared =
+        "1";
+
+    video.preload =
+        "auto";
+
+    video.src =
+        source;
+
+    const markReady = () => {
+
+        video.classList.add(
+            "streamx-preview-ready"
+        );
+    };
+
+    video.addEventListener(
+        "loadeddata",
+        markReady,
+        {once:true}
+    );
+
+    video.addEventListener(
+        "canplay",
+        markReady,
+        {once:true}
+    );
+
+    /*
+     * Retry one failed preview request without affecting the main video.
+     */
+    video.addEventListener(
+        "error",
+        function(){
+
+            if(
+                video.dataset.streamxPreviewRetryDone === "1"
+            ){
+                return;
+            }
+
+            video.dataset.streamxPreviewRetryDone =
+                "1";
+
+            window.setTimeout(
+                () => {
+
+                    if(!video.isConnected){
+                        return;
+                    }
+
+                    video.removeAttribute(
+                        "src"
+                    );
+
+                    video.load();
+
+                    video.src =
+                        source;
+
+                    video.load();
+
+                },
+                500
+            );
+        },
+        {once:true}
+    );
+
+    video.load();
+}
+
+
+function playThumbnailVideoPreview(video){
+
+    if(
+        !video ||
+        streamxFeedPreviewPlaybackSuspended
+    ){
+        return;
+    }
+
+    prepareThumbnailVideoPreview(
+        video
+    );
+
+    const playPromise =
+        video.play();
+
+    if(
+        playPromise &&
+        typeof playPromise.catch === "function"
+    ){
+        playPromise.catch(
+            () => {}
+        );
+    }
+}
+
+
+function pauseThumbnailVideoPreview(video){
+
+    if(!video){
+        return;
+    }
+
+    try{
+        video.pause();
+    }
+    catch(error){}
+}
+
+
+function setupTelegramVideoPreviewWindow(){
+
+    if(streamxPreviewPreloadObserver){
+
+        streamxPreviewPreloadObserver.disconnect();
+
+        streamxPreviewPreloadObserver =
+            null;
+    }
+
+    if(streamxPreviewPlayObserver){
+
+        streamxPreviewPlayObserver.disconnect();
+
+        streamxPreviewPlayObserver =
+            null;
+    }
+
+    if(
+        !videoGrid ||
+        typeof IntersectionObserver !== "function"
+    ){
+        return;
+    }
+
+    const previews =
+        videoGrid.querySelectorAll(
+            ".thumbnail-preview-video"
+        );
+
+    if(previews.length === 0){
+        return;
+    }
+
+
+    /*
+     * Begin fetching several cards before the user reaches them.
+     * These preview MP4s are intentionally tiny (~tens of KB).
+     */
+    streamxPreviewPreloadObserver =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if(entry.isIntersecting){
+
+                        prepareThumbnailVideoPreview(
+                            entry.target
+                        );
+                    }
+                });
+
+            },
+            {
+                root:null,
+                rootMargin:"3200px 0px 3200px 0px",
+                threshold:0
+            }
+        );
+
+
+    /*
+     * Only visible previews decode/play. Off-screen previews stay cached
+     * but paused, avoiding the Telegram GIF CPU problem.
+     */
+    streamxPreviewPlayObserver =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(entry => {
+
+                    const video =
+                        entry.target;
+
+                    if(
+                        entry.isIntersecting &&
+                        entry.intersectionRatio >= 0.08
+                    ){
+
+                        playThumbnailVideoPreview(
+                            video
+                        );
+
+                    }
+                    else{
+
+                        pauseThumbnailVideoPreview(
+                            video
+                        );
+                    }
+                });
+
+            },
+            {
+                root:null,
+                rootMargin:"0px",
+                threshold:[0,0.08,0.25]
+            }
+        );
+
+
+    previews.forEach(video => {
+
+        streamxPreviewPreloadObserver.observe(
+            video
+        );
+
+        streamxPreviewPlayObserver.observe(
+            video
+        );
+    });
+}
+
+
+function pauseAllFeedVideoPreviews(){
+
+    streamxFeedPreviewPlaybackSuspended =
+        true;
+
+    if(!videoGrid){
+        return;
+    }
+
+    videoGrid
+        .querySelectorAll(
+            ".thumbnail-preview-video"
+        )
+        .forEach(
+            pauseThumbnailVideoPreview
+        );
+}
+
+
+function resumeVisibleFeedVideoPreviews(){
+
+    streamxFeedPreviewPlaybackSuspended =
+        false;
+
+    if(!videoGrid){
+        return;
+    }
+
+    videoGrid
+        .querySelectorAll(
+            ".thumbnail-preview-video"
+        )
+        .forEach(video => {
+
+            const rect =
+                video.getBoundingClientRect();
+
+            const viewportHeight =
+                window.innerHeight ||
+                document.documentElement.clientHeight ||
+                800;
+
+            if(
+                rect.bottom > 0 &&
+                rect.top < viewportHeight
+            ){
+
+                playThumbnailVideoPreview(
+                    video
+                );
+            }
+        });
 }
 
 
@@ -5194,6 +5547,15 @@ function createVideoCard(video,prioritizeLoad = false){
         );
 
 
+    const previewVideoURL =
+        video.preview_video_url
+            ? getPublicURL(
+                video.preview_video_url,
+                "streamx-hls"
+            )
+            : null;
+
+
     const title =
         video.title ||
         "Untitled Video";
@@ -5233,27 +5595,52 @@ function createVideoCard(video,prioritizeLoad = false){
         <div class="thumbnail">
 
             ${
-                thumbnail
+                previewVideoURL
                 ?
 
                 `
-                <img
-                    class="thumbnail-fallback"
-                    src="${escapeHTML(thumbnail)}"
-                    alt="${escapeHTML(title)}"
-                    loading="${prioritizeLoad ? "eager" : "lazy"}"
-                    decoding="async"
-                    draggable="false"
-                >
+                <video
+                    class="thumbnail-preview-video"
+                    data-preview-src="${escapeHTML(previewVideoURL)}"
+                    muted
+                    loop
+                    playsinline
+                    preload="none"
+                    disablepictureinpicture
+                    aria-hidden="true"
+                ></video>
+
+                <div
+                    class="thumbnail-preview-loading"
+                    aria-hidden="true"
+                ></div>
                 `
 
                 :
 
-                `
-                <div class="no-thumbnail">
-                    🎬
-                </div>
-                `
+                (
+                    thumbnail
+                    ?
+
+                    `
+                    <img
+                        class="thumbnail-fallback"
+                        src="${escapeHTML(thumbnail)}"
+                        alt="${escapeHTML(title)}"
+                        loading="${prioritizeLoad ? "eager" : "lazy"}"
+                        decoding="async"
+                        draggable="false"
+                    >
+                    `
+
+                    :
+
+                    `
+                    <div class="no-thumbnail">
+                        🎬
+                    </div>
+                    `
+                )
             }
 
             <div class="play-overlay">
@@ -6481,6 +6868,8 @@ function suspendFeedMediaForPlayback(){
      * Video startup is now handled by HLS.js itself, so we do not need to
      * mutate feed images.
      */
+    pauseAllFeedVideoPreviews();
+
     if(videoGrid){
         videoGrid.classList.add(
             "streamx-playback-priority"
@@ -6495,6 +6884,8 @@ function resumeFeedMediaAfterPlayback(){
             "streamx-playback-priority"
         );
     }
+
+    resumeVisibleFeedVideoPreviews();
 }
 
 

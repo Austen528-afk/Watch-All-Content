@@ -2099,6 +2099,21 @@ let likedVideoIds = new Set();
 let likeOptimisticState = new Map();
 let likeSummaryPromise = null;
 let likeSummaryReady = false;
+const VIDEO_URL_CACHE_TTL_MS = 55 * 60 * 1000;
+
+/* Resolve signed URLs for the whole visible page in one small batch request.
+   This does NOT download the actual videos. */
+const VIDEO_URL_PREFETCH_COUNT = 20;
+const VIDEO_URL_PREFETCH_DELAY_MS = 700;
+
+/* Actual byte warming remains selective/adaptive so current-page GIFs
+   keep priority and slow/mobile-data connections are protected. */
+const VIDEO_BYTE_WARM_TIMEOUT_MS = 4500;
+const videoURLCache = new Map();
+const videoURLPromiseCache = new Map();
+const videoByteWarmCache = new Set();
+const videoByteWarmPromiseCache = new Map();
+let videoByteWarmScheduleId = 0;
 const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
@@ -4185,6 +4200,10 @@ function renderVideos(){
         totalPages
     );
 
+    /* Keep GIFs/thumbnail rendering first, then prepare likely video opens. */
+    scheduleVideoURLPrefetch(videos);
+    scheduleVideoByteWarm(videos);
+
 }
 
 
@@ -4401,6 +4420,25 @@ if(likeButton){
     }
 
 
+    /* Desktop hover is a strong signal that this video may open next. */
+    card.addEventListener(
+        "pointerenter",
+        function(){
+            void warmVideoBytes(video);
+        },
+        {once:true,passive:true}
+    );
+
+    /* Mobile/touch intent: start only signed-URL resolution before click.
+       This is intentionally lightweight so scrolling does not compete with GIFs. */
+    card.addEventListener(
+        "pointerdown",
+        function(){
+            void getVideoURL(video);
+        },
+        {once:true,passive:true}
+    );
+
     card.addEventListener(
         "click",
         function(){
@@ -4554,67 +4592,686 @@ function getStoragePath(
 async function getVideoURL(video){
 
     const rawValue =
-        video.video_url;
-
+        typeof video.video_url === "string"
+            ? video.video_url.trim()
+            : video.video_url;
 
     if(!rawValue){
-
         return null;
-
     }
 
+    /* Reuse signed URLs and deduplicate simultaneous requests. This removes
+       the storage-signing round trip from most video opens/replays. */
+    const cacheKey =
+        String(video.id || "") + "|" + String(rawValue);
+    const cached = videoURLCache.get(cacheKey);
 
-    const storagePath =
-        getStoragePath(
-            rawValue,
-            "videos"
-        );
-
-
-    if(!storagePath){
-
-        /* Accept external/direct URLs as well as Supabase storage paths. */
-        if(
-            typeof rawValue === "string" &&
-            /^https?:\/\//i.test(rawValue.trim())
-        ){
-            return rawValue.trim();
-        }
-
-        console.error(
-            "Invalid video path:",
-            rawValue
-        );
-
-        return null;
-
+    if(cached && cached.expiresAt > Date.now() + 30000){
+        return cached.url;
     }
 
+    if(videoURLPromiseCache.has(cacheKey)){
+        return videoURLPromiseCache.get(cacheKey);
+    }
 
-    const result =
-        await supabaseClient
-            .storage
-            .from("videos")
-            .createSignedUrl(
-                storagePath,
-                3600
+    const request = (async () => {
+
+        const storagePath =
+            getStoragePath(
+                rawValue,
+                "videos"
             );
 
+        if(!storagePath){
 
-    if(result.error){
+            if(/^https?:\/\//i.test(String(rawValue))){
+                const directURL = String(rawValue);
+                videoURLCache.set(
+                    cacheKey,
+                    {
+                        url:directURL,
+                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                    }
+                );
+                return directURL;
+            }
 
-        console.error(
-            "Signed URL error:",
-            result.error
-        );
+            console.error(
+                "Invalid video path:",
+                rawValue
+            );
 
-        return null;
+            return null;
+        }
 
+        const result =
+            await supabaseClient
+                .storage
+                .from("videos")
+                .createSignedUrl(
+                    storagePath,
+                    3600
+                );
+
+        if(result.error){
+
+            console.error(
+                "Signed URL error:",
+                result.error
+            );
+
+            return null;
+        }
+
+        const signedURL =
+            result.data && result.data.signedUrl;
+
+        if(signedURL){
+            videoURLCache.set(
+                cacheKey,
+                {
+                    url:signedURL,
+                    expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                }
+            );
+        }
+
+        return signedURL || null;
+    })();
+
+    videoURLPromiseCache.set(cacheKey,request);
+
+    try{
+        return await request;
+    }
+    finally{
+        videoURLPromiseCache.delete(cacheKey);
+    }
+}
+
+async function prefetchVideoURLs(videos){
+
+    if(!Array.isArray(videos) || videos.length === 0){
+        return;
     }
 
+    const candidates = videos.slice(
+        0,
+        Math.min(VIDEO_URL_PREFETCH_COUNT,videos.length)
+    );
 
-    return result.data.signedUrl;
+    const batchItems = [];
 
+    candidates.forEach(video => {
+
+        const rawValue =
+            typeof video.video_url === "string"
+                ? video.video_url.trim()
+                : video.video_url;
+
+        if(!rawValue){
+            return;
+        }
+
+        const cacheKey =
+            String(video.id || "") + "|" + String(rawValue);
+
+        const cached = videoURLCache.get(cacheKey);
+
+        if(cached && cached.expiresAt > Date.now() + 30000){
+            return;
+        }
+
+        const storagePath =
+            getStoragePath(
+                rawValue,
+                "videos"
+            );
+
+        if(!storagePath){
+
+            if(/^https?:\/\//i.test(String(rawValue))){
+                videoURLCache.set(
+                    cacheKey,
+                    {
+                        url:String(rawValue),
+                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                    }
+                );
+            }
+
+            return;
+        }
+
+        batchItems.push({
+            video,
+            cacheKey,
+            storagePath
+        });
+    });
+
+    if(batchItems.length === 0){
+        return;
+    }
+
+    try{
+
+        /*
+         * One batch signing call prepares every visible-page storage URL.
+         * Previously this required several individual network round trips.
+         */
+        const {data,error} =
+            await supabaseClient
+                .storage
+                .from("videos")
+                .createSignedUrls(
+                    batchItems.map(item => item.storagePath),
+                    3600
+                );
+
+        if(error || !Array.isArray(data)){
+            throw error || new Error("Signed URL batch returned no data");
+        }
+
+        batchItems.forEach((item,index) => {
+
+            const row = data[index];
+            const signedURL =
+                row && row.signedUrl;
+
+            if(signedURL){
+                videoURLCache.set(
+                    item.cacheKey,
+                    {
+                        url:signedURL,
+                        expiresAt:Date.now() + VIDEO_URL_CACHE_TTL_MS
+                    }
+                );
+            }
+            else{
+                /* Rare partial failure: fall back only for that video. */
+                void getVideoURL(item.video);
+            }
+        });
+
+    }
+    catch(error){
+
+        console.warn(
+            "Batch video URL prefetch unavailable; using individual fallback.",
+            error?.message || error
+        );
+
+        candidates.forEach(video => {
+            void getVideoURL(video);
+        });
+    }
+}
+
+function scheduleVideoURLPrefetch(videos){
+
+    if(!Array.isArray(videos) || videos.length === 0){
+        return;
+    }
+
+    /*
+     * Give GIF/thumbnail requests the first paint, then prepare every URL on
+     * the current 20-video page in ONE lightweight signing request.
+     */
+    window.setTimeout(
+        () => {
+            void prefetchVideoURLs(videos);
+        },
+        VIDEO_URL_PREFETCH_DELAY_MS
+    );
+}
+
+function getVideoWarmCacheKey(video){
+
+    return String(video && video.id || "") + "|" +
+        String(video && video.video_url || "");
+}
+
+function shouldWarmVideoBytes(){
+
+    if(document.visibilityState !== "visible"){
+        return false;
+    }
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+    if(connection){
+        if(connection.saveData){
+            return false;
+        }
+
+        const effectiveType =
+            String(connection.effectiveType || "").toLowerCase();
+
+        if(
+            effectiveType === "slow-2g" ||
+            effectiveType === "2g"
+        ){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+async function warmVideoBytes(video){
+
+    if(!video || !video.video_url || !shouldWarmVideoBytes()){
+        return;
+    }
+
+    const cacheKey = getVideoWarmCacheKey(video);
+
+    if(videoByteWarmCache.has(cacheKey)){
+        return;
+    }
+
+    if(videoByteWarmPromiseCache.has(cacheKey)){
+        return videoByteWarmPromiseCache.get(cacheKey);
+    }
+
+    const warmRequest = (async () => {
+
+        const videoURL = await getVideoURL(video);
+
+        if(!videoURL){
+            return;
+        }
+
+        await new Promise(resolve => {
+
+            const warmer = document.createElement("video");
+            let finished = false;
+            let timeoutId = null;
+
+            const finish = warmed => {
+                if(finished) return;
+                finished = true;
+
+                if(timeoutId !== null){
+                    window.clearTimeout(timeoutId);
+                }
+
+                warmer.pause();
+                warmer.removeAttribute("src");
+                warmer.load();
+                warmer.remove();
+
+                if(warmed){
+                    videoByteWarmCache.add(cacheKey);
+                }
+
+                resolve();
+            };
+
+            warmer.preload = "auto";
+            warmer.muted = true;
+            warmer.playsInline = true;
+            warmer.setAttribute("aria-hidden","true");
+            warmer.style.position = "fixed";
+            warmer.style.width = "1px";
+            warmer.style.height = "1px";
+            warmer.style.opacity = "0";
+            warmer.style.pointerEvents = "none";
+            warmer.style.left = "-9999px";
+            warmer.src = videoURL;
+
+            warmer.addEventListener(
+                "loadeddata",
+                () => finish(true),
+                {once:true}
+            );
+            warmer.addEventListener(
+                "canplay",
+                () => finish(true),
+                {once:true}
+            );
+            warmer.addEventListener(
+                "error",
+                () => finish(false),
+                {once:true}
+            );
+
+            document.body.appendChild(warmer);
+            warmer.load();
+
+            timeoutId = window.setTimeout(
+                () => finish(false),
+                VIDEO_BYTE_WARM_TIMEOUT_MS
+            );
+        });
+    })();
+
+    videoByteWarmPromiseCache.set(cacheKey,warmRequest);
+
+    try{
+        await warmRequest;
+    }
+    finally{
+        videoByteWarmPromiseCache.delete(cacheKey);
+    }
+}
+
+function getVideoByteWarmPlan(){
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+    const effectiveType =
+        String(connection?.effectiveType || "").toLowerCase();
+
+    /*
+     * Faster networks can safely prepare more likely videos earlier.
+     * 3G stays conservative; 2G/Save-Data was already blocked above.
+     */
+    if(effectiveType === "4g"){
+        return {
+            count:3,
+            delay:1400,
+            stagger:350,
+            idleTimeout:1000
+        };
+    }
+
+    if(effectiveType === "3g"){
+        return {
+            count:1,
+            delay:2400,
+            stagger:0,
+            idleTimeout:1600
+        };
+    }
+
+    return {
+        count:2,
+        delay:1800,
+        stagger:450,
+        idleTimeout:1300
+    };
+}
+
+function scheduleVideoByteWarm(videos){
+
+    if(
+        !Array.isArray(videos) ||
+        videos.length === 0 ||
+        !shouldWarmVideoBytes()
+    ){
+        return;
+    }
+
+    const scheduleId = ++videoByteWarmScheduleId;
+    const plan = getVideoByteWarmPlan();
+
+    const candidates = videos.slice(
+        0,
+        Math.min(plan.count,videos.length)
+    );
+
+    const beginWarm = () => {
+
+        if(scheduleId !== videoByteWarmScheduleId){
+            return;
+        }
+
+        candidates.forEach((video,index) => {
+
+            window.setTimeout(
+                () => {
+                    if(scheduleId === videoByteWarmScheduleId){
+                        void warmVideoBytes(video);
+                    }
+                },
+                index * plan.stagger
+            );
+        });
+    };
+
+    window.setTimeout(
+        () => {
+
+            if("requestIdleCallback" in window){
+                window.requestIdleCallback(
+                    beginWarm,
+                    {timeout:plan.idleTimeout}
+                );
+            }
+            else{
+                beginWarm();
+            }
+        },
+        plan.delay
+    );
+}
+
+
+/* =========================================================
+   PHASE 3 - HLS / ADAPTIVE STREAMING PLAYER
+   ---------------------------------------------------------
+   MP4 playback remains fully supported.
+   HLS.js is loaded only when an .m3u8 video is actually opened,
+   so normal page/GIF loading receives no extra startup cost.
+========================================================= */
+
+let activeHlsPlayer = null;
+let hlsLibraryPromise = null;
+
+function destroyActiveHlsPlayer(){
+
+    if(activeHlsPlayer){
+
+        try{
+            activeHlsPlayer.destroy();
+        }
+        catch(error){
+            console.warn("HLS cleanup warning:",error);
+        }
+
+        activeHlsPlayer = null;
+    }
+}
+
+function isHLSVideoURL(url){
+
+    return (
+        typeof url === "string" &&
+        /\.m3u8(?:$|[?#])/i.test(url)
+    );
+}
+
+function ensureHlsLibrary(){
+
+    if(window.Hls){
+        return Promise.resolve(window.Hls);
+    }
+
+    if(hlsLibraryPromise){
+        return hlsLibraryPromise;
+    }
+
+    hlsLibraryPromise =
+        new Promise((resolve,reject) => {
+
+            const script =
+                document.createElement("script");
+
+            script.src =
+                "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+
+            script.async = true;
+
+            script.onload = () => {
+
+                if(window.Hls){
+                    resolve(window.Hls);
+                }
+                else{
+                    reject(
+                        new Error(
+                            "HLS library loaded but Hls was unavailable."
+                        )
+                    );
+                }
+            };
+
+            script.onerror = () => {
+
+                hlsLibraryPromise = null;
+
+                reject(
+                    new Error(
+                        "Unable to load HLS playback library."
+                    )
+                );
+            };
+
+            document.head.appendChild(script);
+        });
+
+    return hlsLibraryPromise;
+}
+
+async function attachVideoSource(videoURL){
+
+    destroyActiveHlsPlayer();
+
+    /*
+     * Existing MP4/direct-file path stays exactly as before.
+     */
+    if(!isHLSVideoURL(videoURL)){
+
+        playerVideo.src = videoURL;
+        playerVideo.load();
+
+        return;
+    }
+
+    /*
+     * Safari/iOS can play HLS natively.
+     */
+    if(
+        playerVideo.canPlayType(
+            "application/vnd.apple.mpegurl"
+        )
+    ){
+
+        playerVideo.src = videoURL;
+        playerVideo.load();
+
+        return;
+    }
+
+    /*
+     * Chrome/Edge/Telegram WebView generally use HLS.js.
+     * Start at the lowest available rendition for a fast first frame;
+     * ABR can increase quality after playback begins.
+     */
+    const HlsClass =
+        await ensureHlsLibrary();
+
+    if(!HlsClass.isSupported()){
+
+        throw new Error(
+            "HLS playback is not supported by this browser."
+        );
+    }
+
+    await new Promise((resolve,reject) => {
+
+        let settled = false;
+
+        const finishResolve = () => {
+            if(settled) return;
+            settled = true;
+            resolve();
+        };
+
+        const finishReject = error => {
+            if(settled) return;
+            settled = true;
+            reject(error);
+        };
+
+        const hls =
+            new HlsClass({
+                enableWorker:true,
+                startLevel:0,
+                capLevelToPlayerSize:true,
+                maxBufferLength:20,
+                maxMaxBufferLength:40,
+                backBufferLength:30
+            });
+
+        activeHlsPlayer = hls;
+
+        hls.attachMedia(playerVideo);
+
+        hls.on(
+            HlsClass.Events.MEDIA_ATTACHED,
+            () => {
+                hls.loadSource(videoURL);
+            }
+        );
+
+        hls.on(
+            HlsClass.Events.MANIFEST_PARSED,
+            finishResolve
+        );
+
+        hls.on(
+            HlsClass.Events.ERROR,
+            (event,data) => {
+
+                if(!data || !data.fatal){
+                    return;
+                }
+
+                if(
+                    data.type ===
+                    HlsClass.ErrorTypes.NETWORK_ERROR
+                ){
+                    try{
+                        hls.startLoad();
+                        return;
+                    }
+                    catch(error){
+                        finishReject(error);
+                        return;
+                    }
+                }
+
+                if(
+                    data.type ===
+                    HlsClass.ErrorTypes.MEDIA_ERROR
+                ){
+                    try{
+                        hls.recoverMediaError();
+                        return;
+                    }
+                    catch(error){
+                        finishReject(error);
+                        return;
+                    }
+                }
+
+                finishReject(
+                    new Error(
+                        "Fatal HLS playback error."
+                    )
+                );
+            }
+        );
+    });
 }
 
 
@@ -4623,6 +5280,9 @@ async function getVideoURL(video){
 ========================= */
 
 async function openPlayer(video){
+
+    /* Start URL resolution immediately and overlap it with modal/player setup. */
+    const videoURLPromise = getVideoURL(video);
 
     stopWatchTimeTracking();
 
@@ -4651,6 +5311,7 @@ async function openPlayer(video){
     /* Re-play opened videos continuously without forcing them muted. */
     playerVideo.loop = true;
     playerVideo.muted = false;
+    playerVideo.preload = "auto";
 
 
     playerVideo.load();
@@ -4666,7 +5327,7 @@ async function openPlayer(video){
 
 
     const videoURL =
-        await getVideoURL(video);
+        await videoURLPromise;
 
 
     if(!videoURL){
@@ -4682,11 +5343,26 @@ async function openPlayer(video){
     }
 
 
-    playerVideo.src =
-        videoURL;
+    try{
 
+        await attachVideoSource(videoURL);
 
-    playerVideo.load();
+    }
+    catch(error){
+
+        console.error(
+            "Video source attach error:",
+            error
+        );
+
+        closeVideoPlayer();
+
+        alert(
+            "Unable to start this video."
+        );
+
+        return;
+    }
 
 
     startWatchTimeTracking(video.id);
@@ -5162,6 +5838,8 @@ function closeVideoPlayer(){
     updatePlayerLibraryButton();
 
     playerVideo.pause();
+
+    destroyActiveHlsPlayer();
 
 
     playerVideo.removeAttribute(

@@ -2088,6 +2088,13 @@ const videoURLPromiseCache = new Map();
 const videoByteWarmCache = new Set();
 const videoByteWarmPromiseCache = new Map();
 let videoByteWarmScheduleId = 0;
+
+/* Predictive next-video preparation:
+   only one likely HLS video, only after current playback is stable. */
+let streamxCurrentPageVideos = [];
+let predictiveWarmTimer = null;
+let predictiveWarmGeneration = 0;
+
 const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
@@ -4548,6 +4555,11 @@ function renderVideos(){
         pageStart + VIDEOS_PER_PAGE
     );
 
+    /* This order already reflects StreamX's recommendation/display ranking,
+       so it is the safest signal for choosing one likely next video. */
+    streamxCurrentPageVideos =
+        videos.slice();
+
 
     videoGrid.innerHTML = "";
 
@@ -5932,6 +5944,265 @@ async function attachVideoSource(videoURL){
 
 
 /* =========================================================
+   PREDICTIVE NEXT-VIDEO PREPARATION
+   ---------------------------------------------------------
+   Warm exactly ONE likely next HLS video after the current video
+   is already playing smoothly. This avoids slowing GIF loading and
+   avoids competing with the first frame of the selected video.
+========================================================= */
+
+function shouldPredictNextVideo(){
+
+    if(document.visibilityState !== "visible"){
+        return false;
+    }
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+    if(!connection){
+        return true;
+    }
+
+    if(connection.saveData){
+        return false;
+    }
+
+    const effectiveType =
+        String(connection.effectiveType || "").toLowerCase();
+
+    /* Keep this optimization off slower mobile connections. */
+    if(
+        effectiveType === "slow-2g" ||
+        effectiveType === "2g" ||
+        effectiveType === "3g"
+    ){
+        return false;
+    }
+
+    return true;
+}
+
+function getPlayerBufferedAheadSeconds(){
+
+    try{
+
+        if(
+            !playerVideo ||
+            playerVideo.readyState < 3 ||
+            !playerVideo.buffered ||
+            playerVideo.buffered.length === 0
+        ){
+            return 0;
+        }
+
+        const currentTime =
+            Number(playerVideo.currentTime || 0);
+
+        for(
+            let i = 0;
+            i < playerVideo.buffered.length;
+            i++
+        ){
+
+            const start =
+                playerVideo.buffered.start(i);
+
+            const end =
+                playerVideo.buffered.end(i);
+
+            if(
+                currentTime >= start &&
+                currentTime <= end
+            ){
+                return Math.max(
+                    0,
+                    end - currentTime
+                );
+            }
+        }
+
+    }
+    catch(error){
+        console.warn(
+            "Buffer check warning:",
+            error
+        );
+    }
+
+    return 0;
+}
+
+function findLikelyNextHlsVideo(currentVideo){
+
+    if(
+        !currentVideo ||
+        !Array.isArray(streamxCurrentPageVideos) ||
+        streamxCurrentPageVideos.length < 2
+    ){
+        return null;
+    }
+
+    const currentId =
+        String(currentVideo.id);
+
+    const startIndex =
+        streamxCurrentPageVideos.findIndex(
+            video =>
+                String(video && video.id) === currentId
+        );
+
+    /*
+     * First choice: the very next HLS video in the currently ranked feed.
+     * Fallback: the first other HLS video on this page.
+     */
+    const orderedCandidates = [];
+
+    if(startIndex >= 0){
+
+        for(
+            let offset = 1;
+            offset < streamxCurrentPageVideos.length;
+            offset++
+        ){
+
+            const index =
+                (startIndex + offset) %
+                streamxCurrentPageVideos.length;
+
+            orderedCandidates.push(
+                streamxCurrentPageVideos[index]
+            );
+        }
+
+    }
+    else{
+
+        orderedCandidates.push(
+            ...streamxCurrentPageVideos
+        );
+    }
+
+    for(const candidate of orderedCandidates){
+
+        if(
+            !candidate ||
+            String(candidate.id) === currentId
+        ){
+            continue;
+        }
+
+        const rawURL =
+            typeof candidate.video_url === "string"
+                ? candidate.video_url.trim()
+                : "";
+
+        if(
+            isHLSVideoURL(rawURL) &&
+            !videoByteWarmCache.has(
+                getVideoWarmCacheKey(candidate)
+            )
+        ){
+            return candidate;
+        }
+    }
+
+    return null;
+}
+
+function cancelPredictiveNextVideoWarm(){
+
+    predictiveWarmGeneration++;
+
+    if(predictiveWarmTimer !== null){
+        window.clearTimeout(
+            predictiveWarmTimer
+        );
+
+        predictiveWarmTimer =
+            null;
+    }
+}
+
+function schedulePredictiveNextVideoWarm(currentVideo){
+
+    cancelPredictiveNextVideoWarm();
+
+    if(!shouldPredictNextVideo()){
+        return;
+    }
+
+    const generation =
+        predictiveWarmGeneration;
+
+    let attempts =
+        0;
+
+    const tryWarm = async () => {
+
+        if(
+            generation !== predictiveWarmGeneration ||
+            !videoModal.classList.contains("show") ||
+            String(currentPlayerVideoId) !==
+                String(currentVideo && currentVideo.id)
+        ){
+            return;
+        }
+
+        attempts++;
+
+        /*
+         * Wait until the selected video has a healthy short buffer before
+         * spending bandwidth on the likely next video.
+         */
+        const bufferedAhead =
+            getPlayerBufferedAheadSeconds();
+
+        if(
+            bufferedAhead < 2.5 &&
+            attempts < 4
+        ){
+
+            predictiveWarmTimer =
+                window.setTimeout(
+                    tryWarm,
+                    1500
+                );
+
+            return;
+        }
+
+        if(bufferedAhead < 1.5){
+            return;
+        }
+
+        const candidate =
+            findLikelyNextHlsVideo(
+                currentVideo
+            );
+
+        if(!candidate){
+            return;
+        }
+
+        /*
+         * warmVideoBytes() fetches only the HLS manifest + first
+         * low-quality fragment, not the full video.
+         */
+        void warmVideoBytes(candidate);
+    };
+
+    predictiveWarmTimer =
+        window.setTimeout(
+            tryWarm,
+            3500
+        );
+}
+
+
+/* =========================================================
    PLAYBACK NETWORK/CPU PRIORITY
    ---------------------------------------------------------
    Do not compete with the user's tap. While the player is open,
@@ -6125,6 +6396,14 @@ async function openPlayer(video){
     try{
 
         await playerVideo.play();
+
+        /*
+         * Current playback gets full priority first. Only after it is
+         * established do we prepare one likely next HLS video.
+         */
+        schedulePredictiveNextVideoWarm(
+            video
+        );
 
     }
     catch(error){
@@ -6588,6 +6867,8 @@ async function updateLikeButton(videoId){
 ========================= */
 
 function closeVideoPlayer(){
+
+    cancelPredictiveNextVideoWarm();
 
     resumeFeedMediaAfterPlayback();
 

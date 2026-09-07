@@ -1329,6 +1329,28 @@ body{
 
 }
 
+
+/* =====================================================
+   LIGHTWEIGHT VIDEO PREVIEWS
+===================================================== */
+
+.thumbnail-preview-video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+    background:#171717;
+    opacity:0;
+    transition:opacity .12s ease;
+    pointer-events:none;
+}
+
+.thumbnail-preview-video.streamx-preview-ready{
+    opacity:1;
+}
+
 </style>
 
 </head>
@@ -3563,6 +3585,7 @@ function normalizeRecommendationVideo(row){
         category:row && row.category || "Uncategorized",
         video_url:row && row.video_url || "",
         thumbnail_url:row && row.thumbnail_url || "",
+        preview_video_url:row && row.preview_video_url || "",
         created_at:row && row.created_at || null,
         views:Number(row && row.views || 0),
         likes_count:Number(row && row.likes_count || 0),
@@ -4024,7 +4047,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,created_at,views")
+                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -4625,6 +4648,8 @@ function renderVideos(){
 
     videoGrid.appendChild(cardFragment);
 
+    setupFeedVideoPreviewWindow();
+
     updateFeedPagination(
         allDisplayVideos.length,
         totalPages
@@ -4662,6 +4687,15 @@ function createVideoCard(
             video.thumbnail_url,
             "thumbnails"
         );
+
+
+    const previewVideoURL =
+        video.preview_video_url
+            ? getPublicURL(
+                video.preview_video_url,
+                "streamx-hls"
+            )
+            : null;
 
 
     const title =
@@ -4706,28 +4740,49 @@ function createVideoCard(
         <div class="thumbnail">
 
             ${
-                thumbnail
+                previewVideoURL
                 ?
 
                 `
-                <img
-                    class="thumbnail-fallback"
-                    src="${escapeHTML(thumbnail)}"
-                    alt="${escapeHTML(title)}"
-                    loading="${prioritizeLoad ? "eager" : "lazy"}"
-                    decoding="async"
-                    fetchpriority="${highPriority ? "high" : "auto"}"
-                    draggable="false"
-                >
+                <video
+                    class="thumbnail-preview-video"
+                    data-preview-src="${escapeHTML(previewVideoURL)}"
+                    ${thumbnail ? `poster="${escapeHTML(thumbnail)}"` : ""}
+                    muted
+                    loop
+                    playsinline
+                    preload="none"
+                    disablepictureinpicture
+                    aria-label="${escapeHTML(title)} preview"
+                ></video>
                 `
 
                 :
 
-                `
-                <div class="no-thumbnail">
-                    🎬
-                </div>
-                `
+                (
+                    thumbnail
+                    ?
+
+                    `
+                    <img
+                        class="thumbnail-fallback"
+                        src="${escapeHTML(thumbnail)}"
+                        alt="${escapeHTML(title)}"
+                        loading="${prioritizeLoad ? "eager" : "lazy"}"
+                        decoding="async"
+                        fetchpriority="${highPriority ? "high" : "auto"}"
+                        draggable="false"
+                    >
+                    `
+
+                    :
+
+                    `
+                    <div class="no-thumbnail">
+                        🎬
+                    </div>
+                    `
+                )
             }
 
             <div class="play-overlay">
@@ -5806,11 +5861,6 @@ function shouldUseNativeHLSPlayback(){
         /Safari/i.test(ua) &&
         !/Chrome|Chromium|CriOS|Edg|EdgiOS|OPR|Firefox|FxiOS|SamsungBrowser/i.test(ua);
 
-    /*
-     * Safari/iOS native HLS is excellent. On Chrome/Edge, however, do not
-     * trust canPlayType() alone because some Windows builds report native HLS
-     * capability but can still stall under adaptive segmented playback.
-     */
     return isIOS || isSafari;
 }
 
@@ -5830,16 +5880,10 @@ async function attachVideoSource(videoURL){
     }
 
     /*
-     * Keep native HLS only for Safari/iOS. Chrome/Edge use HLS.js even if
-     * canPlayType() reports HLS support, which avoids the stall seen in the
-     * diagnostic test on Windows Chrome.
+     * Native HLS is kept for Safari/iOS only.
+     * Chrome/Edge use HLS.js for more reliable segmented buffering.
      */
     if(shouldUseNativeHLSPlayback()){
-
-        streamxPerf(
-            "HLS playback engine",
-            "native Safari/iOS"
-        );
 
         playerVideo.src = videoURL;
         playerVideo.load();
@@ -5847,26 +5891,13 @@ async function attachVideoSource(videoURL){
         return;
     }
 
-    streamxPerf(
-        "HLS playback engine",
-        "HLS.js"
-    );
-
     /*
-     * Chrome/Edge/Telegram WebView use HLS.js.
+     * Chrome/Edge/Telegram WebView generally use HLS.js.
      * Start at the lowest available rendition for a fast first frame;
      * ABR can increase quality after playback begins.
      */
-    streamxPerf(
-        "HLS library:request"
-    );
-
     const HlsClass =
         await ensureHlsLibrary();
-
-    streamxPerf(
-        "HLS library:ready"
-    );
 
     if(!HlsClass.isSupported()){
 
@@ -5899,11 +5930,6 @@ async function attachVideoSource(videoURL){
 
                 /* Fetch the first low-quality fragment as early as possible. */
                 startFragPrefetch:true,
-
-                /*
-                 * Keep first-frame fast, then maintain enough forward buffer
-                 * to avoid the ~3-4 second stall seen with native Chrome HLS.
-                 */
                 maxBufferLength:12,
                 maxMaxBufferLength:24,
                 backBufferLength:12,
@@ -5917,67 +5943,13 @@ async function attachVideoSource(videoURL){
         hls.on(
             HlsClass.Events.MEDIA_ATTACHED,
             () => {
-                streamxPerf(
-                    "HLS:MEDIA_ATTACHED"
-                );
                 hls.loadSource(videoURL);
             }
         );
 
         hls.on(
-            HlsClass.Events.MANIFEST_LOADED,
-            () => streamxPerf(
-                "HLS:MANIFEST_LOADED"
-            )
-        );
-
-        hls.on(
             HlsClass.Events.MANIFEST_PARSED,
-            () => {
-                streamxPerf(
-                    "HLS:MANIFEST_PARSED"
-                );
-                finishResolve();
-            }
-        );
-
-        let firstFragmentLogged = false;
-
-        hls.on(
-            HlsClass.Events.FRAG_LOADED,
-            (event,data) => {
-                if(firstFragmentLogged){
-                    return;
-                }
-
-                firstFragmentLogged = true;
-
-                streamxPerf(
-                    "HLS:first FRAG_LOADED",
-                    {
-                        level:data?.frag?.level,
-                        duration:data?.frag?.duration
-                    }
-                );
-            }
-        );
-
-        hls.on(
-            HlsClass.Events.FRAG_BUFFERED,
-            (event,data) => {
-                if(
-                    data?.frag &&
-                    data.frag.sn !== "initSegment"
-                ){
-                    streamxPerf(
-                        "HLS:FRAG_BUFFERED",
-                        {
-                            level:data?.frag?.level,
-                            duration:data?.frag?.duration
-                        }
-                    );
-                }
-            }
+            finishResolve
         );
 
         hls.on(
@@ -6028,6 +6000,247 @@ async function attachVideoSource(videoURL){
 
 
 /* =========================================================
+   LIGHTWEIGHT FEED VIDEO PREVIEW WINDOW
+========================================================= */
+
+let streamxPreviewPreloadObserver = null;
+let streamxPreviewPlayObserver = null;
+let streamxFeedPreviewPlaybackSuspended = false;
+
+function prepareFeedVideoPreview(video){
+
+    if(
+        !video ||
+        video.dataset.streamxPreviewPrepared === "1"
+    ){
+        return;
+    }
+
+    const source =
+        video.dataset.previewSrc;
+
+    if(!source){
+        return;
+    }
+
+    video.dataset.streamxPreviewPrepared =
+        "1";
+
+    video.preload = "auto";
+    video.src = source;
+
+    const markReady = () => {
+        video.classList.add(
+            "streamx-preview-ready"
+        );
+    };
+
+    video.addEventListener(
+        "loadeddata",
+        markReady,
+        {once:true}
+    );
+
+    video.addEventListener(
+        "canplay",
+        markReady,
+        {once:true}
+    );
+
+    video.addEventListener(
+        "error",
+        () => {
+
+            if(
+                video.dataset.streamxPreviewRetryDone === "1"
+            ){
+                return;
+            }
+
+            video.dataset.streamxPreviewRetryDone =
+                "1";
+
+            window.setTimeout(
+                () => {
+
+                    if(!video.isConnected){
+                        return;
+                    }
+
+                    video.removeAttribute("src");
+                    video.load();
+                    video.src = source;
+                    video.load();
+
+                },
+                500
+            );
+        },
+        {once:true}
+    );
+
+    video.load();
+}
+
+function playFeedVideoPreview(video){
+
+    if(
+        !video ||
+        streamxFeedPreviewPlaybackSuspended
+    ){
+        return;
+    }
+
+    prepareFeedVideoPreview(video);
+
+    const promise = video.play();
+
+    if(
+        promise &&
+        typeof promise.catch === "function"
+    ){
+        promise.catch(() => {});
+    }
+}
+
+function pauseFeedVideoPreview(video){
+
+    if(!video){
+        return;
+    }
+
+    try{
+        video.pause();
+    }
+    catch(error){}
+}
+
+function setupFeedVideoPreviewWindow(){
+
+    if(streamxPreviewPreloadObserver){
+        streamxPreviewPreloadObserver.disconnect();
+        streamxPreviewPreloadObserver = null;
+    }
+
+    if(streamxPreviewPlayObserver){
+        streamxPreviewPlayObserver.disconnect();
+        streamxPreviewPlayObserver = null;
+    }
+
+    if(
+        !videoGrid ||
+        typeof IntersectionObserver !== "function"
+    ){
+        return;
+    }
+
+    const previews =
+        videoGrid.querySelectorAll(
+            ".thumbnail-preview-video"
+        );
+
+    if(previews.length === 0){
+        return;
+    }
+
+    streamxPreviewPreloadObserver =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if(entry.isIntersecting){
+                        prepareFeedVideoPreview(
+                            entry.target
+                        );
+                    }
+                });
+            },
+            {
+                root:null,
+                rootMargin:"2600px 0px 2600px 0px",
+                threshold:0
+            }
+        );
+
+    streamxPreviewPlayObserver =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if(
+                        entry.isIntersecting &&
+                        entry.intersectionRatio >= 0.08
+                    ){
+                        playFeedVideoPreview(
+                            entry.target
+                        );
+                    }
+                    else{
+                        pauseFeedVideoPreview(
+                            entry.target
+                        );
+                    }
+                });
+            },
+            {
+                root:null,
+                rootMargin:"0px",
+                threshold:[0,0.08,0.25]
+            }
+        );
+
+    previews.forEach(video => {
+        streamxPreviewPreloadObserver.observe(video);
+        streamxPreviewPlayObserver.observe(video);
+    });
+}
+
+function pauseAllFeedVideoPreviews(){
+
+    streamxFeedPreviewPlaybackSuspended = true;
+
+    if(!videoGrid){
+        return;
+    }
+
+    videoGrid
+        .querySelectorAll(".thumbnail-preview-video")
+        .forEach(pauseFeedVideoPreview);
+}
+
+function resumeVisibleFeedVideoPreviews(){
+
+    streamxFeedPreviewPlaybackSuspended = false;
+
+    if(!videoGrid){
+        return;
+    }
+
+    const viewportHeight =
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        800;
+
+    videoGrid
+        .querySelectorAll(".thumbnail-preview-video")
+        .forEach(video => {
+
+            const rect =
+                video.getBoundingClientRect();
+
+            if(
+                rect.bottom > 0 &&
+                rect.top < viewportHeight
+            ){
+                playFeedVideoPreview(video);
+            }
+        });
+}
+
+
+/* =========================================================
    PLAYBACK NETWORK/CPU PRIORITY
    ---------------------------------------------------------
    Do not compete with the user's tap. While the player is open,
@@ -6039,6 +6252,8 @@ const STREAMX_EMPTY_IMAGE =
     "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
 function suspendFeedMediaForPlayback(){
+
+    pauseAllFeedVideoPreviews();
 
     if(!videoGrid){
         return;
@@ -6115,75 +6330,8 @@ function resumeFeedMediaAfterPlayback(){
 
             delete image.dataset.streamxOriginalDisplay;
         });
-}
 
-
-/* =========================================================
-   TEMPORARY STARTUP DIAGNOSTICS
-   ---------------------------------------------------------
-   No playback behavior is changed here. These logs tell us exactly
-   where first-open time is being spent.
-========================================================= */
-
-let streamxPlaybackPerfStart = 0;
-let streamxPlaybackPerfVideoId = null;
-
-function streamxPerf(label, detail){
-
-    if(!streamxPlaybackPerfStart){
-        return;
-    }
-
-    const elapsed =
-        Math.round(
-            performance.now() -
-            streamxPlaybackPerfStart
-        );
-
-    if(detail !== undefined){
-        console.log(
-            `[StreamX PERF] +${elapsed}ms | ${label}`,
-            detail
-        );
-    }
-    else{
-        console.log(
-            `[StreamX PERF] +${elapsed}ms | ${label}`
-        );
-    }
-}
-
-function attachStreamxVideoPerfListeners(){
-
-    const oneShotEvents = [
-        "loadedmetadata",
-        "loadeddata",
-        "canplay",
-        "playing"
-    ];
-
-    oneShotEvents.forEach(eventName => {
-
-        playerVideo.addEventListener(
-            eventName,
-            () => streamxPerf(
-                `video:${eventName}`
-            ),
-            {once:true}
-        );
-    });
-
-    playerVideo.addEventListener(
-        "waiting",
-        () => streamxPerf("video:waiting"),
-        {once:true}
-    );
-
-    playerVideo.addEventListener(
-        "stalled",
-        () => streamxPerf("video:stalled"),
-        {once:true}
-    );
+    resumeVisibleFeedVideoPreviews();
 }
 
 
@@ -6193,31 +6341,6 @@ function attachStreamxVideoPerfListeners(){
 
 async function openPlayer(video){
 
-    streamxPlaybackPerfStart =
-        performance.now();
-
-    streamxPlaybackPerfVideoId =
-        video && video.id;
-
-    console.log(
-        "================ StreamX playback diagnostic ================"
-    );
-
-    streamxPerf(
-        "tap/openPlayer",
-        {
-            videoId:streamxPlaybackPerfVideoId,
-            urlType:
-                isHLSVideoURL(
-                    String(video?.video_url || "")
-                )
-                    ? "HLS"
-                    : "MP4/direct"
-        }
-    );
-
-    attachStreamxVideoPerfListeners();
-
     /*
      * Once the user taps, playback becomes network/CPU priority #1.
      * Feed GIFs resume when the player closes.
@@ -6226,17 +6349,7 @@ async function openPlayer(video){
 
     /* Start URL resolution immediately and overlap it with the modal/player
        setup below. Cached/prefetched URLs resolve almost instantly. */
-    const videoURLPromise =
-        getVideoURL(video)
-            .then(url => {
-                streamxPerf(
-                    "video URL resolved",
-                    url
-                        ? "success"
-                        : "failed"
-                );
-                return url;
-            });
+    const videoURLPromise = getVideoURL(video);
 
     stopWatchTimeTracking();
 
@@ -6299,15 +6412,7 @@ async function openPlayer(video){
 
     try{
 
-        streamxPerf(
-            "attachVideoSource:start"
-        );
-
         await attachVideoSource(videoURL);
-
-        streamxPerf(
-            "attachVideoSource:resolved"
-        );
 
     }
     catch(error){
@@ -6332,15 +6437,7 @@ async function openPlayer(video){
 
     try{
 
-        streamxPerf(
-            "playerVideo.play():called"
-        );
-
         await playerVideo.play();
-
-        streamxPerf(
-            "playerVideo.play():resolved"
-        );
 
     }
     catch(error){

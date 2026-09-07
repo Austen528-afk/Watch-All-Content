@@ -8173,10 +8173,8 @@ function createVideoCard(
 
 
                 ${
-                    video.preview_video_url
+                    !video.preview_video_url
                     ?
-                    ""
-                    :
                     `
                     <button
                         class="card-button optimize-preview-button"
@@ -8185,6 +8183,25 @@ function createVideoCard(
                         ⚡ Optimize Preview
                     </button>
                     `
+                    :
+                    (
+                        String(video.thumbnail_url || "")
+                            .split("?")[0]
+                            .split("#")[0]
+                            .toLowerCase()
+                            .endsWith(".gif")
+                        ?
+                        `
+                        <button
+                            class="card-button optimize-preview-button"
+                            onclick="optimizeVideoPoster(${JSON.stringify(video.id)}, this)"
+                        >
+                            🖼 Optimize Poster
+                        </button>
+                        `
+                        :
+                        ""
+                    )
                 }
 
 
@@ -8472,6 +8489,232 @@ async function optimizeVideoPreview(
 
         alert(
             "Could not optimize preview:\n\n" +
+            error.message
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            originalLabel;
+
+    }
+
+}
+
+
+/* =====================================================
+   OPTIMIZE STATIC POSTER
+===================================================== */
+
+async function optimizeVideoPoster(
+    videoId,
+    button
+){
+
+    if(!button){
+        return;
+    }
+
+
+    const originalLabel =
+        button.textContent;
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Checking...";
+
+
+    try{
+
+        await requireAuthenticatedUser();
+
+
+        button.textContent =
+            "Queueing...";
+
+
+        const queueResult =
+            await supabaseClient
+                .rpc(
+                    "queue_streamx_poster_processing",
+                    {
+                        p_video_id:
+                            videoId
+                    }
+                );
+
+
+        if(queueResult.error){
+
+            throw new Error(
+                queueResult.error.message
+            );
+
+        }
+
+
+        const jobId =
+            queueResult.data;
+
+
+        if(!jobId){
+
+            throw new Error(
+                "Poster optimization did not return a processing job."
+            );
+
+        }
+
+
+        const timeoutAt =
+            Date.now() +
+            (
+                5 *
+                60 *
+                1000
+            );
+
+
+        while(
+            Date.now() <
+            timeoutAt
+        ){
+
+            const job =
+                await getPreviewOptimizationJob(
+                    jobId
+                );
+
+
+            if(!job){
+
+                throw new Error(
+                    "Could not find the poster processing job."
+                );
+
+            }
+
+
+            if(
+                job.status ===
+                "queued"
+            ){
+
+                button.textContent =
+                    "Queued...";
+
+            }
+            else if(
+                job.status ===
+                "processing"
+            ){
+
+                button.textContent =
+                    "Optimizing...";
+
+            }
+            else if(
+                job.status ===
+                "failed"
+            ){
+
+                throw new Error(
+                    job.error_message ||
+                    "Poster optimization failed."
+                );
+
+            }
+            else if(
+                job.status ===
+                "completed"
+            ){
+
+                const videoResult =
+                    await supabaseClient
+                        .from("videos")
+                        .select(
+                            "thumbnail_url"
+                        )
+                        .eq(
+                            "id",
+                            videoId
+                        )
+                        .maybeSingle();
+
+
+                if(videoResult.error){
+
+                    throw new Error(
+                        videoResult.error.message
+                    );
+
+                }
+
+
+                const thumbnailUrl =
+                    String(
+                        videoResult.data &&
+                        videoResult.data.thumbnail_url ||
+                        ""
+                    );
+
+
+                const normalizedThumbnail =
+                    thumbnailUrl
+                        .split("?")[0]
+                        .split("#")[0]
+                        .toLowerCase();
+
+
+                if(
+                    !thumbnailUrl ||
+                    normalizedThumbnail.endsWith(
+                        ".gif"
+                    )
+                ){
+
+                    throw new Error(
+                        "The poster job completed but thumbnail_url was not switched to the new static poster."
+                    );
+
+                }
+
+
+                button.textContent =
+                    "✓ Poster Optimized";
+
+                return;
+
+            }
+
+
+            await waitMilliseconds(
+                2500
+            );
+
+        }
+
+
+        throw new Error(
+            "Poster optimization is taking longer than expected. Check Railway logs."
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Optimize poster error:",
+            error
+        );
+
+
+        alert(
+            "Could not optimize poster:\n\n" +
             error.message
         );
 

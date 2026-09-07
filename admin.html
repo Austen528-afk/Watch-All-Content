@@ -884,6 +884,130 @@ textarea{
 }
 
 
+
+/* =====================================================
+   ADAPTIVE PROCESSING STATUS
+===================================================== */
+
+.processing-status-panel{
+    display:none;
+    margin-top:18px;
+    padding:16px;
+    border:1px solid #2c2c2c;
+    border-radius:10px;
+    background:#101010;
+}
+
+.processing-status-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+}
+
+.processing-status-title{
+    font-size:14px;
+    font-weight:700;
+    color:#fff;
+}
+
+.processing-status-video{
+    margin-top:4px;
+    color:#777;
+    font-size:11px;
+    line-height:1.4;
+}
+
+.processing-status-badge{
+    flex:0 0 auto;
+    padding:6px 9px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.03em;
+    background:#242424;
+    color:#aaa;
+    border:1px solid #333;
+}
+
+.processing-status-badge.queued{
+    background:#211b0d;
+    border-color:#5c4918;
+    color:#e5c35e;
+}
+
+.processing-status-badge.processing{
+    background:#102036;
+    border-color:#244c7d;
+    color:#70b8ff;
+}
+
+.processing-status-badge.ready{
+    background:#10251d;
+    border-color:#1d5b42;
+    color:#50d69a;
+}
+
+.processing-status-badge.failed{
+    background:#281015;
+    border-color:#70283a;
+    color:#ff6b88;
+}
+
+.processing-steps{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:8px;
+    margin-top:15px;
+}
+
+.processing-step{
+    min-height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:8px 6px;
+    border-radius:7px;
+    background:#181818;
+    border:1px solid #282828;
+    color:#666;
+    font-size:10px;
+    font-weight:700;
+    text-align:center;
+}
+
+.processing-step.done{
+    background:#10251d;
+    border-color:#1d5b42;
+    color:#50d69a;
+}
+
+.processing-step.active{
+    background:#102036;
+    border-color:#244c7d;
+    color:#70b8ff;
+}
+
+.processing-step.failed{
+    background:#281015;
+    border-color:#70283a;
+    color:#ff6b88;
+}
+
+.processing-status-detail{
+    margin-top:12px;
+    color:#8c8c8c;
+    font-size:11px;
+    line-height:1.5;
+}
+
+@media(max-width:700px){
+    .processing-steps{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+
 /* =====================================================
    MESSAGE
 ===================================================== */
@@ -3324,6 +3448,83 @@ textarea{
             id="message"
             class="message"
         ></div>
+
+
+        <!-- LIVE ADAPTIVE PROCESSING STATUS -->
+
+        <div
+            id="processingStatusPanel"
+            class="processing-status-panel"
+        >
+
+            <div class="processing-status-head">
+
+                <div>
+
+                    <div class="processing-status-title">
+                        Adaptive Streaming
+                    </div>
+
+                    <div
+                        id="processingStatusVideo"
+                        class="processing-status-video"
+                    >
+                        Waiting for a new upload.
+                    </div>
+
+                </div>
+
+                <span
+                    id="processingStatusBadge"
+                    class="processing-status-badge"
+                >
+                    Waiting
+                </span>
+
+            </div>
+
+
+            <div class="processing-steps">
+
+                <div
+                    id="processingStepUpload"
+                    class="processing-step"
+                >
+                    Upload
+                </div>
+
+                <div
+                    id="processingStepQueue"
+                    class="processing-step"
+                >
+                    Queue
+                </div>
+
+                <div
+                    id="processingStepProcess"
+                    class="processing-step"
+                >
+                    Processing
+                </div>
+
+                <div
+                    id="processingStepReady"
+                    class="processing-step"
+                >
+                    Ready
+                </div>
+
+            </div>
+
+
+            <div
+                id="processingStatusDetail"
+                class="processing-status-detail"
+            >
+                StreamX will show the live conversion state here.
+            </div>
+
+        </div>
 
 
     </section>
@@ -5920,6 +6121,575 @@ setInterval(
 );
 
 /* =====================================================
+   LIVE ADAPTIVE PROCESSING STATUS
+===================================================== */
+
+let processingStatusPollTimer = null;
+let processingStatusMonitorToken = 0;
+
+function stopProcessingStatusMonitor(){
+
+    processingStatusMonitorToken++;
+
+    if(processingStatusPollTimer !== null){
+
+        window.clearTimeout(
+            processingStatusPollTimer
+        );
+
+        processingStatusPollTimer = null;
+    }
+}
+
+
+function getProcessingStatusElements(){
+
+    return {
+        panel:
+            document.getElementById(
+                "processingStatusPanel"
+            ),
+
+        video:
+            document.getElementById(
+                "processingStatusVideo"
+            ),
+
+        badge:
+            document.getElementById(
+                "processingStatusBadge"
+            ),
+
+        detail:
+            document.getElementById(
+                "processingStatusDetail"
+            ),
+
+        upload:
+            document.getElementById(
+                "processingStepUpload"
+            ),
+
+        queue:
+            document.getElementById(
+                "processingStepQueue"
+            ),
+
+        process:
+            document.getElementById(
+                "processingStepProcess"
+            ),
+
+        ready:
+            document.getElementById(
+                "processingStepReady"
+            )
+    };
+}
+
+
+function setProcessingStepClass(
+    element,
+    state
+){
+
+    if(!element){
+        return;
+    }
+
+    element.className =
+        "processing-step" +
+        (
+            state
+                ? " " + state
+                : ""
+        );
+}
+
+
+function renderAdaptiveProcessingStatus({
+    videoId,
+    title,
+    mediaStatus,
+    jobStatus,
+    detail,
+    queueFailed = false
+}){
+
+    const ui =
+        getProcessingStatusElements();
+
+    if(!ui.panel){
+        return;
+    }
+
+    ui.panel.style.display =
+        "block";
+
+
+    const safeTitle =
+        title || "Untitled video";
+
+
+    ui.video.textContent =
+        "Video #" +
+        videoId +
+        " • " +
+        safeTitle;
+
+
+    const media =
+        String(
+            mediaStatus || ""
+        ).toLowerCase();
+
+
+    const job =
+        String(
+            jobStatus || ""
+        ).toLowerCase();
+
+
+    let badgeText =
+        "Uploaded";
+
+    let badgeClass =
+        "";
+
+    let stage =
+        1;
+
+
+    if(queueFailed){
+
+        badgeText =
+            "Not queued";
+
+        badgeClass =
+            "failed";
+
+        stage =
+            1;
+
+    }
+    else if(
+        media === "failed" ||
+        job === "failed"
+    ){
+
+        badgeText =
+            "Failed";
+
+        badgeClass =
+            "failed";
+
+        stage =
+            3;
+
+    }
+    else if(
+        media === "ready" ||
+        job === "completed"
+    ){
+
+        badgeText =
+            "Ready";
+
+        badgeClass =
+            "ready";
+
+        stage =
+            4;
+
+    }
+    else if(
+        media === "processing" ||
+        job === "processing"
+    ){
+
+        badgeText =
+            "Processing";
+
+        badgeClass =
+            "processing";
+
+        stage =
+            3;
+
+    }
+    else if(
+        media === "queued" ||
+        job === "queued"
+    ){
+
+        badgeText =
+            "Queued";
+
+        badgeClass =
+            "queued";
+
+        stage =
+            2;
+
+    }
+    else if(
+        media === "uploaded"
+    ){
+
+        badgeText =
+            "Uploaded";
+
+        badgeClass =
+            "";
+
+        stage =
+            1;
+    }
+
+
+    ui.badge.textContent =
+        badgeText;
+
+    ui.badge.className =
+        "processing-status-badge" +
+        (
+            badgeClass
+                ? " " + badgeClass
+                : ""
+        );
+
+
+    setProcessingStepClass(
+        ui.upload,
+        stage > 1 ||
+        badgeText === "Ready"
+            ? "done"
+            : "active"
+    );
+
+
+    setProcessingStepClass(
+        ui.queue,
+        stage > 2
+            ? "done"
+            :
+            (
+                stage === 2
+                    ? "active"
+                    : ""
+            )
+    );
+
+
+    setProcessingStepClass(
+        ui.process,
+        stage > 3
+            ? "done"
+            :
+            (
+                stage === 3
+                    ? "active"
+                    : ""
+            )
+    );
+
+
+    setProcessingStepClass(
+        ui.ready,
+        stage === 4
+            ? "done"
+            : ""
+    );
+
+
+    if(
+        badgeText === "Failed"
+    ){
+
+        setProcessingStepClass(
+            ui.process,
+            "failed"
+        );
+
+    }
+
+
+    if(queueFailed){
+
+        setProcessingStepClass(
+            ui.queue,
+            "failed"
+        );
+    }
+
+
+    ui.detail.textContent =
+        detail ||
+        "Checking adaptive-streaming status...";
+}
+
+
+async function monitorAdaptiveProcessing(
+    videoId,
+    title
+){
+
+    stopProcessingStatusMonitor();
+
+
+    const monitorToken =
+        processingStatusMonitorToken;
+
+
+    const startedAt =
+        Date.now();
+
+
+    const maxMonitorMs =
+        20 * 60 * 1000;
+
+
+    async function poll(){
+
+        if(
+            monitorToken !==
+            processingStatusMonitorToken
+        ){
+            return;
+        }
+
+
+        try{
+
+            const [
+                videoResult,
+                jobResult
+            ] =
+                await Promise.all([
+
+                    supabaseClient
+                        .from("videos")
+                        .select(
+                            "id,title,media_status,processing_error,hls_url,processed_at"
+                        )
+                        .eq(
+                            "id",
+                            videoId
+                        )
+                        .single(),
+
+                    supabaseClient
+                        .from(
+                            "video_processing_jobs"
+                        )
+                        .select(
+                            "status,attempts,error,updated_at"
+                        )
+                        .eq(
+                            "video_id",
+                            videoId
+                        )
+                        .order(
+                            "created_at",
+                            {
+                                ascending:false
+                            }
+                        )
+                        .limit(1)
+                        .maybeSingle()
+
+                ]);
+
+
+            if(videoResult.error){
+
+                throw new Error(
+                    videoResult.error.message
+                );
+            }
+
+
+            const video =
+                videoResult.data || {};
+
+
+            const job =
+                (
+                    !jobResult.error &&
+                    jobResult.data
+                )
+                    ? jobResult.data
+                    : {};
+
+
+            const mediaStatus =
+                video.media_status ||
+                "uploaded";
+
+
+            const jobStatus =
+                job.status ||
+                null;
+
+
+            let detail =
+                "StreamX is preparing adaptive streaming.";
+
+
+            if(
+                mediaStatus === "queued" ||
+                jobStatus === "queued"
+            ){
+
+                detail =
+                    "Queued for the Railway media worker.";
+
+            }
+            else if(
+                mediaStatus === "processing" ||
+                jobStatus === "processing"
+            ){
+
+                detail =
+                    "Railway is creating the adaptive HLS renditions.";
+
+                if(
+                    Number(job.attempts) > 0
+                ){
+
+                    detail +=
+                        " Attempt " +
+                        Number(job.attempts) +
+                        ".";
+                }
+
+            }
+            else if(
+                mediaStatus === "ready"
+            ){
+
+                detail =
+                    "Adaptive streaming is ready. StreamX is now using the HLS version.";
+
+            }
+            else if(
+                mediaStatus === "failed" ||
+                jobStatus === "failed"
+            ){
+
+                detail =
+                    video.processing_error ||
+                    job.error ||
+                    "Adaptive processing failed. The original upload has been retained.";
+            }
+
+
+            renderAdaptiveProcessingStatus({
+                videoId:
+                    videoId,
+
+                title:
+                    video.title ||
+                    title,
+
+                mediaStatus:
+                    mediaStatus,
+
+                jobStatus:
+                    jobStatus,
+
+                detail:
+                    detail
+            });
+
+
+            if(
+                mediaStatus === "ready"
+            ){
+
+                processingStatusPollTimer =
+                    null;
+
+                await loadVideos();
+
+                return;
+            }
+
+
+            if(
+                mediaStatus === "failed" ||
+                jobStatus === "failed"
+            ){
+
+                processingStatusPollTimer =
+                    null;
+
+                return;
+            }
+
+
+            if(
+                Date.now() -
+                startedAt >=
+                maxMonitorMs
+            ){
+
+                const ui =
+                    getProcessingStatusElements();
+
+                if(ui.detail){
+
+                    ui.detail.textContent =
+                        "Processing is taking longer than expected. The job will continue in the background.";
+                }
+
+                processingStatusPollTimer =
+                    null;
+
+                return;
+            }
+
+
+            processingStatusPollTimer =
+                window.setTimeout(
+                    poll,
+                    3000
+                );
+
+        }
+        catch(error){
+
+            console.warn(
+                "Adaptive processing status check:",
+                error
+            );
+
+
+            const ui =
+                getProcessingStatusElements();
+
+
+            if(ui.detail){
+
+                ui.detail.textContent =
+                    "Status temporarily unavailable. StreamX will check again automatically.";
+            }
+
+
+            processingStatusPollTimer =
+                window.setTimeout(
+                    poll,
+                    5000
+                );
+        }
+    }
+
+
+    await poll();
+}
+
+
+/* =====================================================
    UPLOAD VIDEO
 ===================================================== */
 
@@ -6315,6 +7085,67 @@ async function uploadVideo(){
                     true;
 
             }
+
+        }
+
+
+        /* =========================================
+           LIVE ADAPTIVE PROCESSING STATUS
+        ========================================= */
+
+        if(
+            insertedVideoId &&
+            processingQueued
+        ){
+
+            renderAdaptiveProcessingStatus({
+                videoId:
+                    insertedVideoId,
+
+                title:
+                    title,
+
+                mediaStatus:
+                    "queued",
+
+                jobStatus:
+                    "queued",
+
+                detail:
+                    "Queued for the Railway media worker."
+            });
+
+
+            void monitorAdaptiveProcessing(
+                insertedVideoId,
+                title
+            );
+
+        }
+        else if(insertedVideoId){
+
+            stopProcessingStatusMonitor();
+
+
+            renderAdaptiveProcessingStatus({
+                videoId:
+                    insertedVideoId,
+
+                title:
+                    title,
+
+                mediaStatus:
+                    "uploaded",
+
+                jobStatus:
+                    null,
+
+                queueFailed:
+                    true,
+
+                detail:
+                    "The original video is available, but adaptive processing was not queued."
+            });
 
         }
 

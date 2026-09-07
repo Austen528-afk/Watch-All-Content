@@ -3794,6 +3794,15 @@ textarea{
             <div class="storage-maintenance-actions">
 
                 <button
+                    id="optimizeAllGifButton"
+                    class="storage-clean-button"
+                    type="button"
+                    onclick="optimizeAllGifPreviews()"
+                >
+                    Optimize All GIF Previews
+                </button>
+
+                <button
                     id="storageCleanButton"
                     class="storage-clean-button"
                     type="button"
@@ -10021,6 +10030,272 @@ async function loadSingleVideo(
             );
 
         }
+
+    }
+
+}
+
+
+/* =====================================================
+   BATCH GIF PREVIEW OPTIMIZATION
+===================================================== */
+
+function isGifThumbnailUrl(value){
+
+    const normalized =
+        String(value || "")
+            .split("?")[0]
+            .split("#")[0]
+            .toLowerCase();
+
+    return normalized.endsWith(
+        ".gif"
+    );
+}
+
+
+function setOptimizeAllGifButtonBusy(
+    busy,
+    label
+){
+
+    const button =
+        document.getElementById(
+            "optimizeAllGifButton"
+        );
+
+    if(!button){
+        return;
+    }
+
+    button.disabled =
+        Boolean(busy);
+
+    button.textContent =
+        label ||
+        (
+            busy
+                ? "Queueing..."
+                : "Optimize All GIF Previews"
+        );
+}
+
+
+async function optimizeAllGifPreviews(){
+
+    setOptimizeAllGifButtonBusy(
+        true,
+        "Checking..."
+    );
+
+    setStorageMaintenanceStatus(
+        "Checking remaining GIF thumbnails..."
+    );
+
+
+    try{
+
+        await requireAuthenticatedUser();
+
+
+        const videosResult =
+            await supabaseClient
+                .from("videos")
+                .select(
+                    "id,thumbnail_url,preview_video_url"
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending:true
+                    }
+                );
+
+
+        if(videosResult.error){
+
+            throw new Error(
+                videosResult.error.message
+            );
+        }
+
+
+        const candidates =
+            (videosResult.data || [])
+                .filter(
+                    video =>
+                        isGifThumbnailUrl(
+                            video.thumbnail_url
+                        )
+                );
+
+
+        if(candidates.length === 0){
+
+            setStorageMaintenanceStatus(
+                "✓ No GIF thumbnails remain to optimize.",
+                "success"
+            );
+
+            return;
+        }
+
+
+        const confirmed =
+            confirm(
+                "Optimize all remaining GIF previews?\n\n" +
+                "Videos to optimize: " +
+                candidates.length +
+                "\n\n" +
+                "Videos without a lightweight preview will get preview.mp4 + poster.jpg.\n" +
+                "Videos that already have preview.mp4 will get poster.jpg only.\n\n" +
+                "Railway will process the queued jobs one at a time in the background."
+            );
+
+
+        if(!confirmed){
+
+            setStorageMaintenanceStatus(
+                "Batch optimization cancelled. Nothing was queued."
+            );
+
+            return;
+        }
+
+
+        let queuedCount = 0;
+        let failedCount = 0;
+        const failures = [];
+
+
+        for(
+            let index = 0;
+            index < candidates.length;
+            index++
+        ){
+
+            const video =
+                candidates[index];
+
+
+            setOptimizeAllGifButtonBusy(
+                true,
+                `Queueing ${index + 1}/${candidates.length}`
+            );
+
+
+            setStorageMaintenanceStatus(
+                "Queueing GIF optimization " +
+                (index + 1) +
+                " of " +
+                candidates.length +
+                "..."
+            );
+
+
+            const rpcName =
+                video.preview_video_url
+                    ? "queue_streamx_poster_processing"
+                    : "queue_streamx_preview_processing";
+
+
+            const queueResult =
+                await supabaseClient
+                    .rpc(
+                        rpcName,
+                        {
+                            p_video_id:
+                                video.id
+                        }
+                    );
+
+
+            if(queueResult.error){
+
+                failedCount++;
+
+                failures.push(
+                    "Video " +
+                    video.id +
+                    ": " +
+                    queueResult.error.message
+                );
+
+                console.warn(
+                    "Batch GIF optimization queue error:",
+                    video.id,
+                    queueResult.error
+                );
+
+            }
+            else{
+
+                queuedCount++;
+
+            }
+
+        }
+
+
+        if(failedCount > 0){
+
+            setStorageMaintenanceStatus(
+                "Queued " +
+                queuedCount +
+                " GIF optimizations. " +
+                failedCount +
+                " could not be queued. Check the browser console for details.",
+                "warning"
+            );
+
+        }
+        else{
+
+            setStorageMaintenanceStatus(
+                "✓ Queued all " +
+                queuedCount +
+                " remaining GIF optimizations. Railway will process them in the background. Run Clean Orphaned Storage after processing finishes.",
+                "success"
+            );
+
+        }
+
+
+        /*
+         * Refresh cards so any jobs that completed very quickly can reflect
+         * their new preview/poster state without changing other Admin logic.
+         */
+        try{
+            await loadVideos();
+        }
+        catch(refreshError){
+            console.warn(
+                "Video grid refresh after batch queue failed:",
+                refreshError
+            );
+        }
+
+
+    }catch(error){
+
+        console.error(
+            "Batch GIF optimization error:",
+            error
+        );
+
+
+        setStorageMaintenanceStatus(
+            "Batch optimization failed: " +
+            error.message,
+            "error"
+        );
+
+    }
+    finally{
+
+        setOptimizeAllGifButtonBusy(
+            false
+        );
 
     }
 

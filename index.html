@@ -4631,7 +4631,6 @@ function renderVideos(){
     );
 
     scheduleVideoURLPrefetch(videos);
-    scheduleHlsLibraryPreload(videos);
     scheduleVideoByteWarm(videos);
 
 }
@@ -4885,6 +4884,15 @@ if(likeButton){
         "pointerdown",
         function(){
             void getVideoURL(video);
+
+            const rawVideoURL =
+                typeof video?.video_url === "string"
+                    ? video.video_url.trim()
+                    : "";
+
+            if(isHLSVideoURL(rawVideoURL)){
+                void ensureHlsLibrary();
+            }
         },
         {once:true,passive:true}
     );
@@ -5851,9 +5859,12 @@ async function attachVideoSource(videoURL){
                 enableWorker:true,
                 startLevel:0,
                 capLevelToPlayerSize:true,
-                maxBufferLength:8,
-                maxMaxBufferLength:20,
-                backBufferLength:20,
+
+                /* Fetch the first low-quality fragment as early as possible. */
+                startFragPrefetch:true,
+                maxBufferLength:6,
+                maxMaxBufferLength:16,
+                backBufferLength:16,
                 abrEwmaDefaultEstimate:650000
             });
 
@@ -5920,11 +5931,108 @@ async function attachVideoSource(videoURL){
 }
 
 
+/* =========================================================
+   PLAYBACK NETWORK/CPU PRIORITY
+   ---------------------------------------------------------
+   Do not compete with the user's tap. While the player is open,
+   pause feed GIF painting and cancel only GIF/image requests that
+   are still unfinished. Loaded thumbnails stay cached.
+========================================================= */
+
+const STREAMX_EMPTY_IMAGE =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
+function suspendFeedMediaForPlayback(){
+
+    if(!videoGrid){
+        return;
+    }
+
+    videoGrid.classList.add(
+        "streamx-playback-priority"
+    );
+
+    videoGrid
+        .querySelectorAll(".thumbnail-fallback")
+        .forEach(image => {
+
+            if(
+                !image.dataset.streamxOriginalDisplay
+            ){
+                image.dataset.streamxOriginalDisplay =
+                    image.style.display || "";
+            }
+
+            /*
+             * If a GIF/image is still downloading, stop that request so the
+             * just-opened video receives the available bandwidth immediately.
+             * Already-loaded GIFs are only hidden, not re-requested.
+             */
+            if(!image.complete){
+
+                const source =
+                    image.getAttribute("src");
+
+                if(
+                    source &&
+                    source !== STREAMX_EMPTY_IMAGE
+                ){
+                    image.dataset.streamxSuspendedSrc =
+                        source;
+
+                    image.src =
+                        STREAMX_EMPTY_IMAGE;
+                }
+            }
+
+            image.style.display =
+                "none";
+        });
+}
+
+function resumeFeedMediaAfterPlayback(){
+
+    if(!videoGrid){
+        return;
+    }
+
+    videoGrid.classList.remove(
+        "streamx-playback-priority"
+    );
+
+    videoGrid
+        .querySelectorAll(".thumbnail-fallback")
+        .forEach(image => {
+
+            const suspendedSource =
+                image.dataset.streamxSuspendedSrc;
+
+            if(suspendedSource){
+                image.src =
+                    suspendedSource;
+
+                delete image.dataset.streamxSuspendedSrc;
+            }
+
+            image.style.display =
+                image.dataset.streamxOriginalDisplay || "";
+
+            delete image.dataset.streamxOriginalDisplay;
+        });
+}
+
+
 /* =========================
    OPEN PLAYER
 ========================= */
 
 async function openPlayer(video){
+
+    /*
+     * Once the user taps, playback becomes network/CPU priority #1.
+     * Feed GIFs resume when the player closes.
+     */
+    suspendFeedMediaForPlayback();
 
     /* Start URL resolution immediately and overlap it with the modal/player
        setup below. Cached/prefetched URLs resolve almost instantly. */
@@ -6480,6 +6588,8 @@ async function updateLikeButton(videoId){
 ========================= */
 
 function closeVideoPlayer(){
+
+    resumeFeedMediaAfterPlayback();
 
     stopWatchTimeTracking();
 

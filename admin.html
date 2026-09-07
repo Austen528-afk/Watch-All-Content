@@ -9091,8 +9091,8 @@ async function deleteVideo(id){
     const confirmed =
         confirm(
             "Delete this video permanently?\n\n" +
-            "This will remove the database record, " +
-            "video file and thumbnail."
+            "This will remove the database record, original video, " +
+            "thumbnail, adaptive HLS files and lightweight preview."
         );
 
 
@@ -9106,7 +9106,7 @@ async function deleteVideo(id){
 
 
         showMessage(
-            "Deleting video...",
+            "Deleting video and media files...",
             "success"
         );
 
@@ -9137,11 +9137,36 @@ async function deleteVideo(id){
             result.data;
 
 
+        /*
+         * Processed videos use video_url for master.m3u8.
+         * The original uploaded file is preserved in source_video_url.
+         * Legacy videos may not have source_video_url, so fall back only
+         * when video_url is not HLS.
+         */
+        const rawSourceURL =
+            (
+                video.source_video_url &&
+                String(video.source_video_url).trim()
+            )
+                ? String(video.source_video_url).trim()
+                :
+                (
+                    video.video_url &&
+                    !/\.m3u8(?:$|[?#])/i.test(
+                        String(video.video_url)
+                    )
+                        ? String(video.video_url).trim()
+                        : null
+                );
+
+
         const videoPath =
-            getStoragePath(
-                video.video_url,
-                "videos"
-            );
+            rawSourceURL
+                ? getStoragePath(
+                    rawSourceURL,
+                    "videos"
+                )
+                : null;
 
 
         const thumbnailPath =
@@ -9152,7 +9177,48 @@ async function deleteVideo(id){
 
 
         /* =========================================
-           DELETE VIDEO FILE
+           FIND ALL HLS / PREVIEW OBJECTS
+        ========================================= */
+
+        let hlsObjectNames =
+            [];
+
+
+        const hlsObjectsResult =
+            await supabaseClient
+                .rpc(
+                    "get_streamx_hls_objects_for_video",
+                    {
+                        p_video_id:id
+                    }
+                );
+
+
+        if(hlsObjectsResult.error){
+
+            throw new Error(
+                "Could not prepare adaptive media cleanup: " +
+                hlsObjectsResult.error.message
+            );
+
+        }
+
+
+        hlsObjectNames =
+            Array.isArray(hlsObjectsResult.data)
+                ? hlsObjectsResult.data
+                    .map(row =>
+                        row &&
+                        row.object_name
+                            ? String(row.object_name)
+                            : null
+                    )
+                    .filter(Boolean)
+                : [];
+
+
+        /* =========================================
+           DELETE ORIGINAL VIDEO FILE
         ========================================= */
 
         if(videoPath){
@@ -9169,7 +9235,7 @@ async function deleteVideo(id){
             if(deleteVideoFile.error){
 
                 throw new Error(
-                    "Could not delete video file: " +
+                    "Could not delete original video file: " +
                     deleteVideoFile.error.message
                 );
 
@@ -9195,9 +9261,9 @@ async function deleteVideo(id){
 
             if(deleteThumbnail.error){
 
-                console.warn(
-                    "Thumbnail deletion warning:",
-                    deleteThumbnail.error
+                throw new Error(
+                    "Could not delete thumbnail: " +
+                    deleteThumbnail.error.message
                 );
 
             }
@@ -9206,7 +9272,58 @@ async function deleteVideo(id){
 
 
         /* =========================================
+           DELETE HLS + LIGHTWEIGHT PREVIEW FILES
+        ========================================= */
+
+        if(hlsObjectNames.length > 0){
+
+            /*
+             * Remove in moderate batches so long videos with many
+             * 2-second HLS segments do not create one oversized request.
+             */
+            const batchSize =
+                100;
+
+
+            for(
+                let index = 0;
+                index < hlsObjectNames.length;
+                index += batchSize
+            ){
+
+                const batch =
+                    hlsObjectNames.slice(
+                        index,
+                        index + batchSize
+                    );
+
+
+                const deleteAdaptiveFiles =
+                    await supabaseClient
+                        .storage
+                        .from("streamx-hls")
+                        .remove(batch);
+
+
+                if(deleteAdaptiveFiles.error){
+
+                    throw new Error(
+                        "Could not delete adaptive streaming files: " +
+                        deleteAdaptiveFiles.error.message
+                    );
+
+                }
+
+            }
+
+        }
+
+
+        /* =========================================
            DELETE DATABASE RECORD
+
+           video_processing_jobs uses ON DELETE CASCADE,
+           so its processing history is removed automatically.
         ========================================= */
 
         const deleteRecord =
@@ -9219,7 +9336,7 @@ async function deleteVideo(id){
         if(deleteRecord.error){
 
             throw new Error(
-                "Files deleted but database record could not be deleted: " +
+                "Media files were removed but database record could not be deleted: " +
                 deleteRecord.error.message
             );
 
@@ -9227,7 +9344,7 @@ async function deleteVideo(id){
 
 
         showMessage(
-            "✓ Video deleted successfully.",
+            "✓ Video and all associated media deleted successfully.",
             "success"
         );
 

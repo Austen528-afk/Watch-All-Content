@@ -5028,10 +5028,29 @@ function scheduleVideoByteWarm(videos){
     const scheduleId = ++videoByteWarmScheduleId;
     const plan = getVideoByteWarmPlan();
 
-    const candidates = videos.slice(
+    /*
+     * Do NOT fetch HLS media segments automatically during page load.
+     * Those requests compete directly with GIFs. MP4 warming remains
+     * selective; HLS warming is reserved for explicit user intent (hover).
+     */
+    const autoWarmCandidates =
+        videos.filter(video => {
+            const value =
+                typeof video?.video_url === "string"
+                    ? video.video_url.trim()
+                    : "";
+
+            return !isHLSVideoURL(value);
+        });
+
+    const candidates = autoWarmCandidates.slice(
         0,
-        Math.min(plan.count,videos.length)
+        Math.min(plan.count,autoWarmCandidates.length)
     );
+
+    if(candidates.length === 0){
+        return;
+    }
 
     const beginWarm = () => {
 
@@ -5202,7 +5221,7 @@ function scheduleHlsLibraryPreload(videos){
                 preload();
             }
         },
-        900
+        2200
     );
 }
 

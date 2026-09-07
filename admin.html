@@ -7369,11 +7369,30 @@ async function getVideoURL(video){
 
     const rawValue =
         video &&
-        video.video_url;
+        video.video_url
+            ? String(video.video_url).trim()
+            : "";
 
 
     if(!rawValue)
         return null;
+
+
+    /*
+     * Processed StreamX videos point to the PUBLIC streamx-hls bucket.
+     * Do not try to reinterpret/sign those URLs from the original
+     * "videos" bucket; doing so causes "Object not found".
+     */
+    if(
+        /\.m3u8(?:$|[?#])/i.test(rawValue) ||
+        rawValue.includes(
+            "/storage/v1/object/public/streamx-hls/"
+        )
+    ){
+
+        return rawValue;
+
+    }
 
 
     const storagePath =
@@ -7912,6 +7931,12 @@ async function loadSingleVideo(
         }
 
 
+        const isHLSPreview =
+            /\.m3u8(?:$|[?#])/i.test(
+                videoURL
+            );
+
+
         if(
             !preview ||
             preview.closed
@@ -8118,11 +8143,6 @@ async function loadSingleVideo(
                         playsinline
                         preload="metadata"
                     >
-
-                        <source
-                            src="${escapeHTML(videoURL)}"
-                        >
-
                     </video>
 
                 </div>
@@ -8212,6 +8232,10 @@ async function loadSingleVideo(
 
 
         let previewBlobURL =
+            null;
+
+
+        let previewHls =
             null;
 
 
@@ -8587,13 +8611,33 @@ async function loadSingleVideo(
             "error",
             function(){
 
-                if(!usingBlobFallback){
+                /*
+                 * HLS uses segmented media and cannot use the old
+                 * "download whole file as Blob" MP4 fallback.
+                 */
+                if(
+                    !isHLSPreview &&
+                    !usingBlobFallback
+                ){
 
                     loadVideoAsBlob();
 
                     return;
 
                 }
+
+
+                if(isHLSPreview){
+
+                    showPlayerMessage(
+                        "Adaptive video preview could not continue. Try reopening the preview.",
+                        true,
+                        true
+                    );
+
+                    return;
+                }
+
 
                 const mediaError =
                     player.error;
@@ -8645,6 +8689,18 @@ async function loadSingleVideo(
             "beforeunload",
             function(){
 
+                if(previewHls){
+
+                    try{
+                        previewHls.destroy();
+                    }
+                    catch(error){}
+
+                    previewHls =
+                        null;
+                }
+
+
                 if(previewBlobURL){
 
                     URL.revokeObjectURL(
@@ -8657,25 +8713,285 @@ async function loadSingleVideo(
         );
 
 
-        streamingTimeout =
-            setTimeout(
-                function(){
+        function previewUsesAppleNativeHLS(){
+
+            const ua =
+                String(
+                    preview.navigator.userAgent ||
+                    ""
+                );
+
+
+            const isIOS =
+                /iPhone|iPad|iPod/i.test(
+                    ua
+                );
+
+
+            const isSafari =
+                /Safari/i.test(ua) &&
+                !/Chrome|Chromium|CriOS|Edg|EdgiOS|OPR|Firefox|FxiOS|SamsungBrowser/i.test(
+                    ua
+                );
+
+
+            return (
+                isIOS ||
+                isSafari
+            );
+        }
+
+
+        function loadPreviewHlsLibrary(){
+
+            return new Promise(
+                (resolve,reject) => {
 
                     if(
-                        player.readyState === 0 &&
-                        !usingBlobFallback
+                        preview.Hls
                     ){
 
-                        loadVideoAsBlob();
+                        resolve(
+                            preview.Hls
+                        );
 
+                        return;
                     }
 
-                },
-                8000
+
+                    const script =
+                        preview.document.createElement(
+                            "script"
+                        );
+
+
+                    script.src =
+                        "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+
+
+                    script.async =
+                        true;
+
+
+                    script.onload =
+                        function(){
+
+                            if(preview.Hls){
+
+                                resolve(
+                                    preview.Hls
+                                );
+
+                            }else{
+
+                                reject(
+                                    new Error(
+                                        "HLS player library did not initialize."
+                                    )
+                                );
+                            }
+                        };
+
+
+                    script.onerror =
+                        function(){
+
+                            reject(
+                                new Error(
+                                    "Could not load the HLS player library."
+                                )
+                            );
+                        };
+
+
+                    preview.document.head.appendChild(
+                        script
+                    );
+                }
+            );
+        }
+
+
+        async function attachPreviewSource(){
+
+            if(!isHLSPreview){
+
+                player.src =
+                    videoURL;
+
+                player.preload =
+                    "auto";
+
+                player.load();
+
+                tryToPlay();
+
+                return;
+            }
+
+
+            showPlayerMessage(
+                "Loading adaptive video...",
+                false,
+                false
             );
 
 
-        tryToPlay();
+            /*
+             * Safari/iOS use native HLS.
+             * Chrome/Edge use HLS.js so preview behavior matches
+             * the production StreamX player.
+             */
+            if(
+                previewUsesAppleNativeHLS() &&
+                player.canPlayType(
+                    "application/vnd.apple.mpegurl"
+                )
+            ){
+
+                player.src =
+                    videoURL;
+
+                player.preload =
+                    "auto";
+
+                player.load();
+
+                tryToPlay();
+
+                return;
+            }
+
+
+            const HlsClass =
+                await loadPreviewHlsLibrary();
+
+
+            if(!HlsClass.isSupported()){
+
+                throw new Error(
+                    "Adaptive HLS preview is not supported by this browser."
+                );
+            }
+
+
+            previewHls =
+                new HlsClass({
+                    enableWorker:true,
+                    startLevel:0,
+                    startFragPrefetch:true,
+                    capLevelToPlayerSize:true,
+                    maxBufferLength:12,
+                    maxMaxBufferLength:24,
+                    backBufferLength:12,
+                    abrEwmaDefaultEstimate:650000
+                });
+
+
+            previewHls.attachMedia(
+                player
+            );
+
+
+            previewHls.on(
+                HlsClass.Events.MEDIA_ATTACHED,
+                function(){
+
+                    previewHls.loadSource(
+                        videoURL
+                    );
+                }
+            );
+
+
+            previewHls.on(
+                HlsClass.Events.MANIFEST_PARSED,
+                function(){
+
+                    tryToPlay();
+                }
+            );
+
+
+            previewHls.on(
+                HlsClass.Events.ERROR,
+                function(
+                    event,
+                    data
+                ){
+
+                    if(
+                        !data ||
+                        !data.fatal
+                    ){
+                        return;
+                    }
+
+
+                    console.error(
+                        "Admin HLS preview error:",
+                        data
+                    );
+
+
+                    if(
+                        data.type ===
+                        HlsClass.ErrorTypes.NETWORK_ERROR
+                    ){
+
+                        try{
+                            previewHls.startLoad();
+                            return;
+                        }
+                        catch(error){}
+                    }
+
+
+                    if(
+                        data.type ===
+                        HlsClass.ErrorTypes.MEDIA_ERROR
+                    ){
+
+                        try{
+                            previewHls.recoverMediaError();
+                            return;
+                        }
+                        catch(error){}
+                    }
+
+
+                    showPlayerMessage(
+                        "Adaptive video preview failed. The processed HLS files may be unavailable.",
+                        true,
+                        true
+                    );
+                }
+            );
+        }
+
+
+        if(!isHLSPreview){
+
+            streamingTimeout =
+                setTimeout(
+                    function(){
+
+                        if(
+                            player.readyState === 0 &&
+                            !usingBlobFallback
+                        ){
+
+                            loadVideoAsBlob();
+
+                        }
+
+                    },
+                    8000
+                );
+        }
+
+
+        await attachPreviewSource();
 
 
     }catch(error){

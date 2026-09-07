@@ -1357,6 +1357,30 @@ textarea{
 
     margin-top:13px;
 
+    flex-wrap:wrap;
+
+}
+
+.optimize-preview-button{
+
+    border:1px solid #3b3b3b;
+
+    background:#191919;
+
+}
+
+.optimize-preview-button:hover{
+
+    background:#242424;
+
+}
+
+.optimize-preview-button:disabled{
+
+    opacity:.65;
+
+    cursor:not-allowed;
+
 }
 
 .card-button{
@@ -8148,6 +8172,22 @@ function createVideoCard(
                 </button>
 
 
+                ${
+                    video.preview_video_url
+                    ?
+                    ""
+                    :
+                    `
+                    <button
+                        class="card-button optimize-preview-button"
+                        onclick="optimizeVideoPreview(${JSON.stringify(video.id)}, this)"
+                    >
+                        ⚡ Optimize Preview
+                    </button>
+                    `
+                }
+
+
                 <button
                     class="card-button delete-button"
                     onclick="deleteVideo(${JSON.stringify(video.id)})"
@@ -8167,6 +8207,285 @@ function createVideoCard(
         .appendChild(card);
 
 }
+
+/* =====================================================
+   OPTIMIZE LIGHTWEIGHT PREVIEW
+===================================================== */
+
+function waitMilliseconds(ms){
+
+    return new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                ms
+            )
+    );
+
+}
+
+
+async function getPreviewOptimizationJob(jobId){
+
+    const result =
+        await supabaseClient
+            .from(
+                "video_processing_jobs"
+            )
+            .select(
+                "id,video_id,status,processing_type,error_message,created_at,started_at,completed_at"
+            )
+            .eq(
+                "id",
+                jobId
+            )
+            .maybeSingle();
+
+
+    if(result.error){
+
+        throw new Error(
+            result.error.message
+        );
+
+    }
+
+
+    return result.data || null;
+
+}
+
+
+async function videoHasLightweightPreview(videoId){
+
+    const result =
+        await supabaseClient
+            .from("videos")
+            .select(
+                "preview_video_url"
+            )
+            .eq(
+                "id",
+                videoId
+            )
+            .maybeSingle();
+
+
+    if(result.error){
+
+        throw new Error(
+            result.error.message
+        );
+
+    }
+
+
+    return Boolean(
+        result.data &&
+        result.data.preview_video_url
+    );
+
+}
+
+
+async function optimizeVideoPreview(
+    videoId,
+    button
+){
+
+    if(!button){
+        return;
+    }
+
+
+    const originalLabel =
+        button.textContent;
+
+
+    button.disabled =
+        true;
+
+    button.textContent =
+        "Checking...";
+
+
+    try{
+
+        await requireAuthenticatedUser();
+
+
+        if(
+            await videoHasLightweightPreview(
+                videoId
+            )
+        ){
+
+            button.textContent =
+                "✓ Optimized";
+
+            return;
+        }
+
+
+        button.textContent =
+            "Queueing...";
+
+
+        const queueResult =
+            await supabaseClient
+                .rpc(
+                    "queue_streamx_preview_processing",
+                    {
+                        p_video_id:
+                            videoId
+                    }
+                );
+
+
+        if(queueResult.error){
+
+            throw new Error(
+                queueResult.error.message
+            );
+
+        }
+
+
+        const jobId =
+            queueResult.data;
+
+
+        if(!jobId){
+
+            throw new Error(
+                "Preview optimization did not return a processing job."
+            );
+
+        }
+
+
+        const timeoutAt =
+            Date.now() +
+            (
+                5 *
+                60 *
+                1000
+            );
+
+
+        while(
+            Date.now() <
+            timeoutAt
+        ){
+
+            const job =
+                await getPreviewOptimizationJob(
+                    jobId
+                );
+
+
+            if(!job){
+
+                throw new Error(
+                    "Could not find the preview processing job."
+                );
+
+            }
+
+
+            if(
+                job.status ===
+                "queued"
+            ){
+
+                button.textContent =
+                    "Queued...";
+
+            }
+            else if(
+                job.status ===
+                "processing"
+            ){
+
+                button.textContent =
+                    "Optimizing...";
+
+            }
+            else if(
+                job.status ===
+                "failed"
+            ){
+
+                throw new Error(
+                    job.error_message ||
+                    "Preview optimization failed."
+                );
+
+            }
+            else if(
+                job.status ===
+                "completed"
+            ){
+
+                const hasPreview =
+                    await videoHasLightweightPreview(
+                        videoId
+                    );
+
+
+                if(!hasPreview){
+
+                    throw new Error(
+                        "The job completed but no lightweight preview URL was saved."
+                    );
+
+                }
+
+
+                button.textContent =
+                    "✓ Optimized";
+
+                return;
+
+            }
+
+
+            await waitMilliseconds(
+                2500
+            );
+
+        }
+
+
+        throw new Error(
+            "Preview optimization is taking longer than expected. Check Railway logs."
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Optimize preview error:",
+            error
+        );
+
+
+        alert(
+            "Could not optimize preview:\n\n" +
+            error.message
+        );
+
+
+        button.disabled =
+            false;
+
+        button.textContent =
+            originalLabel;
+
+    }
+
+}
+
 
 /* =====================================================
    PREVIEW VIDEO

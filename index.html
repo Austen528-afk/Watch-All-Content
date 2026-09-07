@@ -5793,6 +5793,27 @@ async function warmHlsVideoStart(videoURL, cacheKey){
     });
 }
 
+
+function shouldUseNativeHLSPlayback(){
+
+    const ua =
+        String(navigator.userAgent || "");
+
+    const isIOS =
+        /iPhone|iPad|iPod/i.test(ua);
+
+    const isSafari =
+        /Safari/i.test(ua) &&
+        !/Chrome|Chromium|CriOS|Edg|EdgiOS|OPR|Firefox|FxiOS|SamsungBrowser/i.test(ua);
+
+    /*
+     * Safari/iOS native HLS is excellent. On Chrome/Edge, however, do not
+     * trust canPlayType() alone because some Windows builds report native HLS
+     * capability but can still stall under adaptive segmented playback.
+     */
+    return isIOS || isSafari;
+}
+
 async function attachVideoSource(videoURL){
 
     destroyActiveHlsPlayer();
@@ -5809,13 +5830,16 @@ async function attachVideoSource(videoURL){
     }
 
     /*
-     * Safari/iOS can play HLS natively.
+     * Keep native HLS only for Safari/iOS. Chrome/Edge use HLS.js even if
+     * canPlayType() reports HLS support, which avoids the stall seen in the
+     * diagnostic test on Windows Chrome.
      */
-    if(
-        playerVideo.canPlayType(
-            "application/vnd.apple.mpegurl"
-        )
-    ){
+    if(shouldUseNativeHLSPlayback()){
+
+        streamxPerf(
+            "HLS playback engine",
+            "native Safari/iOS"
+        );
 
         playerVideo.src = videoURL;
         playerVideo.load();
@@ -5823,8 +5847,13 @@ async function attachVideoSource(videoURL){
         return;
     }
 
+    streamxPerf(
+        "HLS playback engine",
+        "HLS.js"
+    );
+
     /*
-     * Chrome/Edge/Telegram WebView generally use HLS.js.
+     * Chrome/Edge/Telegram WebView use HLS.js.
      * Start at the lowest available rendition for a fast first frame;
      * ABR can increase quality after playback begins.
      */
@@ -5870,9 +5899,14 @@ async function attachVideoSource(videoURL){
 
                 /* Fetch the first low-quality fragment as early as possible. */
                 startFragPrefetch:true,
-                maxBufferLength:6,
-                maxMaxBufferLength:16,
-                backBufferLength:16,
+
+                /*
+                 * Keep first-frame fast, then maintain enough forward buffer
+                 * to avoid the ~3-4 second stall seen with native Chrome HLS.
+                 */
+                maxBufferLength:12,
+                maxMaxBufferLength:24,
+                backBufferLength:12,
                 abrEwmaDefaultEstimate:650000
             });
 

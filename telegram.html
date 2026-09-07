@@ -1298,6 +1298,16 @@ body{
     visibility:visible !important;
 }
 
+
+/* Telegram Step 11: never show a white thumbnail gap while GIF data arrives. */
+.thumbnail{
+    background:#171717 !important;
+}
+
+.thumbnail-fallback.streamx-gif-pending{
+    background:#171717 !important;
+}
+
 </style>
 
 </head>
@@ -3400,7 +3410,7 @@ function renderRecommendations(rows){
     prioritizeRenderedRecommendationCards();
 }
 
-const INITIAL_THUMBNAIL_COUNT = 8;
+const INITIAL_THUMBNAIL_COUNT = 4;
 
 function prioritizeRenderedRecommendationCards(){
 
@@ -4247,7 +4257,7 @@ const STREAMX_MAX_ACTIVE_GIFS = 4;
  * Keep GIF animation budget small, but warm likely upcoming GIF files
  * separately so scrolling does not reveal long blank previews.
  */
-const STREAMX_GIF_PRELOAD_AHEAD = 5;
+const STREAMX_GIF_PRELOAD_AHEAD = 7;
 const STREAMX_GIF_PRELOAD_CONCURRENCY = 2;
 
 const streamxGifPreloadedSources = new Set();
@@ -4628,12 +4638,48 @@ function activateFeedGif(image){
             "load",
             function rememberLoadedGif(){
 
+                image.dataset.streamxGifEverLoaded =
+                    "1";
+
+                image.classList.remove(
+                    "streamx-gif-pending"
+                );
+
                 streamxGifPreloadedSources.add(
                     activeSource
                 );
             },
             {once:true}
         );
+
+
+        /*
+         * If it was already loaded before this activation, mark it immediately.
+         */
+        if(
+            image.complete &&
+            image.naturalWidth > 0 &&
+            image.getAttribute("src") !== STREAMX_GIF_PLACEHOLDER
+        ){
+
+            image.dataset.streamxGifEverLoaded =
+                "1";
+
+            image.classList.remove(
+                "streamx-gif-pending"
+            );
+
+            streamxGifPreloadedSources.add(
+                activeSource
+            );
+
+        }
+        else{
+
+            image.classList.add(
+                "streamx-gif-pending"
+            );
+        }
     }
 
 
@@ -4665,17 +4711,25 @@ function suspendFeedGif(image){
         return;
     }
 
+    /*
+     * IMPORTANT:
+     * Do not blank a GIF that has never successfully rendered in the DOM.
+     * Telegram's lazy loader must be allowed to fetch/render it at least once.
+     * After that first successful load, suspending it is safe because restoring
+     * normally comes from cache.
+     */
+    if(
+        image.dataset.streamxGifEverLoaded !== "1"
+    ){
+        return;
+    }
+
     image.dataset.streamxGifSource =
         currentSource;
 
     image.dataset.streamxGifSuspended =
         "1";
 
-    /*
-     * Stop off-screen/low-priority GIF decoding.
-     * The source remains cached and is restored when the card becomes
-     * one of the four highest-priority GIFs.
-     */
     image.src =
         STREAMX_GIF_PLACEHOLDER;
 }
@@ -4929,6 +4983,26 @@ function setupTelegramGifScrollWindow(){
                             card
                         );
 
+
+                        /*
+                         * A near/visible never-loaded GIF gets an immediate
+                         * eager request. The animation budget can suspend it
+                         * later, but only after its first successful render.
+                         */
+                        if(
+                            image.dataset.streamxGifEverLoaded !== "1"
+                        ){
+
+                            image.loading =
+                                "eager";
+
+                            try{
+                                image.fetchPriority =
+                                    "auto";
+                            }
+                            catch(error){}
+                        }
+
                     }
                     else{
 
@@ -4950,7 +5024,7 @@ function setupTelegramGifScrollWindow(){
                  * not let all 20 cards become active decoders.
                  */
                 root:null,
-                rootMargin:"1200px 0px 1200px 0px",
+                rootMargin:"1600px 0px 1600px 0px",
                 threshold:0
             }
         );
@@ -4979,6 +5053,103 @@ function setupTelegramGifScrollWindow(){
 
                 image.dataset.streamxGifSource =
                     source;
+
+
+                /*
+                 * Track whether this exact DOM image has ever rendered.
+                 * Until then, it is never swapped to the tiny placeholder.
+                 */
+                const rememberActualGifLoad = () => {
+
+                    if(
+                        image.getAttribute("src") ===
+                        STREAMX_GIF_PLACEHOLDER
+                    ){
+                        return;
+                    }
+
+                    image.dataset.streamxGifEverLoaded =
+                        "1";
+
+                    image.classList.remove(
+                        "streamx-gif-pending"
+                    );
+
+                    streamxGifPreloadedSources.add(
+                        source
+                    );
+
+                    scheduleTelegramGifBudget();
+                };
+
+
+                image.addEventListener(
+                    "load",
+                    rememberActualGifLoad
+                );
+
+
+                if(
+                    image.complete &&
+                    image.naturalWidth > 0
+                ){
+
+                    rememberActualGifLoad();
+
+                }
+                else{
+
+                    image.classList.add(
+                        "streamx-gif-pending"
+                    );
+                }
+
+
+                /*
+                 * If Telegram fails an image request, retry the original URL
+                 * once when the card is near the viewport rather than leaving
+                 * a permanent white/blank preview.
+                 */
+                image.addEventListener(
+                    "error",
+                    function(){
+
+                        if(
+                            image.dataset.streamxGifRetryDone === "1" ||
+                            image.getAttribute("src") ===
+                                STREAMX_GIF_PLACEHOLDER
+                        ){
+                            return;
+                        }
+
+                        image.dataset.streamxGifRetryDone =
+                            "1";
+
+                        const retrySource =
+                            image.dataset.streamxGifSource;
+
+                        if(!retrySource){
+                            return;
+                        }
+
+                        window.setTimeout(
+                            () => {
+
+                                if(
+                                    image.isConnected &&
+                                    image.dataset.streamxGifSuspended !== "1"
+                                ){
+
+                                    image.src =
+                                        retrySource;
+                                }
+
+                            },
+                            450
+                        );
+                    }
+                );
+
 
                 streamxGifObserver.observe(
                     card

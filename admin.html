@@ -1001,6 +1001,32 @@ textarea{
     line-height:1.5;
 }
 
+.processing-status-actions{
+    display:none;
+    margin-top:12px;
+}
+
+.processing-retry-button{
+    min-height:38px;
+    padding:9px 14px;
+    border-radius:8px;
+    border:1px solid #444;
+    background:#1d1d1d;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.processing-retry-button:hover{
+    background:#272727;
+}
+
+.processing-retry-button:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
 @media(max-width:700px){
     .processing-steps{
         grid-template-columns:repeat(2,minmax(0,1fr));
@@ -3522,6 +3548,23 @@ textarea{
                 class="processing-status-detail"
             >
                 StreamX will show the live conversion state here.
+            </div>
+
+
+            <div
+                id="processingStatusActions"
+                class="processing-status-actions"
+            >
+
+                <button
+                    id="processingRetryButton"
+                    class="processing-retry-button"
+                    type="button"
+                    onclick="retryAdaptiveProcessingFromStatus()"
+                >
+                    Retry Processing
+                </button>
+
             </div>
 
         </div>
@@ -6127,6 +6170,9 @@ setInterval(
 let processingStatusPollTimer = null;
 let processingStatusMonitorToken = 0;
 
+let processingRetryVideoId = null;
+let processingRetryVideoTitle = "";
+
 function stopProcessingStatusMonitor(){
 
     processingStatusMonitorToken++;
@@ -6163,6 +6209,16 @@ function getProcessingStatusElements(){
         detail:
             document.getElementById(
                 "processingStatusDetail"
+            ),
+
+        actions:
+            document.getElementById(
+                "processingStatusActions"
+            ),
+
+        retry:
+            document.getElementById(
+                "processingRetryButton"
             ),
 
         upload:
@@ -6426,6 +6482,151 @@ function renderAdaptiveProcessingStatus({
     ui.detail.textContent =
         detail ||
         "Checking adaptive-streaming status...";
+
+
+    const canRetry =
+        queueFailed ||
+        badgeText === "Failed";
+
+
+    processingRetryVideoId =
+        canRetry
+            ? videoId
+            : null;
+
+
+    processingRetryVideoTitle =
+        canRetry
+            ? safeTitle
+            : "";
+
+
+    if(ui.actions){
+
+        ui.actions.style.display =
+            canRetry
+                ? "block"
+                : "none";
+    }
+
+
+    if(ui.retry){
+
+        ui.retry.disabled =
+            false;
+
+        ui.retry.textContent =
+            "Retry Processing";
+    }
+}
+
+
+async function retryAdaptiveProcessingFromStatus(){
+
+    const videoId =
+        processingRetryVideoId;
+
+
+    if(!videoId){
+        return;
+    }
+
+
+    const ui =
+        getProcessingStatusElements();
+
+
+    if(ui.retry){
+
+        ui.retry.disabled =
+            true;
+
+        ui.retry.textContent =
+            "Retrying...";
+    }
+
+
+    if(ui.detail){
+
+        ui.detail.textContent =
+            "Re-queueing adaptive processing...";
+    }
+
+
+    try{
+
+        await requireAuthenticatedUser();
+
+
+        const retryResult =
+            await supabaseClient
+                .rpc(
+                    "queue_streamx_video_processing",
+                    {
+                        p_video_id:
+                            videoId
+                    }
+                );
+
+
+        if(retryResult.error){
+
+            throw new Error(
+                retryResult.error.message
+            );
+        }
+
+
+        renderAdaptiveProcessingStatus({
+            videoId:
+                videoId,
+
+            title:
+                processingRetryVideoTitle,
+
+            mediaStatus:
+                "queued",
+
+            jobStatus:
+                "queued",
+
+            detail:
+                "Retry queued for the Railway media worker."
+        });
+
+
+        void monitorAdaptiveProcessing(
+            videoId,
+            processingRetryVideoTitle
+        );
+
+
+    }catch(error){
+
+        console.error(
+            "Adaptive processing retry error:",
+            error
+        );
+
+
+        renderAdaptiveProcessingStatus({
+            videoId:
+                videoId,
+
+            title:
+                processingRetryVideoTitle,
+
+            mediaStatus:
+                "failed",
+
+            jobStatus:
+                "failed",
+
+            detail:
+                "Retry failed: " +
+                error.message
+        });
+    }
 }
 
 

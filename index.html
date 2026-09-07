@@ -4631,6 +4631,7 @@ function renderVideos(){
     );
 
     scheduleVideoURLPrefetch(videos);
+    scheduleHlsLibraryPreload(videos);
     scheduleVideoByteWarm(videos);
 
 }
@@ -5338,6 +5339,20 @@ async function warmVideoBytes(video){
             return;
         }
 
+        /*
+         * Chrome/Edge cannot warm .m3u8 by assigning it directly to <video>.
+         * Use HLS.js to cache the manifest and first low-quality fragment.
+         */
+        if(isHLSVideoURL(videoURL)){
+
+            await warmHlsVideoStart(
+                videoURL,
+                cacheKey
+            );
+
+            return;
+        }
+
         await new Promise(resolve => {
 
             const warmer = document.createElement("video");
@@ -5521,6 +5536,7 @@ function scheduleVideoByteWarm(videos){
 
 let activeHlsPlayer = null;
 let hlsLibraryPromise = null;
+let hlsLibraryPreloadScheduled = false;
 
 function destroyActiveHlsPlayer(){
 
@@ -5597,6 +5613,159 @@ function ensureHlsLibrary(){
     return hlsLibraryPromise;
 }
 
+
+function scheduleHlsLibraryPreload(videos){
+
+    if(hlsLibraryPreloadScheduled || window.Hls){
+        return;
+    }
+
+    const hasHlsVideo =
+        Array.isArray(videos) &&
+        videos.some(video =>
+            isHLSVideoURL(
+                typeof video?.video_url === "string"
+                    ? video.video_url.trim()
+                    : ""
+            )
+        );
+
+    if(!hasHlsVideo){
+        return;
+    }
+
+    hlsLibraryPreloadScheduled = true;
+
+    const preload = () => {
+        void ensureHlsLibrary().catch(error => {
+            hlsLibraryPreloadScheduled = false;
+            console.warn(
+                "HLS preload skipped:",
+                error?.message || error
+            );
+        });
+    };
+
+    window.setTimeout(
+        () => {
+            if("requestIdleCallback" in window){
+                window.requestIdleCallback(
+                    preload,
+                    {timeout:1200}
+                );
+            }
+            else{
+                preload();
+            }
+        },
+        900
+    );
+}
+
+async function warmHlsVideoStart(videoURL, cacheKey){
+
+    const HlsClass =
+        await ensureHlsLibrary();
+
+    if(!HlsClass.isSupported()){
+        return false;
+    }
+
+    return await new Promise(resolve => {
+
+        const warmer =
+            document.createElement("video");
+
+        let hls = null;
+        let finished = false;
+        let timeoutId = null;
+
+        const finish = warmed => {
+
+            if(finished){
+                return;
+            }
+
+            finished = true;
+
+            if(timeoutId !== null){
+                window.clearTimeout(timeoutId);
+            }
+
+            try{
+                hls?.destroy();
+            }
+            catch(error){
+                console.warn(
+                    "HLS warm cleanup warning:",
+                    error
+                );
+            }
+
+            warmer.pause();
+            warmer.removeAttribute("src");
+            warmer.load();
+            warmer.remove();
+
+            if(warmed){
+                videoByteWarmCache.add(cacheKey);
+            }
+
+            resolve(warmed);
+        };
+
+        warmer.muted = true;
+        warmer.playsInline = true;
+        warmer.preload = "auto";
+        warmer.setAttribute("aria-hidden","true");
+        warmer.style.position = "fixed";
+        warmer.style.width = "1px";
+        warmer.style.height = "1px";
+        warmer.style.opacity = "0";
+        warmer.style.pointerEvents = "none";
+        warmer.style.left = "-9999px";
+
+        document.body.appendChild(warmer);
+
+        hls = new HlsClass({
+            enableWorker:true,
+            startLevel:0,
+            capLevelToPlayerSize:true,
+            maxBufferLength:4,
+            maxMaxBufferLength:6,
+            backBufferLength:0
+        });
+
+        hls.attachMedia(warmer);
+
+        hls.on(
+            HlsClass.Events.MEDIA_ATTACHED,
+            () => {
+                hls.loadSource(videoURL);
+            }
+        );
+
+        hls.on(
+            HlsClass.Events.FRAG_BUFFERED,
+            () => finish(true)
+        );
+
+        hls.on(
+            HlsClass.Events.ERROR,
+            (event,data) => {
+                if(data?.fatal){
+                    finish(false);
+                }
+            }
+        );
+
+        timeoutId = window.setTimeout(
+            () => finish(false),
+            5000
+        );
+    });
+}
+
 async function attachVideoSource(videoURL){
 
     destroyActiveHlsPlayer();
@@ -5663,9 +5832,10 @@ async function attachVideoSource(videoURL){
                 enableWorker:true,
                 startLevel:0,
                 capLevelToPlayerSize:true,
-                maxBufferLength:20,
-                maxMaxBufferLength:40,
-                backBufferLength:30
+                maxBufferLength:8,
+                maxMaxBufferLength:20,
+                backBufferLength:20,
+                abrEwmaDefaultEstimate:650000
             });
 
         activeHlsPlayer = hls;

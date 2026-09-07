@@ -1107,6 +1107,151 @@ textarea{
 
 }
 
+
+/* =====================================================
+   STORAGE MAINTENANCE
+===================================================== */
+
+.storage-maintenance{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:18px;
+
+    margin-bottom:20px;
+
+    padding:14px 16px;
+
+    border:1px solid #292929;
+
+    border-radius:10px;
+
+    background:#101010;
+
+}
+
+.storage-maintenance-copy{
+
+    min-width:0;
+
+}
+
+.storage-maintenance-title{
+
+    font-size:13px;
+
+    font-weight:700;
+
+    color:#fff;
+
+}
+
+.storage-maintenance-status{
+
+    margin-top:4px;
+
+    color:#777;
+
+    font-size:11px;
+
+    line-height:1.45;
+
+}
+
+.storage-maintenance-actions{
+
+    flex:0 0 auto;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+.storage-clean-button{
+
+    min-height:38px;
+
+    padding:9px 14px;
+
+    border:1px solid #343434;
+
+    border-radius:8px;
+
+    background:#1b1b1b;
+
+    color:#fff;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+}
+
+.storage-clean-button:hover{
+
+    background:#252525;
+
+}
+
+.storage-clean-button:disabled{
+
+    opacity:.55;
+
+    cursor:not-allowed;
+
+}
+
+.storage-maintenance-status.success{
+
+    color:#50d69a;
+
+}
+
+.storage-maintenance-status.warning{
+
+    color:#e5c35e;
+
+}
+
+.storage-maintenance-status.error{
+
+    color:#ff6b88;
+
+}
+
+@media(max-width:700px){
+
+    .storage-maintenance{
+
+        align-items:flex-start;
+
+        flex-direction:column;
+
+    }
+
+    .storage-maintenance-actions{
+
+        width:100%;
+
+    }
+
+    .storage-clean-button{
+
+        width:100%;
+
+    }
+
+}
+
 .video-grid{
 
     display:grid;
@@ -3597,6 +3742,43 @@ textarea{
             >
                 0 videos
             </span>
+
+        </div>
+
+
+        <div
+            class="storage-maintenance"
+            id="storageMaintenancePanel"
+        >
+
+            <div class="storage-maintenance-copy">
+
+                <div class="storage-maintenance-title">
+                    Storage Maintenance
+                </div>
+
+                <div
+                    id="storageMaintenanceStatus"
+                    class="storage-maintenance-status"
+                >
+                    Safely check for uploaded video or thumbnail files that are no longer linked to any database video.
+                </div>
+
+            </div>
+
+
+            <div class="storage-maintenance-actions">
+
+                <button
+                    id="storageCleanButton"
+                    class="storage-clean-button"
+                    type="button"
+                    onclick="cleanOrphanedStorage()"
+                >
+                    Clean Orphaned Storage
+                </button>
+
+            </div>
 
         </div>
 
@@ -9280,6 +9462,386 @@ async function loadSingleVideo(
 
     }
 
+}
+
+
+/* =====================================================
+   ORPHAN STORAGE CLEANUP
+===================================================== */
+
+function formatStorageBytes(bytes){
+
+    const value =
+        Number(bytes || 0);
+
+    if(!Number.isFinite(value) || value <= 0){
+        return "0 MB";
+    }
+
+    const mb =
+        value / 1024 / 1024;
+
+    if(mb < 1024){
+        return mb.toFixed(
+            mb >= 100
+                ? 0
+                : 2
+        ) + " MB";
+    }
+
+    return (
+        mb / 1024
+    ).toFixed(2) + " GB";
+}
+
+
+function setStorageMaintenanceStatus(
+    message,
+    kind = ""
+){
+
+    const status =
+        document.getElementById(
+            "storageMaintenanceStatus"
+        );
+
+    if(!status){
+        return;
+    }
+
+    status.textContent =
+        message;
+
+    status.classList.remove(
+        "success",
+        "warning",
+        "error"
+    );
+
+    if(kind){
+        status.classList.add(
+            kind
+        );
+    }
+}
+
+
+function setStorageCleanButtonBusy(
+    busy,
+    label
+){
+
+    const button =
+        document.getElementById(
+            "storageCleanButton"
+        );
+
+    if(!button){
+        return;
+    }
+
+    button.disabled =
+        Boolean(busy);
+
+    button.textContent =
+        label ||
+        (
+            busy
+                ? "Working..."
+                : "Clean Orphaned Storage"
+        );
+}
+
+
+async function getOrphanStorageObjects(){
+
+    const result =
+        await supabaseClient
+            .rpc(
+                "get_streamx_orphan_storage_objects"
+            );
+
+
+    if(result.error){
+
+        throw new Error(
+            result.error.message
+        );
+    }
+
+
+    return Array.isArray(result.data)
+        ? result.data
+        : [];
+}
+
+
+async function removeStorageObjectsInBatches(
+    bucket,
+    objectNames
+){
+
+    const names =
+        Array.from(
+            new Set(
+                objectNames.filter(Boolean)
+            )
+        );
+
+
+    const batchSize =
+        100;
+
+
+    for(
+        let index = 0;
+        index < names.length;
+        index += batchSize
+    ){
+
+        const batch =
+            names.slice(
+                index,
+                index + batchSize
+            );
+
+
+        const result =
+            await supabaseClient
+                .storage
+                .from(bucket)
+                .remove(batch);
+
+
+        if(result.error){
+
+            throw new Error(
+                "Could not clean " +
+                bucket +
+                ": " +
+                result.error.message
+            );
+        }
+    }
+}
+
+
+async function cleanOrphanedStorage(){
+
+    setStorageCleanButtonBusy(
+        true,
+        "Checking..."
+    );
+
+
+    setStorageMaintenanceStatus(
+        "Checking storage for orphaned files..."
+    );
+
+
+    try{
+
+        await requireAuthenticatedUser();
+
+
+        const orphanObjects =
+            await getOrphanStorageObjects();
+
+
+        if(orphanObjects.length === 0){
+
+            setStorageMaintenanceStatus(
+                "✓ No orphaned video or thumbnail files were found.",
+                "success"
+            );
+
+
+            setStorageCleanButtonBusy(
+                false
+            );
+
+            return;
+        }
+
+
+        const totalBytes =
+            orphanObjects.reduce(
+                (sum,row) =>
+                    sum +
+                    Number(
+                        row &&
+                        row.size_bytes ||
+                        0
+                    ),
+                0
+            );
+
+
+        const videos =
+            orphanObjects.filter(
+                row =>
+                    row &&
+                    row.bucket_id === "videos"
+            );
+
+
+        const thumbnails =
+            orphanObjects.filter(
+                row =>
+                    row &&
+                    row.bucket_id === "thumbnails"
+            );
+
+
+        setStorageMaintenanceStatus(
+            "Found " +
+            orphanObjects.length +
+            " orphaned files using about " +
+            formatStorageBytes(totalBytes) +
+            ". Waiting for confirmation.",
+            "warning"
+        );
+
+
+        const confirmed =
+            confirm(
+                "Clean orphaned StreamX storage?\n\n" +
+                "Files found: " +
+                orphanObjects.length +
+                "\n" +
+                "Estimated space to recover: " +
+                formatStorageBytes(totalBytes) +
+                "\n\n" +
+                "Videos: " +
+                videos.length +
+                "\n" +
+                "Thumbnails: " +
+                thumbnails.length +
+                "\n\n" +
+                "Only files that are not linked to any current video record will be removed."
+            );
+
+
+        if(!confirmed){
+
+            setStorageMaintenanceStatus(
+                "Cleanup cancelled. No files were deleted."
+            );
+
+
+            setStorageCleanButtonBusy(
+                false
+            );
+
+            return;
+        }
+
+
+        setStorageCleanButtonBusy(
+            true,
+            "Cleaning..."
+        );
+
+
+        setStorageMaintenanceStatus(
+            "Removing orphaned storage files..."
+        );
+
+
+        if(videos.length > 0){
+
+            await removeStorageObjectsInBatches(
+                "videos",
+                videos.map(
+                    row =>
+                        row.object_name
+                )
+            );
+        }
+
+
+        if(thumbnails.length > 0){
+
+            await removeStorageObjectsInBatches(
+                "thumbnails",
+                thumbnails.map(
+                    row =>
+                        row.object_name
+                )
+            );
+        }
+
+
+        /*
+         * Re-audit after deletion instead of assuming success.
+         * This catches partial Storage API failures or objects added
+         * concurrently while cleanup was running.
+         */
+        const remaining =
+            await getOrphanStorageObjects();
+
+
+        if(remaining.length > 0){
+
+            const remainingBytes =
+                remaining.reduce(
+                    (sum,row) =>
+                        sum +
+                        Number(
+                            row &&
+                            row.size_bytes ||
+                            0
+                        ),
+                    0
+                );
+
+
+            setStorageMaintenanceStatus(
+                "Cleanup completed, but " +
+                remaining.length +
+                " orphaned files remain (" +
+                formatStorageBytes(
+                    remainingBytes
+                ) +
+                "). You can run cleanup again.",
+                "warning"
+            );
+
+        }
+        else{
+
+            setStorageMaintenanceStatus(
+                "✓ Orphaned storage cleaned successfully. Recovered about " +
+                formatStorageBytes(
+                    totalBytes
+                ) +
+                ".",
+                "success"
+            );
+        }
+
+
+    }catch(error){
+
+        console.error(
+            "Orphan storage cleanup error:",
+            error
+        );
+
+
+        setStorageMaintenanceStatus(
+            "Cleanup failed: " +
+            error.message,
+            "error"
+        );
+
+    }
+    finally{
+
+        setStorageCleanButtonBusy(
+            false
+        );
+    }
 }
 
 

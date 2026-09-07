@@ -701,9 +701,6 @@ body{
     border-radius:12px;
     overflow:hidden;
     cursor:pointer;
-    /* Let the browser skip layout/paint work for cards outside the viewport. */
-    content-visibility:auto;
-    contain-intrinsic-size:320px 360px;
     transition:
         transform .2s,
         border-color .2s,
@@ -2078,19 +2075,10 @@ let librarySummaryReady = false;
 let libraryRealtimeChannel = null;
 const VIDEO_URL_CACHE_TTL_MS = 55 * 60 * 1000;
 
-/* Keep the first feed page intentionally small so the browser has fewer
-   cards, GIFs and signed video URLs competing during startup. */
-const VIDEOS_PER_PAGE = 15;
-
 /* Resolve signed URLs for the whole visible page in one small batch request.
    This does NOT download the actual videos. */
-const VIDEO_URL_PREFETCH_COUNT = VIDEOS_PER_PAGE;
+const VIDEO_URL_PREFETCH_COUNT = 20;
 const VIDEO_URL_PREFETCH_DELAY_MS = 700;
-
-/* First paint gets only 15 video metadata rows. The full catalog is hydrated
-   shortly afterwards, once current-page GIF requests have had first priority. */
-const FULL_CATALOG_HYDRATE_DELAY_MS = 900;
-let fullCatalogHydrationPromise = null;
 
 /* Actual byte warming remains selective/adaptive so current-page GIFs
    keep priority and slow/mobile-data connections are protected. */
@@ -2100,6 +2088,7 @@ const videoURLPromiseCache = new Map();
 const videoByteWarmCache = new Set();
 const videoByteWarmPromiseCache = new Map();
 let videoByteWarmScheduleId = 0;
+const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
 
@@ -4026,45 +4015,9 @@ function scheduleLikeSummary(){
    LOAD VIDEOS
 ========================= */
 
-function applyKnownEngagementToVideos(videos){
+async function loadVideos(){
 
-    (Array.isArray(videos) ? videos : []).forEach(video => {
-
-        const key = String(video.id);
-
-        if(videoLikeSummary.has(key)){
-            video.likes_count = videoLikeSummary.get(key);
-        }
-        else if(video.likes_count === undefined || video.likes_count === null){
-            video.likes_count = 0;
-        }
-
-        if(videoLibrarySummary.has(key)){
-            video.saves_count = videoLibrarySummary.get(key);
-        }
-
-    });
-}
-
-function refreshFeedTotalsWithoutRebuild(){
-
-    const allDisplayVideos = getVideosForDisplay();
-    const totalPages = Math.max(
-        1,
-        Math.ceil(allDisplayVideos.length / VIDEOS_PER_PAGE)
-    );
-
-    resultCount.textContent =
-        allDisplayVideos.length +
-        (allDisplayVideos.length === 1 ? " video" : " videos");
-
-    updateFeedPagination(
-        allDisplayVideos.length,
-        totalPages
-    );
-}
-
-async function hydrateFullVideoCatalog(){
+    showLoading();
 
     try{
 
@@ -4078,87 +4031,6 @@ async function hydrateFullVideoCatalog(){
                         ascending:false
                     }
                 );
-
-        if(result.error){
-            throw result.error;
-        }
-
-        const hydratedVideos = result.data || [];
-
-        applyKnownEngagementToVideos(hydratedVideos);
-        allVideos = hydratedVideos;
-
-        mergeVideoCategoriesIntoCategoryBar();
-
-        /* Do not rebuild page 1 just because the background catalog arrived.
-           Rebuilding would restart GIF/image downloads. Only refresh totals
-           and pagination; later filters/pages use the fully hydrated catalog. */
-        if(
-            currentVideoPage === 1 &&
-            !libraryViewActive &&
-            !searchTerm &&
-            String(currentCategory).toLowerCase() === "all"
-        ){
-            refreshFeedTotalsWithoutRebuild();
-        }
-        else{
-            renderVideos();
-        }
-
-    }
-    catch(error){
-
-        /* The first 15 videos remain fully usable even if background catalog
-           hydration fails. */
-        console.warn(
-            "Full video catalog hydration unavailable:",
-            error
-        );
-
-    }
-    finally{
-        fullCatalogHydrationPromise = null;
-    }
-}
-
-function scheduleFullVideoCatalogHydration(){
-
-    if(fullCatalogHydrationPromise){
-        return fullCatalogHydrationPromise;
-    }
-
-    fullCatalogHydrationPromise = new Promise(resolve => {
-
-        window.setTimeout(
-            () => {
-                Promise.resolve(hydrateFullVideoCatalog()).then(resolve);
-            },
-            FULL_CATALOG_HYDRATE_DELAY_MS
-        );
-
-    });
-
-    return fullCatalogHydrationPromise;
-}
-
-async function loadVideos(){
-
-    showLoading();
-
-    try{
-
-        /* Fast startup path: request only what page 1 can actually display. */
-        const result =
-            await supabaseClient
-                .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,created_at,views")
-                .order(
-                    "created_at",
-                    {
-                        ascending:false
-                    }
-                )
-                .range(0,VIDEOS_PER_PAGE - 1);
 
 
         if(result.error){
@@ -4177,23 +4049,26 @@ async function loadVideos(){
         }
 
 
-        allVideos = result.data || [];
+allVideos =
+    result.data || [];
 
-        /* Keep category navigation useful even if the categories table is temporarily
-           unavailable; the visible videos still expose categories in use. */
-        mergeVideoCategoriesIntoCategoryBar();
+/* Keep category navigation useful even if the categories table is temporarily
+   unavailable; the videos table still exposes the categories in use. */
+mergeVideoCategoriesIntoCategoryBar();
 
-        /* Paint the first 15 immediately. Likes/saves arrive after first paint. */
-        applyKnownEngagementToVideos(allVideos);
+/* Queue the single likes request after the first paint. The grid can paint
+   immediately while counts and heart states arrive in the background. */
+allVideos.forEach(video => {
+    if(video.likes_count === undefined || video.likes_count === null){
+        video.likes_count = 0;
+    }
+});
 
-        likeSummaryPromise = scheduleLikeSummary();
-        renderVideos();
-        void likeSummaryPromise.catch(() => {});
-        librarySummaryPromise = scheduleLibrarySummary();
-        void librarySummaryPromise.catch(() => {});
-
-        /* Hydrate the rest only after current-page GIF requests have started. */
-        void scheduleFullVideoCatalogHydration();
+likeSummaryPromise = scheduleLikeSummary();
+renderVideos();
+void likeSummaryPromise.catch(() => {});
+librarySummaryPromise = scheduleLibrarySummary();
+void librarySummaryPromise.catch(() => {});
 
     }
     catch(error){
@@ -5392,7 +5267,7 @@ function scheduleVideoURLPrefetch(videos){
 
     /*
      * Give GIF/thumbnail requests the first paint, then prepare every URL on
-     * the current 15-video page in ONE lightweight signing request.
+     * the current 20-video page in ONE lightweight signing request.
      */
     window.setTimeout(
         () => {
@@ -5636,6 +5511,226 @@ function scheduleVideoByteWarm(videos){
 }
 
 
+/* =========================================================
+   PHASE 3 - HLS / ADAPTIVE STREAMING PLAYER
+   ---------------------------------------------------------
+   MP4 playback remains fully supported.
+   HLS.js is loaded only when an .m3u8 video is actually opened,
+   so normal page/GIF loading receives no extra startup cost.
+========================================================= */
+
+let activeHlsPlayer = null;
+let hlsLibraryPromise = null;
+
+function destroyActiveHlsPlayer(){
+
+    if(activeHlsPlayer){
+
+        try{
+            activeHlsPlayer.destroy();
+        }
+        catch(error){
+            console.warn("HLS cleanup warning:",error);
+        }
+
+        activeHlsPlayer = null;
+    }
+}
+
+function isHLSVideoURL(url){
+
+    return (
+        typeof url === "string" &&
+        /\.m3u8(?:$|[?#])/i.test(url)
+    );
+}
+
+function ensureHlsLibrary(){
+
+    if(window.Hls){
+        return Promise.resolve(window.Hls);
+    }
+
+    if(hlsLibraryPromise){
+        return hlsLibraryPromise;
+    }
+
+    hlsLibraryPromise =
+        new Promise((resolve,reject) => {
+
+            const script =
+                document.createElement("script");
+
+            script.src =
+                "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+
+            script.async = true;
+
+            script.onload = () => {
+
+                if(window.Hls){
+                    resolve(window.Hls);
+                }
+                else{
+                    reject(
+                        new Error(
+                            "HLS library loaded but Hls was unavailable."
+                        )
+                    );
+                }
+            };
+
+            script.onerror = () => {
+
+                hlsLibraryPromise = null;
+
+                reject(
+                    new Error(
+                        "Unable to load HLS playback library."
+                    )
+                );
+            };
+
+            document.head.appendChild(script);
+        });
+
+    return hlsLibraryPromise;
+}
+
+async function attachVideoSource(videoURL){
+
+    destroyActiveHlsPlayer();
+
+    /*
+     * Existing MP4/direct-file path stays exactly as before.
+     */
+    if(!isHLSVideoURL(videoURL)){
+
+        playerVideo.src = videoURL;
+        playerVideo.load();
+
+        return;
+    }
+
+    /*
+     * Safari/iOS can play HLS natively.
+     */
+    if(
+        playerVideo.canPlayType(
+            "application/vnd.apple.mpegurl"
+        )
+    ){
+
+        playerVideo.src = videoURL;
+        playerVideo.load();
+
+        return;
+    }
+
+    /*
+     * Chrome/Edge/Telegram WebView generally use HLS.js.
+     * Start at the lowest available rendition for a fast first frame;
+     * ABR can increase quality after playback begins.
+     */
+    const HlsClass =
+        await ensureHlsLibrary();
+
+    if(!HlsClass.isSupported()){
+
+        throw new Error(
+            "HLS playback is not supported by this browser."
+        );
+    }
+
+    await new Promise((resolve,reject) => {
+
+        let settled = false;
+
+        const finishResolve = () => {
+            if(settled) return;
+            settled = true;
+            resolve();
+        };
+
+        const finishReject = error => {
+            if(settled) return;
+            settled = true;
+            reject(error);
+        };
+
+        const hls =
+            new HlsClass({
+                enableWorker:true,
+                startLevel:0,
+                capLevelToPlayerSize:true,
+                maxBufferLength:20,
+                maxMaxBufferLength:40,
+                backBufferLength:30
+            });
+
+        activeHlsPlayer = hls;
+
+        hls.attachMedia(playerVideo);
+
+        hls.on(
+            HlsClass.Events.MEDIA_ATTACHED,
+            () => {
+                hls.loadSource(videoURL);
+            }
+        );
+
+        hls.on(
+            HlsClass.Events.MANIFEST_PARSED,
+            finishResolve
+        );
+
+        hls.on(
+            HlsClass.Events.ERROR,
+            (event,data) => {
+
+                if(!data || !data.fatal){
+                    return;
+                }
+
+                if(
+                    data.type ===
+                    HlsClass.ErrorTypes.NETWORK_ERROR
+                ){
+                    try{
+                        hls.startLoad();
+                        return;
+                    }
+                    catch(error){
+                        finishReject(error);
+                        return;
+                    }
+                }
+
+                if(
+                    data.type ===
+                    HlsClass.ErrorTypes.MEDIA_ERROR
+                ){
+                    try{
+                        hls.recoverMediaError();
+                        return;
+                    }
+                    catch(error){
+                        finishReject(error);
+                        return;
+                    }
+                }
+
+                finishReject(
+                    new Error(
+                        "Fatal HLS playback error."
+                    )
+                );
+            }
+        );
+    });
+}
+
+
 /* =========================
    OPEN PLAYER
 ========================= */
@@ -5705,11 +5800,26 @@ async function openPlayer(video){
     }
 
 
-    playerVideo.src =
-        videoURL;
+    try{
 
+        await attachVideoSource(videoURL);
 
-    playerVideo.load();
+    }
+    catch(error){
+
+        console.error(
+            "Video source attach error:",
+            error
+        );
+
+        closeVideoPlayer();
+
+        alert(
+            "Unable to start this video."
+        );
+
+        return;
+    }
 
 
     startWatchTimeTracking(video.id);
@@ -6189,6 +6299,8 @@ function closeVideoPlayer(){
     updatePlayerLibraryButton();
 
     playerVideo.pause();
+
+    destroyActiveHlsPlayer();
 
 
     playerVideo.removeAttribute(

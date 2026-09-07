@@ -6208,12 +6208,22 @@ async function uploadVideo(){
                     video_url:
                         videoURL,
 
+                    /* Preserve the original uploaded MP4 while the background
+                       media worker creates the adaptive HLS version. */
+                    source_video_url:
+                        videoURL,
+
+                    media_status:
+                        "uploaded",
+
                     thumbnail_url:
                         thumbnailURL,
 
                     views:0
 
-                });
+                })
+                .select("id")
+                .single();
 
 
         /* =========================================
@@ -6261,17 +6271,70 @@ async function uploadVideo(){
 
 
         /* =========================================
+           QUEUE ADAPTIVE HLS PROCESSING
+        ========================================= */
+
+        let processingQueued =
+            false;
+
+        const insertedVideoId =
+            databaseInsert.data &&
+            databaseInsert.data.id;
+
+        if(insertedVideoId){
+
+            updateProgress(
+                92,
+                "Video uploaded. Queueing adaptive streaming..."
+            );
+
+            const processingQueue =
+                await supabaseClient
+                    .rpc(
+                        "queue_streamx_video_processing",
+                        {
+                            p_video_id:
+                                insertedVideoId
+                        }
+                    );
+
+            if(processingQueue.error){
+
+                /* The original MP4 remains valid and playable. Do not delete
+                   the successful upload just because background conversion
+                   could not be queued. */
+                console.error(
+                    "HLS PROCESSING QUEUE ERROR:",
+                    processingQueue.error
+                );
+
+            }
+            else{
+
+                processingQueued =
+                    true;
+
+            }
+
+        }
+
+
+        /* =========================================
            SUCCESS
         ========================================= */
 
         updateProgress(
             100,
-            "Upload complete!"
+            processingQueued
+                ? "Upload complete. Adaptive processing queued!"
+                : "Upload complete!"
         );
 
 
         showMessage(
-            "✓ Video uploaded successfully and is now available on the user website.",
+            processingQueued
+                ? "✓ Video uploaded successfully. Fast adaptive streaming is now processing in the background."
+                : "✓ Video uploaded successfully. The original video is available, but adaptive processing was not queued.",
             "success"
         );
 

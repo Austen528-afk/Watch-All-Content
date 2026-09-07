@@ -728,6 +728,7 @@ body{
     height:100%;
     object-fit:cover;
     display:block;
+    background:#1d1d1d;
     transition:transform .3s;
     user-select:none;
     -webkit-user-select:none;
@@ -4242,6 +4243,20 @@ const streamxNearGifCards = new Set();
 
 const STREAMX_MAX_ACTIVE_GIFS = 4;
 
+/*
+ * Keep GIF animation budget small, but warm likely upcoming GIF files
+ * separately so scrolling does not reveal long blank previews.
+ */
+const STREAMX_GIF_PRELOAD_AHEAD = 5;
+const STREAMX_GIF_PRELOAD_CONCURRENCY = 2;
+
+const streamxGifPreloadedSources = new Set();
+const streamxGifPreloadingSources = new Map();
+const streamxGifPreloadQueue = [];
+
+let streamxGifPreloadActiveCount = 0;
+let streamxGifPreloadTimer = null;
+
 const STREAMX_GIF_PLACEHOLDER =
     "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
@@ -4273,6 +4288,301 @@ function isAnimatedGifThumbnailURL(url){
     }
 }
 
+function canPreloadFeedGifs(){
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+    if(!connection){
+        return true;
+    }
+
+    if(connection.saveData){
+        return false;
+    }
+
+    const effectiveType =
+        String(
+            connection.effectiveType || ""
+        ).toLowerCase();
+
+    /*
+     * On very slow connections, do not create extra background requests.
+     * The normal near-viewport loader still works.
+     */
+    return !(
+        effectiveType === "slow-2g" ||
+        effectiveType === "2g"
+    );
+}
+
+
+function pumpGifPreloadQueue(){
+
+    if(
+        !canPreloadFeedGifs() ||
+        (
+            videoModal &&
+            videoModal.classList.contains("show")
+        )
+    ){
+        return;
+    }
+
+
+    while(
+        streamxGifPreloadActiveCount <
+            STREAMX_GIF_PRELOAD_CONCURRENCY &&
+        streamxGifPreloadQueue.length > 0
+    ){
+
+        const source =
+            streamxGifPreloadQueue.shift();
+
+
+        if(
+            !source ||
+            streamxGifPreloadedSources.has(source) ||
+            streamxGifPreloadingSources.has(source)
+        ){
+            continue;
+        }
+
+
+        streamxGifPreloadActiveCount++;
+
+
+        /*
+         * A detached Image is used only as a network/cache warmer.
+         * It is never appended to the page, so the normal 4-GIF animation
+         * budget remains unchanged.
+         */
+        const warmer =
+            new Image();
+
+
+        try{
+            warmer.fetchPriority =
+                "low";
+        }
+        catch(error){}
+
+
+        warmer.decoding =
+            "async";
+
+
+        streamxGifPreloadingSources.set(
+            source,
+            warmer
+        );
+
+
+        const finish = () => {
+
+            streamxGifPreloadActiveCount =
+                Math.max(
+                    0,
+                    streamxGifPreloadActiveCount - 1
+                );
+
+
+            streamxGifPreloadingSources.delete(
+                source
+            );
+
+
+            /*
+             * Whether loaded or failed, move on to the next queued item.
+             * Successful requests are normally kept in the browser HTTP/image
+             * cache and therefore restore much faster when their card activates.
+             */
+            pumpGifPreloadQueue();
+        };
+
+
+        warmer.onload = () => {
+
+            streamxGifPreloadedSources.add(
+                source
+            );
+
+            finish();
+        };
+
+
+        warmer.onerror =
+            finish;
+
+
+        warmer.src =
+            source;
+    }
+}
+
+
+function queueGifPreload(source){
+
+    if(
+        !source ||
+        !isAnimatedGifThumbnailURL(source) ||
+        streamxGifPreloadedSources.has(source) ||
+        streamxGifPreloadingSources.has(source) ||
+        streamxGifPreloadQueue.includes(source)
+    ){
+        return;
+    }
+
+
+    streamxGifPreloadQueue.push(
+        source
+    );
+
+
+    pumpGifPreloadQueue();
+}
+
+
+function scheduleUpcomingGifPreloads(
+    delay = 120
+){
+
+    if(streamxGifPreloadTimer !== null){
+
+        window.clearTimeout(
+            streamxGifPreloadTimer
+        );
+    }
+
+
+    streamxGifPreloadTimer =
+        window.setTimeout(
+            () => {
+
+                streamxGifPreloadTimer =
+                    null;
+
+
+                if(
+                    !videoGrid ||
+                    !canPreloadFeedGifs() ||
+                    (
+                        videoModal &&
+                        videoModal.classList.contains("show")
+                    )
+                ){
+                    return;
+                }
+
+
+                const viewportHeight =
+                    window.innerHeight ||
+                    document.documentElement.clientHeight ||
+                    800;
+
+
+                const gifItems =
+                    Array.from(
+                        videoGrid.querySelectorAll(
+                            ".video-card"
+                        )
+                    )
+                    .map(card => {
+
+                        const image =
+                            card.querySelector(
+                                ".thumbnail-fallback"
+                            );
+
+
+                        if(!image){
+                            return null;
+                        }
+
+
+                        const source =
+                            image.dataset.streamxGifSource ||
+                            image.getAttribute("src");
+
+
+                        if(
+                            !isAnimatedGifThumbnailURL(
+                                source
+                            )
+                        ){
+                            return null;
+                        }
+
+
+                        const rect =
+                            card.getBoundingClientRect();
+
+
+                        return {
+                            source,
+                            rect
+                        };
+                    })
+                    .filter(Boolean);
+
+
+                let upcoming =
+                    [];
+
+
+                if(streamxGifScrollDirection >= 0){
+
+                    upcoming =
+                        gifItems
+                            .filter(item =>
+                                item.rect.bottom >= -120 &&
+                                item.rect.top <=
+                                    viewportHeight + 3200
+                            )
+                            .sort(
+                                (a,b) =>
+                                    a.rect.top -
+                                    b.rect.top
+                            );
+
+                }
+                else{
+
+                    upcoming =
+                        gifItems
+                            .filter(item =>
+                                item.rect.top <=
+                                    viewportHeight + 120 &&
+                                item.rect.bottom >= -3200
+                            )
+                            .sort(
+                                (a,b) =>
+                                    b.rect.bottom -
+                                    a.rect.bottom
+                            );
+                }
+
+
+                upcoming
+                    .slice(
+                        0,
+                        STREAMX_GIF_PRELOAD_AHEAD
+                    )
+                    .forEach(item => {
+
+                        queueGifPreload(
+                            item.source
+                        );
+                    });
+
+            },
+            delay
+        );
+}
+
+
 function activateFeedGif(image){
 
     if(!image){
@@ -4302,6 +4612,30 @@ function activateFeedGif(image){
 
     image.loading =
         "eager";
+
+
+    const activeSource =
+        image.dataset.streamxGifSource ||
+        image.getAttribute("src");
+
+
+    if(
+        activeSource &&
+        isAnimatedGifThumbnailURL(activeSource)
+    ){
+
+        image.addEventListener(
+            "load",
+            function rememberLoadedGif(){
+
+                streamxGifPreloadedSources.add(
+                    activeSource
+                );
+            },
+            {once:true}
+        );
+    }
+
 
     try{
         image.fetchPriority =
@@ -4518,6 +4852,15 @@ function installTelegramGifScrollTracking(){
             }
 
             scheduleTelegramGifBudget();
+
+            /*
+             * Network preload runs independently from GIF animation.
+             * This gives upcoming previews time to enter cache before
+             * they become one of the four active GIFs.
+             */
+            scheduleUpcomingGifPreloads(
+                90
+            );
         },
         {passive:true}
     );
@@ -4607,7 +4950,7 @@ function setupTelegramGifScrollWindow(){
                  * not let all 20 cards become active decoders.
                  */
                 root:null,
-                rootMargin:"750px 0px 750px 0px",
+                rootMargin:"1200px 0px 1200px 0px",
                 threshold:0
             }
         );
@@ -4644,6 +4987,15 @@ function setupTelegramGifScrollWindow(){
         });
 
     scheduleTelegramGifBudget();
+
+
+    /*
+     * Do not compete with the first visible GIFs during initial paint.
+     * Begin low-priority preview warming shortly afterward.
+     */
+    scheduleUpcomingGifPreloads(
+        900
+    );
 }
 
 
@@ -6539,6 +6891,14 @@ async function updateLikeButton(videoId){
 function closeVideoPlayer(){
 
     resumeFeedMediaAfterPlayback();
+
+    /*
+     * Resume low-priority preview warming only after video playback
+     * has released network priority.
+     */
+    scheduleUpcomingGifPreloads(
+        500
+    );
 
     stopWatchTimeTracking();
 

@@ -3530,7 +3530,7 @@ textarea{
                     <input
                         type="file"
                         id="thumbnailFile"
-                        accept="image/jpeg,image/png,image/webp"
+                        accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
                     >
 
                     <div class="upload-icon">
@@ -5832,8 +5832,10 @@ thumbnailFile.addEventListener(
             return;
 
 
-        /* New uploads must not reintroduce heavy animated GIF thumbnails.
-           StreamX generates a tiny preview.mp4 + poster.jpg in Railway. */
+        /* GIFs are accepted for the existing upload workflow.
+           To protect feed speed, a selected GIF is NOT published as the live
+           thumbnail. Railway will generate the lightweight preview.mp4 +
+           poster.jpg from the uploaded video instead. */
         const thumbnailExtension =
             String(selectedThumbnailFile.name || "")
                 .split(".")
@@ -5841,7 +5843,7 @@ thumbnailFile.addEventListener(
                 .toLowerCase();
 
         if(
-            !["jpg","jpeg","png","webp"].includes(
+            !["jpg","jpeg","png","webp","gif"].includes(
                 thumbnailExtension
             )
         ){
@@ -5858,7 +5860,7 @@ thumbnailFile.addEventListener(
                 "";
 
             showMessage(
-                "❌ Use JPG, PNG or WebP for thumbnails. StreamX now generates the lightweight moving preview automatically, so GIF thumbnails are not needed.",
+                "❌ Use JPG, PNG, WebP or GIF for thumbnails.",
                 "error"
             );
 
@@ -5870,7 +5872,12 @@ thumbnailFile.addEventListener(
             "thumbnailFileName"
         ).textContent =
             "✓ " +
-            selectedThumbnailFile.name;
+            selectedThumbnailFile.name +
+            (
+                thumbnailExtension === "gif"
+                    ? " — GIF recognized; lightweight preview/poster will be generated"
+                    : ""
+            );
 
 
         const reader =
@@ -7298,6 +7305,20 @@ async function uploadVideo(){
             null;
 
 
+        const selectedThumbnailExtension =
+            selectedThumbnailFile
+                ? String(selectedThumbnailFile.name || "")
+                    .split(".")
+                    .pop()
+                    .toLowerCase()
+                : "";
+
+
+        const selectedThumbnailIsGif =
+            selectedThumbnailExtension ===
+            "gif";
+
+
         /* =========================================
            UPLOAD VIDEO
         ========================================= */
@@ -7336,7 +7357,9 @@ async function uploadVideo(){
 
         updateProgress(
             70,
-            "Video uploaded. Processing thumbnail..."
+            selectedThumbnailIsGif
+                ? "Video uploaded. GIF recognized — preparing lightweight preview + poster..."
+                : "Video uploaded. Processing thumbnail..."
         );
 
 
@@ -7344,7 +7367,10 @@ async function uploadVideo(){
            UPLOAD THUMBNAIL
         ========================================= */
 
-        if(selectedThumbnailFile){
+        if(
+            selectedThumbnailFile &&
+            !selectedThumbnailIsGif
+        ){
 
             const thumbnailName =
                 cleanFileName(

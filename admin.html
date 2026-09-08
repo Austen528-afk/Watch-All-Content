@@ -3530,7 +3530,7 @@ textarea{
                     <input
                         type="file"
                         id="thumbnailFile"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp"
                     >
 
                     <div class="upload-icon">
@@ -3657,7 +3657,7 @@ textarea{
                 <div>
 
                     <div class="processing-status-title">
-                        Adaptive Streaming
+                        Fast Feed Optimization
                     </div>
 
                     <div
@@ -3716,7 +3716,7 @@ textarea{
                 id="processingStatusDetail"
                 class="processing-status-detail"
             >
-                StreamX will show the live conversion state here.
+                StreamX will show the lightweight preview and poster status here.
             </div>
 
 
@@ -3731,7 +3731,7 @@ textarea{
                     type="button"
                     onclick="retryAdaptiveProcessingFromStatus()"
                 >
-                    Retry Processing
+                    Retry Optimization
                 </button>
 
             </div>
@@ -5832,6 +5832,40 @@ thumbnailFile.addEventListener(
             return;
 
 
+        /* New uploads must not reintroduce heavy animated GIF thumbnails.
+           StreamX generates a tiny preview.mp4 + poster.jpg in Railway. */
+        const thumbnailExtension =
+            String(selectedThumbnailFile.name || "")
+                .split(".")
+                .pop()
+                .toLowerCase();
+
+        if(
+            !["jpg","jpeg","png","webp"].includes(
+                thumbnailExtension
+            )
+        ){
+
+            selectedThumbnailFile =
+                null;
+
+            this.value =
+                "";
+
+            document.getElementById(
+                "thumbnailFileName"
+            ).textContent =
+                "";
+
+            showMessage(
+                "❌ Use JPG, PNG or WebP for thumbnails. StreamX now generates the lightweight moving preview automatically, so GIF thumbnails are not needed.",
+                "error"
+            );
+
+            return;
+        }
+
+
         document.getElementById(
             "thumbnailFileName"
         ).textContent =
@@ -6764,7 +6798,7 @@ async function retryAdaptiveProcessingFromStatus(){
     if(ui.detail){
 
         ui.detail.textContent =
-            "Re-queueing adaptive processing...";
+            "Re-queueing fast feed optimization...";
     }
 
 
@@ -6776,7 +6810,7 @@ async function retryAdaptiveProcessingFromStatus(){
         const retryResult =
             await supabaseClient
                 .rpc(
-                    "queue_streamx_video_processing",
+                    "queue_streamx_preview_processing",
                     {
                         p_video_id:
                             videoId
@@ -6806,7 +6840,7 @@ async function retryAdaptiveProcessingFromStatus(){
                 "queued",
 
             detail:
-                "Retry queued for the Railway media worker."
+                "Fast feed optimization retry queued for the Railway media worker."
         });
 
 
@@ -6819,7 +6853,7 @@ async function retryAdaptiveProcessingFromStatus(){
     }catch(error){
 
         console.error(
-            "Adaptive processing retry error:",
+            "Feed optimization retry error:",
             error
         );
 
@@ -6899,7 +6933,7 @@ async function monitorAdaptiveProcessing(
                             "video_processing_jobs"
                         )
                         .select(
-                            "status,attempts,error,updated_at"
+                            "status,attempts,error_message,processing_type,updated_at"
                         )
                         .eq(
                             "video_id",
@@ -6948,8 +6982,22 @@ async function monitorAdaptiveProcessing(
                 null;
 
 
+            const processingType =
+                String(
+                    job.processing_type ||
+                    ""
+                ).toLowerCase();
+
+
+            const isPreviewOptimization =
+                processingType ===
+                "preview";
+
+
             let detail =
-                "StreamX is preparing adaptive streaming.";
+                isPreviewOptimization
+                    ? "StreamX is preparing the lightweight feed preview and static poster."
+                    : "StreamX is preparing media processing.";
 
 
             if(
@@ -6958,7 +7006,9 @@ async function monitorAdaptiveProcessing(
             ){
 
                 detail =
-                    "Queued for the Railway media worker.";
+                    isPreviewOptimization
+                        ? "Queued for lightweight preview + poster optimization."
+                        : "Queued for the Railway media worker.";
 
             }
             else if(
@@ -6967,7 +7017,9 @@ async function monitorAdaptiveProcessing(
             ){
 
                 detail =
-                    "Railway is creating the adaptive HLS renditions.";
+                    isPreviewOptimization
+                        ? "Railway is creating the lightweight preview.mp4 and poster.jpg."
+                        : "Railway is processing the video.";
 
                 if(
                     Number(job.attempts) > 0
@@ -6981,11 +7033,20 @@ async function monitorAdaptiveProcessing(
 
             }
             else if(
+                jobStatus === "completed" &&
+                isPreviewOptimization
+            ){
+
+                detail =
+                    "Fast feed optimization is ready. StreamX is now using the lightweight preview and static poster.";
+
+            }
+            else if(
                 mediaStatus === "ready"
             ){
 
                 detail =
-                    "Adaptive streaming is ready. StreamX is now using the HLS version.";
+                    "Processed playback is ready.";
 
             }
             else if(
@@ -6995,8 +7056,8 @@ async function monitorAdaptiveProcessing(
 
                 detail =
                     video.processing_error ||
-                    job.error ||
-                    "Adaptive processing failed. The original upload has been retained.";
+                    job.error_message ||
+                    "Media optimization failed. The original upload has been retained.";
             }
 
 
@@ -7020,7 +7081,11 @@ async function monitorAdaptiveProcessing(
 
 
             if(
-                mediaStatus === "ready"
+                mediaStatus === "ready" ||
+                (
+                    jobStatus === "completed" &&
+                    isPreviewOptimization
+                )
             ){
 
                 processingStatusPollTimer =
@@ -7076,7 +7141,7 @@ async function monitorAdaptiveProcessing(
         catch(error){
 
             console.warn(
-                "Adaptive processing status check:",
+                "Feed optimization status check:",
                 error
             );
 
@@ -7394,8 +7459,9 @@ async function uploadVideo(){
                     video_url:
                         videoURL,
 
-                    /* Preserve the original uploaded MP4 while the background
-                       media worker creates the adaptive HLS version. */
+                    /* Keep the uploaded video as playback. The background worker
+                       creates only a tiny preview.mp4 + poster.jpg by default,
+                       preserving fast feeds without large HLS storage growth. */
                     source_video_url:
                         videoURL,
 
@@ -7457,7 +7523,7 @@ async function uploadVideo(){
 
 
         /* =========================================
-           QUEUE ADAPTIVE HLS PROCESSING
+           QUEUE LIGHTWEIGHT FEED OPTIMIZATION
         ========================================= */
 
         let processingQueued =
@@ -7471,13 +7537,13 @@ async function uploadVideo(){
 
             updateProgress(
                 92,
-                "Video uploaded. Queueing adaptive streaming..."
+                "Video uploaded. Queueing lightweight preview + poster..."
             );
 
             const processingQueue =
                 await supabaseClient
                     .rpc(
-                        "queue_streamx_video_processing",
+                        "queue_streamx_preview_processing",
                         {
                             p_video_id:
                                 insertedVideoId
@@ -7490,7 +7556,7 @@ async function uploadVideo(){
                    the successful upload just because background conversion
                    could not be queued. */
                 console.error(
-                    "HLS PROCESSING QUEUE ERROR:",
+                    "FEED OPTIMIZATION QUEUE ERROR:",
                     processingQueue.error
                 );
 
@@ -7506,7 +7572,7 @@ async function uploadVideo(){
 
 
         /* =========================================
-           LIVE ADAPTIVE PROCESSING STATUS
+           LIVE FEED OPTIMIZATION STATUS
         ========================================= */
 
         if(
@@ -7522,13 +7588,13 @@ async function uploadVideo(){
                     title,
 
                 mediaStatus:
-                    "queued",
+                    "uploaded",
 
                 jobStatus:
                     "queued",
 
                 detail:
-                    "Queued for the Railway media worker."
+                    "Queued for lightweight preview + poster optimization."
             });
 
 
@@ -7560,7 +7626,7 @@ async function uploadVideo(){
                     true,
 
                 detail:
-                    "The original video is available, but adaptive processing was not queued."
+                    "The original video is available, but fast feed optimization was not queued."
             });
 
         }
@@ -7573,15 +7639,15 @@ async function uploadVideo(){
         updateProgress(
             100,
             processingQueued
-                ? "Upload complete. Adaptive processing queued!"
+                ? "Upload complete. Fast feed optimization queued!"
                 : "Upload complete!"
         );
 
 
         showMessage(
             processingQueued
-                ? "✓ Video uploaded successfully. Fast adaptive streaming is now processing in the background."
-                : "✓ Video uploaded successfully. The original video is available, but adaptive processing was not queued.",
+                ? "✓ Video uploaded successfully. A lightweight preview and static poster are now processing in the background for fast loading."
+                : "✓ Video uploaded successfully. The original video is available, but fast feed optimization was not queued.",
             "success"
         );
 

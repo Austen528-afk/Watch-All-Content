@@ -10413,6 +10413,29 @@ async function getOrphanStorageObjects(){
 }
 
 
+async function getOrphanHlsObjects(){
+
+    const result =
+        await supabaseClient
+            .rpc(
+                "get_streamx_orphan_hls_objects"
+            );
+
+
+    if(result.error){
+
+        throw new Error(
+            result.error.message
+        );
+    }
+
+
+    return Array.isArray(result.data)
+        ? result.data
+        : [];
+}
+
+
 async function removeStorageObjectsInBatches(
     bucket,
     objectNames
@@ -10481,14 +10504,25 @@ async function cleanOrphanedStorage(){
         await requireAuthenticatedUser();
 
 
-        const orphanObjects =
-            await getOrphanStorageObjects();
+        const [
+            originalOrphans,
+            hlsOrphans
+        ] = await Promise.all([
+            getOrphanStorageObjects(),
+            getOrphanHlsObjects()
+        ]);
 
 
-        if(orphanObjects.length === 0){
+        const allOrphans = [
+            ...originalOrphans,
+            ...hlsOrphans
+        ];
+
+
+        if(allOrphans.length === 0){
 
             setStorageMaintenanceStatus(
-                "✓ No orphaned video or thumbnail files were found.",
+                "✓ No orphaned media files were found.",
                 "success"
             );
 
@@ -10502,7 +10536,7 @@ async function cleanOrphanedStorage(){
 
 
         const totalBytes =
-            orphanObjects.reduce(
+            allOrphans.reduce(
                 (sum,row) =>
                     sum +
                     Number(
@@ -10515,7 +10549,7 @@ async function cleanOrphanedStorage(){
 
 
         const videos =
-            orphanObjects.filter(
+            originalOrphans.filter(
                 row =>
                     row &&
                     row.bucket_id === "videos"
@@ -10523,17 +10557,25 @@ async function cleanOrphanedStorage(){
 
 
         const thumbnails =
-            orphanObjects.filter(
+            originalOrphans.filter(
                 row =>
                     row &&
                     row.bucket_id === "thumbnails"
             );
 
 
+        const hls =
+            hlsOrphans.filter(
+                row =>
+                    row &&
+                    row.bucket_id === "streamx-hls"
+            );
+
+
         setStorageMaintenanceStatus(
             "Found " +
-            orphanObjects.length +
-            " orphaned files using about " +
+            allOrphans.length +
+            " orphaned media files using about " +
             formatStorageBytes(totalBytes) +
             ". Waiting for confirmation.",
             "warning"
@@ -10542,20 +10584,23 @@ async function cleanOrphanedStorage(){
 
         const confirmed =
             confirm(
-                "Clean orphaned StreamX storage?\n\n" +
+                "Clean orphaned StreamX media?\n\n" +
                 "Files found: " +
-                orphanObjects.length +
+                allOrphans.length +
                 "\n" +
                 "Estimated space to recover: " +
                 formatStorageBytes(totalBytes) +
                 "\n\n" +
-                "Videos: " +
+                "Original videos: " +
                 videos.length +
                 "\n" +
-                "Thumbnails: " +
+                "Legacy thumbnails: " +
                 thumbnails.length +
+                "\n" +
+                "Old HLS/preview/poster files: " +
+                hls.length +
                 "\n\n" +
-                "Only files that are not linked to any current video record will be removed."
+                "Only files that are no longer referenced by current StreamX video records will be removed."
             );
 
 
@@ -10581,7 +10626,7 @@ async function cleanOrphanedStorage(){
 
 
         setStorageMaintenanceStatus(
-            "Removing orphaned storage files..."
+            "Removing orphaned media files..."
         );
 
 
@@ -10609,13 +10654,35 @@ async function cleanOrphanedStorage(){
         }
 
 
+        if(hls.length > 0){
+
+            await removeStorageObjectsInBatches(
+                "streamx-hls",
+                hls.map(
+                    row =>
+                        row.object_name
+                )
+            );
+        }
+
+
         /*
-         * Re-audit after deletion instead of assuming success.
-         * This catches partial Storage API failures or objects added
-         * concurrently while cleanup was running.
+         * Re-audit both original buckets and generated streamx-hls.
+         * We only report success when both helpers return zero objects.
          */
-        const remaining =
-            await getOrphanStorageObjects();
+        const [
+            remainingOriginal,
+            remainingHls
+        ] = await Promise.all([
+            getOrphanStorageObjects(),
+            getOrphanHlsObjects()
+        ]);
+
+
+        const remaining = [
+            ...remainingOriginal,
+            ...remainingHls
+        ];
 
 
         if(remaining.length > 0){
@@ -10636,7 +10703,7 @@ async function cleanOrphanedStorage(){
             setStorageMaintenanceStatus(
                 "Cleanup completed, but " +
                 remaining.length +
-                " orphaned files remain (" +
+                " orphaned media files remain (" +
                 formatStorageBytes(
                     remainingBytes
                 ) +
@@ -10648,7 +10715,7 @@ async function cleanOrphanedStorage(){
         else{
 
             setStorageMaintenanceStatus(
-                "✓ Orphaned storage cleaned successfully. Recovered about " +
+                "✓ Orphaned media cleaned successfully. Recovered about " +
                 formatStorageBytes(
                     totalBytes
                 ) +
@@ -10661,7 +10728,7 @@ async function cleanOrphanedStorage(){
     }catch(error){
 
         console.error(
-            "Orphan storage cleanup error:",
+            "Orphan media cleanup error:",
             error
         );
 

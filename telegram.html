@@ -4278,11 +4278,10 @@ function renderVideos(){
    TELEGRAM LIGHTWEIGHT VIDEO PREVIEW WINDOW
    ---------------------------------------------------------
    New processed uploads use tiny muted MP4 previews instead of GIF.
-   The files are small, so we preload them well before they reach the
-   viewport, but only play previews that are actually visible.
+   The static poster is shown first; the MP4 is requested only when the
+   preview card is actually visible, and only visible previews play.
 ========================================================= */
 
-let streamxPreviewPreloadObserver = null;
 let streamxPreviewPlayObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
 
@@ -4417,14 +4416,6 @@ function pauseThumbnailVideoPreview(video){
 
 function setupTelegramVideoPreviewWindow(){
 
-    if(streamxPreviewPreloadObserver){
-
-        streamxPreviewPreloadObserver.disconnect();
-
-        streamxPreviewPreloadObserver =
-            null;
-    }
-
     if(streamxPreviewPlayObserver){
 
         streamxPreviewPlayObserver.disconnect();
@@ -4449,37 +4440,11 @@ function setupTelegramVideoPreviewWindow(){
         return;
     }
 
-
     /*
-     * Begin fetching several cards before the user reaches them.
-     * These preview MP4s are intentionally tiny (~tens of KB).
-     */
-    streamxPreviewPreloadObserver =
-        new IntersectionObserver(
-            entries => {
-
-                entries.forEach(entry => {
-
-                    if(entry.isIntersecting){
-
-                        prepareThumbnailVideoPreview(
-                            entry.target
-                        );
-                    }
-                });
-
-            },
-            {
-                root:null,
-                rootMargin:"3200px 0px 3200px 0px",
-                threshold:0
-            }
-        );
-
-
-    /*
-     * Only visible previews decode/play. Off-screen previews stay cached
-     * but paused, avoiding the Telegram GIF CPU problem.
+     * PERFORMANCE RULE:
+     * Do not download preview MP4s while they are off-screen.
+     * The static poster remains visible until the card actually enters
+     * the viewport, then the tiny preview is loaded and played.
      */
     streamxPreviewPlayObserver =
         new IntersectionObserver(
@@ -4516,12 +4481,7 @@ function setupTelegramVideoPreviewWindow(){
             }
         );
 
-
     previews.forEach(video => {
-
-        streamxPreviewPreloadObserver.observe(
-            video
-        );
 
         streamxPreviewPlayObserver.observe(
             video
@@ -5602,6 +5562,7 @@ function createVideoCard(video,prioritizeLoad = false){
                 <video
                     class="thumbnail-preview-video"
                     data-preview-src="${escapeHTML(previewVideoURL)}"
+                    ${thumbnail ? `poster="${escapeHTML(thumbnail)}"` : ""}
                     muted
                     loop
                     playsinline

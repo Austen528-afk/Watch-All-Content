@@ -6003,7 +6003,6 @@ async function attachVideoSource(videoURL){
    LIGHTWEIGHT FEED VIDEO PREVIEW WINDOW
 ========================================================= */
 
-let streamxPreviewPreloadObserver = null;
 let streamxPreviewPlayObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
 
@@ -6117,11 +6116,6 @@ function pauseFeedVideoPreview(video){
 
 function setupFeedVideoPreviewWindow(){
 
-    if(streamxPreviewPreloadObserver){
-        streamxPreviewPreloadObserver.disconnect();
-        streamxPreviewPreloadObserver = null;
-    }
-
     if(streamxPreviewPlayObserver){
         streamxPreviewPlayObserver.disconnect();
         streamxPreviewPlayObserver = null;
@@ -6143,26 +6137,13 @@ function setupFeedVideoPreviewWindow(){
         return;
     }
 
-    streamxPreviewPreloadObserver =
-        new IntersectionObserver(
-            entries => {
-
-                entries.forEach(entry => {
-
-                    if(entry.isIntersecting){
-                        prepareFeedVideoPreview(
-                            entry.target
-                        );
-                    }
-                });
-            },
-            {
-                root:null,
-                rootMargin:"2600px 0px 2600px 0px",
-                threshold:0
-            }
-        );
-
+    /*
+     * PERFORMANCE RULE:
+     * Do not download preview MP4s while they are off-screen.
+     * The card already has its static poster, so the first page can
+     * paint immediately. The tiny preview is requested only when the
+     * card is actually visible to the user.
+     */
     streamxPreviewPlayObserver =
         new IntersectionObserver(
             entries => {
@@ -6192,7 +6173,6 @@ function setupFeedVideoPreviewWindow(){
         );
 
     previews.forEach(video => {
-        streamxPreviewPreloadObserver.observe(video);
         streamxPreviewPlayObserver.observe(video);
     });
 }

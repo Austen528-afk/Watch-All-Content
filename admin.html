@@ -2903,7 +2903,7 @@ textarea{
             Stream<span>X</span>
         </div>
 
-        <div class="login-subtitle">
+        <div class="login-subtitle" id="loginSubtitle">
             Administrator Login
         </div>
 
@@ -2961,6 +2961,65 @@ textarea{
 
 
         </form>
+
+
+        <div id="passwordResetPanel" style="display:none;">
+
+            <div
+                id="resetPasswordError"
+                class="login-error"
+            ></div>
+
+            <form id="passwordResetForm">
+
+                <div class="login-group">
+
+                    <label>
+                        New password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="newAdminPassword"
+                        placeholder="New password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="login-group">
+
+                    <label>
+                        Confirm new password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirmAdminPassword"
+                        placeholder="Confirm new password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="login-button"
+                    id="resetPasswordButton"
+                    disabled
+                >
+                    Verifying reset link...
+                </button>
+
+            </form>
+
+        </div>
 
 
         <div class="login-info">
@@ -5207,6 +5266,12 @@ const SUPABASE_KEY =
     "sb_publishable_r13yibx1-cPJ7nod29-oAA_eqs-x8qL";
 
 
+const STREAMX_PASSWORD_RECOVERY_FROM_URL =
+    new URLSearchParams(
+        window.location.hash.replace(/^#/, "")
+    ).get("type") === "recovery";
+
+
 const supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
@@ -5220,6 +5285,9 @@ const supabaseClient =
 const STREAMX_ADMIN_CACHE_MS = 60 * 1000;
 let streamXVerifiedAdminUserId = null;
 let streamXVerifiedAdminAt = 0;
+let streamXPasswordRecoveryActive =
+    STREAMX_PASSWORD_RECOVERY_FROM_URL;
+let streamXPasswordRecoveryReady = false;
 
 function clearStreamXAdminVerification(){
     streamXVerifiedAdminUserId = null;
@@ -5554,6 +5622,253 @@ await showApplication(
 
 
 /* =====================================================
+   PASSWORD RECOVERY
+===================================================== */
+
+document
+    .getElementById("passwordResetForm")
+    .addEventListener(
+        "submit",
+        async function(event){
+
+            event.preventDefault();
+
+            await updateAdminPassword();
+
+        }
+    );
+
+
+function showPasswordReset(session = null){
+
+    streamXPasswordRecoveryActive = true;
+    streamXPasswordRecoveryReady =
+        Boolean(session && session.user);
+
+    document
+        .getElementById("loginScreen")
+        .style.display =
+        "flex";
+
+    document
+        .getElementById("app")
+        .style.display =
+        "none";
+
+    document
+        .getElementById("loginForm")
+        .style.display =
+        "none";
+
+    document
+        .getElementById("passwordResetPanel")
+        .style.display =
+        "block";
+
+    document
+        .getElementById("loginSubtitle")
+        .textContent =
+        "Reset Administrator Password";
+
+    document
+        .getElementById("loginError")
+        .style.display =
+        "none";
+
+    const resetError =
+        document.getElementById(
+            "resetPasswordError"
+        );
+
+    const resetButton =
+        document.getElementById(
+            "resetPasswordButton"
+        );
+
+    if(streamXPasswordRecoveryReady){
+
+        resetError.style.display =
+            "none";
+
+        resetButton.disabled =
+            false;
+
+        resetButton.textContent =
+            "Update Password";
+
+    }else{
+
+        resetError.textContent =
+            "Verifying the password recovery link...";
+
+        resetError.style.display =
+            "block";
+
+        resetButton.disabled =
+            true;
+
+        resetButton.textContent =
+            "Verifying reset link...";
+
+    }
+
+}
+
+
+async function updateAdminPassword(){
+
+    const password =
+        document
+            .getElementById(
+                "newAdminPassword"
+            )
+            .value;
+
+    const confirmPassword =
+        document
+            .getElementById(
+                "confirmAdminPassword"
+            )
+            .value;
+
+    const resetError =
+        document.getElementById(
+            "resetPasswordError"
+        );
+
+    const resetButton =
+        document.getElementById(
+            "resetPasswordButton"
+        );
+
+    resetError.style.display =
+        "none";
+
+    if(!streamXPasswordRecoveryReady){
+
+        resetError.textContent =
+            "The password recovery session is not ready. Request a new recovery email and open its link again.";
+
+        resetError.style.display =
+            "block";
+
+        return;
+
+    }
+
+    if(password.length < 8){
+
+        resetError.textContent =
+            "Use at least 8 characters for the new password.";
+
+        resetError.style.display =
+            "block";
+
+        return;
+
+    }
+
+    if(password !== confirmPassword){
+
+        resetError.textContent =
+            "The two passwords do not match.";
+
+        resetError.style.display =
+            "block";
+
+        return;
+
+    }
+
+    resetButton.disabled =
+        true;
+
+    resetButton.textContent =
+        "Updating password...";
+
+    try{
+
+        const result =
+            await supabaseClient.auth.updateUser({
+                password:password
+            });
+
+        if(result.error){
+            throw new Error(
+                result.error.message
+            );
+        }
+
+        /*
+         * End the temporary recovery session after changing the password.
+         * The administrator then signs in normally using the new password.
+         */
+        await supabaseClient.auth.signOut();
+
+        if(
+            window.history &&
+            window.history.replaceState
+        ){
+            window.history.replaceState(
+                null,
+                document.title,
+                window.location.pathname +
+                window.location.search
+            );
+        }
+
+        streamXPasswordRecoveryActive =
+            false;
+
+        streamXPasswordRecoveryReady =
+            false;
+
+        document
+            .getElementById(
+                "newAdminPassword"
+            )
+            .value =
+            "";
+
+        document
+            .getElementById(
+                "confirmAdminPassword"
+            )
+            .value =
+            "";
+
+        showLogin();
+
+        alert(
+            "Password updated successfully. Log in with your new password."
+        );
+
+    }catch(error){
+
+        console.error(
+            "Password reset error:",
+            error
+        );
+
+        resetError.textContent =
+            "Could not update password: " +
+            error.message;
+
+        resetError.style.display =
+            "block";
+
+        resetButton.disabled =
+            false;
+
+        resetButton.textContent =
+            "Update Password";
+
+    }
+
+}
+
+
+/* =====================================================
    CHECK EXISTING SESSION
 ===================================================== */
 
@@ -5579,6 +5894,32 @@ async function checkSession(){
 
         const session =
             result.data.session;
+
+
+if(streamXPasswordRecoveryActive){
+
+    showPasswordReset(
+        session
+    );
+
+    if(!session){
+
+        const resetError =
+            document.getElementById(
+                "resetPasswordError"
+            );
+
+        resetError.textContent =
+            "This recovery link could not be verified yet. If it remains here, request a new password recovery email.";
+
+        resetError.style.display =
+            "block";
+
+    }
+
+    return;
+
+}
 
 
 if(session){
@@ -5642,6 +5983,12 @@ if(session){
 
 function showLogin(){
 
+    streamXPasswordRecoveryActive =
+        false;
+
+    streamXPasswordRecoveryReady =
+        false;
+
     document
         .getElementById("loginScreen")
         .style.display =
@@ -5652,6 +5999,24 @@ function showLogin(){
         .getElementById("app")
         .style.display =
         "none";
+
+
+    document
+        .getElementById("loginForm")
+        .style.display =
+        "block";
+
+
+    document
+        .getElementById("passwordResetPanel")
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById("loginSubtitle")
+        .textContent =
+        "Administrator Login";
 
 }
 
@@ -5761,6 +6126,20 @@ supabaseClient.auth.onAuthStateChange(
             "Auth event:",
             event
         );
+
+
+        if(
+            event === "PASSWORD_RECOVERY"
+        ){
+
+            clearStreamXAdminVerification();
+            showPasswordReset(
+                session
+            );
+
+            return;
+
+        }
 
 
         if(
@@ -15604,6 +15983,10 @@ if(newCategoryInput){
 /* =====================================================
    START APPLICATION
 ===================================================== */
+
+if(STREAMX_PASSWORD_RECOVERY_FROM_URL){
+    showPasswordReset();
+}
 
 checkSession();
 

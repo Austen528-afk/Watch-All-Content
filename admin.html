@@ -5278,6 +5278,95 @@ const supabaseClient =
         SUPABASE_KEY
     );
 
+
+const STREAMX_MEDIA_WORKER_URL =
+    "https://streamx-media-worker-production.up.railway.app";
+
+
+async function uploadOriginalVideoToR2(
+    session,
+    file
+){
+
+    if(!session || !session.access_token){
+        throw new Error(
+            "Your admin session is missing an access token. Please log in again."
+        );
+    }
+
+
+    const response =
+        await fetch(
+            STREAMX_MEDIA_WORKER_URL +
+            "/admin/upload-original",
+            {
+                method:"POST",
+
+                headers:{
+                    "Authorization":
+                        "Bearer " +
+                        session.access_token,
+
+                    "Content-Type":
+                        file.type ||
+                        "application/octet-stream",
+
+                    "X-StreamX-File-Name":
+                        encodeURIComponent(
+                            file.name ||
+                            "video.mp4"
+                        )
+                },
+
+                body:file
+            }
+        );
+
+
+    let payload =
+        null;
+
+
+    try{
+        payload =
+            await response.json();
+    }
+    catch(error){
+        payload =
+            null;
+    }
+
+
+    if(!response.ok){
+
+        throw new Error(
+            payload &&
+            payload.error
+                ? payload.error
+                : (
+                    "R2 video upload failed with HTTP " +
+                    response.status
+                )
+        );
+
+    }
+
+
+    if(
+        !payload ||
+        !payload.publicUrl
+    ){
+
+        throw new Error(
+            "R2 upload completed without returning a video URL."
+        );
+
+    }
+
+
+    return payload.publicUrl;
+}
+
 /* =====================================================
    STREAMX ADMIN AUTHORIZATION
 ===================================================== */
@@ -7708,30 +7797,11 @@ async function uploadVideo(){
         );
 
 
-        const videoUpload =
-            await supabaseClient
-                .storage
-                .from("videos")
-                .upload(
-                    videoPath,
-                    selectedVideoFile,
-                    {
-                        cacheControl:"3600",
-                        upsert:false,
-                        contentType:
-                            selectedVideoFile.type
-                    }
-                );
-
-
-        if(videoUpload.error){
-
-            throw new Error(
-                "Video upload failed: " +
-                videoUpload.error.message
+        const videoURL =
+            await uploadOriginalVideoToR2(
+                session,
+                selectedVideoFile
             );
-
-        }
 
 
         updateProgress(
@@ -7806,19 +7876,8 @@ async function uploadVideo(){
 
 
         /* =========================================
-           GET PUBLIC VIDEO URL
+           GET PUBLIC THUMBNAIL URL
         ========================================= */
-
-        const videoURL =
-            supabaseClient
-                .storage
-                .from("videos")
-                .getPublicUrl(
-                    videoPath
-                )
-                .data
-                .publicUrl;
-
 
         let thumbnailURL =
             null;
@@ -7864,9 +7923,9 @@ async function uploadVideo(){
                     video_url:
                         videoURL,
 
-                    /* Keep the uploaded video as playback. The background worker
-                       creates only a tiny preview.mp4 + poster.jpg by default,
-                       preserving fast feeds without large HLS storage growth. */
+                    /* The original video is stored directly in Cloudflare R2.
+                       It remains the immediate playback source while the worker
+                       prepares the lightweight preview/poster in the background. */
                     source_video_url:
                         videoURL,
 

@@ -4762,10 +4762,10 @@ function setupTelegramVideoPreviewWindow(){
     }
 
     /*
-     * PERFORMANCE RULE:
-     * Do not download preview MP4s while they are off-screen.
-     * The static poster remains visible until the card actually enters
-     * the viewport, then the tiny preview is loaded and played.
+     * PRELOAD EARLY, PLAY ONLY WHEN VISIBLE:
+     * Telegram feels much faster when the tiny preview MP4 is already in
+     * cache before the user reaches the next card. Cards up to about one
+     * screen ahead are prepared, but off-screen previews remain paused.
      */
     streamxPreviewPlayObserver =
         new IntersectionObserver(
@@ -4776,14 +4776,37 @@ function setupTelegramVideoPreviewWindow(){
                     const video =
                         entry.target;
 
-                    if(
-                        entry.isIntersecting &&
-                        entry.intersectionRatio >= 0.08
-                    ){
+                    if(entry.isIntersecting){
 
-                        playThumbnailVideoPreview(
+                        prepareThumbnailVideoPreview(
                             video
                         );
+
+                        const rect =
+                            video.getBoundingClientRect();
+
+                        const viewportHeight =
+                            window.innerHeight ||
+                            document.documentElement.clientHeight ||
+                            800;
+
+                        const actuallyVisible =
+                            rect.bottom > 0 &&
+                            rect.top < viewportHeight;
+
+                        if(actuallyVisible){
+
+                            playThumbnailVideoPreview(
+                                video
+                            );
+
+                        }
+                        else{
+
+                            pauseThumbnailVideoPreview(
+                                video
+                            );
+                        }
 
                     }
                     else{
@@ -4797,12 +4820,22 @@ function setupTelegramVideoPreviewWindow(){
             },
             {
                 root:null,
-                rootMargin:"0px",
-                threshold:[0,0.08,0.25]
+                rootMargin:"900px 0px 900px 0px",
+                threshold:0
             }
         );
 
-    previews.forEach(video => {
+    previews.forEach((video,index) => {
+
+        /*
+         * Prime the first few lightweight previews immediately. These are
+         * only a few-second low-bitrate MP4s, not the full video streams.
+         */
+        if(index < 3){
+            prepareThumbnailVideoPreview(
+                video
+            );
+        }
 
         streamxPreviewPlayObserver.observe(
             video
@@ -4891,8 +4924,8 @@ const STREAMX_MAX_ACTIVE_GIFS = 4;
  * Keep GIF animation budget small, but warm likely upcoming GIF files
  * separately so scrolling does not reveal long blank previews.
  */
-const STREAMX_GIF_PRELOAD_AHEAD = 7;
-const STREAMX_GIF_PRELOAD_CONCURRENCY = 2;
+const STREAMX_GIF_PRELOAD_AHEAD = 8;
+const STREAMX_GIF_PRELOAD_CONCURRENCY = 3;
 
 const streamxGifPreloadedSources = new Set();
 const streamxGifPreloadingSources = new Map();
@@ -5631,8 +5664,21 @@ function setupTelegramGifScrollWindow(){
                                 "eager";
 
                             try{
+                                const rect =
+                                    card.getBoundingClientRect();
+
+                                const viewportHeight =
+                                    window.innerHeight ||
+                                    document.documentElement.clientHeight ||
+                                    800;
+
                                 image.fetchPriority =
-                                    "auto";
+                                    (
+                                        rect.bottom > 0 &&
+                                        rect.top < viewportHeight
+                                    )
+                                        ? "high"
+                                        : "auto";
                             }
                             catch(error){}
                         }
@@ -5799,7 +5845,7 @@ function setupTelegramGifScrollWindow(){
      * Begin low-priority preview warming shortly afterward.
      */
     scheduleUpcomingGifPreloads(
-        900
+        160
     );
 }
 

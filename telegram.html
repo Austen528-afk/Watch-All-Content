@@ -702,6 +702,44 @@ body{
     background:#171717;
 }
 
+/* Adaptive feed sizing: cards stay centered and reflect source aspect. */
+.video-card{
+    width:min(100%,520px);
+    justify-self:center;
+}
+
+.video-card.streamx-landscape{
+    width:min(94%,520px);
+}
+
+.video-card.streamx-square{
+    width:min(84%,440px);
+}
+
+.video-card.streamx-portrait{
+    width:min(72%,370px);
+}
+
+.video-card.streamx-tall{
+    width:min(66%,340px);
+}
+
+.video-card.streamx-landscape .thumbnail{
+    aspect-ratio:16/9;
+}
+
+.video-card.streamx-square .thumbnail{
+    aspect-ratio:1/1;
+}
+
+.video-card.streamx-portrait .thumbnail{
+    aspect-ratio:4/5;
+}
+
+.video-card.streamx-tall .thumbnail{
+    aspect-ratio:9/16;
+}
+
 
 /* =========================
    THUMBNAIL
@@ -1229,17 +1267,34 @@ body{
 
     .video-grid{
         grid-template-columns:1fr;
-        gap:12px;
+        gap:14px;
         width:100%;
-        max-width:620px;
+        max-width:540px;
         margin:0 auto;
     }
 
     .video-card{
+        width:min(92%,500px);
         border-radius:14px;
         background:#0f0f0f;
         border-color:#242424;
         transform:none !important;
+    }
+
+    .video-card.streamx-landscape{
+        width:min(92%,500px);
+    }
+
+    .video-card.streamx-square{
+        width:min(82%,430px);
+    }
+
+    .video-card.streamx-portrait{
+        width:min(72%,360px);
+    }
+
+    .video-card.streamx-tall{
+        width:min(66%,330px);
     }
 
     .video-info{
@@ -1279,6 +1334,22 @@ body{
     .main{
         padding-left:10px;
         padding-right:10px;
+    }
+
+    .video-card.streamx-landscape{
+        width:96%;
+    }
+
+    .video-card.streamx-square{
+        width:88%;
+    }
+
+    .video-card.streamx-portrait{
+        width:78%;
+    }
+
+    .video-card.streamx-tall{
+        width:72%;
     }
 
     .hero{
@@ -5635,6 +5706,72 @@ function setupTelegramGifScrollWindow(){
    CREATE CARD
 ========================= */
 
+function applyVideoCardAspect(
+    card,
+    width,
+    height
+){
+
+    width =
+        Number(width || 0);
+
+    height =
+        Number(height || 0);
+
+
+    if(
+        !card ||
+        width <= 0 ||
+        height <= 0
+    ){
+        return;
+    }
+
+
+    const ratio =
+        width / height;
+
+
+    card.classList.remove(
+        "streamx-landscape",
+        "streamx-square",
+        "streamx-portrait",
+        "streamx-tall"
+    );
+
+
+    if(ratio >= 1.35){
+
+        card.classList.add(
+            "streamx-landscape"
+        );
+
+    }
+    else if(ratio >= 0.9){
+
+        card.classList.add(
+            "streamx-square"
+        );
+
+    }
+    else if(ratio >= 0.68){
+
+        card.classList.add(
+            "streamx-portrait"
+        );
+
+    }
+    else{
+
+        card.classList.add(
+            "streamx-tall"
+        );
+
+    }
+
+}
+
+
 function createVideoCard(video,prioritizeLoad = false){
 
     const card =
@@ -5830,6 +5967,59 @@ function createVideoCard(video,prioritizeLoad = false){
         </div>
 
     `;
+
+    /*
+     * Match each card to the uploaded media shape.
+     * R2 posters preserve the source aspect ratio, and preview metadata
+     * provides a second measurement once the preview enters view.
+     */
+    const previewElement =
+        card.querySelector(
+            ".thumbnail-preview-video"
+        );
+
+
+    if(previewElement){
+
+        previewElement.addEventListener(
+            "loadedmetadata",
+            function(){
+
+                applyVideoCardAspect(
+                    card,
+                    previewElement.videoWidth,
+                    previewElement.videoHeight
+                );
+
+            }
+        );
+
+    }
+
+
+    if(thumbnail){
+
+        const aspectProbe =
+            new Image();
+
+
+        aspectProbe.onload =
+            function(){
+
+                applyVideoCardAspect(
+                    card,
+                    aspectProbe.naturalWidth,
+                    aspectProbe.naturalHeight
+                );
+
+            };
+
+
+        aspectProbe.src =
+            thumbnail;
+
+    }
+
 
     const likeButton =
     card.querySelector(".like-btn");

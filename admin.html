@@ -8930,6 +8930,14 @@ function createVideoCard(
                 </button>
 
 
+                <button
+                    class="card-button"
+                    onclick="editVideoMetadata(${JSON.stringify(video.id)})"
+                >
+                    ✏️ Edit Metadata
+                </button>
+
+
                 ${
                     !video.preview_video_url
                     ?
@@ -8982,6 +8990,161 @@ function createVideoCard(
         .appendChild(card);
 
 }
+
+/* =====================================================
+   EDIT VIDEO METADATA
+===================================================== */
+
+async function editVideoMetadata(videoId){
+
+    try{
+
+        await requireAuthenticatedUser();
+
+
+        const result =
+            await supabaseClient
+                .from("videos")
+                .select(
+                    "id,title,description,category"
+                )
+                .eq(
+                    "id",
+                    videoId
+                )
+                .single();
+
+
+        if(result.error){
+
+            throw new Error(
+                result.error.message
+            );
+
+        }
+
+
+        const video =
+            result.data;
+
+
+        const titleInput =
+            prompt(
+                "Video title:",
+                video.title || ""
+            );
+
+
+        if(titleInput === null){
+            return;
+        }
+
+
+        const title =
+            titleInput.trim();
+
+
+        if(!title){
+
+            alert(
+                "The video title cannot be empty."
+            );
+
+            return;
+        }
+
+
+        const descriptionInput =
+            prompt(
+                "Video description:",
+                video.description || ""
+            );
+
+
+        if(descriptionInput === null){
+            return;
+        }
+
+
+        const categoryInput =
+            prompt(
+                "Video category:",
+                video.category || ""
+            );
+
+
+        if(categoryInput === null){
+            return;
+        }
+
+
+        const description =
+            descriptionInput.trim();
+
+
+        const category =
+            categoryInput.trim();
+
+
+        const updateResult =
+            await supabaseClient
+                .from("videos")
+                .update({
+                    title:
+                        title,
+
+                    description:
+                        description,
+
+                    category:
+                        category || null
+                })
+                .eq(
+                    "id",
+                    videoId
+                )
+                .select(
+                    "id,title,description,category"
+                )
+                .single();
+
+
+        if(updateResult.error){
+
+            throw new Error(
+                updateResult.error.message
+            );
+
+        }
+
+
+        showMessage(
+            "✓ Video metadata updated successfully.",
+            "success"
+        );
+
+
+        await loadVideos();
+
+
+    }catch(error){
+
+        console.error(
+            "Edit video metadata error:",
+            error
+        );
+
+
+        showMessage(
+            "❌ Could not update video metadata: " +
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
 
 /* =====================================================
    OPTIMIZE LIGHTWEIGHT PREVIEW

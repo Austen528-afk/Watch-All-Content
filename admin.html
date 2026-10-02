@@ -9180,6 +9180,10 @@ function createVideoCard(
         "video-card";
 
 
+    card.dataset.videoId =
+        String(video.id);
+
+
     const thumbnailURL =
         getPublicURL(
             video.thumbnail_url,
@@ -12417,6 +12421,114 @@ async function cleanOrphanedStorage(){
    DELETE VIDEO
 ===================================================== */
 
+function removeDeletedVideoFromAdminUI(
+    id,
+    video = null
+){
+
+    const grid =
+        document.getElementById(
+            "videoGrid"
+        );
+
+    const card =
+        grid &&
+        grid.querySelector(
+            '.video-card[data-video-id="' +
+            CSS.escape(String(id)) +
+            '"]'
+        );
+
+
+    if(card){
+        card.remove();
+    }
+
+
+    const remaining =
+        grid
+            ? grid.querySelectorAll(
+                ".video-card"
+            ).length
+            : 0;
+
+
+    const totalVideosElement =
+        document.getElementById(
+            "totalVideos"
+        );
+
+    const videoCountElement =
+        document.getElementById(
+            "videoCount"
+        );
+
+    const emptyState =
+        document.getElementById(
+            "emptyState"
+        );
+
+
+    if(totalVideosElement){
+        totalVideosElement.textContent =
+            remaining;
+    }
+
+
+    if(videoCountElement){
+        videoCountElement.textContent =
+            remaining +
+            (
+                remaining === 1
+                    ? " video"
+                    : " videos"
+            );
+    }
+
+
+    if(
+        emptyState &&
+        remaining === 0
+    ){
+        emptyState.style.display =
+            "block";
+    }
+
+
+    if(video){
+
+        const totalViewsElement =
+            document.getElementById(
+                "totalViews"
+            );
+
+        if(totalViewsElement){
+
+            const currentViews =
+                Number(
+                    String(
+                        totalViewsElement.textContent ||
+                        "0"
+                    ).replace(/[^0-9.-]/g,"")
+                ) || 0;
+
+            const deletedViews =
+                Number(
+                    video.views || 0
+                );
+
+            totalViewsElement.textContent =
+                Math.max(
+                    0,
+                    currentViews -
+                        deletedViews
+                ).toLocaleString();
+        }
+    }
+
+}
+
+
 async function deleteVideo(id, button = null){
 
     const confirmed =
@@ -12501,7 +12613,9 @@ async function deleteVideo(id, button = null){
             );
 
 
-            await loadVideos();
+            removeDeletedVideoFromAdminUI(
+                id
+            );
 
             return;
 
@@ -12747,13 +12861,16 @@ async function deleteVideo(id, button = null){
         }
 
 
+        removeDeletedVideoFromAdminUI(
+            id,
+            video
+        );
+
+
         showMessage(
             "✓ Video and all associated media deleted successfully.",
             "success"
         );
-
-
-        await loadVideos();
 
 
     }catch(error){

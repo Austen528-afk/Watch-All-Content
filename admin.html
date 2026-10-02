@@ -5511,6 +5511,81 @@ async function deleteStreamXVideoMedia(
 
 }
 
+async function queueFullProcessing(
+    session,
+    videoId
+){
+
+    if(
+        !session ||
+        !session.access_token ||
+        !videoId
+    ){
+        throw new Error(
+            "A valid admin session and video ID are required."
+        );
+    }
+
+
+    const response =
+        await fetch(
+            STREAMX_MEDIA_WORKER_URL +
+            "/admin/queue-full",
+            {
+                method:"POST",
+
+                headers:{
+                    "Authorization":
+                        "Bearer " +
+                        session.access_token,
+
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify({
+                        videoId:
+                            Number(videoId)
+                    })
+            }
+        );
+
+
+    let payload =
+        null;
+
+
+    try{
+        payload =
+            await response.json();
+    }
+    catch(error){
+        payload =
+            null;
+    }
+
+
+    if(!response.ok){
+
+        throw new Error(
+            payload &&
+            payload.error
+                ? payload.error
+                : (
+                    "Full HLS processing queue failed with HTTP " +
+                    response.status
+                )
+        );
+
+    }
+
+
+    return payload;
+
+}
+
+
 
 /* =====================================================
    STREAMX ADMIN AUTHORIZATION
@@ -7418,32 +7493,20 @@ async function retryAdaptiveProcessingFromStatus(){
     if(ui.detail){
 
         ui.detail.textContent =
-            "Re-queueing fast feed optimization...";
+            "Re-queueing full HLS processing...";
     }
 
 
     try{
 
-        await requireAuthenticatedUser();
+        const session =
+            await requireAuthenticatedUser();
 
 
-        const retryResult =
-            await supabaseClient
-                .rpc(
-                    "queue_streamx_preview_processing",
-                    {
-                        p_video_id:
-                            videoId
-                    }
-                );
-
-
-        if(retryResult.error){
-
-            throw new Error(
-                retryResult.error.message
-            );
-        }
+        await queueFullProcessing(
+            session,
+            videoId
+        );
 
 
         renderAdaptiveProcessingStatus({
@@ -7460,7 +7523,7 @@ async function retryAdaptiveProcessingFromStatus(){
                 "queued",
 
             detail:
-                "Fast feed optimization retry queued for the Railway media worker."
+                "Full HLS processing retry queued for the Railway media worker."
         });
 
 
@@ -7473,7 +7536,7 @@ async function retryAdaptiveProcessingFromStatus(){
     }catch(error){
 
         console.error(
-            "Feed optimization retry error:",
+            "Full HLS retry error:",
             error
         );
 
@@ -7617,7 +7680,7 @@ async function monitorAdaptiveProcessing(
             let detail =
                 isPreviewOptimization
                     ? "StreamX is preparing the lightweight feed preview and static poster."
-                    : "StreamX is preparing media processing.";
+                    : "StreamX is preparing HLS, preview and poster media.";
 
 
             if(
@@ -7627,7 +7690,7 @@ async function monitorAdaptiveProcessing(
 
                 detail =
                     isPreviewOptimization
-                        ? "Queued for lightweight preview + poster optimization."
+                        ? "Queued for full HLS + preview + poster processing."
                         : "Queued for the Railway media worker.";
 
             }
@@ -7639,7 +7702,7 @@ async function monitorAdaptiveProcessing(
                 detail =
                     isPreviewOptimization
                         ? "Railway is creating the lightweight preview.mp4 and poster.jpg."
-                        : "Railway is processing the video.";
+                        : "Railway is creating HLS, preview.mp4 and poster.jpg.";
 
                 if(
                     Number(job.attempts) > 0
@@ -8150,7 +8213,7 @@ async function uploadVideo(){
 
 
         /* =========================================
-           QUEUE LIGHTWEIGHT FEED OPTIMIZATION
+           QUEUE FULL HLS PROCESSING
         ========================================= */
 
         let processingQueued =
@@ -8164,34 +8227,27 @@ async function uploadVideo(){
 
             updateProgress(
                 92,
-                "Video uploaded. Queueing lightweight preview + poster..."
+                "Video uploaded. Queueing full HLS processing..."
             );
 
-            const processingQueue =
-                await supabaseClient
-                    .rpc(
-                        "queue_streamx_preview_processing",
-                        {
-                            p_video_id:
-                                insertedVideoId
-                        }
-                    );
+            try{
 
-            if(processingQueue.error){
-
-                /* The original MP4 remains valid and playable. Do not delete
-                   the successful upload just because background conversion
-                   could not be queued. */
-                console.error(
-                    "FEED OPTIMIZATION QUEUE ERROR:",
-                    processingQueue.error
+                await queueFullProcessing(
+                    session,
+                    insertedVideoId
                 );
 
-            }
-            else{
 
                 processingQueued =
                     true;
+
+            }catch(processingError){
+
+                /* The original R2 MP4 remains valid and playable. */
+                console.error(
+                    "FULL HLS QUEUE ERROR:",
+                    processingError
+                );
 
             }
 
@@ -8221,7 +8277,7 @@ async function uploadVideo(){
                     "queued",
 
                 detail:
-                    "Queued for lightweight preview + poster optimization."
+                    "Queued for full HLS + preview + poster processing."
             });
 
 
@@ -8253,7 +8309,7 @@ async function uploadVideo(){
                     true,
 
                 detail:
-                    "The original video is available, but fast feed optimization was not queued."
+                    "The original video is available, but full HLS processing was not queued."
             });
 
         }
@@ -8266,15 +8322,15 @@ async function uploadVideo(){
         updateProgress(
             100,
             processingQueued
-                ? "Upload complete. Fast feed optimization queued!"
+                ? "Upload complete. Full HLS processing queued!"
                 : "Upload complete!"
         );
 
 
         showMessage(
             processingQueued
-                ? "✓ Video uploaded successfully. A lightweight preview and static poster are now processing in the background for fast loading."
-                : "✓ Video uploaded successfully. The original video is available, but fast feed optimization was not queued.",
+                ? "✓ Video uploaded successfully. HLS, preview and poster are now processing in the background."
+                : "✓ Video uploaded successfully. The original video is available, but full HLS processing was not queued.",
             "success"
         );
 

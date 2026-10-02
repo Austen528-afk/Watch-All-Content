@@ -641,29 +641,185 @@ body{
 /* WEB / APP VIEW MODE */
 .view-mode-toggle{flex:0 0 auto;min-height:38px;padding:8px 14px;border:1px solid #343434;border-radius:999px;background:#151515;color:#f3f3f3;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:.18s ease}
 .view-mode-toggle:hover,.view-mode-toggle[aria-pressed="true"]{border-color:#ff1744;background:#211016;color:#fff}
+
 body.streamx-app-mode .hero{display:none}
 body.streamx-app-mode .main{max-width:760px;padding-top:18px}
 body.streamx-app-mode .section-header{margin-bottom:14px}
 body.streamx-app-mode .video-grid{display:grid;grid-template-columns:1fr;gap:28px}
-body.streamx-app-mode .video-card{width:min(100%,520px);justify-self:center;background:transparent;border:none;border-radius:0;overflow:visible;transform:none}
+
+body.streamx-app-mode .video-card{
+    width:min(100%,520px);
+    justify-self:center;
+    background:transparent;
+    border:none;
+    border-radius:0;
+    overflow:visible;
+    transform:none;
+}
 body.streamx-app-mode .video-card:hover{transform:translateY(-2px);border-color:transparent;background:transparent}
 body.streamx-app-mode .video-card.streamx-landscape{width:min(94%,520px)}
 body.streamx-app-mode .video-card.streamx-square{width:min(76%,400px)}
 body.streamx-app-mode .video-card.streamx-portrait{width:min(72%,370px)}
 body.streamx-app-mode .video-card.streamx-tall{width:min(66%,340px)}
+
 body.streamx-app-mode .video-card.streamx-landscape .thumbnail{aspect-ratio:16/9}
 body.streamx-app-mode .video-card.streamx-square .thumbnail{aspect-ratio:1/1}
 body.streamx-app-mode .video-card.streamx-portrait .thumbnail{aspect-ratio:4/5}
 body.streamx-app-mode .video-card.streamx-tall .thumbnail{aspect-ratio:9/16}
-body.streamx-app-mode .thumbnail{border:1px solid #252525;border-radius:12px}
-body.streamx-app-mode .app-mode-video-title{padding:0 2px;margin:0 0 9px;color:#f3f3f3;font-size:14px;font-weight:800;line-height:1.4}
-body.streamx-app-mode .video-title{display:none}
-body.streamx-app-mode .video-info{padding:10px 2px 0;display:flex;flex-wrap:wrap;align-items:center}
-body.streamx-app-mode .video-meta{order:1;min-width:0;display:flex;align-items:center;gap:6px;justify-content:flex-start;color:#666;font-size:10px;white-space:nowrap}
-body.streamx-app-mode .video-actions{order:2;min-width:0;margin:0 0 0 auto;gap:7px}
-body.streamx-app-mode .video-description{order:3;flex-basis:100%;margin:7px 0 0;color:#858585;font-size:11px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+body.streamx-app-mode .thumbnail{
+    border:1px solid #252525;
+    border-radius:12px;
+}
+
+/* Full-width text, matching the Mini App. */
+body.streamx-app-mode .app-mode-video-title,
+body.streamx-app-mode .app-mode-video-description{
+    width:calc(100vw - 20px);
+    max-width:760px;
+    position:relative;
+    left:50%;
+    transform:translateX(-50%);
+    padding:0 2px;
+    box-sizing:border-box;
+    text-align:left;
+}
+
+body.streamx-app-mode .app-mode-video-title{
+    margin:0 0 4px;
+    color:#f3f3f3;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.4;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+
+body.streamx-app-mode .app-mode-video-description{
+    margin:0 0 8px;
+    color:#858585;
+    font-size:11px;
+    line-height:1.55;
+    display:block;
+    white-space:normal;
+    overflow:visible;
+    overflow-wrap:break-word;
+    word-break:normal;
+}
+
+/* Hide the normal Web-card title/description only while App mode is active. */
+body.streamx-app-mode .video-title,
+body.streamx-app-mode .video-description{
+    display:none!important;
+}
+
+/* Views / likes / save remain directly below the video. */
+body.streamx-app-mode .video-info{
+    padding:10px 2px 0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    overflow:visible;
+}
+body.streamx-app-mode .video-meta{
+    min-width:0;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    justify-content:flex-start;
+    color:#666;
+    font-size:10px;
+    white-space:nowrap;
+}
+body.streamx-app-mode .video-actions{
+    min-width:0;
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:7px;
+    overflow:visible;
+}
 body.streamx-app-mode .feed-pagination{display:none!important}
-@media(max-width:480px){.view-mode-toggle{min-height:36px;padding:7px 11px;font-size:10px}body.streamx-app-mode .main{padding-left:10px;padding-right:10px}body.streamx-app-mode .video-card.streamx-landscape{width:80%}body.streamx-app-mode .video-card.streamx-square{width:68%}body.streamx-app-mode .video-card.streamx-portrait{width:48%}body.streamx-app-mode .video-card.streamx-tall{width:56%}body.streamx-app-mode .app-mode-video-title{font-size:11px}body.streamx-app-mode .video-description{display:-webkit-box;font-size:9.5px}}
+
+@media(max-width:800px){
+    body.streamx-app-mode .video-grid{
+        grid-template-columns:1fr;
+        gap:16px;
+        width:100%;
+        max-width:500px;
+        margin:0 auto;
+    }
+
+    body.streamx-app-mode .video-card{
+        width:min(84%,440px);
+        background:transparent;
+        border:none;
+        border-radius:0;
+        transform:none!important;
+    }
+
+    body.streamx-app-mode .video-card.streamx-landscape{width:min(84%,440px)}
+    body.streamx-app-mode .video-card.streamx-square{width:min(64%,320px)}
+    body.streamx-app-mode .video-card.streamx-portrait{width:min(44%,220px)}
+    body.streamx-app-mode .video-card.streamx-tall{width:min(52%,260px)}
+
+    /* Same left shift as the Mini App: text stays at the edge, media has an inset. */
+    body.streamx-app-mode .thumbnail{
+        position:relative;
+        left:calc((100% - (100vw - 20px)) / 2 + 18px);
+    }
+
+    body.streamx-app-mode .video-info{
+        position:relative;
+        left:calc((100% - (100vw - 20px)) / 2 + 18px);
+        padding:6px 1px 0;
+        gap:6px;
+    }
+
+    body.streamx-app-mode .app-mode-video-title{
+        width:calc(100vw - 20px);
+        max-width:760px;
+        padding:0 2px;
+        margin-bottom:3px;
+        font-size:11px;
+        line-height:1.3;
+        text-align:left;
+        -webkit-line-clamp:1;
+    }
+
+    body.streamx-app-mode .app-mode-video-description{
+        width:calc(100vw - 20px);
+        max-width:760px;
+        display:block;
+        font-size:9.5px;
+        line-height:1.45;
+        white-space:normal;
+        overflow:visible;
+        max-height:none;
+    }
+
+    body.streamx-app-mode .video-meta{
+        gap:4px;
+        font-size:8.5px;
+    }
+
+    body.streamx-app-mode .video-actions{gap:4px}
+    body.streamx-app-mode .like-btn{font-size:18px}
+    body.streamx-app-mode .like-count{font-size:10px}
+    body.streamx-app-mode .library-btn{min-height:27px;padding:4px 7px;font-size:10px}
+    body.streamx-app-mode .save-count{font-size:10px}
+}
+
+@media(max-width:480px){
+    .view-mode-toggle{min-height:36px;padding:7px 11px;font-size:10px}
+    body.streamx-app-mode .main{padding-left:10px;padding-right:10px}
+    body.streamx-app-mode .video-card.streamx-landscape{width:80%}
+    body.streamx-app-mode .video-card.streamx-square{width:68%}
+    body.streamx-app-mode .video-card.streamx-portrait{width:48%}
+    body.streamx-app-mode .video-card.streamx-tall{width:56%}
+}
 
 /* =========================
    VIDEO GRID
@@ -4788,6 +4944,12 @@ function createVideoCard(
     card.innerHTML = `
 
         ${streamxAppMode ? `<div class="app-mode-video-title">${escapeHTML(title)}</div>` : ""}
+
+        ${
+            streamxAppMode && description
+                ? `<div class="app-mode-video-description">${escapeHTML(description)}</div>`
+                : ""
+        }
 
         <div class="thumbnail">
 

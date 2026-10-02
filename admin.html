@@ -9345,7 +9345,7 @@ function createVideoCard(
 
                 <button
                     class="card-button delete-button"
-                    onclick="deleteVideo(${JSON.stringify(video.id)})"
+                    onclick="deleteVideo(${JSON.stringify(video.id)}, this)"
                 >
                     🗑 Delete
                 </button>
@@ -12417,7 +12417,7 @@ async function cleanOrphanedStorage(){
    DELETE VIDEO
 ===================================================== */
 
-async function deleteVideo(id){
+async function deleteVideo(id, button = null){
 
     const confirmed =
         confirm(
@@ -12429,6 +12429,28 @@ async function deleteVideo(id){
 
     if(!confirmed)
         return;
+
+
+    const originalButtonText =
+        button
+            ? button.textContent
+            : "";
+
+
+    if(button){
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "Deleting...";
+
+        button.style.opacity =
+            "0.65";
+
+        button.style.cursor =
+            "wait";
+    }
 
 
     try{
@@ -12452,7 +12474,7 @@ async function deleteVideo(id){
                 .from("videos")
                 .select("*")
                 .eq("id",id)
-                .single();
+                .maybeSingle();
 
 
         if(result.error){
@@ -12461,6 +12483,27 @@ async function deleteVideo(id){
                 "Could not find video: " +
                 result.error.message
             );
+
+        }
+
+
+        /*
+         * A card can remain visible briefly after a realtime/delete refresh.
+         * Supabase .single() turns that normal zero-row case into
+         * "Cannot coerce the result to a single JSON object".
+         * Treat it as an already-removed record and refresh the Admin list.
+         */
+        if(!result.data){
+
+            showMessage(
+                "✓ This video was already removed. Refreshing the library.",
+                "success"
+            );
+
+
+            await loadVideos();
+
+            return;
 
         }
 
@@ -12678,7 +12721,9 @@ async function deleteVideo(id){
             await supabaseClient
                 .from("videos")
                 .delete()
-                .eq("id",id);
+                .eq("id",id)
+                .select("id")
+                .maybeSingle();
 
 
         if(deleteRecord.error){
@@ -12686,6 +12731,17 @@ async function deleteVideo(id){
             throw new Error(
                 "Media files were removed but database record could not be deleted: " +
                 deleteRecord.error.message
+            );
+
+        }
+
+
+        if(!deleteRecord.data){
+
+            throw new Error(
+                "Media files were removed, but the database did not confirm deletion of video #" +
+                id +
+                ". Refresh the Admin panel before trying again."
             );
 
         }
@@ -12714,6 +12770,27 @@ async function deleteVideo(id){
             "error"
         );
 
+    }
+    finally{
+
+        if(
+            button &&
+            button.isConnected
+        ){
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                originalButtonText ||
+                "🗑 Delete";
+
+            button.style.opacity =
+                "";
+
+            button.style.cursor =
+                "";
+        }
     }
 
 }

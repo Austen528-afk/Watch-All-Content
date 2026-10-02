@@ -5367,6 +5367,76 @@ async function uploadOriginalVideoToR2(
     return payload.publicUrl;
 }
 
+
+async function deleteR2MediaObject(
+    session,
+    publicUrl
+){
+
+    if(
+        !session ||
+        !session.access_token ||
+        !publicUrl
+    ){
+        return;
+    }
+
+
+    const response =
+        await fetch(
+            STREAMX_MEDIA_WORKER_URL +
+            "/admin/delete-r2-object",
+            {
+                method:"POST",
+
+                headers:{
+                    "Authorization":
+                        "Bearer " +
+                        session.access_token,
+
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify({
+                        publicUrl:
+                            publicUrl
+                    })
+            }
+        );
+
+
+    if(!response.ok){
+
+        let payload =
+            null;
+
+
+        try{
+            payload =
+                await response.json();
+        }
+        catch(error){
+            payload =
+                null;
+        }
+
+
+        throw new Error(
+            payload &&
+            payload.error
+                ? payload.error
+                : (
+                    "R2 cleanup failed with HTTP " +
+                    response.status
+                )
+        );
+
+    }
+
+}
+
 /* =====================================================
    STREAMX ADMIN AUTHORIZATION
 ===================================================== */
@@ -7851,12 +7921,21 @@ async function uploadVideo(){
 
             if(thumbnailUpload.error){
 
-                await supabaseClient
-                    .storage
-                    .from("videos")
-                    .remove([
-                        videoPath
-                    ]);
+                try{
+
+                    await deleteR2MediaObject(
+                        session,
+                        videoURL
+                    );
+
+                }catch(cleanupError){
+
+                    console.error(
+                        "R2 cleanup after thumbnail upload failure:",
+                        cleanupError
+                    );
+
+                }
 
 
                 throw new Error(
@@ -7954,14 +8033,23 @@ async function uploadVideo(){
             );
 
 
-            /* CLEAN VIDEO */
+            /* CLEAN R2 ORIGINAL */
 
-            await supabaseClient
-                .storage
-                .from("videos")
-                .remove([
-                    videoPath
-                ]);
+            try{
+
+                await deleteR2MediaObject(
+                    session,
+                    videoURL
+                );
+
+            }catch(cleanupError){
+
+                console.error(
+                    "R2 cleanup after database insert failure:",
+                    cleanupError
+                );
+
+            }
 
 
             /* CLEAN THUMBNAIL */
@@ -11299,7 +11387,8 @@ async function deleteVideo(id){
 
     try{
 
-        await requireAuthenticatedUser();
+        const session =
+            await requireAuthenticatedUser();
 
 
         showMessage(
@@ -11418,7 +11507,20 @@ async function deleteVideo(id){
            DELETE ORIGINAL VIDEO FILE
         ========================================= */
 
-        if(videoPath){
+        if(
+            rawSourceURL &&
+            rawSourceURL.startsWith(
+                "https://pub-9c0499ead7b74ac8b0f3e815ca988f82.r2.dev/"
+            )
+        ){
+
+            await deleteR2MediaObject(
+                session,
+                rawSourceURL
+            );
+
+        }
+        else if(videoPath){
 
             const deleteVideoFile =
                 await supabaseClient

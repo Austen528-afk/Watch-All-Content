@@ -1413,6 +1413,241 @@ textarea{
 
 
 /* =====================================================
+   VIDEO METADATA EDITOR
+===================================================== */
+
+.metadata-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:5000;
+    padding:24px;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.72);
+    backdrop-filter:blur(8px);
+}
+
+.metadata-modal.active{
+    display:flex;
+}
+
+.metadata-dialog{
+    width:min(620px,100%);
+    max-height:calc(100vh - 48px);
+    overflow-y:auto;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;
+    background:#111;
+    box-shadow:0 28px 80px rgba(0,0,0,.55);
+}
+
+.metadata-dialog-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    padding:22px 22px 17px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.metadata-dialog-title{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.metadata-dialog-icon{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    border-radius:11px;
+    border:1px solid rgba(255,23,68,.20);
+    background:rgba(255,23,68,.10);
+    color:#ff7188;
+    font-size:18px;
+}
+
+.metadata-dialog-title h3{
+    margin:0;
+    color:#fff;
+    font-size:18px;
+}
+
+.metadata-dialog-title p{
+    margin:4px 0 0;
+    color:#777;
+    font-size:11px;
+    line-height:1.45;
+}
+
+.metadata-close{
+    width:38px;
+    height:38px;
+    flex:0 0 auto;
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:10px;
+    background:#1a1a1a;
+    color:#aaa;
+    cursor:pointer;
+    font-size:20px;
+    line-height:1;
+}
+
+.metadata-close:hover{
+    background:#252525;
+    color:#fff;
+}
+
+.metadata-form{
+    padding:22px;
+}
+
+.metadata-field{
+    margin-bottom:18px;
+}
+
+.metadata-field:last-of-type{
+    margin-bottom:0;
+}
+
+.metadata-field label{
+    display:block;
+    margin-bottom:8px;
+    color:#d9d9d9;
+    font-size:12px;
+    font-weight:700;
+}
+
+.metadata-field input,
+.metadata-field textarea,
+.metadata-field select{
+    width:100%;
+    border:1px solid rgba(255,255,255,.11);
+    border-radius:11px;
+    background:#0b0b0b;
+    color:#fff;
+    outline:none;
+    font:inherit;
+    font-size:14px;
+    transition:border-color .18s,box-shadow .18s,background .18s;
+}
+
+.metadata-field input,
+.metadata-field select{
+    height:48px;
+    padding:0 14px;
+}
+
+.metadata-field textarea{
+    min-height:120px;
+    padding:13px 14px;
+    resize:vertical;
+    line-height:1.5;
+}
+
+.metadata-field input:focus,
+.metadata-field textarea:focus,
+.metadata-field select:focus{
+    border-color:#ff1744;
+    background:#0f0f0f;
+    box-shadow:0 0 0 3px rgba(255,23,68,.10);
+}
+
+.metadata-field select{
+    cursor:pointer;
+}
+
+.metadata-field option{
+    background:#111;
+    color:#fff;
+}
+
+.metadata-form-error{
+    display:none;
+    margin-top:16px;
+    padding:11px 13px;
+    border:1px solid #70283a;
+    border-radius:9px;
+    background:#281015;
+    color:#ff7b94;
+    font-size:12px;
+    line-height:1.45;
+}
+
+.metadata-form-error.active{
+    display:block;
+}
+
+.metadata-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:22px;
+    padding-top:18px;
+    border-top:1px solid rgba(255,255,255,.07);
+}
+
+.metadata-button{
+    min-width:110px;
+    height:44px;
+    padding:0 17px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:800;
+}
+
+.metadata-button.cancel{
+    border:1px solid rgba(255,255,255,.10);
+    background:#1b1b1b;
+    color:#bbb;
+}
+
+.metadata-button.cancel:hover{
+    background:#252525;
+    color:#fff;
+}
+
+.metadata-button.save{
+    border:1px solid rgba(255,23,68,.28);
+    background:#ff1744;
+    color:#fff;
+}
+
+.metadata-button.save:hover{
+    background:#e90035;
+}
+
+.metadata-button:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
+@media(max-width:600px){
+    .metadata-modal{
+        padding:14px;
+    }
+
+    .metadata-dialog-head,
+    .metadata-form{
+        padding:18px;
+    }
+
+    .metadata-actions{
+        flex-direction:column-reverse;
+    }
+
+    .metadata-button{
+        width:100%;
+    }
+}
+
+
+/* =====================================================
    EMPTY
 ===================================================== */
 
@@ -3467,8 +3702,8 @@ textarea{
             </h2>
 
             <p>
-                Uploaded content will be stored in Supabase
-                and appear on the public website.
+                Video files are stored in Cloudflare R2 while
+                Supabase keeps the video metadata.
             </p>
 
         </div>
@@ -5251,6 +5486,141 @@ textarea{
 
 </main>
 
+
+<!-- =====================================================
+     VIDEO METADATA EDITOR
+===================================================== -->
+
+<div
+    id="metadataModal"
+    class="metadata-modal"
+    aria-hidden="true"
+>
+    <div
+        class="metadata-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="metadataDialogTitle"
+    >
+        <div class="metadata-dialog-head">
+
+            <div class="metadata-dialog-title">
+
+                <div class="metadata-dialog-icon">
+                    ✏️
+                </div>
+
+                <div>
+                    <h3 id="metadataDialogTitle">
+                        Edit Video Details
+                    </h3>
+
+                    <p id="metadataDialogSubtitle">
+                        Update the title, description and category together.
+                    </p>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                class="metadata-close"
+                id="metadataCloseButton"
+                aria-label="Close editor"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form
+            id="metadataForm"
+            class="metadata-form"
+        >
+
+            <div class="metadata-field">
+
+                <label for="metadataTitle">
+                    Video Title
+                </label>
+
+                <input
+                    type="text"
+                    id="metadataTitle"
+                    maxlength="180"
+                    autocomplete="off"
+                    required
+                >
+
+            </div>
+
+
+            <div class="metadata-field">
+
+                <label for="metadataDescription">
+                    Description
+                </label>
+
+                <textarea
+                    id="metadataDescription"
+                    maxlength="2000"
+                    placeholder="Write a description for this video..."
+                ></textarea>
+
+            </div>
+
+
+            <div class="metadata-field">
+
+                <label for="metadataCategory">
+                    Category
+                </label>
+
+                <select
+                    id="metadataCategory"
+                    required
+                >
+                    <option value="">
+                        Select category
+                    </option>
+                </select>
+
+            </div>
+
+
+            <div
+                id="metadataFormError"
+                class="metadata-form-error"
+                role="alert"
+            ></div>
+
+
+            <div class="metadata-actions">
+
+                <button
+                    type="button"
+                    class="metadata-button cancel"
+                    id="metadataCancelButton"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="metadata-button save"
+                    id="metadataSaveButton"
+                >
+                    Save Changes
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
 </div>
 
 <script>
@@ -5687,6 +6057,8 @@ async function requireStreamXAdminSession(){
 let selectedVideoFile = null;
 
 let selectedThumbnailFile = null;
+
+let editingVideoMetadataId = null;
 
 let allCategories = [];
 let categorySearchTerm = "";
@@ -8995,6 +9367,111 @@ function createVideoCard(
    EDIT VIDEO METADATA
 ===================================================== */
 
+function getMetadataEditorElements(){
+
+    return {
+        modal:
+            document.getElementById(
+                "metadataModal"
+            ),
+
+        form:
+            document.getElementById(
+                "metadataForm"
+            ),
+
+        title:
+            document.getElementById(
+                "metadataTitle"
+            ),
+
+        description:
+            document.getElementById(
+                "metadataDescription"
+            ),
+
+        category:
+            document.getElementById(
+                "metadataCategory"
+            ),
+
+        subtitle:
+            document.getElementById(
+                "metadataDialogSubtitle"
+            ),
+
+        error:
+            document.getElementById(
+                "metadataFormError"
+            ),
+
+        save:
+            document.getElementById(
+                "metadataSaveButton"
+            )
+    };
+
+}
+
+
+function setMetadataEditorError(message = ""){
+
+    const ui =
+        getMetadataEditorElements();
+
+
+    if(!ui.error){
+        return;
+    }
+
+
+    ui.error.textContent =
+        message;
+
+
+    ui.error.classList.toggle(
+        "active",
+        Boolean(message)
+    );
+
+}
+
+
+function closeVideoMetadataEditor(){
+
+    const ui =
+        getMetadataEditorElements();
+
+
+    editingVideoMetadataId =
+        null;
+
+
+    if(ui.modal){
+
+        ui.modal.classList.remove(
+            "active"
+        );
+
+        ui.modal.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+    }
+
+
+    setMetadataEditorError(
+        ""
+    );
+
+
+    document.body.style.overflow =
+        "";
+
+}
+
+
 async function editVideoMetadata(videoId){
 
     try{
@@ -9002,88 +9479,286 @@ async function editVideoMetadata(videoId){
         await requireAuthenticatedUser();
 
 
-        const result =
-            await supabaseClient
-                .from("videos")
-                .select(
-                    "id,title,description,category"
-                )
-                .eq(
-                    "id",
-                    videoId
-                )
-                .single();
+        const [
+            videoResult,
+            categoriesResult
+        ] =
+            await Promise.all([
+
+                supabaseClient
+                    .from("videos")
+                    .select(
+                        "id,title,description,category"
+                    )
+                    .eq(
+                        "id",
+                        videoId
+                    )
+                    .single(),
+
+                supabaseClient
+                    .from("categories")
+                    .select(
+                        "name"
+                    )
+                    .order(
+                        "name",
+                        {
+                            ascending:true
+                        }
+                    )
+
+            ]);
 
 
-        if(result.error){
+        if(videoResult.error){
 
             throw new Error(
-                result.error.message
+                videoResult.error.message
+            );
+
+        }
+
+
+        if(categoriesResult.error){
+
+            throw new Error(
+                "Could not load categories: " +
+                categoriesResult.error.message
             );
 
         }
 
 
         const video =
-            result.data;
+            videoResult.data;
 
 
-        const titleInput =
-            prompt(
-                "Video title:",
-                video.title || ""
+        const categories =
+            (categoriesResult.data || [])
+                .map(row =>
+                    String(
+                        row &&
+                        row.name ||
+                        ""
+                    ).trim()
+                )
+                .filter(Boolean);
+
+
+        const ui =
+            getMetadataEditorElements();
+
+
+        editingVideoMetadataId =
+            video.id;
+
+
+        ui.title.value =
+            video.title || "";
+
+
+        ui.description.value =
+            video.description || "";
+
+
+        ui.category.innerHTML =
+            "";
+
+
+        const placeholder =
+            document.createElement(
+                "option"
             );
 
 
-        if(titleInput === null){
-            return;
+        placeholder.value =
+            "";
+
+        placeholder.textContent =
+            categories.length > 0
+                ? "Select category"
+                : "No categories available";
+
+        placeholder.disabled =
+            categories.length === 0;
+
+
+        ui.category.appendChild(
+            placeholder
+        );
+
+
+        categories.forEach(
+            categoryName => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    categoryName;
+
+                option.textContent =
+                    categoryName;
+
+
+                ui.category.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        if(
+            video.category &&
+            categories.includes(
+                String(video.category)
+            )
+        ){
+
+            ui.category.value =
+                String(video.category);
+
+        }
+        else{
+
+            ui.category.value =
+                "";
+
         }
 
 
-        const title =
-            titleInput.trim();
+        ui.subtitle.textContent =
+            "Video #" +
+            video.id +
+            " • Update the title, description and category together.";
 
 
-        if(!title){
-
-            alert(
-                "The video title cannot be empty."
-            );
-
-            return;
-        }
+        ui.save.disabled =
+            categories.length === 0;
 
 
-        const descriptionInput =
-            prompt(
-                "Video description:",
-                video.description || ""
-            );
+        ui.save.textContent =
+            categories.length === 0
+                ? "Add a category first"
+                : "Save Changes";
 
 
-        if(descriptionInput === null){
-            return;
-        }
+        setMetadataEditorError(
+            categories.length === 0
+                ? "No categories exist yet. Add a category in the Categories page before editing this video."
+                : ""
+        );
 
 
-        const categoryInput =
-            prompt(
-                "Video category:",
-                video.category || ""
-            );
+        ui.modal.classList.add(
+            "active"
+        );
+
+        ui.modal.setAttribute(
+            "aria-hidden",
+            "false"
+        );
 
 
-        if(categoryInput === null){
-            return;
-        }
+        document.body.style.overflow =
+            "hidden";
 
 
-        const description =
-            descriptionInput.trim();
+        setTimeout(
+            () => ui.title.focus(),
+            0
+        );
 
 
-        const category =
-            categoryInput.trim();
+    }catch(error){
+
+        console.error(
+            "Open video metadata editor error:",
+            error
+        );
+
+
+        showMessage(
+            "❌ Could not open video editor: " +
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+async function saveVideoMetadata(event){
+
+    event.preventDefault();
+
+
+    if(!editingVideoMetadataId){
+        return;
+    }
+
+
+    const ui =
+        getMetadataEditorElements();
+
+
+    const title =
+        ui.title.value.trim();
+
+
+    const description =
+        ui.description.value.trim();
+
+
+    const category =
+        ui.category.value.trim();
+
+
+    if(!title){
+
+        setMetadataEditorError(
+            "Please enter a video title."
+        );
+
+        ui.title.focus();
+
+        return;
+    }
+
+
+    if(!category){
+
+        setMetadataEditorError(
+            "Please select one of the existing categories."
+        );
+
+        ui.category.focus();
+
+        return;
+    }
+
+
+    ui.save.disabled =
+        true;
+
+    ui.save.textContent =
+        "Saving...";
+
+
+    setMetadataEditorError(
+        ""
+    );
+
+
+    try{
+
+        await requireAuthenticatedUser();
 
 
         const updateResult =
@@ -9097,11 +9772,11 @@ async function editVideoMetadata(videoId){
                         description,
 
                     category:
-                        category || null
+                        category
                 })
                 .eq(
                     "id",
-                    videoId
+                    editingVideoMetadataId
                 )
                 .select(
                     "id,title,description,category"
@@ -9118,8 +9793,11 @@ async function editVideoMetadata(videoId){
         }
 
 
+        closeVideoMetadataEditor();
+
+
         showMessage(
-            "✓ Video metadata updated successfully.",
+            "✓ Video details updated successfully.",
             "success"
         );
 
@@ -9135,15 +9813,89 @@ async function editVideoMetadata(videoId){
         );
 
 
-        showMessage(
-            "❌ Could not update video metadata: " +
-            error.message,
-            "error"
+        setMetadataEditorError(
+            "Could not save changes: " +
+            error.message
         );
+
+
+        ui.save.disabled =
+            false;
+
+        ui.save.textContent =
+            "Save Changes";
 
     }
 
 }
+
+
+document
+    .getElementById(
+        "metadataForm"
+    )
+    .addEventListener(
+        "submit",
+        saveVideoMetadata
+    );
+
+
+document
+    .getElementById(
+        "metadataCloseButton"
+    )
+    .addEventListener(
+        "click",
+        closeVideoMetadataEditor
+    );
+
+
+document
+    .getElementById(
+        "metadataCancelButton"
+    )
+    .addEventListener(
+        "click",
+        closeVideoMetadataEditor
+    );
+
+
+document
+    .getElementById(
+        "metadataModal"
+    )
+    .addEventListener(
+        "click",
+        function(event){
+
+            if(
+                event.target ===
+                event.currentTarget
+            ){
+
+                closeVideoMetadataEditor();
+
+            }
+
+        }
+    );
+
+
+document.addEventListener(
+    "keydown",
+    function(event){
+
+        if(
+            event.key === "Escape" &&
+            editingVideoMetadataId
+        ){
+
+            closeVideoMetadataEditor();
+
+        }
+
+    }
+);
 
 
 /* =====================================================

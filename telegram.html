@@ -699,24 +699,34 @@ body{
 
 /* Adaptive feed sizing: cards stay centered and reflect source aspect. */
 .video-card{
-    width:min(100%,520px);
+    width:100%;
+    max-width:760px;
     justify-self:center;
+    --streamx-media-width:min(100%,520px);
 }
 
 .video-card.streamx-landscape{
-    width:min(94%,520px);
+    --streamx-media-width:min(94%,520px);
 }
 
 .video-card.streamx-square{
-    width:min(76%,400px);
+    --streamx-media-width:min(76%,400px);
 }
 
 .video-card.streamx-portrait{
-    width:min(72%,370px);
+    --streamx-media-width:min(72%,370px);
 }
 
 .video-card.streamx-tall{
-    width:min(66%,340px);
+    --streamx-media-width:min(66%,340px);
+}
+
+.video-card > .video-title,
+.video-card > .thumbnail,
+.video-card > .video-info > .video-engagement-row{
+    width:var(--streamx-media-width);
+    margin-left:auto;
+    margin-right:auto;
 }
 
 .video-card.streamx-landscape .thumbnail{
@@ -881,14 +891,17 @@ body{
 }
 
 .video-description{
+    width:100%;
     margin:0;
+    padding:0 2px;
     color:#858585;
     font-size:11px;
-    line-height:1.5;
-    display:-webkit-box;
-    -webkit-line-clamp:3;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
+    line-height:1.55;
+    display:block;
+    white-space:normal;
+    overflow:visible;
+    overflow-wrap:anywhere;
+    word-break:normal;
 }
 
 .like-btn{
@@ -1406,19 +1419,19 @@ body{
     }
 
     .video-card.streamx-landscape{
-        width:80%;
+        --streamx-media-width:80%;
     }
 
     .video-card.streamx-square{
-        width:68%;
+        --streamx-media-width:68%;
     }
 
     .video-card.streamx-portrait{
-        width:48%;
+        --streamx-media-width:48%;
     }
 
     .video-card.streamx-tall{
-        width:56%;
+        --streamx-media-width:56%;
     }
 
     .video-title{

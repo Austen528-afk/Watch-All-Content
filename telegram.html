@@ -783,12 +783,14 @@ body{
 .play-overlay{
     position:absolute;
     inset:0;
+    z-index:3;
     display:flex;
     align-items:center;
     justify-content:center;
     background:rgba(0,0,0,.2);
     opacity:0;
     transition:.2s;
+    pointer-events:none;
 }
 
 .video-card:hover .play-overlay{
@@ -815,6 +817,7 @@ body{
 
 .category-tag{
     position:absolute;
+    z-index:4;
     left:9px;
     top:9px;
     background:rgba(0,0,0,.78);
@@ -1471,19 +1474,25 @@ body{
 
 
 /* =====================================================
-   LIGHTWEIGHT VIDEO PREVIEWS
+   FEED AUTOPLAY + VOLUME
 ===================================================== */
+
+.thumbnail-fallback{
+    position:relative;
+    z-index:1;
+}
 
 .thumbnail-preview-video{
     position:absolute;
     inset:0;
+    z-index:2;
     width:100%;
     height:100%;
     display:block;
     object-fit:cover;
     background:#171717;
     opacity:0;
-    transition:opacity .12s ease;
+    transition:opacity .16s ease;
     pointer-events:none;
 }
 
@@ -1491,18 +1500,48 @@ body{
     opacity:1;
 }
 
-.thumbnail-preview-loading{
+.feed-volume-btn{
     position:absolute;
-    inset:0;
-    background:#171717;
-    pointer-events:none;
+    right:8px;
+    bottom:8px;
+    z-index:6;
+    width:32px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:50%;
+    background:rgba(0,0,0,.68);
+    color:#fff;
+    cursor:pointer;
+    font-size:15px;
+    line-height:1;
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    box-shadow:0 3px 12px rgba(0,0,0,.35);
+    transition:transform .18s ease,background .18s ease,border-color .18s ease;
 }
 
-.thumbnail-preview-video.streamx-preview-ready
-    + .thumbnail-preview-loading{
-    display:none;
+.feed-volume-btn:hover{
+    transform:scale(1.06);
+    background:rgba(0,0,0,.82);
+    border-color:rgba(255,255,255,.32);
 }
 
+.feed-volume-btn:active{
+    transform:scale(.94);
+}
+
+@media(max-width:480px){
+    .feed-volume-btn{
+        right:7px;
+        bottom:7px;
+        width:30px;
+        height:30px;
+        font-size:14px;
+    }
+}
 </style>
 
 </head>
@@ -3837,7 +3876,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,created_at,views")
+                .select("id,title,description,category,video_url,source_video_url,thumbnail_url,preview_video_url,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -4571,15 +4610,56 @@ function renderVideos(){
 
 
 /* =========================================================
-   TELEGRAM LIGHTWEIGHT VIDEO PREVIEW WINDOW
+   TELEGRAM FEED AUTOPLAY + GLOBAL SOUND
    ---------------------------------------------------------
-   New processed uploads use tiny muted MP4 previews instead of GIF.
-   The static poster is shown first; the MP4 is requested only when the
-   preview card is actually visible, and only visible previews play.
+   Only the most visible feed video plays. Feed audio starts muted.
+   After the user unmutes once, the next video inherits that choice
+   and attempts to autoplay with sound. GIF/static thumbnails remain
+   visible until actual video playback starts.
 ========================================================= */
 
 let streamxPreviewPlayObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
+let streamxFeedMuted = true;
+let streamxActivePreviewVideo = null;
+let streamxPreviewSelectionRAF = 0;
+const streamxPreviewVisibility = new Map();
+
+
+function updateStreamxFeedVolumeButtons(){
+
+    if(!videoGrid){
+        return;
+    }
+
+    videoGrid
+        .querySelectorAll(".feed-volume-btn")
+        .forEach(button => {
+
+            button.textContent =
+                streamxFeedMuted
+                    ? "🔇"
+                    : "🔊";
+
+            button.setAttribute(
+                "aria-label",
+                streamxFeedMuted
+                    ? "Unmute feed videos"
+                    : "Mute feed videos"
+            );
+
+            button.title =
+                streamxFeedMuted
+                    ? "Unmute"
+                    : "Mute";
+
+            button.setAttribute(
+                "aria-pressed",
+                String(!streamxFeedMuted)
+            );
+        });
+}
+
 
 function prepareThumbnailVideoPreview(video){
 
@@ -4606,28 +4686,50 @@ function prepareThumbnailVideoPreview(video){
     video.src =
         source;
 
-    const markReady = () => {
-
-        video.classList.add(
-            "streamx-preview-ready"
-        );
-    };
-
     video.addEventListener(
-        "loadeddata",
-        markReady,
-        {once:true}
+        "playing",
+        () => {
+
+            video.classList.add(
+                "streamx-preview-ready"
+            );
+
+            const card =
+                video.closest(".video-card");
+
+            const fallback =
+                card &&
+                card.querySelector(
+                    ".thumbnail-fallback"
+                );
+
+            if(fallback){
+                suspendFeedGif(
+                    fallback
+                );
+            }
+        }
     );
 
     video.addEventListener(
-        "canplay",
-        markReady,
-        {once:true}
+        "loadedmetadata",
+        () => {
+
+            const card =
+                video.closest(
+                    ".video-card"
+                );
+
+            if(card){
+                applyVideoCardAspect(
+                    card,
+                    video.videoWidth,
+                    video.videoHeight
+                );
+            }
+        }
     );
 
-    /*
-     * Retry one failed preview request without affecting the main video.
-     */
     video.addEventListener(
         "error",
         function(){
@@ -4679,9 +4781,24 @@ function playThumbnailVideoPreview(video){
         return;
     }
 
+    if(
+        streamxActivePreviewVideo &&
+        streamxActivePreviewVideo !== video
+    ){
+        pauseThumbnailVideoPreview(
+            streamxActivePreviewVideo
+        );
+    }
+
+    streamxActivePreviewVideo =
+        video;
+
     prepareThumbnailVideoPreview(
         video
     );
+
+    video.muted =
+        streamxFeedMuted;
 
     const playPromise =
         video.play();
@@ -4691,7 +4808,17 @@ function playThumbnailVideoPreview(video){
         typeof playPromise.catch === "function"
     ){
         playPromise.catch(
-            () => {}
+            error => {
+
+                video.classList.remove(
+                    "streamx-preview-ready"
+                );
+
+                console.warn(
+                    "Feed autoplay blocked:",
+                    error?.message || error
+                );
+            }
         );
     }
 }
@@ -4707,6 +4834,122 @@ function pauseThumbnailVideoPreview(video){
         video.pause();
     }
     catch(error){}
+
+    video.classList.remove(
+        "streamx-preview-ready"
+    );
+
+    const card =
+        video.closest(
+            ".video-card"
+        );
+
+    const fallback =
+        card &&
+        card.querySelector(
+            ".thumbnail-fallback"
+        );
+
+    if(fallback){
+        activateFeedGif(
+            fallback
+        );
+    }
+
+    if(
+        streamxActivePreviewVideo === video
+    ){
+        streamxActivePreviewVideo =
+            null;
+    }
+}
+
+
+function chooseMostVisibleFeedPreview(){
+
+    streamxPreviewSelectionRAF =
+        0;
+
+    if(
+        streamxFeedPreviewPlaybackSuspended ||
+        document.visibilityState !== "visible"
+    ){
+        return;
+    }
+
+    const viewportHeight =
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        800;
+
+    const viewportCenter =
+        viewportHeight / 2;
+
+    const candidates =
+        Array.from(
+            streamxPreviewVisibility.entries()
+        )
+        .filter(
+            ([video,ratio]) =>
+                video.isConnected &&
+                ratio >= 0.12
+        )
+        .map(
+            ([video,ratio]) => {
+
+                const rect =
+                    video.getBoundingClientRect();
+
+                const center =
+                    rect.top +
+                    rect.height / 2;
+
+                return {
+                    video,
+                    ratio,
+                    distance:
+                        Math.abs(
+                            center -
+                            viewportCenter
+                        )
+                };
+            }
+        )
+        .sort(
+            (a,b) =>
+                a.distance -
+                    b.distance ||
+                b.ratio -
+                    a.ratio
+        );
+
+    if(candidates.length === 0){
+
+        if(streamxActivePreviewVideo){
+            pauseThumbnailVideoPreview(
+                streamxActivePreviewVideo
+            );
+        }
+
+        return;
+    }
+
+    playThumbnailVideoPreview(
+        candidates[0].video
+    );
+}
+
+
+function scheduleMostVisibleFeedPreview(){
+
+    if(streamxPreviewSelectionRAF){
+        return;
+    }
+
+    streamxPreviewSelectionRAF =
+        window.requestAnimationFrame(
+            chooseMostVisibleFeedPreview
+        );
 }
 
 
@@ -4719,6 +4962,8 @@ function setupTelegramVideoPreviewWindow(){
         streamxPreviewPlayObserver =
             null;
     }
+
+    streamxPreviewVisibility.clear();
 
     if(
         !videoGrid ||
@@ -4736,53 +4981,62 @@ function setupTelegramVideoPreviewWindow(){
         return;
     }
 
-    /*
-     * PERFORMANCE RULE:
-     * Do not download preview MP4s while they are off-screen.
-     * The static poster remains visible until the card actually enters
-     * the viewport, then the tiny preview is loaded and played.
-     */
     streamxPreviewPlayObserver =
         new IntersectionObserver(
             entries => {
 
-                entries.forEach(entry => {
+                entries.forEach(
+                    entry => {
 
-                    const video =
-                        entry.target;
+                        if(entry.isIntersecting){
 
-                    if(
-                        entry.isIntersecting &&
-                        entry.intersectionRatio >= 0.08
-                    ){
+                            streamxPreviewVisibility.set(
+                                entry.target,
+                                entry.intersectionRatio
+                            );
 
-                        playThumbnailVideoPreview(
-                            video
-                        );
+                        }
+                        else{
 
+                            streamxPreviewVisibility.delete(
+                                entry.target
+                            );
+
+                            pauseThumbnailVideoPreview(
+                                entry.target
+                            );
+                        }
                     }
-                    else{
+                );
 
-                        pauseThumbnailVideoPreview(
-                            video
-                        );
-                    }
-                });
-
+                scheduleMostVisibleFeedPreview();
             },
             {
                 root:null,
-                rootMargin:"0px",
-                threshold:[0,0.08,0.25]
+                rootMargin:"70px 0px 70px 0px",
+                threshold:[
+                    0,
+                    0.12,
+                    0.25,
+                    0.5,
+                    0.75,
+                    0.95
+                ]
             }
         );
 
     previews.forEach(video => {
 
+        video.muted =
+            streamxFeedMuted;
+
         streamxPreviewPlayObserver.observe(
             video
         );
     });
+
+    updateStreamxFeedVolumeButtons();
+    scheduleMostVisibleFeedPreview();
 }
 
 
@@ -4810,34 +5064,7 @@ function resumeVisibleFeedVideoPreviews(){
     streamxFeedPreviewPlaybackSuspended =
         false;
 
-    if(!videoGrid){
-        return;
-    }
-
-    videoGrid
-        .querySelectorAll(
-            ".thumbnail-preview-video"
-        )
-        .forEach(video => {
-
-            const rect =
-                video.getBoundingClientRect();
-
-            const viewportHeight =
-                window.innerHeight ||
-                document.documentElement.clientHeight ||
-                800;
-
-            if(
-                rect.bottom > 0 &&
-                rect.top < viewportHeight
-            ){
-
-                playThumbnailVideoPreview(
-                    video
-                );
-            }
-        });
+    scheduleMostVisibleFeedPreview();
 }
 
 
@@ -5869,13 +6096,44 @@ function createVideoCard(video,prioritizeLoad = false){
         );
 
 
-    const previewVideoURL =
-        video.preview_video_url
-            ? getPublicURL(
-                video.preview_video_url,
-                "streamx-hls"
+    const previewHasAudio =
+        Boolean(
+            video.source_video_url ||
+            (
+                video.video_url &&
+                !isHLSVideoURL(
+                    String(video.video_url)
+                )
             )
-            : null;
+        );
+
+
+    const previewVideoURL =
+        video.source_video_url
+            ? getPublicURL(
+                video.source_video_url,
+                "videos"
+            )
+            :
+            (
+                video.video_url &&
+                !isHLSVideoURL(
+                    String(video.video_url)
+                )
+                    ? getPublicURL(
+                        video.video_url,
+                        "videos"
+                    )
+                    :
+                    (
+                        video.preview_video_url
+                            ? getPublicURL(
+                                video.preview_video_url,
+                                "streamx-hls"
+                            )
+                            : null
+                    )
+            );
 
 
     const title =
@@ -5921,6 +6179,30 @@ function createVideoCard(video,prioritizeLoad = false){
         <div class="thumbnail">
 
             ${
+                thumbnail
+                ?
+
+                `
+                <img
+                    class="thumbnail-fallback"
+                    src="${escapeHTML(thumbnail)}"
+                    alt="${escapeHTML(title)}"
+                    loading="${prioritizeLoad ? "eager" : "lazy"}"
+                    decoding="async"
+                    draggable="false"
+                >
+                `
+
+                :
+
+                `
+                <div class="no-thumbnail">
+                    🎬
+                </div>
+                `
+            }
+
+            ${
                 previewVideoURL
                 ?
 
@@ -5928,7 +6210,6 @@ function createVideoCard(video,prioritizeLoad = false){
                 <video
                     class="thumbnail-preview-video"
                     data-preview-src="${escapeHTML(previewVideoURL)}"
-                    ${thumbnail ? `poster="${escapeHTML(thumbnail)}"` : ""}
                     muted
                     loop
                     playsinline
@@ -5936,38 +6217,11 @@ function createVideoCard(video,prioritizeLoad = false){
                     disablepictureinpicture
                     aria-hidden="true"
                 ></video>
-
-                <div
-                    class="thumbnail-preview-loading"
-                    aria-hidden="true"
-                ></div>
                 `
 
                 :
 
-                (
-                    thumbnail
-                    ?
-
-                    `
-                    <img
-                        class="thumbnail-fallback"
-                        src="${escapeHTML(thumbnail)}"
-                        alt="${escapeHTML(title)}"
-                        loading="${prioritizeLoad ? "eager" : "lazy"}"
-                        decoding="async"
-                        draggable="false"
-                    >
-                    `
-
-                    :
-
-                    `
-                    <div class="no-thumbnail">
-                        🎬
-                    </div>
-                    `
-                )
+                ""
             }
 
             <div class="play-overlay">
@@ -5981,6 +6235,27 @@ function createVideoCard(video,prioritizeLoad = false){
             <div class="category-tag">
                 ${escapeHTML(category)}
             </div>
+
+            ${
+                previewHasAudio
+                ?
+
+                `
+                <button
+                    class="feed-volume-btn"
+                    type="button"
+                    aria-label="Unmute feed videos"
+                    aria-pressed="false"
+                    title="Unmute"
+                >
+                    🔇
+                </button>
+                `
+
+                :
+
+                ""
+            }
 
         </div>
 
@@ -6147,6 +6422,64 @@ if(likeButton){
             }
         );
 
+    }
+
+
+    const feedVolumeButton =
+        card.querySelector(
+            ".feed-volume-btn"
+        );
+
+
+    if(feedVolumeButton){
+
+        feedVolumeButton.addEventListener(
+            "click",
+            function(event){
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                streamxFeedMuted =
+                    !streamxFeedMuted;
+
+                updateStreamxFeedVolumeButtons();
+
+                videoGrid
+                    .querySelectorAll(
+                        ".thumbnail-preview-video"
+                    )
+                    .forEach(
+                        preview => {
+
+                            preview.muted =
+                                streamxFeedMuted;
+                        }
+                    );
+
+                const preview =
+                    card.querySelector(
+                        ".thumbnail-preview-video"
+                    );
+
+                if(preview){
+
+                    if(
+                        streamxActivePreviewVideo &&
+                        streamxActivePreviewVideo !==
+                            preview
+                    ){
+                        pauseThumbnailVideoPreview(
+                            streamxActivePreviewVideo
+                        );
+                    }
+
+                    playThumbnailVideoPreview(
+                        preview
+                    );
+                }
+            }
+        );
     }
 
 

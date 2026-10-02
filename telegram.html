@@ -1517,14 +1517,6 @@ body{
 }
 
 .thumbnail-preview-loading{
-    position:absolute;
-    inset:0;
-    background:#171717;
-    pointer-events:none;
-}
-
-.thumbnail-preview-video.streamx-preview-ready
-    + .thumbnail-preview-loading{
     display:none;
 }
 
@@ -4604,6 +4596,7 @@ function renderVideos(){
 ========================================================= */
 
 let streamxPreviewPlayObserver = null;
+let streamxPreviewPreloadObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
 
 function prepareThumbnailVideoPreview(video){
@@ -4631,23 +4624,33 @@ function prepareThumbnailVideoPreview(video){
     video.src =
         source;
 
-    const markReady = () => {
+    const markPlaying = () => {
 
         video.classList.add(
             "streamx-preview-ready"
         );
+
+        const card =
+            video.closest(
+                ".video-card"
+            );
+
+        const fallback =
+            card &&
+            card.querySelector(
+                ".thumbnail-fallback"
+            );
+
+        if(fallback){
+            suspendFeedGif(
+                fallback
+            );
+        }
     };
 
     video.addEventListener(
-        "loadeddata",
-        markReady,
-        {once:true}
-    );
-
-    video.addEventListener(
-        "canplay",
-        markReady,
-        {once:true}
+        "playing",
+        markPlaying
     );
 
     /*
@@ -4732,6 +4735,27 @@ function pauseThumbnailVideoPreview(video){
         video.pause();
     }
     catch(error){}
+
+    video.classList.remove(
+        "streamx-preview-ready"
+    );
+
+    const card =
+        video.closest(
+            ".video-card"
+        );
+
+    const fallback =
+        card &&
+        card.querySelector(
+            ".thumbnail-fallback"
+        );
+
+    if(fallback){
+        activateFeedGif(
+            fallback
+        );
+    }
 }
 
 
@@ -4742,6 +4766,14 @@ function setupTelegramVideoPreviewWindow(){
         streamxPreviewPlayObserver.disconnect();
 
         streamxPreviewPlayObserver =
+            null;
+    }
+
+    if(streamxPreviewPreloadObserver){
+
+        streamxPreviewPreloadObserver.disconnect();
+
+        streamxPreviewPreloadObserver =
             null;
     }
 
@@ -4762,10 +4794,37 @@ function setupTelegramVideoPreviewWindow(){
     }
 
     /*
-     * PRELOAD EARLY, PLAY ONLY WHEN VISIBLE:
-     * Telegram feels much faster when the tiny preview MP4 is already in
-     * cache before the user reaches the next card. Cards up to about one
-     * screen ahead are prepared, but off-screen previews remain paused.
+     * PRELOAD OBSERVER:
+     * Prepare the tiny preview shortly before the card reaches the screen,
+     * but do not play it yet. This keeps scrolling responsive without
+     * competing with every GIF in the feed.
+     */
+    streamxPreviewPreloadObserver =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(entry => {
+
+                    if(entry.isIntersecting){
+
+                        prepareThumbnailVideoPreview(
+                            entry.target
+                        );
+                    }
+                });
+
+            },
+            {
+                root:null,
+                rootMargin:"600px 0px 700px 0px",
+                threshold:0
+            }
+        );
+
+    /*
+     * PLAY OBSERVER:
+     * Playback uses the real viewport only. This prevents a preloaded,
+     * paused video frame from looking like a frozen GIF.
      */
     streamxPreviewPlayObserver =
         new IntersectionObserver(
@@ -4776,37 +4835,14 @@ function setupTelegramVideoPreviewWindow(){
                     const video =
                         entry.target;
 
-                    if(entry.isIntersecting){
+                    if(
+                        entry.isIntersecting &&
+                        entry.intersectionRatio >= 0.08
+                    ){
 
-                        prepareThumbnailVideoPreview(
+                        playThumbnailVideoPreview(
                             video
                         );
-
-                        const rect =
-                            video.getBoundingClientRect();
-
-                        const viewportHeight =
-                            window.innerHeight ||
-                            document.documentElement.clientHeight ||
-                            800;
-
-                        const actuallyVisible =
-                            rect.bottom > 0 &&
-                            rect.top < viewportHeight;
-
-                        if(actuallyVisible){
-
-                            playThumbnailVideoPreview(
-                                video
-                            );
-
-                        }
-                        else{
-
-                            pauseThumbnailVideoPreview(
-                                video
-                            );
-                        }
 
                     }
                     else{
@@ -4820,29 +4856,42 @@ function setupTelegramVideoPreviewWindow(){
             },
             {
                 root:null,
-                rootMargin:"900px 0px 900px 0px",
-                threshold:0
+                rootMargin:"0px",
+                threshold:[0,0.08,0.25]
             }
         );
 
     previews.forEach((video,index) => {
 
         /*
-         * Prime the first few lightweight previews immediately. These are
-         * only a few-second low-bitrate MP4s, not the full video streams.
+         * Prime only the first preview after the first paint. More aggressive
+         * startup preloading made Telegram's WebView fight with GIF decoding.
          */
-        if(index < 3){
-            prepareThumbnailVideoPreview(
-                video
+        if(index === 0){
+
+            window.setTimeout(
+                () => {
+
+                    if(video.isConnected){
+                        prepareThumbnailVideoPreview(
+                            video
+                        );
+                    }
+
+                },
+                120
             );
         }
+
+        streamxPreviewPreloadObserver.observe(
+            video
+        );
 
         streamxPreviewPlayObserver.observe(
             video
         );
     });
 }
-
 
 function pauseAllFeedVideoPreviews(){
 
@@ -4924,8 +4973,8 @@ const STREAMX_MAX_ACTIVE_GIFS = 4;
  * Keep GIF animation budget small, but warm likely upcoming GIF files
  * separately so scrolling does not reveal long blank previews.
  */
-const STREAMX_GIF_PRELOAD_AHEAD = 8;
-const STREAMX_GIF_PRELOAD_CONCURRENCY = 3;
+const STREAMX_GIF_PRELOAD_AHEAD = 7;
+const STREAMX_GIF_PRELOAD_CONCURRENCY = 2;
 
 const streamxGifPreloadedSources = new Set();
 const streamxGifPreloadingSources = new Map();
@@ -5460,6 +5509,11 @@ function rebalanceTelegramGifBudget(){
         return;
     }
 
+    const viewportHeight =
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        800;
+
     const candidates =
         Array.from(streamxNearGifCards)
             .filter(card =>
@@ -5489,9 +5543,17 @@ function rebalanceTelegramGifBudget(){
                     return null;
                 }
 
+                const rect =
+                    card.getBoundingClientRect();
+
+                const visible =
+                    rect.bottom > 0 &&
+                    rect.top < viewportHeight;
+
                 return {
                     card,
                     image,
+                    visible,
                     priority:getGifCardPriority(card)
                 };
             })
@@ -5501,14 +5563,36 @@ function rebalanceTelegramGifBudget(){
                     a.priority - b.priority
             );
 
+    /*
+     * Never freeze an on-screen GIF. The cap applies only to spare
+     * off-screen animation slots used to make the next card feel instant.
+     */
+    const visibleItems =
+        candidates.filter(
+            item => item.visible
+        );
+
+    const offscreenSlots =
+        Math.max(
+            0,
+            STREAMX_MAX_ACTIVE_GIFS -
+                visibleItems.length
+        );
+
     const active =
         new Set(
-            candidates
-                .slice(
-                    0,
-                    STREAMX_MAX_ACTIVE_GIFS
-                )
-                .map(item => item.card)
+            [
+                ...visibleItems,
+                ...candidates
+                    .filter(
+                        item => !item.visible
+                    )
+                    .slice(
+                        0,
+                        offscreenSlots
+                    )
+            ]
+            .map(item => item.card)
         );
 
     candidates.forEach(item => {
@@ -5845,7 +5929,7 @@ function setupTelegramGifScrollWindow(){
      * Begin low-priority preview warming shortly afterward.
      */
     scheduleUpcomingGifPreloads(
-        160
+        260
     );
 }
 
@@ -6007,6 +6091,30 @@ function createVideoCard(video,prioritizeLoad = false){
         <div class="thumbnail">
 
             ${
+                thumbnail
+                ?
+
+                `
+                <img
+                    class="thumbnail-fallback"
+                    src="${escapeHTML(thumbnail)}"
+                    alt="${escapeHTML(title)}"
+                    loading="${prioritizeLoad ? "eager" : "lazy"}"
+                    decoding="async"
+                    draggable="false"
+                >
+                `
+
+                :
+
+                `
+                <div class="no-thumbnail">
+                    🎬
+                </div>
+                `
+            }
+
+            ${
                 previewVideoURL
                 ?
 
@@ -6014,7 +6122,6 @@ function createVideoCard(video,prioritizeLoad = false){
                 <video
                     class="thumbnail-preview-video"
                     data-preview-src="${escapeHTML(previewVideoURL)}"
-                    ${thumbnail ? `poster="${escapeHTML(thumbnail)}"` : ""}
                     muted
                     loop
                     playsinline
@@ -6022,38 +6129,11 @@ function createVideoCard(video,prioritizeLoad = false){
                     disablepictureinpicture
                     aria-hidden="true"
                 ></video>
-
-                <div
-                    class="thumbnail-preview-loading"
-                    aria-hidden="true"
-                ></div>
                 `
 
                 :
 
-                (
-                    thumbnail
-                    ?
-
-                    `
-                    <img
-                        class="thumbnail-fallback"
-                        src="${escapeHTML(thumbnail)}"
-                        alt="${escapeHTML(title)}"
-                        loading="${prioritizeLoad ? "eager" : "lazy"}"
-                        decoding="async"
-                        draggable="false"
-                    >
-                    `
-
-                    :
-
-                    `
-                    <div class="no-thumbnail">
-                        🎬
-                    </div>
-                    `
-                )
+                ""
             }
 
             <div class="play-overlay">

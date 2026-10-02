@@ -645,46 +645,38 @@ body{
     gap:20px;
 }
 
-.feed-pagination{
-    display:none;
+.feed-load-sentinel{
+    min-height:72px;
+    display:flex;
     align-items:center;
     justify-content:center;
-    gap:12px;
-    margin:30px 0 10px;
-}
-
-.feed-pagination.show{
-    display:flex;
-}
-
-.feed-pagination-button{
-    min-width:100px;
-    padding:10px 16px;
-    border:1px solid #333;
-    border-radius:9px;
-    background:#171717;
-    color:#fff;
-    font-size:12px;
+    gap:10px;
+    margin:20px 0 8px;
+    color:#6f6f6f;
+    font-size:11px;
     font-weight:700;
-    cursor:pointer;
-    transition:.2s ease;
 }
 
-.feed-pagination-button:hover:not(:disabled){
-    border-color:#ff1744;
-    background:#241018;
+.feed-load-sentinel.hidden{
+    display:none;
 }
 
-.feed-pagination-button:disabled{
-    opacity:.35;
-    cursor:not-allowed;
+.feed-load-spinner{
+    width:18px;
+    height:18px;
+    border:2px solid #292929;
+    border-top-color:#ff1744;
+    border-radius:50%;
+    animation:spin .8s linear infinite;
 }
 
-.feed-pagination-status{
-    min-width:82px;
-    color:#999;
-    font-size:12px;
-    text-align:center;
+.feed-load-sentinel.done{
+    min-height:48px;
+    color:#4f4f4f;
+}
+
+.feed-load-sentinel.done .feed-load-spinner{
+    display:none;
 }
 
 
@@ -1236,24 +1228,40 @@ body{
     }
 
     .video-grid{
-        grid-template-columns:repeat(2,minmax(0,1fr));
+        grid-template-columns:1fr;
         gap:12px;
+        width:100%;
+        max-width:620px;
+        margin:0 auto;
+    }
+
+    .video-card{
+        border-radius:14px;
+        background:#0f0f0f;
+        border-color:#242424;
+        transform:none !important;
     }
 
     .video-info{
-        padding:11px;
+        padding:13px 14px 14px;
     }
 
     .video-title{
-        font-size:12px;
+        font-size:14px;
+        line-height:1.4;
     }
 
     .video-description{
-        display:none;
+        display:-webkit-box;
+        font-size:11px;
+        line-height:1.45;
+        -webkit-line-clamp:2;
+        -webkit-box-orient:vertical;
+        overflow:hidden;
     }
 
     .video-meta{
-        font-size:9px;
+        font-size:10px;
     }
 
     .age-gate-box{
@@ -1265,7 +1273,12 @@ body{
 @media(max-width:480px){
 
     .video-grid{
-        grid-template-columns:repeat(2,1fr);
+        grid-template-columns:1fr;
+    }
+
+    .main{
+        padding-left:10px;
+        padding-right:10px;
     }
 
     .hero{
@@ -1629,35 +1642,21 @@ body{
 
     </div>
 
-    <nav
-        class="feed-pagination"
-        id="feedPagination"
-        aria-label="Video pages"
+    <div
+        class="feed-load-sentinel"
+        id="feedLoadSentinel"
+        aria-live="polite"
     >
-        <button
-            class="feed-pagination-button"
-            id="feedPageBack"
-            type="button"
-        >
-            ← Back
-        </button>
+        <div
+            class="feed-load-spinner"
+            id="feedLoadSpinner"
+            aria-hidden="true"
+        ></div>
 
-        <span
-            class="feed-pagination-status"
-            id="feedPageStatus"
-            aria-live="polite"
-        >
-            Page 1 of 1
+        <span id="feedLoadStatus">
+            Scroll for more
         </span>
-
-        <button
-            class="feed-pagination-button"
-            id="feedPageNext"
-            type="button"
-        >
-            Next →
-        </button>
-    </nav>
+    </div>
 
 </main>
 
@@ -2167,9 +2166,11 @@ const videoURLPromiseCache = new Map();
 const videoByteWarmCache = new Set();
 const videoByteWarmPromiseCache = new Map();
 let videoByteWarmScheduleId = 0;
-const VIDEOS_PER_PAGE = 20;
-let currentVideoPage = 1;
-let paginationFilterKey = "";
+const FEED_BATCH_SIZE = 10;
+let feedVisibleCount = FEED_BATCH_SIZE;
+let feedRenderKey = "";
+let feedLoadObserver = null;
+let feedLoadBusy = false;
 
 
 /* =========================
@@ -2179,17 +2180,14 @@ let paginationFilterKey = "";
 const videoGrid =
     document.getElementById("videoGrid");
 
-const feedPagination =
-    document.getElementById("feedPagination");
+const feedLoadSentinel =
+    document.getElementById("feedLoadSentinel");
 
-const feedPageBack =
-    document.getElementById("feedPageBack");
+const feedLoadSpinner =
+    document.getElementById("feedLoadSpinner");
 
-const feedPageNext =
-    document.getElementById("feedPageNext");
-
-const feedPageStatus =
-    document.getElementById("feedPageStatus");
+const feedLoadStatus =
+    document.getElementById("feedLoadStatus");
 
 const resultCount =
     document.getElementById("resultCount");
@@ -4075,7 +4073,7 @@ function getVideosForDisplay(){
     ];
 }
 
-function getPaginationFilterKey(){
+function getFeedRenderKey(){
 
     return [
         libraryViewActive ? "library" : "feed",
@@ -4084,97 +4082,213 @@ function getPaginationFilterKey(){
     ].join("\u0001");
 }
 
-function hideFeedPagination(){
 
-    if(feedPagination){
-        feedPagination.classList.remove("show");
+function updateFeedLoadStatus(totalItems){
+
+    if(!feedLoadSentinel){
+        return;
     }
+
+
+    if(totalItems <= 0){
+
+        feedLoadSentinel.classList.add(
+            "hidden"
+        );
+
+        return;
+    }
+
+
+    feedLoadSentinel.classList.remove(
+        "hidden"
+    );
+
+
+    const visibleCount =
+        Math.min(
+            feedVisibleCount,
+            totalItems
+        );
+
+
+    const hasMore =
+        visibleCount < totalItems;
+
+
+    feedLoadSentinel.classList.toggle(
+        "done",
+        !hasMore
+    );
+
+
+    if(feedLoadStatus){
+
+        feedLoadStatus.textContent =
+            hasMore
+                ? (
+                    "Showing " +
+                    visibleCount +
+                    " of " +
+                    totalItems +
+                    " · keep scrolling"
+                )
+                : (
+                    "You’re all caught up · " +
+                    totalItems +
+                    (
+                        totalItems === 1
+                            ? " video"
+                            : " videos"
+                    )
+                );
+
+    }
+
 }
 
-function updateFeedPagination(totalItems,totalPages){
+
+function setupInfiniteFeedObserver(){
+
+    if(feedLoadObserver){
+
+        feedLoadObserver.disconnect();
+
+        feedLoadObserver =
+            null;
+
+    }
+
 
     if(
-        !feedPagination ||
-        totalItems <= VIDEOS_PER_PAGE ||
-        totalPages <= 1
+        !feedLoadSentinel ||
+        typeof IntersectionObserver !== "function"
     ){
-        hideFeedPagination();
         return;
     }
 
-    feedPagination.classList.add("show");
 
-    if(feedPageStatus){
-        feedPageStatus.textContent =
-            "Page " + currentVideoPage + " of " + totalPages;
-    }
+    feedLoadObserver =
+        new IntersectionObserver(
+            entries => {
 
-    if(feedPageBack){
-        feedPageBack.disabled = currentVideoPage <= 1;
-    }
+                const entry =
+                    entries[0];
 
-    if(feedPageNext){
-        feedPageNext.disabled = currentVideoPage >= totalPages;
-    }
+
+                if(
+                    !entry ||
+                    !entry.isIntersecting ||
+                    feedLoadBusy
+                ){
+                    return;
+                }
+
+
+                const totalItems =
+                    getVideosForDisplay().length;
+
+
+                if(
+                    feedVisibleCount >=
+                    totalItems
+                ){
+
+                    updateFeedLoadStatus(
+                        totalItems
+                    );
+
+                    return;
+                }
+
+
+                feedLoadBusy =
+                    true;
+
+
+                window.requestAnimationFrame(
+                    () => {
+
+                        feedVisibleCount =
+                            Math.min(
+                                totalItems,
+                                feedVisibleCount +
+                                    FEED_BATCH_SIZE
+                            );
+
+
+                        renderVideos();
+
+
+                        feedLoadBusy =
+                            false;
+
+                    }
+                );
+
+            },
+            {
+                root:null,
+                rootMargin:"900px 0px 900px 0px",
+                threshold:0
+            }
+        );
+
+
+    feedLoadObserver.observe(
+        feedLoadSentinel
+    );
+
 }
 
-function changeVideoPage(direction){
-
-    const totalItems = getVideosForDisplay().length;
-    const totalPages = Math.max(
-        1,
-        Math.ceil(totalItems / VIDEOS_PER_PAGE)
-    );
-    const nextPage = Math.min(
-        totalPages,
-        Math.max(1,currentVideoPage + direction)
-    );
-
-    if(nextPage === currentVideoPage){
-        return;
-    }
-
-    currentVideoPage = nextPage;
-    renderVideos();
-
-    if(videoGrid){
-        videoGrid.scrollIntoView({
-            behavior:"smooth",
-            block:"start"
-        });
-    }
-}
 
 function renderVideos(){
 
     const allDisplayVideos =
         getVideosForDisplay();
 
-    const filterKey = getPaginationFilterKey();
 
-    if(filterKey !== paginationFilterKey){
-        currentVideoPage = 1;
-        paginationFilterKey = filterKey;
+    const filterKey =
+        getFeedRenderKey();
+
+
+    if(
+        filterKey !==
+        feedRenderKey
+    ){
+
+        feedVisibleCount =
+            FEED_BATCH_SIZE;
+
+        feedRenderKey =
+            filterKey;
+
     }
 
-    const totalPages = Math.max(
-        1,
-        Math.ceil(allDisplayVideos.length / VIDEOS_PER_PAGE)
-    );
 
-    if(currentVideoPage > totalPages){
-        currentVideoPage = totalPages;
+    if(
+        feedVisibleCount >
+        allDisplayVideos.length
+    ){
+
+        feedVisibleCount =
+            Math.max(
+                FEED_BATCH_SIZE,
+                allDisplayVideos.length
+            );
+
     }
 
-    const pageStart =
-        (currentVideoPage - 1) * VIDEOS_PER_PAGE;
-    const videos = allDisplayVideos.slice(
-        pageStart,
-        pageStart + VIDEOS_PER_PAGE
-    );
+
+    const videos =
+        allDisplayVideos.slice(
+            0,
+            feedVisibleCount
+        );
 
 
-    videoGrid.innerHTML = "";
+    videoGrid.innerHTML =
+        "";
 
 
     if(searchTerm){
@@ -4226,7 +4340,10 @@ function renderVideos(){
 
     if(videos.length === 0){
 
-        hideFeedPagination();
+        updateFeedLoadStatus(
+            0
+        );
+
         showEmpty();
 
         return;
@@ -4234,42 +4351,73 @@ function renderVideos(){
     }
 
 
-    const cardFragment = document.createDocumentFragment();
+    const cardFragment =
+        document.createDocumentFragment();
 
-    videos.forEach((video,index) => {
 
-        cardFragment.appendChild(
-            createVideoCard(
-                video,
-                index < INITIAL_THUMBNAIL_COUNT
-            )
-        );
+    videos.forEach(
+        (video,index) => {
 
-    });
+            cardFragment.appendChild(
+                createVideoCard(
+                    video,
+                    index <
+                        INITIAL_THUMBNAIL_COUNT
+                )
+            );
 
-    videoGrid.appendChild(cardFragment);
+        }
+    );
+
+
+    videoGrid.appendChild(
+        cardFragment
+    );
+
 
     /*
-     * New processed videos use lightweight MP4 previews.
-     * Older videos continue using the existing GIF system.
+     * Only visible/near-visible previews are active.
      */
     setupTelegramVideoPreviewWindow();
 
 
     /*
-     * Keep only near-viewport animated GIFs active in Telegram.
-     * This now applies only to legacy videos without preview_video_url.
+     * Legacy GIFs retain their existing small animation budget.
      */
     setupTelegramGifScrollWindow();
 
-    updateFeedPagination(
-        allDisplayVideos.length,
-        totalPages
+
+    updateFeedLoadStatus(
+        allDisplayVideos.length
     );
 
-    /* Keep GIFs/thumbnail rendering first, then prepare likely video opens. */
-    scheduleVideoURLPrefetch(videos);
-    scheduleVideoByteWarm(videos);
+
+    setupInfiniteFeedObserver();
+
+
+    /*
+     * Warm only the newest visible portion rather than the entire library.
+     */
+    scheduleVideoURLPrefetch(
+        videos.slice(
+            Math.max(
+                0,
+                videos.length -
+                    FEED_BATCH_SIZE * 2
+            )
+        )
+    );
+
+
+    scheduleVideoByteWarm(
+        videos.slice(
+            Math.max(
+                0,
+                videos.length -
+                    FEED_BATCH_SIZE
+            )
+        )
+    );
 
 }
 
@@ -7596,20 +7744,6 @@ if(libraryToggle){
         toggleLibraryView
     );
 
-}
-
-if(feedPageBack){
-    feedPageBack.addEventListener(
-        "click",
-        () => changeVideoPage(-1)
-    );
-}
-
-if(feedPageNext){
-    feedPageNext.addEventListener(
-        "click",
-        () => changeVideoPage(1)
-    );
 }
 
 document

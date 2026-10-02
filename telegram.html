@@ -173,7 +173,7 @@ body{
 }
 
 .header{
-    display:none;
+    display:block;
     position:relative;
     z-index:1000;
     background:rgba(8,8,8,.96);
@@ -1521,6 +1521,141 @@ body{
     display:none;
 }
 
+
+
+/* =====================================================
+   REFINED TOP ROW
+===================================================== */
+.header{
+    display:block !important;
+    background:linear-gradient(180deg,rgba(10,10,10,.98),rgba(7,7,7,.96));
+    border-bottom:1px solid #202020;
+    box-shadow:0 8px 24px rgba(0,0,0,.24);
+}
+
+.header-inner{
+    min-height:62px;
+    padding:10px 25px;
+    gap:12px;
+}
+
+.search-wrapper{
+    display:none !important;
+}
+
+.header-actions{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    min-width:0;
+}
+
+.header-actions .library-toggle{
+    min-height:38px;
+    padding:8px 14px;
+    border-radius:14px;
+    border-width:1px;
+    font-size:12px;
+    animation:none;
+    box-shadow:0 5px 18px rgba(255,23,68,.16);
+}
+
+.header-actions .library-toggle::before{
+    display:none;
+}
+
+.header-actions .library-toggle-icon{
+    font-size:17px;
+}
+
+.header-actions .library-count{
+    min-width:17px;
+    padding:2px 5px;
+}
+
+
+
+.header-library-callout{
+    display:none !important;
+}
+
+.header-right{
+    margin-left:2px;
+}
+
+.category-nav-inner{
+    padding-top:9px;
+    padding-bottom:9px;
+}
+
+.category-nav-inner > .categories{
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+
+@media(max-width:800px){
+    .header-inner{
+        min-height:56px;
+        padding:9px 12px;
+        gap:8px;
+        flex-wrap:nowrap;
+    }
+
+    .logo{
+        font-size:22px;
+        flex-shrink:0;
+    }
+
+    .header-actions{
+        gap:7px;
+        margin-left:auto;
+    }
+
+    .header-actions .library-toggle{
+        min-height:34px;
+        padding:7px 10px;
+        gap:5px;
+        border-radius:12px;
+        font-size:10px;
+    }
+
+    .header-actions .library-toggle-icon{
+        font-size:15px;
+    }
+
+    
+
+    .category-nav-inner{
+        padding:9px 12px;
+    }
+}
+
+@media(max-width:380px){
+    .header-inner{
+        padding-left:9px;
+        padding-right:9px;
+        gap:6px;
+    }
+
+    .logo{
+        font-size:19px;
+    }
+
+    .header-actions{
+        gap:5px;
+    }
+
+    .header-actions .library-toggle{
+        min-height:32px;
+        padding:6px 8px;
+        font-size:9.5px;
+    }
+
+    
+}
 </style>
 
 </head>
@@ -1659,26 +1794,7 @@ body{
 
         </div>
 
-        <div class="header-right">
-
-            <div class="online">
-
-                <span class="online-dot"></span>
-
-                Online
-
-            </div>
-
-        </div>
-
-    </div>
-
-</header>
-
-
-<nav class="category-bar">
-
-    <div class="category-nav-inner">
+        <div class="header-actions">
 
         <button
             class="library-toggle"
@@ -1699,10 +1815,37 @@ body{
         </button>
 
         <span
-            class="library-callout"
+            class="library-callout header-library-callout"
             id="libraryCallout"
             aria-live="polite"
         >Tap ☆ on a video to save it here</span>
+
+    </div>
+
+    <div class="header-right">
+
+            <div class="online">
+
+                <span class="online-dot"></span>
+
+                Online
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<nav class="category-bar">
+
+    <div class="category-nav-inner">
+
+        
+
+        
 
         <div
             class="categories"

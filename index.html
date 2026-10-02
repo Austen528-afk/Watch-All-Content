@@ -638,6 +638,33 @@ body{
 }
 
 
+/* WEB / APP VIEW MODE */
+.view-mode-toggle{flex:0 0 auto;min-height:38px;padding:8px 14px;border:1px solid #343434;border-radius:999px;background:#151515;color:#f3f3f3;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:.18s ease}
+.view-mode-toggle:hover,.view-mode-toggle[aria-pressed="true"]{border-color:#ff1744;background:#211016;color:#fff}
+body.streamx-app-mode .hero{display:none}
+body.streamx-app-mode .main{max-width:760px;padding-top:18px}
+body.streamx-app-mode .section-header{margin-bottom:14px}
+body.streamx-app-mode .video-grid{display:grid;grid-template-columns:1fr;gap:28px}
+body.streamx-app-mode .video-card{width:min(100%,520px);justify-self:center;background:transparent;border:none;border-radius:0;overflow:visible;transform:none}
+body.streamx-app-mode .video-card:hover{transform:translateY(-2px);border-color:transparent;background:transparent}
+body.streamx-app-mode .video-card.streamx-landscape{width:min(94%,520px)}
+body.streamx-app-mode .video-card.streamx-square{width:min(76%,400px)}
+body.streamx-app-mode .video-card.streamx-portrait{width:min(72%,370px)}
+body.streamx-app-mode .video-card.streamx-tall{width:min(66%,340px)}
+body.streamx-app-mode .video-card.streamx-landscape .thumbnail{aspect-ratio:16/9}
+body.streamx-app-mode .video-card.streamx-square .thumbnail{aspect-ratio:1/1}
+body.streamx-app-mode .video-card.streamx-portrait .thumbnail{aspect-ratio:4/5}
+body.streamx-app-mode .video-card.streamx-tall .thumbnail{aspect-ratio:9/16}
+body.streamx-app-mode .thumbnail{border:1px solid #252525;border-radius:12px}
+body.streamx-app-mode .app-mode-video-title{padding:0 2px;margin:0 0 9px;color:#f3f3f3;font-size:14px;font-weight:800;line-height:1.4}
+body.streamx-app-mode .video-title{display:none}
+body.streamx-app-mode .video-info{padding:10px 2px 0;display:flex;flex-wrap:wrap;align-items:center}
+body.streamx-app-mode .video-meta{order:1;min-width:0;display:flex;align-items:center;gap:6px;justify-content:flex-start;color:#666;font-size:10px;white-space:nowrap}
+body.streamx-app-mode .video-actions{order:2;min-width:0;margin:0 0 0 auto;gap:7px}
+body.streamx-app-mode .video-description{order:3;flex-basis:100%;margin:7px 0 0;color:#858585;font-size:11px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+body.streamx-app-mode .feed-pagination{display:none!important}
+@media(max-width:480px){.view-mode-toggle{min-height:36px;padding:7px 11px;font-size:10px}body.streamx-app-mode .main{padding-left:10px;padding-right:10px}body.streamx-app-mode .video-card.streamx-landscape{width:80%}body.streamx-app-mode .video-card.streamx-square{width:68%}body.streamx-app-mode .video-card.streamx-portrait{width:48%}body.streamx-app-mode .video-card.streamx-tall{width:56%}body.streamx-app-mode .app-mode-video-title{font-size:11px}body.streamx-app-mode .video-description{display:-webkit-box;font-size:9.5px}}
+
 /* =========================
    VIDEO GRID
 ========================= */
@@ -1528,11 +1555,7 @@ body{
             >0</span>
         </button>
 
-        <span
-            class="library-callout"
-            id="libraryCallout"
-            aria-live="polite"
-        >Tap ☆ on a video to save it here</span>
+        <button class="view-mode-toggle" id="viewModeToggle" type="button" aria-pressed="false" title="Switch to App mode">Switch to App mode</button>
 
         <div
             class="categories"
@@ -2067,6 +2090,7 @@ let allVideos = [];
 let currentCategory = "All";
 
 let searchTerm = "";
+let streamxAppMode = false;
 
 let libraryViewActive = false;
 let libraryPreviousCategory = "All";
@@ -2118,6 +2142,9 @@ let paginationFilterKey = "";
 /* =========================
    ELEMENTS
 ========================= */
+
+const viewModeToggle =
+    document.getElementById("viewModeToggle");
 
 const videoGrid =
     document.getElementById("videoGrid");
@@ -4543,6 +4570,24 @@ function changeVideoPage(direction){
     }
 }
 
+function setWebsiteViewMode(useAppMode){
+    streamxAppMode = Boolean(useAppMode);
+    document.body.classList.toggle("streamx-app-mode",streamxAppMode);
+    if(viewModeToggle){
+        const label = streamxAppMode ? "Switch to Web mode" : "Switch to App mode";
+        viewModeToggle.textContent = label;
+        viewModeToggle.title = label;
+        viewModeToggle.setAttribute("aria-pressed",String(streamxAppMode));
+    }
+    currentVideoPage = 1;
+    paginationFilterKey = "";
+    renderVideos();
+    if(videoGrid) videoGrid.scrollIntoView({behavior:"smooth",block:"start"});
+}
+if(viewModeToggle){
+    viewModeToggle.addEventListener("click",function(){setWebsiteViewMode(!streamxAppMode);});
+}
+
 function renderVideos(){
 
     const allDisplayVideos =
@@ -4564,12 +4609,8 @@ function renderVideos(){
         currentVideoPage = totalPages;
     }
 
-    const pageStart =
-        (currentVideoPage - 1) * VIDEOS_PER_PAGE;
-    const videos = allDisplayVideos.slice(
-        pageStart,
-        pageStart + VIDEOS_PER_PAGE
-    );
+    const pageStart = streamxAppMode ? 0 : (currentVideoPage - 1) * VIDEOS_PER_PAGE;
+    const videos = streamxAppMode ? allDisplayVideos : allDisplayVideos.slice(pageStart,pageStart + VIDEOS_PER_PAGE);
 
 
     videoGrid.innerHTML = "";
@@ -4650,10 +4691,8 @@ function renderVideos(){
 
     setupFeedVideoPreviewWindow();
 
-    updateFeedPagination(
-        allDisplayVideos.length,
-        totalPages
-    );
+    if(streamxAppMode) hideFeedPagination();
+    else updateFeedPagination(allDisplayVideos.length,totalPages);
 
     scheduleVideoURLPrefetch(videos);
     scheduleVideoByteWarm(videos);
@@ -4680,6 +4719,17 @@ function createVideoCard(
 
     card.dataset.videoId =
         String(video.id);
+
+    function applyWebsiteAppCardAspect(width,height){
+        if(!streamxAppMode || !width || !height) return;
+        const ratio = width / height;
+        card.classList.remove("streamx-landscape","streamx-square","streamx-portrait","streamx-tall");
+        if(ratio >= 1.25) card.classList.add("streamx-landscape");
+        else if(ratio >= 0.9) card.classList.add("streamx-square");
+        else if(ratio >= 0.68) card.classList.add("streamx-portrait");
+        else card.classList.add("streamx-tall");
+    }
+
 
 
     const thumbnail =
@@ -4736,6 +4786,8 @@ function createVideoCard(
 
 
     card.innerHTML = `
+
+        ${streamxAppMode ? `<div class="app-mode-video-title">${escapeHTML(title)}</div>` : ""}
 
         <div class="thumbnail">
 
@@ -4872,6 +4924,22 @@ function createVideoCard(
         </div>
 
     `;
+
+    if(streamxAppMode){
+        const previewElement = card.querySelector(".thumbnail-preview-video");
+        if(previewElement){
+            previewElement.addEventListener("loadedmetadata",function(){
+                applyWebsiteAppCardAspect(previewElement.videoWidth,previewElement.videoHeight);
+            });
+        }
+        if(thumbnail){
+            const aspectProbe = new Image();
+            aspectProbe.onload = function(){
+                applyWebsiteAppCardAspect(aspectProbe.naturalWidth,aspectProbe.naturalHeight);
+            };
+            aspectProbe.src = thumbnail;
+        }
+    }
 
     const likeButton =
     card.querySelector(".like-btn");

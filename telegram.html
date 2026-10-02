@@ -8125,7 +8125,11 @@ document.addEventListener(
 
 function showLoading(){
 
-    hideFeedPagination();
+    if(feedLoadSentinel){
+        feedLoadSentinel.classList.add(
+            "hidden"
+        );
+    }
 
     videoGrid.innerHTML = `
 
@@ -8150,7 +8154,11 @@ function showLoading(){
 
 function showEmpty(){
 
-    hideFeedPagination();
+    if(feedLoadSentinel){
+        feedLoadSentinel.classList.add(
+            "hidden"
+        );
+    }
 
     const emptyHeading = libraryViewActive
         ? "Your library is empty"
@@ -8189,7 +8197,11 @@ function showEmpty(){
 
 function showError(message){
 
-    hideFeedPagination();
+    if(feedLoadSentinel){
+        feedLoadSentinel.classList.add(
+            "hidden"
+        );
+    }
 
     videoGrid.innerHTML = `
 

@@ -868,10 +868,13 @@ body{
 }
 
 .video-actions{
+    width:100%;
+    min-width:0;
     display:flex;
     align-items:center;
     gap:8px;
     margin-top:10px;
+    overflow:visible;
 }
 
 .like-btn{
@@ -896,25 +899,39 @@ body{
 
 .library-btn{
     position:relative;
+    z-index:3;
     overflow:visible;
     margin-left:auto;
-    border:none;
-    background:none;
-    color:#777;
+    width:38px;
+    min-width:38px;
+    height:36px;
+    flex:0 0 38px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid #343434;
+    border-radius:10px;
+    background:#191919;
+    color:#c8c8c8;
     cursor:pointer;
-    font-size:21px;
+    font-size:23px;
+    font-weight:700;
     line-height:1;
     transform:translateZ(0);
-    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,filter .22s;
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),color .22s,background .22s,border-color .22s,filter .22s;
 }
 
 .library-btn:hover{
     color:#f5b942;
-    transform:scale(1.12);
+    border-color:rgba(245,185,66,.45);
+    background:rgba(245,185,66,.08);
+    transform:scale(1.08);
 }
 
 .library-btn.saved{
     color:#f5b942;
+    border-color:rgba(245,185,66,.50);
+    background:rgba(245,185,66,.10);
 }
 
 .library-btn:disabled{

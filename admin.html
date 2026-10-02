@@ -5437,6 +5437,81 @@ async function deleteR2MediaObject(
 
 }
 
+async function deleteStreamXVideoMedia(
+    session,
+    videoId,
+    originalUrl
+){
+
+    if(
+        !session ||
+        !session.access_token ||
+        !videoId
+    ){
+        return;
+    }
+
+
+    const response =
+        await fetch(
+            STREAMX_MEDIA_WORKER_URL +
+            "/admin/delete-video-media",
+            {
+                method:"POST",
+
+                headers:{
+                    "Authorization":
+                        "Bearer " +
+                        session.access_token,
+
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body:
+                    JSON.stringify({
+                        videoId:
+                            Number(videoId),
+
+                        originalUrl:
+                            originalUrl ||
+                            null
+                    })
+            }
+        );
+
+
+    if(!response.ok){
+
+        let payload =
+            null;
+
+
+        try{
+            payload =
+                await response.json();
+        }
+        catch(error){
+            payload =
+                null;
+        }
+
+
+        throw new Error(
+            payload &&
+            payload.error
+                ? payload.error
+                : (
+                    "R2 video media cleanup failed with HTTP " +
+                    response.status
+                )
+        );
+
+    }
+
+}
+
+
 /* =====================================================
    STREAMX ADMIN AUTHORIZATION
 ===================================================== */
@@ -11388,6 +11463,7 @@ async function deleteVideo(id){
     try{
 
         const session =
+            const session =
             await requireAuthenticatedUser();
 
 
@@ -11504,18 +11580,21 @@ async function deleteVideo(id){
 
 
         /* =========================================
-           DELETE ORIGINAL VIDEO FILE
+           DELETE R2 ORIGINAL + GENERATED MEDIA
         ========================================= */
 
-        if(
+        const sourceIsR2 =
             rawSourceURL &&
             rawSourceURL.startsWith(
                 "https://pub-9c0499ead7b74ac8b0f3e815ca988f82.r2.dev/"
-            )
-        ){
+            );
 
-            await deleteR2MediaObject(
+
+        if(sourceIsR2){
+
+            await deleteStreamXVideoMedia(
                 session,
+                id,
                 rawSourceURL
             );
 
@@ -11574,7 +11653,7 @@ async function deleteVideo(id){
            DELETE HLS + LIGHTWEIGHT PREVIEW FILES
         ========================================= */
 
-        if(hlsObjectNames.length > 0){
+        if(!sourceIsR2 && hlsObjectNames.length > 0){
 
             /*
              * Remove in moderate batches so long videos with many

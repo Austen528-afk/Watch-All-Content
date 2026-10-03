@@ -16,6 +16,16 @@ set search_path = ''
 as $function$
 begin
     if auth.uid() is null then return false; end if;
+
+    -- Data API GET requests use read-only transactions; row locks are only
+    -- needed for writes so a deleted identity cannot recreate its records.
+    if current_setting('transaction_read_only') = 'on' then
+        return exists (
+            select 1 from auth.users as u
+            where u.id = auth.uid() and u.deleted_at is null
+        );
+    end if;
+
     perform 1 from auth.users as u
     where u.id = auth.uid() and u.deleted_at is null
     for key share;
@@ -185,6 +195,69 @@ as $function$
 $function$;
 revoke all on function public.reset_streamx_viewers(text) from public, anon;
 grant execute on function public.reset_streamx_viewers(text) to authenticated;
+
+-- StreamX: delete only explicitly selected viewer IDs, in one transaction.
+-- Uses the existing per-viewer cleanup and protected-account checks.
+create or replace function public.reset_streamx_selected_viewers(p_viewer_ids text[])
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+declare
+    selected_ids text[];
+    viewer_id text;
+    reset_result jsonb;
+    video_update jsonb;
+    likes_by_video jsonb := '{}'::jsonb;
+    likes_updates jsonb;
+    deleted_users bigint := 0;
+    deleted_auth_users bigint := 0;
+begin
+    if auth.uid() is null or public.is_streamx_admin() is distinct from true then
+        raise exception 'Only StreamX admins can reset viewers.' using errcode = '42501';
+    end if;
+    if p_viewer_ids is null or cardinality(p_viewer_ids) < 1
+       or cardinality(p_viewer_ids) > 100 or array_ndims(p_viewer_ids) <> 1 then
+        raise exception 'Select between 1 and 100 users to delete.' using errcode = '22023';
+    end if;
+    if exists (
+        select 1 from unnest(p_viewer_ids) as selected(id)
+        where selected.id is null or btrim(selected.id) = '' or length(selected.id) > 200
+    ) then
+        raise exception 'Every selected user must have a valid viewer ID.' using errcode = '22023';
+    end if;
+
+    -- Consistent ordering prevents overlapping bulk operations taking account
+    -- locks in opposite orders. Any failed selection rolls back the whole call.
+    select array_agg(distinct selected.id order by selected.id) into selected_ids
+    from unnest(p_viewer_ids) as selected(id);
+
+    foreach viewer_id in array selected_ids loop
+        reset_result := streamx_private.reset_viewers(viewer_id);
+        deleted_users := deleted_users + (reset_result->>'deleted_users')::bigint;
+        deleted_auth_users := deleted_auth_users + (reset_result->>'deleted_auth_users')::bigint;
+        for video_update in
+            select value from jsonb_array_elements(reset_result->'likes_updates')
+        loop
+            -- If selected users liked the same video, retain its final count.
+            likes_by_video := likes_by_video || jsonb_build_object(video_update->>'video_id', video_update);
+        end loop;
+    end loop;
+
+    select coalesce(jsonb_agg(updates.value order by updates.key), '[]'::jsonb)
+    into likes_updates from jsonb_each(likes_by_video) as updates;
+
+    return jsonb_build_object(
+        'deleted_users', deleted_users,
+        'deleted_auth_users', deleted_auth_users,
+        'likes_updates', likes_updates
+    );
+end;
+$function$;
+revoke all on function public.reset_streamx_selected_viewers(text[]) from public, anon;
+grant execute on function public.reset_streamx_selected_viewers(text[]) to authenticated;
+
 
 -- Existing ownership/admin policies still apply. This additional restriction
 -- rejects writes from a deleted identity even while its old JWT is unexpired.

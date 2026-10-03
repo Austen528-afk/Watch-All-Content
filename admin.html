@@ -3141,7 +3141,10 @@ textarea{
 .viewer-management-description{color:#999;font-size:13px;line-height:1.6;margin-top:10px;}
 .viewer-management-list{display:grid;gap:10px;}
 .viewer-management-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b;}
-.viewer-management-info{min-width:0;}
+.viewer-management-info{min-width:0;flex:1;}
+.viewer-management-checkbox{flex-shrink:0;width:18px;height:18px;accent-color:#ffc86a;cursor:pointer;}
+.viewer-management-selection{display:flex;align-items:center;gap:10px;font-size:13px;color:#ccc;}
+.viewer-management-selection input{width:18px;height:18px;accent-color:#ffc86a;}
 .viewer-management-info strong{display:block;overflow-wrap:anywhere;font-size:13px;}
 .viewer-management-info small{display:block;color:#999;line-height:1.5;margin-top:5px;overflow-wrap:anywhere;}
 .viewer-management-reset{flex-shrink:0;}
@@ -5525,6 +5528,13 @@ textarea{
             <span id="viewerManagementCount">Loading users...</span>
             <button type="button" class="viewer-management-button" onclick="loadViewerManagement()">Refresh users</button>
         </div>
+        <div class="viewer-management-toolbar">
+            <label class="viewer-management-selection"><input type="checkbox" id="viewerManagementSelectPage" onchange="selectViewerManagementPage(this.checked)" disabled> Select this page</label>
+            <span id="viewerManagementSelectedCount">0 selected</span>
+            <button type="button" class="viewer-management-button" id="viewerManagementClearSelection" onclick="clearViewerManagementSelection()" disabled>Clear selection</button>
+            <button type="button" class="viewer-management-button viewer-management-reset" id="viewerManagementDeleteSelected" onclick="deleteSelectedStreamXViewers()" disabled>Delete selected users</button>
+        </div>
+        <p class="viewer-management-description">Selections stay selected when you change pages. Delete up to 100 selected users at a time.</p>
         <p class="viewer-management-description" id="viewerManagementStatus" role="status" aria-live="polite"></p>
         <div class="viewer-management-list" id="viewerManagementList"></div>
         <div class="viewer-management-pagination">
@@ -6124,6 +6134,9 @@ let dailyPerformanceResizeTimer = null;
 let graphSourceCache = null;
 let graphSourcePromise = null;
 let graphSourceLoadedAt = 0;
+let adminVideoCountersLoading = false;
+let adminVideoLibraryLoading = false;
+let adminVideoCounterRevision = 0;
 let categoryPerformanceMetric = "watchTime";
 let returningUsersDays = 30;
 let statisticalGraphsResizeTimer = null;
@@ -6715,6 +6728,8 @@ if(session){
 
 function showLogin(){
 
+    adminVideoCounterRevision++;
+
     streamXPasswordRecoveryActive =
         false;
 
@@ -6799,6 +6814,8 @@ async function showApplication(session){
     await loadCategories();
 
     await loadActiveUsers();
+
+    await refreshAdminVideoCounters();
 
 }
 
@@ -7532,6 +7549,83 @@ setInterval(
 
 
 /* =====================================================
+   LIVE VIDEO COUNTERS
+===================================================== */
+
+async function refreshAdminVideoCounters(){
+
+    const app = document.getElementById("app");
+    if(adminVideoCountersLoading || adminVideoLibraryLoading ||
+       document.hidden || !app || app.style.display === "none") return;
+
+    adminVideoCountersLoading = true;
+    const revision = adminVideoCounterRevision;
+
+    try{
+        const session = await requireStreamXAdminSession();
+        const result = await supabaseClient.rpc("get_streamx_admin_video_counts");
+        if(result.error) throw new Error(result.error.message);
+        if(!Array.isArray(result.data)) throw new Error("The server did not return video counters.");
+
+        // A reset, deletion, reload or logout can finish while this read waits.
+        if(revision !== adminVideoCounterRevision || adminVideoLibraryLoading ||
+           app.style.display === "none" || streamXVerifiedAdminUserId !== session.user.id) return;
+
+        const counts = new Map();
+        let totalViews = 0;
+        let totalLikes = 0;
+        result.data.forEach(video => {
+            const views = Number(video.views);
+            const likes = Number(video.likes_count);
+            if(video.video_id == null || !Number.isSafeInteger(views) || views < 0 ||
+               !Number.isSafeInteger(likes) || likes < 0){
+                throw new Error("The server returned invalid video counters.");
+            }
+            counts.set(String(video.video_id), {views, likes});
+            totalViews += views;
+            totalLikes += likes;
+        });
+
+        let changed = false;
+        const updateText = (element, value) => {
+            if(element && element.textContent !== value){
+                element.textContent = value;
+                changed = true;
+            }
+        };
+        document.querySelectorAll("#videoGrid .video-card").forEach(card => {
+            const current = counts.get(card.dataset.videoId);
+            if(!current) return;
+            if(card.dataset.viewCount !== String(current.views)) card.dataset.viewCount = String(current.views);
+            if(card.dataset.likeCount !== String(current.likes)) card.dataset.likeCount = String(current.likes);
+            updateText(card.querySelector(".video-view-count"), current.views.toLocaleString());
+            updateText(card.querySelector(".video-like-count"), current.likes.toLocaleString());
+        });
+        updateText(document.getElementById("totalViews"), totalViews.toLocaleString());
+        updateText(document.getElementById("totalLikes"), totalLikes.toLocaleString());
+        updateText(document.getElementById("totalVideos"), String(counts.size));
+
+        if(changed){
+            graphSourceCache = null;
+            graphSourceLoadedAt = 0;
+            dailyPerformanceLoadedDays = 0;
+        }
+    }
+    catch(error){
+        console.warn("Could not refresh dashboard counters:", error);
+    }
+    finally{
+        adminVideoCountersLoading = false;
+    }
+}
+
+setInterval(refreshAdminVideoCounters, 5000);
+document.addEventListener("visibilitychange", () => {
+    if(!document.hidden) refreshAdminVideoCounters();
+});
+window.addEventListener("focus", refreshAdminVideoCounters);
+
+/* =====================================================
    MANAGE / RESET VIEWERS
 ===================================================== */
 
@@ -7540,6 +7634,8 @@ let viewerManagementTotal = 0;
 let viewerManagementLoading = false;
 let viewerResetRunning = false;
 const VIEWER_MANAGEMENT_PAGE_SIZE = 50;
+const VIEWER_MANAGEMENT_SELECTION_LIMIT = 100;
+const viewerManagementSelectedIds = new Set();
 
 function setViewerManagementBusy(busy){
     document.querySelectorAll('#viewerManagementModal button').forEach(button => {
@@ -7549,10 +7645,94 @@ function setViewerManagementBusy(busy){
         document.getElementById('viewerManagementPrevious').disabled = viewerManagementOffset === 0;
         document.getElementById('viewerManagementNext').disabled = viewerManagementOffset + VIEWER_MANAGEMENT_PAGE_SIZE >= viewerManagementTotal;
     }
+    updateViewerManagementSelection();
+}
+
+function updateViewerManagementSelection(){
+    const busy = viewerManagementLoading || viewerResetRunning;
+    const selected = viewerManagementSelectedIds.size;
+    const visibleCheckboxes = Array.from(document.querySelectorAll('#viewerManagementList .viewer-management-checkbox'));
+    visibleCheckboxes.forEach(checkbox => {
+        checkbox.checked = viewerManagementSelectedIds.has(checkbox.value);
+        checkbox.disabled = busy;
+    });
+    const selectedOnPage = visibleCheckboxes.filter(checkbox => checkbox.checked).length;
+    const selectPage = document.getElementById('viewerManagementSelectPage');
+    selectPage.checked = visibleCheckboxes.length > 0 && selectedOnPage === visibleCheckboxes.length;
+    selectPage.indeterminate = selectedOnPage > 0 && selectedOnPage < visibleCheckboxes.length;
+    selectPage.disabled = busy || visibleCheckboxes.length === 0;
+    document.getElementById('viewerManagementSelectedCount').textContent = selected.toLocaleString() + ' selected';
+    document.getElementById('viewerManagementDeleteSelected').disabled = busy || selected === 0;
+    document.getElementById('viewerManagementClearSelection').disabled = busy || selected === 0;
+}
+
+function selectViewerManagementPage(checked){
+    if(viewerManagementLoading || viewerResetRunning) return;
+    const ids = Array.from(document.querySelectorAll('#viewerManagementList .viewer-management-checkbox'), checkbox => checkbox.value);
+    const next = new Set(viewerManagementSelectedIds);
+    ids.forEach(id => checked ? next.add(id) : next.delete(id));
+    if(next.size > VIEWER_MANAGEMENT_SELECTION_LIMIT){
+        showMessage('Select up to ' + VIEWER_MANAGEMENT_SELECTION_LIMIT + ' users at a time.', 'error');
+        updateViewerManagementSelection();
+        return;
+    }
+    viewerManagementSelectedIds.clear();
+    next.forEach(id => viewerManagementSelectedIds.add(id));
+    updateViewerManagementSelection();
+}
+
+function clearViewerManagementSelection(){
+    if(viewerManagementLoading || viewerResetRunning) return;
+    viewerManagementSelectedIds.clear();
+    updateViewerManagementSelection();
+}
+
+async function deleteSelectedStreamXViewers(){
+    if(viewerResetRunning || viewerManagementLoading || viewerManagementSelectedIds.size === 0) return;
+    const ids = Array.from(viewerManagementSelectedIds);
+    if(!confirm('Delete the ' + ids.length + ' selected users?\n\nTheir accounts, likes, saved libraries and activity history will be removed. They can return as new users. Admin accounts and video view totals stay unchanged.')) return;
+
+    viewerResetRunning = true;
+    setViewerManagementBusy(true);
+    const button = document.getElementById('viewerManagementDeleteSelected');
+    button.textContent = 'Deleting...';
+    button.setAttribute('aria-busy', 'true');
+    const status = document.getElementById('viewerManagementStatus');
+    status.textContent = 'Deleting selected users...';
+    try{
+        await requireStreamXAdminSession();
+        const result = await supabaseClient.rpc('reset_streamx_selected_viewers', {p_viewer_ids:ids});
+        if(result.error) throw new Error(result.error.message);
+        if(!result.data || Number(result.data.deleted_users) !== ids.length){
+            throw new Error('The server did not confirm deletion of the selected users.');
+        }
+        (result.data.likes_updates || []).forEach(video => updateAdminVideoLikeCount(video.video_id, video.likes_count));
+        graphSourceCache = null;
+        graphSourceLoadedAt = 0;
+        dailyPerformanceLoadedDays = 0;
+        ids.forEach(id => viewerManagementSelectedIds.delete(id));
+        viewerManagementTotal = Math.max(0, viewerManagementTotal - ids.length);
+        viewerManagementOffset = Math.min(viewerManagementOffset, Math.max(0, Math.ceil(viewerManagementTotal / VIEWER_MANAGEMENT_PAGE_SIZE) - 1) * VIEWER_MANAGEMENT_PAGE_SIZE);
+        await loadActiveUsers();
+        await loadViewerManagement();
+        showMessage('✓ ' + ids.length.toLocaleString() + (ids.length === 1 ? ' selected user deleted.' : ' selected users deleted.'), 'success');
+    }
+    catch(error){
+        status.textContent = 'Could not delete selected users: ' + error.message;
+        showMessage(status.textContent, 'error');
+    }
+    finally{
+        viewerResetRunning = false;
+        button.textContent = 'Delete selected users';
+        button.removeAttribute('aria-busy');
+        setViewerManagementBusy(viewerManagementLoading);
+    }
 }
 
 async function openViewerManagement(){
     viewerManagementOffset = 0;
+    viewerManagementSelectedIds.clear();
+    updateViewerManagementSelection();
     document.getElementById('viewerManagementModal').style.display = 'flex';
     document.getElementById('closeViewerManagementButton').focus();
     await loadViewerManagement();
@@ -7592,6 +7772,24 @@ async function loadViewerManagement(){
             const row = document.createElement('div');
             row.className = 'viewer-management-row';
             row.dataset.viewerId = String(viewer.viewer_id);
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'viewer-management-checkbox';
+            checkbox.value = String(viewer.viewer_id);
+            checkbox.setAttribute('aria-label', 'Select user ' + String(viewer.viewer_id));
+            checkbox.addEventListener('change', () => {
+                if(viewerManagementLoading || viewerResetRunning) return;
+                if(checkbox.checked && viewerManagementSelectedIds.size >= VIEWER_MANAGEMENT_SELECTION_LIMIT){
+                    showMessage('Select up to ' + VIEWER_MANAGEMENT_SELECTION_LIMIT + ' users at a time.', 'error');
+                }
+                else if(checkbox.checked){
+                    viewerManagementSelectedIds.add(checkbox.value);
+                }
+                else{
+                    viewerManagementSelectedIds.delete(checkbox.value);
+                }
+                updateViewerManagementSelection();
+            });
             const info = document.createElement('div');
             info.className = 'viewer-management-info';
             const title = document.createElement('strong');
@@ -7605,7 +7803,7 @@ async function loadViewerManagement(){
             button.className = 'viewer-management-button viewer-management-reset';
             button.textContent = 'Reset user';
             button.addEventListener('click', () => resetStreamXViewers(String(viewer.viewer_id), button));
-            row.append(info,button);
+            row.append(checkbox,info,button);
             list.appendChild(row);
         });
         document.getElementById('viewerManagementCount').textContent = viewerManagementTotal.toLocaleString() + (viewerManagementTotal === 1 ? ' user' : ' users');
@@ -7645,6 +7843,7 @@ async function resetStreamXViewers(viewerId, button = null){
         graphSourceLoadedAt = 0;
         dailyPerformanceLoadedDays = 0;
         const removed = Number(result.data.deleted_users);
+        viewerManagementSelectedIds.delete(viewerId);
         viewerManagementTotal = Math.max(0,viewerManagementTotal - removed);
         viewerManagementOffset = Math.min(viewerManagementOffset, Math.max(0,Math.ceil(viewerManagementTotal / VIEWER_MANAGEMENT_PAGE_SIZE) - 1) * VIEWER_MANAGEMENT_PAGE_SIZE);
         await loadActiveUsers();
@@ -9173,6 +9372,9 @@ async function getVideoURL(video){
 
 async function loadVideos(){
 
+    adminVideoCounterRevision++;
+    adminVideoLibraryLoading = true;
+
     try{
 
         await requireAuthenticatedUser();
@@ -9345,6 +9547,9 @@ document.getElementById(
             "error"
         );
 
+    }
+    finally{
+        adminVideoLibraryLoading = false;
     }
 
 }
@@ -9584,6 +9789,8 @@ const resettingVideoLikesIds = new Set();
 
 function updateAdminVideoLikeCount(id, count){
 
+    adminVideoCounterRevision++;
+
     const grid = document.getElementById("videoGrid");
     const card = grid && grid.querySelector(
         '.video-card[data-video-id="' + CSS.escape(String(id)) + '"]'
@@ -9681,6 +9888,8 @@ async function resetVideoLikes(id, button = null){
 const resettingVideoViewsIds = new Set();
 
 function updateAdminVideoViewCount(id, count){
+
+    adminVideoCounterRevision++;
 
     const grid = document.getElementById("videoGrid");
     const card = grid && grid.querySelector(
@@ -12889,6 +13098,8 @@ function removeDeletedVideoFromAdminUI(
     id,
     video = null
 ){
+
+    adminVideoCounterRevision++;
 
     const grid =
         document.getElementById(

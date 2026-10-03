@@ -9698,6 +9698,64 @@ async function editVideoMetadata(videoId){
 }
 
 
+function updateVideoMetadataCard(video){
+
+    const grid =
+        document.getElementById(
+            "videoGrid"
+        );
+
+
+    const card =
+        grid &&
+        grid.querySelector(
+            '.video-card[data-video-id="' +
+            CSS.escape(String(video.id)) +
+            '"]'
+        );
+
+
+    if(!card){
+        return;
+    }
+
+
+    const title =
+        card.querySelector(
+            ".video-content h3"
+        );
+
+    const description =
+        card.querySelector(
+            ".video-content > p"
+        );
+
+    const category =
+        card.querySelector(
+            ".category-tag"
+        );
+
+
+    if(title){
+        title.textContent =
+            video.title || "Untitled";
+    }
+
+
+    if(description){
+        description.textContent =
+            video.description || "No description";
+    }
+
+
+    if(category){
+        category.textContent =
+            video.category || "General";
+    }
+
+}
+
+
 async function saveVideoMetadata(event){
 
     event.preventDefault();
@@ -9797,6 +9855,11 @@ async function saveVideoMetadata(event){
         }
 
 
+        updateVideoMetadataCard(
+            updateResult.data
+        );
+
+
         closeVideoMetadataEditor();
 
 
@@ -9804,9 +9867,6 @@ async function saveVideoMetadata(event){
             "✓ Video details updated successfully.",
             "success"
         );
-
-
-        await loadVideos();
 
 
     }catch(error){

@@ -2457,6 +2457,8 @@ const videoURLCache = new Map();
 const videoURLPromiseCache = new Map();
 const videoByteWarmCache = new Set();
 const videoByteWarmPromiseCache = new Map();
+const videoByteWarmControllers = new Map();
+let videoByteWarmCandidates = [];
 let videoByteWarmScheduleId = 0;
 const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
@@ -5018,6 +5020,7 @@ function renderVideos(){
     if(streamxAppMode) hideFeedPagination();
     else updateFeedPagination(allDisplayVideos.length,totalPages);
 
+    scheduleHlsLibraryPreload(videos);
     scheduleVideoURLPrefetch(videos);
     scheduleVideoByteWarm(videos);
 
@@ -5747,7 +5750,10 @@ function getVideoWarmCacheKey(video){
 
 function shouldWarmVideoBytes(){
 
-    if(document.visibilityState !== "visible"){
+    if(
+        document.visibilityState !== "visible" ||
+        videoModal.classList.contains("show")
+    ){
         return false;
     }
 
@@ -5776,6 +5782,12 @@ function shouldWarmVideoBytes(){
     return true;
 }
 
+function cancelVideoByteWarming(){
+
+    videoByteWarmScheduleId++;
+    videoByteWarmControllers.forEach(controller => controller.abort());
+}
+
 async function warmVideoBytes(video){
 
     if(!video || !video.video_url || !shouldWarmVideoBytes()){
@@ -5796,7 +5808,7 @@ async function warmVideoBytes(video){
 
         const videoURL = await getVideoURL(video);
 
-        if(!videoURL){
+        if(!videoURL || !shouldWarmVideoBytes()){
             return;
         }
 
@@ -5934,6 +5946,8 @@ function getVideoByteWarmPlan(){
 
 function scheduleVideoByteWarm(videos){
 
+    const scheduleId = ++videoByteWarmScheduleId;
+
     if(
         !Array.isArray(videos) ||
         videos.length === 0 ||
@@ -5942,76 +5956,61 @@ function scheduleVideoByteWarm(videos){
         return;
     }
 
-    const scheduleId = ++videoByteWarmScheduleId;
     const plan = getVideoByteWarmPlan();
 
-    /*
-     * Do NOT fetch HLS media segments automatically during page load.
-     * Those requests compete directly with GIFs. MP4 warming remains
-     * selective; HLS warming is reserved for explicit user intent (hover).
-     */
-    const autoWarmCandidates =
-        videos.filter(video => {
-            const value =
-                typeof video?.video_url === "string"
-                    ? video.video_url.trim()
-                    : "";
+    /* Include HLS again, but prepare only the first few likely videos,
+       serially. Each HLS warm-up caches just its opening fragment. */
+    videoByteWarmCandidates = videos;
+    const candidates = videos
+        .filter(video => video && video.video_url &&
+            !videoByteWarmCache.has(getVideoWarmCacheKey(video)))
+        .slice(0,Math.min(plan.count,videos.length));
 
-            return !isHLSVideoURL(value);
-        });
-
-    const candidates = autoWarmCandidates.slice(
-        0,
-        Math.min(plan.count,autoWarmCandidates.length)
-    );
-
-    if(candidates.length === 0){
-        return;
-    }
-
-    const beginWarm = () => {
-
-        if(scheduleId !== videoByteWarmScheduleId){
+    const warmNext = async (index = 0) => {
+        if(
+            scheduleId !== videoByteWarmScheduleId ||
+            !shouldWarmVideoBytes() ||
+            index >= candidates.length
+        ){
             return;
         }
 
-        candidates.forEach((video,index) => {
+        /* A previous render/hover can already be warming another video.
+           Wait for it rather than adding parallel background downloads. */
+        if(videoByteWarmPromiseCache.size){
+            window.setTimeout(() => warmNext(index),plan.stagger || 350);
+            return;
+        }
 
-            window.setTimeout(
-                () => {
-                    if(scheduleId === videoByteWarmScheduleId){
-                        void warmVideoBytes(video);
-                    }
-                },
-                index * plan.stagger
-            );
-        });
+        try{
+            await warmVideoBytes(candidates[index]);
+        }
+        catch(error){}
+
+        if(scheduleId === videoByteWarmScheduleId){
+            window.setTimeout(() => warmNext(index + 1),plan.stagger);
+        }
     };
 
     window.setTimeout(
         () => {
-
             if("requestIdleCallback" in window){
-                window.requestIdleCallback(
-                    beginWarm,
-                    {timeout:plan.idleTimeout}
-                );
+                window.requestIdleCallback(() => { void warmNext(); },{timeout:plan.idleTimeout});
             }
             else{
-                beginWarm();
+                void warmNext();
             }
         },
         plan.delay
     );
 }
 
-
 /* =========================================================
    PHASE 3 - HLS / ADAPTIVE STREAMING PLAYER
    ---------------------------------------------------------
    MP4 playback remains fully supported.
-   HLS.js is loaded only when an .m3u8 video is actually opened,
-   so normal page/GIF loading receives no extra startup cost.
+   Prepare the HLS library at idle after the feed paints.
+   Opening-fragment warming is bounded, serial and decoder-free.
 ========================================================= */
 
 let activeHlsPlayer = null;
@@ -6096,7 +6095,8 @@ function ensureHlsLibrary(){
 
 function scheduleHlsLibraryPreload(videos){
 
-    if(hlsLibraryPreloadScheduled || window.Hls){
+    if(hlsLibraryPreloadScheduled || window.Hls ||
+        shouldUseNativeHLSPlayback() || !shouldWarmVideoBytes()){
         return;
     }
 
@@ -6138,114 +6138,114 @@ function scheduleHlsLibraryPreload(videos){
                 preload();
             }
         },
-        2200
+        600
     );
 }
 
 async function warmHlsVideoStart(videoURL, cacheKey){
 
-    const HlsClass =
-        await ensureHlsLibrary();
-
-    if(!HlsClass.isSupported()){
+    if(!shouldWarmVideoBytes()){
         return false;
     }
 
-    return await new Promise(resolve => {
+    /* Cache opening bytes without another HLS player, worker or decoder.
+       R2 job URLs are immutable and already have long-lived cache headers. */
+    const controller = new AbortController();
+    videoByteWarmControllers.set(cacheKey,controller);
 
-        const warmer =
-            document.createElement("video");
+    const timeoutId = window.setTimeout(
+        () => controller.abort(),
+        VIDEO_BYTE_WARM_TIMEOUT_MS
+    );
 
-        let hls = null;
-        let finished = false;
-        let timeoutId = null;
+    const options = {
+        signal:controller.signal,
+        cache:"default",
+        priority:"low"
+    };
 
-        const finish = warmed => {
+    const readPlaylist = async url => {
+        const response = await fetch(url,options);
+        if(!response.ok){
+            throw new Error("HLS warm request failed.");
+        }
+        return {
+            url:response.url || url,
+            text:await response.text()
+        };
+    };
 
-            if(finished){
+    try{
+        let playlist = await readPlaylist(videoURL);
+        const lines = playlist.text.split(/\r?\n/).map(line => line.trim());
+        const variants = [];
+
+        lines.forEach((line,index) => {
+            if(!line.startsWith("#EXT-X-STREAM-INF:")){
                 return;
             }
-
-            finished = true;
-
-            if(timeoutId !== null){
-                window.clearTimeout(timeoutId);
+            const uri = lines[index + 1];
+            const bandwidth = line.match(/(?:[:,])BANDWIDTH=(\d+)/);
+            if(uri && !uri.startsWith("#")){
+                variants.push({
+                    uri,
+                    bandwidth:bandwidth ? Number(bandwidth[1]) : Infinity
+                });
             }
-
-            try{
-                hls?.destroy();
-            }
-            catch(error){
-                console.warn(
-                    "HLS warm cleanup warning:",
-                    error
-                );
-            }
-
-            warmer.pause();
-            warmer.removeAttribute("src");
-            warmer.load();
-            warmer.remove();
-
-            if(warmed){
-                videoByteWarmCache.add(cacheKey);
-            }
-
-            resolve(warmed);
-        };
-
-        warmer.muted = true;
-        warmer.playsInline = true;
-        warmer.preload = "auto";
-        warmer.setAttribute("aria-hidden","true");
-        warmer.style.position = "fixed";
-        warmer.style.width = "1px";
-        warmer.style.height = "1px";
-        warmer.style.opacity = "0";
-        warmer.style.pointerEvents = "none";
-        warmer.style.left = "-9999px";
-
-        document.body.appendChild(warmer);
-
-        hls = new HlsClass({
-            enableWorker:true,
-            startLevel:0,
-            capLevelToPlayerSize:true,
-            maxBufferLength:4,
-            maxMaxBufferLength:6,
-            backBufferLength:0
         });
 
-        hls.attachMedia(warmer);
+        if(variants.length){
+            variants.sort((a,b) => a.bandwidth - b.bandwidth);
+            playlist = await readPlaylist(
+                new URL(variants[0].uri,playlist.url).href
+            );
+        }
 
-        hls.on(
-            HlsClass.Events.MEDIA_ATTACHED,
-            () => {
-                hls.loadSource(videoURL);
+        /* Keep live, encrypted and byte-range streams on normal playback.
+           StreamX's worker produces ordinary immutable VOD segments. */
+        if(
+            !playlist.text.includes("#EXT-X-ENDLIST") ||
+            /#EXT-X-(?:BYTERANGE|KEY):/.test(playlist.text)
+        ){
+            return false;
+        }
+
+        const firstFragment = playlist.text
+            .split(/\r?\n/)
+            .map(line => line.trim())
+            .find(line => line && !line.startsWith("#"));
+
+        if(!firstFragment){
+            return false;
+        }
+
+        const download = async uri => {
+            const response = await fetch(new URL(uri,playlist.url).href,options);
+            if(!response.ok){
+                throw new Error("HLS fragment warm request failed.");
             }
-        );
+            await response.arrayBuffer();
+        };
 
-        hls.on(
-            HlsClass.Events.FRAG_BUFFERED,
-            () => finish(true)
-        );
-
-        hls.on(
-            HlsClass.Events.ERROR,
-            (event,data) => {
-                if(data?.fatal){
-                    finish(false);
-                }
-            }
-        );
-
-        timeoutId = window.setTimeout(
-            () => finish(false),
-            5000
-        );
-    });
+        const initSegment = playlist.text.match(/#EXT-X-MAP:[^\r\n]*URI="([^"]+)"/);
+        if(initSegment){
+            await download(initSegment[1]);
+        }
+        await download(firstFragment);
+        videoByteWarmCache.add(cacheKey);
+        return true;
+    }
+    catch(error){
+        /* A missed warm-up must never prevent normal playback. */
+        return false;
+    }
+    finally{
+        window.clearTimeout(timeoutId);
+        if(videoByteWarmControllers.get(cacheKey) === controller){
+            videoByteWarmControllers.delete(cacheKey);
+        }
+    }
 }
-
 
 function shouldUseNativeHLSPlayback(){
 
@@ -6336,15 +6336,6 @@ async function attachVideoSource(videoURL){
 
         activeHlsPlayer = hls;
 
-        hls.attachMedia(playerVideo);
-
-        hls.on(
-            HlsClass.Events.MEDIA_ATTACHED,
-            () => {
-                hls.loadSource(videoURL);
-            }
-        );
-
         hls.on(
             HlsClass.Events.MANIFEST_PARSED,
             finishResolve
@@ -6393,6 +6384,9 @@ async function attachVideoSource(videoURL){
                 );
             }
         );
+        /* Overlap manifest/fragment requests with MediaSource setup. */
+        hls.loadSource(videoURL);
+        hls.attachMedia(playerVideo);
     });
 }
 
@@ -6710,6 +6704,7 @@ function resumeFeedMediaAfterPlayback(){
         });
 
     resumeVisibleFeedVideoPreviews();
+    scheduleVideoByteWarm(videoByteWarmCandidates);
 }
 
 
@@ -6718,6 +6713,8 @@ function resumeFeedMediaAfterPlayback(){
 ========================= */
 
 async function openPlayer(video){
+
+    cancelVideoByteWarming();
 
     /*
      * Once the user taps, playback becomes network/CPU priority #1.

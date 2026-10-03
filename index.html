@@ -5412,8 +5412,8 @@ function renderVideos(){
 
 
 /* =========================================================
-   ROLLING WEBSITE PREVIEW WINDOW
-   Keep the next ten cards queued while limiting background downloads.
+   ROLLING WEBSITE POSTER WINDOW
+   Keep the next ten posters queued while limiting background downloads.
    Visible cards, mobile startup, and opened-video playback take priority.
    Retain successfully loaded GIF sources through player transitions.
 ========================================================= */
@@ -5515,7 +5515,7 @@ function hasPendingFeedThumbnails(){
 function requestFeedCardPreview(card,priority){
     requestFeedThumbnail(card.querySelector('.thumbnail-fallback'),priority);
     const preview = card.querySelector('.thumbnail-preview-video');
-    if(preview) prepareFeedVideoPreview(preview);
+    if(preview && priority === 'high') prepareFeedVideoPreview(preview);
 }
 
 function refreshFeedThumbnailWindow(){
@@ -5543,10 +5543,8 @@ function refreshFeedThumbnailWindow(){
     previewWindow.upcoming.forEach(({card}) => {
         if(available <= 0 || isFeedCardPreviewLoading(card)) return;
         const image = card.querySelector('.thumbnail-fallback');
-        const preview = card.querySelector('.thumbnail-preview-video');
         const needsImage = image?.dataset.thumbnailSrc && !image.dataset.thumbnailState;
-        const needsPreview = preview?.dataset.previewSrc && preview.dataset.streamxPreviewPrepared !== '1';
-        if(!needsImage && !needsPreview) return;
+        if(!needsImage) return;
         requestFeedCardPreview(card,'low');
         if(isFeedCardPreviewLoading(card)) available--;
     });
@@ -7034,6 +7032,10 @@ let streamxFeedPreviewPlaybackSuspended = false;
 
 function prepareFeedVideoPreview(video){
     if(!video || !canLoadFeedThumbnails() || video.dataset.streamxPreviewPrepared === '1') return;
+    const rect = video.getBoundingClientRect();
+    const height = window.innerHeight || document.documentElement.clientHeight || 800;
+    const width = window.innerWidth || document.documentElement.clientWidth || 800;
+    if(rect.bottom <= 0 || rect.top >= height || rect.right <= 0 || rect.left >= width) return;
     const source = video.dataset.previewSrc;
     if(!source) return;
     if(video.dataset.streamxPreviewTracked !== '1'){
@@ -7131,8 +7133,8 @@ function setupFeedVideoPreviewWindow(){
         return;
     }
 
-    /* Upcoming MP4 previews are prepared by the rolling ten-card window.
-       This observer controls playback only: offscreen videos remain paused. */
+    /* MP4 previews load and play inside the viewport; upcoming cards only
+       prepare their posters. Offscreen videos remain paused. */
     streamxPreviewPlayObserver =
         new IntersectionObserver(
             entries => {

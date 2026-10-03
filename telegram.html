@@ -4037,7 +4037,7 @@ function renderRecommendations(rows){
     prioritizeRenderedRecommendationCards();
 }
 
-const INITIAL_THUMBNAIL_COUNT = 4;
+/* Thumbnail priority is assigned from the viewport after cards mount. */
 
 function prioritizeRenderedRecommendationCards(){
 
@@ -4089,24 +4089,9 @@ function prioritizeRenderedRecommendationCards(){
 
     const fragment = document.createDocumentFragment();
 
-    ordered.forEach((card,index) => {
-
-        if(index < INITIAL_THUMBNAIL_COUNT){
-            const image = card.querySelector(
-                ".thumbnail-fallback"
-            );
-
-            if(image){
-                image.loading = "eager";
-                image.decoding = "async";
-            }
-        }
-
-        fragment.appendChild(card);
-
-    });
-
+    ordered.forEach(card => fragment.appendChild(card));
     videoGrid.appendChild(fragment);
+    scheduleFeedThumbnailWindow();
 }
 
 async function loadRecommendations(){
@@ -5033,9 +5018,7 @@ function renderVideos(){
 
             cardFragment.appendChild(
                 createVideoCard(
-                    video,
-                    index <
-                        INITIAL_THUMBNAIL_COUNT
+                    video
                 )
             );
 
@@ -5049,15 +5032,13 @@ function renderVideos(){
 
 
     /*
-     * Only visible/near-visible previews are active.
+     * Only visible video previews are active.
      */
     setupTelegramVideoPreviewWindow();
 
 
-    /*
-     * Legacy GIFs retain their existing small animation budget.
-     */
-    setupTelegramGifScrollWindow();
+    /* Visible GIFs load first; nearby images share a bounded request budget. */
+    setupFeedThumbnailWindow();
 
 
     updateFeedLoadStatus(
@@ -5106,7 +5087,6 @@ function renderVideos(){
 ========================================================= */
 
 let streamxPreviewPlayObserver = null;
-let streamxPreviewPreloadObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
 
 function prepareThumbnailVideoPreview(video){
@@ -5279,14 +5259,6 @@ function setupTelegramVideoPreviewWindow(){
             null;
     }
 
-    if(streamxPreviewPreloadObserver){
-
-        streamxPreviewPreloadObserver.disconnect();
-
-        streamxPreviewPreloadObserver =
-            null;
-    }
-
     if(
         !videoGrid ||
         typeof IntersectionObserver !== "function"
@@ -5302,34 +5274,6 @@ function setupTelegramVideoPreviewWindow(){
     if(previews.length === 0){
         return;
     }
-
-    /*
-     * PRELOAD OBSERVER:
-     * Prepare the tiny preview shortly before the card reaches the screen,
-     * but do not play it yet. This keeps scrolling responsive without
-     * competing with every GIF in the feed.
-     */
-    streamxPreviewPreloadObserver =
-        new IntersectionObserver(
-            entries => {
-
-                entries.forEach(entry => {
-
-                    if(entry.isIntersecting){
-
-                        prepareThumbnailVideoPreview(
-                            entry.target
-                        );
-                    }
-                });
-
-            },
-            {
-                root:null,
-                rootMargin:"600px 0px 700px 0px",
-                threshold:0
-            }
-        );
 
     /*
      * PLAY OBSERVER:
@@ -5371,36 +5315,7 @@ function setupTelegramVideoPreviewWindow(){
             }
         );
 
-    previews.forEach((video,index) => {
-
-        /*
-         * Prime only the first preview after the first paint. More aggressive
-         * startup preloading made Telegram's WebView fight with GIF decoding.
-         */
-        if(index === 0){
-
-            window.setTimeout(
-                () => {
-
-                    if(video.isConnected){
-                        prepareThumbnailVideoPreview(
-                            video
-                        );
-                    }
-
-                },
-                120
-            );
-        }
-
-        streamxPreviewPreloadObserver.observe(
-            video
-        );
-
-        streamxPreviewPlayObserver.observe(
-            video
-        );
-    });
+    previews.forEach(video => streamxPreviewPlayObserver.observe(video));
 }
 
 function pauseAllFeedVideoPreviews(){
@@ -5459,990 +5374,148 @@ function resumeVisibleFeedVideoPreviews(){
 
 
 /* =========================================================
-   TELEGRAM SMART GIF BUDGET
-   ---------------------------------------------------------
-   Telegram WebView can struggle when several animated GIFs decode
-   at the same time. Keep a very small animation budget:
-   - visible GIFs always get first priority
-   - then the nearest GIFs in the user's scroll direction
-   - maximum 4 active GIFs at once
-   - GIFs are prepared before they enter the viewport
-   - static JPG/PNG thumbnails are never touched
+   VIEWPORT-FIRST THUMBNAIL LOADING
+   Visible images start immediately. At most three nearby images are
+   prepared, with two background requests at a time. Use the actual DOM
+   image for dimensions and caching; never download a hidden aspect probe.
 ========================================================= */
+let streamxThumbnailObserver = null;
+let streamxThumbnailRAF = 0;
+let streamxThumbnailListenersInstalled = false;
+let streamxThumbnailLastY = window.scrollY || 0;
+let streamxThumbnailDirection = 1;
+const STREAMX_THUMBNAIL_AHEAD = 3;
+const STREAMX_THUMBNAIL_CONCURRENCY = 2;
 
-let streamxGifObserver = null;
-let streamxGifBudgetRAF = 0;
-let streamxGifScrollListenerInstalled = false;
-let streamxLastGifScrollY = window.scrollY || 0;
-let streamxGifScrollDirection = 1;
-const streamxNearGifCards = new Set();
-
-const STREAMX_MAX_ACTIVE_GIFS = 4;
-
-/*
- * Keep GIF animation budget small, but warm likely upcoming GIF files
- * separately so scrolling does not reveal long blank previews.
- */
-const STREAMX_GIF_PRELOAD_AHEAD = 7;
-const STREAMX_GIF_PRELOAD_CONCURRENCY = 2;
-
-const streamxGifPreloadedSources = new Set();
-const streamxGifPreloadingSources = new Map();
-const streamxGifPreloadQueue = [];
-
-let streamxGifPreloadActiveCount = 0;
-let streamxGifPreloadTimer = null;
-
-const STREAMX_GIF_PLACEHOLDER =
-    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-
-function isAnimatedGifThumbnailURL(url){
-
-    if(!url){
-        return false;
-    }
-
-    try{
-
-        const parsed =
-            new URL(
-                url,
-                window.location.href
-            );
-
-        return parsed.pathname
-            .toLowerCase()
-            .endsWith(".gif");
-
-    }
-    catch(error){
-
-        return String(url)
-            .split("?")[0]
-            .toLowerCase()
-            .endsWith(".gif");
-    }
+function getFeedThumbnailItems(){
+    if(!videoGrid) return [];
+    const height = window.innerHeight || document.documentElement.clientHeight || 800;
+    const width = window.innerWidth || document.documentElement.clientWidth || 800;
+    return Array.from(videoGrid.querySelectorAll('.thumbnail-fallback')).map(image => {
+        const rect = image.getBoundingClientRect();
+        return {image,rect,visible:rect.bottom > 0 && rect.top < height &&
+            rect.right > 0 && rect.left < width};
+    });
 }
 
-function canPreloadFeedGifs(){
-
-    const connection =
-        navigator.connection ||
-        navigator.mozConnection ||
-        navigator.webkitConnection;
-
-    if(!connection){
-        return true;
-    }
-
-    if(connection.saveData){
-        return false;
-    }
-
-    const effectiveType =
-        String(
-            connection.effectiveType || ""
-        ).toLowerCase();
-
-    /*
-     * On very slow connections, do not create extra background requests.
-     * The normal near-viewport loader still works.
-     */
-    return !(
-        effectiveType === "slow-2g" ||
-        effectiveType === "2g"
-    );
+function canLoadFeedThumbnails(){
+    return document.visibilityState !== 'hidden' &&
+        !streamxFeedPreviewPlaybackSuspended;
 }
 
-
-function pumpGifPreloadQueue(){
-
-    if(
-        !canPreloadFeedGifs() ||
-        (
-            videoModal &&
-            videoModal.classList.contains("show")
-        )
-    ){
-        return;
-    }
-
-
-    while(
-        streamxGifPreloadActiveCount <
-            STREAMX_GIF_PRELOAD_CONCURRENCY &&
-        streamxGifPreloadQueue.length > 0
-    ){
-
-        const source =
-            streamxGifPreloadQueue.shift();
-
-
-        if(
-            !source ||
-            streamxGifPreloadedSources.has(source) ||
-            streamxGifPreloadingSources.has(source)
-        ){
-            continue;
-        }
-
-
-        streamxGifPreloadActiveCount++;
-
-
-        /*
-         * A detached Image is used only as a network/cache warmer.
-         * It is never appended to the page, so the normal 4-GIF animation
-         * budget remains unchanged.
-         */
-        const warmer =
-            new Image();
-
-
-        try{
-            warmer.fetchPriority =
-                "low";
-        }
-        catch(error){}
-
-
-        warmer.decoding =
-            "async";
-
-
-        streamxGifPreloadingSources.set(
-            source,
-            warmer
-        );
-
-
-        const finish = () => {
-
-            streamxGifPreloadActiveCount =
-                Math.max(
-                    0,
-                    streamxGifPreloadActiveCount - 1
-                );
-
-
-            streamxGifPreloadingSources.delete(
-                source
-            );
-
-
-            /*
-             * Whether loaded or failed, move on to the next queued item.
-             * Successful requests are normally kept in the browser HTTP/image
-             * cache and therefore restore much faster when their card activates.
-             */
-            pumpGifPreloadQueue();
-        };
-
-
-        warmer.onload = () => {
-
-            streamxGifPreloadedSources.add(
-                source
-            );
-
-            finish();
-        };
-
-
-        warmer.onerror =
-            finish;
-
-
-        warmer.src =
-            source;
-    }
+function canPreloadFeedThumbnails(){
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    return !connection || (!connection.saveData &&
+        !/^(slow-2g|2g)$/.test(connection.effectiveType || ''));
 }
 
-
-function queueGifPreload(source){
-
-    if(
-        !source ||
-        !isAnimatedGifThumbnailURL(source) ||
-        streamxGifPreloadedSources.has(source) ||
-        streamxGifPreloadingSources.has(source) ||
-        streamxGifPreloadQueue.includes(source)
-    ){
-        return;
-    }
-
-
-    streamxGifPreloadQueue.push(
-        source
-    );
-
-
-    pumpGifPreloadQueue();
+function requestFeedThumbnail(image,priority){
+    const source = image.dataset.thumbnailSrc;
+    if(!source || image.dataset.thumbnailState === 'failed') return;
+    image.fetchPriority = priority;
+    image.loading = 'eager';
+    // Repeated scroll/resize callbacks must not restart the GIF.
+    if(image.getAttribute('src') === source) return;
+    image.dataset.thumbnailState = 'loading';
+    image.src = source;
 }
 
-
-function scheduleUpcomingGifPreloads(
-    delay = 120
-){
-
-    if(streamxGifPreloadTimer !== null){
-
-        window.clearTimeout(
-            streamxGifPreloadTimer
-        );
-    }
-
-
-    streamxGifPreloadTimer =
-        window.setTimeout(
-            () => {
-
-                streamxGifPreloadTimer =
-                    null;
-
-
-                if(
-                    !videoGrid ||
-                    !canPreloadFeedGifs() ||
-                    (
-                        videoModal &&
-                        videoModal.classList.contains("show")
-                    )
-                ){
-                    return;
-                }
-
-
-                const viewportHeight =
-                    window.innerHeight ||
-                    document.documentElement.clientHeight ||
-                    800;
-
-
-                const gifItems =
-                    Array.from(
-                        videoGrid.querySelectorAll(
-                            ".video-card"
-                        )
-                    )
-                    .map(card => {
-
-                        const image =
-                            card.querySelector(
-                                ".thumbnail-fallback"
-                            );
-
-
-                        if(!image){
-                            return null;
-                        }
-
-
-                        const source =
-                            image.dataset.streamxGifSource ||
-                            image.getAttribute("src");
-
-
-                        if(
-                            !isAnimatedGifThumbnailURL(
-                                source
-                            )
-                        ){
-                            return null;
-                        }
-
-
-                        const rect =
-                            card.getBoundingClientRect();
-
-
-                        return {
-                            source,
-                            rect
-                        };
-                    })
-                    .filter(Boolean);
-
-
-                let upcoming =
-                    [];
-
-
-                if(streamxGifScrollDirection >= 0){
-
-                    upcoming =
-                        gifItems
-                            .filter(item =>
-                                item.rect.bottom >= -120 &&
-                                item.rect.top <=
-                                    viewportHeight + 3200
-                            )
-                            .sort(
-                                (a,b) =>
-                                    a.rect.top -
-                                    b.rect.top
-                            );
-
-                }
-                else{
-
-                    upcoming =
-                        gifItems
-                            .filter(item =>
-                                item.rect.top <=
-                                    viewportHeight + 120 &&
-                                item.rect.bottom >= -3200
-                            )
-                            .sort(
-                                (a,b) =>
-                                    b.rect.bottom -
-                                    a.rect.bottom
-                            );
-                }
-
-
-                upcoming
-                    .slice(
-                        0,
-                        STREAMX_GIF_PRELOAD_AHEAD
-                    )
-                    .forEach(item => {
-
-                        queueGifPreload(
-                            item.source
-                        );
-                    });
-
-            },
-            delay
-        );
+function hasPendingVisibleFeedThumbnails(){
+    return getFeedThumbnailItems().some(({image,visible}) => visible &&
+        image.dataset.thumbnailState !== 'loaded' &&
+        image.dataset.thumbnailState !== 'failed');
 }
 
-
-function activateFeedGif(image){
-
-    if(!image){
-        return;
-    }
-
-    const storedSource =
-        image.dataset.streamxGifSource;
-
-    /*
-     * Restore only when this GIF was actually suspended.
-     * Reassigning src on every scroll event would restart the animation.
-     */
-    if(
-        storedSource &&
-        (
-            image.dataset.streamxGifSuspended === "1" ||
-            image.getAttribute("src") === STREAMX_GIF_PLACEHOLDER
-        )
-    ){
-
-        image.src =
-            storedSource;
-
-        delete image.dataset.streamxGifSuspended;
-    }
-
-    image.loading =
-        "eager";
-
-
-    const activeSource =
-        image.dataset.streamxGifSource ||
-        image.getAttribute("src");
-
-
-    if(
-        activeSource &&
-        isAnimatedGifThumbnailURL(activeSource)
-    ){
-
-        image.addEventListener(
-            "load",
-            function rememberLoadedGif(){
-
-                image.dataset.streamxGifEverLoaded =
-                    "1";
-
-                image.classList.remove(
-                    "streamx-gif-pending"
-                );
-
-                streamxGifPreloadedSources.add(
-                    activeSource
-                );
-            },
-            {once:true}
-        );
-
-
-        /*
-         * If it was already loaded before this activation, mark it immediately.
-         */
-        if(
-            image.complete &&
-            image.naturalWidth > 0 &&
-            image.getAttribute("src") !== STREAMX_GIF_PLACEHOLDER
-        ){
-
-            image.dataset.streamxGifEverLoaded =
-                "1";
-
-            image.classList.remove(
-                "streamx-gif-pending"
-            );
-
-            streamxGifPreloadedSources.add(
-                activeSource
-            );
-
-        }
-        else{
-
-            image.classList.add(
-                "streamx-gif-pending"
-            );
-        }
-    }
-
-
-    try{
-        image.fetchPriority =
-            "auto";
-    }
-    catch(error){}
+function hasPendingFeedThumbnails(){
+    return hasPendingVisibleFeedThumbnails() || getFeedThumbnailItems().some(({image}) =>
+        image.dataset.thumbnailState === 'loading');
 }
 
-function suspendFeedGif(image){
-
-    if(
-        !image ||
-        image.dataset.streamxGifSuspended === "1"
-    ){
-        return;
+function refreshFeedThumbnailWindow(){
+    streamxThumbnailRAF = 0;
+    if(!canLoadFeedThumbnails()) return;
+    const currentY = window.scrollY || 0;
+    if(Math.abs(currentY - streamxThumbnailLastY) > 2){
+        streamxThumbnailDirection = currentY >= streamxThumbnailLastY ? 1 : -1;
+        streamxThumbnailLastY = currentY;
     }
-
-    const currentSource =
-        image.dataset.streamxGifSource ||
-        image.getAttribute("src");
-
-    if(
-        !currentSource ||
-        currentSource === STREAMX_GIF_PLACEHOLDER ||
-        !isAnimatedGifThumbnailURL(currentSource)
-    ){
-        return;
-    }
-
-    /*
-     * IMPORTANT:
-     * Do not blank a GIF that has never successfully rendered in the DOM.
-     * Telegram's lazy loader must be allowed to fetch/render it at least once.
-     * After that first successful load, suspending it is safe because restoring
-     * normally comes from cache.
-     */
-    if(
-        image.dataset.streamxGifEverLoaded !== "1"
-    ){
-        return;
-    }
-
-    image.dataset.streamxGifSource =
-        currentSource;
-
-    image.dataset.streamxGifSuspended =
-        "1";
-
-    image.src =
-        STREAMX_GIF_PLACEHOLDER;
-}
-
-function getGifCardPriority(card){
-
-    const rect =
-        card.getBoundingClientRect();
-
-    const viewportHeight =
-        window.innerHeight ||
-        document.documentElement.clientHeight ||
-        800;
-
-    const visible =
-        rect.bottom > 0 &&
-        rect.top < viewportHeight;
-
-    if(visible){
-
-        /*
-         * Visible cards are always first.
-         * Within the viewport, favor the one closest to the center.
-         */
-        const cardCenter =
-            rect.top + (rect.height / 2);
-
-        const viewportCenter =
-            viewportHeight / 2;
-
-        return Math.abs(
-            cardCenter - viewportCenter
-        );
-    }
-
-    /*
-     * For nearby off-screen cards, favor the direction the user is moving.
-     * This effectively reserves spare GIF capacity for what is coming next.
-     */
-    if(streamxGifScrollDirection >= 0){
-
-        if(rect.top >= viewportHeight){
-            return 10000 + (rect.top - viewportHeight);
-        }
-
-        return 20000 + Math.abs(rect.bottom);
-    }
-
-    if(rect.bottom <= 0){
-        return 10000 + Math.abs(rect.bottom);
-    }
-
-    return 20000 + Math.abs(rect.top - viewportHeight);
-}
-
-function rebalanceTelegramGifBudget(){
-
-    streamxGifBudgetRAF = 0;
-
-    if(!videoGrid){
-        return;
-    }
-
-    const viewportHeight =
-        window.innerHeight ||
-        document.documentElement.clientHeight ||
-        800;
-
-    const candidates =
-        Array.from(streamxNearGifCards)
-            .filter(card =>
-                card &&
-                card.isConnected
-            )
-            .map(card => {
-
-                const image =
-                    card.querySelector(
-                        ".thumbnail-fallback"
-                    );
-
-                if(!image){
-                    return null;
-                }
-
-                const source =
-                    image.dataset.streamxGifSource ||
-                    image.getAttribute("src");
-
-                if(
-                    !isAnimatedGifThumbnailURL(
-                        source
-                    )
-                ){
-                    return null;
-                }
-
-                const rect =
-                    card.getBoundingClientRect();
-
-                const visible =
-                    rect.bottom > 0 &&
-                    rect.top < viewportHeight;
-
-                return {
-                    card,
-                    image,
-                    visible,
-                    priority:getGifCardPriority(card)
-                };
-            })
-            .filter(Boolean)
-            .sort(
-                (a,b) =>
-                    a.priority - b.priority
-            );
-
-    /*
-     * Never freeze an on-screen GIF. The cap applies only to spare
-     * off-screen animation slots used to make the next card feel instant.
-     */
-    const visibleItems =
-        candidates.filter(
-            item => item.visible
-        );
-
-    const offscreenSlots =
-        Math.max(
-            0,
-            STREAMX_MAX_ACTIVE_GIFS -
-                visibleItems.length
-        );
-
-    const active =
-        new Set(
-            [
-                ...visibleItems,
-                ...candidates
-                    .filter(
-                        item => !item.visible
-                    )
-                    .slice(
-                        0,
-                        offscreenSlots
-                    )
-            ]
-            .map(item => item.card)
-        );
-
-    candidates.forEach(item => {
-
-        if(active.has(item.card)){
-
-            activateFeedGif(
-                item.image
-            );
-
-        }
-        else{
-
-            suspendFeedGif(
-                item.image
-            );
+    const height = window.innerHeight || document.documentElement.clientHeight || 800;
+    const items = getFeedThumbnailItems();
+    items.filter(item => item.visible).forEach(({image}) => requestFeedThumbnail(image,'high'));
+    // Visible previews own the connection until they have rendered.
+    if(hasPendingVisibleFeedThumbnails() || !canPreloadFeedThumbnails()) return;
+    const nearby = items.filter(({rect,visible}) => !visible &&
+        (streamxThumbnailDirection >= 0
+            ? rect.top >= height && rect.top < height * 3
+            : rect.bottom <= 0 && rect.bottom > -height * 2))
+        .sort((a,b) => streamxThumbnailDirection >= 0
+            ? a.rect.top - b.rect.top : b.rect.bottom - a.rect.bottom)
+        .slice(0,STREAMX_THUMBNAIL_AHEAD);
+    let available = Math.max(0,STREAMX_THUMBNAIL_CONCURRENCY -
+        items.filter(({image,visible}) => !visible && image.dataset.thumbnailState === 'loading').length);
+    nearby.forEach(({image}) => {
+        if(available > 0 && !image.dataset.thumbnailState){
+            requestFeedThumbnail(image,'low');
+            available--;
         }
     });
 }
 
-function scheduleTelegramGifBudget(){
-
-    if(streamxGifBudgetRAF){
-        return;
-    }
-
-    streamxGifBudgetRAF =
-        window.requestAnimationFrame(
-            rebalanceTelegramGifBudget
-        );
+function scheduleFeedThumbnailWindow(){
+    if(streamxThumbnailRAF) return;
+    streamxThumbnailRAF = window.requestAnimationFrame(refreshFeedThumbnailWindow);
 }
 
-function installTelegramGifScrollTracking(){
-
-    if(streamxGifScrollListenerInstalled){
-        return;
-    }
-
-    streamxGifScrollListenerInstalled =
-        true;
-
-    window.addEventListener(
-        "scroll",
-        () => {
-
-            const currentY =
-                window.scrollY || 0;
-
-            const delta =
-                currentY -
-                streamxLastGifScrollY;
-
-            if(Math.abs(delta) > 2){
-
-                streamxGifScrollDirection =
-                    delta >= 0
-                        ? 1
-                        : -1;
-
-                streamxLastGifScrollY =
-                    currentY;
-            }
-
-            scheduleTelegramGifBudget();
-
-            /*
-             * Network preload runs independently from GIF animation.
-             * This gives upcoming previews time to enter cache before
-             * they become one of the four active GIFs.
-             */
-            scheduleUpcomingGifPreloads(
-                90
-            );
-        },
-        {passive:true}
-    );
-
-    window.addEventListener(
-        "resize",
-        scheduleTelegramGifBudget,
-        {passive:true}
-    );
-}
-
-function setupTelegramGifScrollWindow(){
-
-    if(streamxGifObserver){
-
-        streamxGifObserver.disconnect();
-
-        streamxGifObserver =
-            null;
-    }
-
-    streamxNearGifCards.clear();
-
-    if(
-        !videoGrid ||
-        typeof IntersectionObserver !== "function"
-    ){
-        return;
-    }
-
-    installTelegramGifScrollTracking();
-
-    streamxGifObserver =
-        new IntersectionObserver(
-            entries => {
-
-                entries.forEach(entry => {
-
-                    const card =
-                        entry.target;
-
-                    const image =
-                        card.querySelector(
-                            ".thumbnail-fallback"
-                        );
-
-                    if(!image){
-                        return;
-                    }
-
-                    const candidateURL =
-                        image.dataset.streamxGifSource ||
-                        image.getAttribute("src");
-
-                    if(
-                        !isAnimatedGifThumbnailURL(
-                            candidateURL
-                        )
-                    ){
-                        return;
-                    }
-
-                    if(entry.isIntersecting){
-
-                        streamxNearGifCards.add(
-                            card
-                        );
-
-
-                        /*
-                         * A near/visible never-loaded GIF gets an immediate
-                         * eager request. The animation budget can suspend it
-                         * later, but only after its first successful render.
-                         */
-                        if(
-                            image.dataset.streamxGifEverLoaded !== "1"
-                        ){
-
-                            image.loading =
-                                "eager";
-
-                            try{
-                                const rect =
-                                    card.getBoundingClientRect();
-
-                                const viewportHeight =
-                                    window.innerHeight ||
-                                    document.documentElement.clientHeight ||
-                                    800;
-
-                                image.fetchPriority =
-                                    (
-                                        rect.bottom > 0 &&
-                                        rect.top < viewportHeight
-                                    )
-                                        ? "high"
-                                        : "auto";
-                            }
-                            catch(error){}
-                        }
-
-                    }
-                    else{
-
-                        streamxNearGifCards.delete(
-                            card
-                        );
-
-                        suspendFeedGif(
-                            image
-                        );
-                    }
-                });
-
-                scheduleTelegramGifBudget();
-            },
-            {
-                /*
-                 * Prepare upcoming GIFs before they enter the screen, but do
-                 * not let all 20 cards become active decoders.
-                 */
-                root:null,
-                rootMargin:"1600px 0px 1600px 0px",
-                threshold:0
-            }
-        );
-
-    videoGrid
-        .querySelectorAll(".video-card")
-        .forEach(card => {
-
-            const image =
-                card.querySelector(
-                    ".thumbnail-fallback"
-                );
-
-            if(!image){
-                return;
-            }
-
-            const source =
-                image.getAttribute("src");
-
-            if(
-                isAnimatedGifThumbnailURL(
-                    source
-                )
-            ){
-
-                image.dataset.streamxGifSource =
-                    source;
-
-
-                /*
-                 * Track whether this exact DOM image has ever rendered.
-                 * Until then, it is never swapped to the tiny placeholder.
-                 */
-                const rememberActualGifLoad = () => {
-
-                    if(
-                        image.getAttribute("src") ===
-                        STREAMX_GIF_PLACEHOLDER
-                    ){
-                        return;
-                    }
-
-                    image.dataset.streamxGifEverLoaded =
-                        "1";
-
-                    image.classList.remove(
-                        "streamx-gif-pending"
-                    );
-
-                    streamxGifPreloadedSources.add(
-                        source
-                    );
-
-                    scheduleTelegramGifBudget();
-                };
-
-
-                image.addEventListener(
-                    "load",
-                    rememberActualGifLoad
-                );
-
-
-                if(
-                    image.complete &&
-                    image.naturalWidth > 0
-                ){
-
-                    rememberActualGifLoad();
-
-                }
-                else{
-
-                    image.classList.add(
-                        "streamx-gif-pending"
-                    );
-                }
-
-
-                /*
-                 * If Telegram fails an image request, retry the original URL
-                 * once when the card is near the viewport rather than leaving
-                 * a permanent white/blank preview.
-                 */
-                image.addEventListener(
-                    "error",
-                    function(){
-
-                        if(
-                            image.dataset.streamxGifRetryDone === "1" ||
-                            image.getAttribute("src") ===
-                                STREAMX_GIF_PLACEHOLDER
-                        ){
-                            return;
-                        }
-
-                        image.dataset.streamxGifRetryDone =
-                            "1";
-
-                        const retrySource =
-                            image.dataset.streamxGifSource;
-
-                        if(!retrySource){
-                            return;
-                        }
-
-                        window.setTimeout(
-                            () => {
-
-                                if(
-                                    image.isConnected &&
-                                    image.dataset.streamxGifSuspended !== "1"
-                                ){
-
-                                    image.src =
-                                        retrySource;
-                                }
-
-                            },
-                            450
-                        );
-                    }
-                );
-
-
-                streamxGifObserver.observe(
-                    card
-                );
-            }
+function setupFeedThumbnailWindow(){
+    if(streamxThumbnailObserver) streamxThumbnailObserver.disconnect();
+    if(!videoGrid) return;
+    videoGrid.querySelectorAll('.thumbnail-fallback').forEach(image => {
+        if(image.dataset.thumbnailTracked === '1') return;
+        image.dataset.thumbnailTracked = '1';
+        image.addEventListener('load',() => {
+            if(image.getAttribute('src') !== image.dataset.thumbnailSrc) return;
+            image.dataset.thumbnailState = 'loaded';
+            scheduleFeedThumbnailWindow();
         });
-
-    scheduleTelegramGifBudget();
-
-
-    /*
-     * Do not compete with the first visible GIFs during initial paint.
-     * Begin low-priority preview warming shortly afterward.
-     */
-    scheduleUpcomingGifPreloads(
-        260
-    );
+        image.addEventListener('error',() => {
+            if(image.getAttribute('src') !== image.dataset.thumbnailSrc) return;
+            image.dataset.thumbnailState = 'failed';
+            if(image.dataset.thumbnailRetried !== '1'){
+                image.dataset.thumbnailRetried = '1';
+                window.setTimeout(() => {
+                    if(!image.isConnected) return;
+                    image.removeAttribute('src');
+                    delete image.dataset.thumbnailState;
+                    scheduleFeedThumbnailWindow();
+                },450);
+            }
+            scheduleFeedThumbnailWindow();
+        });
+    });
+    if(typeof IntersectionObserver === 'function'){
+        streamxThumbnailObserver = new IntersectionObserver(scheduleFeedThumbnailWindow,
+            {root:null,rootMargin:'0px',threshold:0});
+        videoGrid.querySelectorAll('.thumbnail-fallback').forEach(image => streamxThumbnailObserver.observe(image));
+    }
+    if(!streamxThumbnailListenersInstalled){
+        streamxThumbnailListenersInstalled = true;
+        window.addEventListener('scroll',scheduleFeedThumbnailWindow,{passive:true});
+        window.addEventListener('resize',scheduleFeedThumbnailWindow,{passive:true});
+        document.addEventListener('visibilitychange',scheduleFeedThumbnailWindow);
+    }
+    // Start first-screen requests without waiting for observer delivery.
+    refreshFeedThumbnailWindow();
 }
 
+
+/* The MP4 preview overlays its fallback without resetting the GIF source. */
+function suspendFeedGif(image){
+    if(image) image.style.visibility = "hidden";
+}
+
+function activateFeedGif(image){
+    if(image) image.style.visibility = "";
+}
 
 /* =========================
    CREATE CARD
@@ -6514,7 +5587,7 @@ function applyVideoCardAspect(
 }
 
 
-function createVideoCard(video,prioritizeLoad = false){
+function createVideoCard(video){
 
     const card =
         document.createElement("article");
@@ -6595,9 +5668,10 @@ function createVideoCard(video,prioritizeLoad = false){
                 `
                 <img
                     class="thumbnail-fallback"
-                    src="${escapeHTML(thumbnail)}"
+                    data-thumbnail-src="${escapeHTML(thumbnail)}"
                     alt="${escapeHTML(title)}"
-                    loading="${prioritizeLoad ? "eager" : "lazy"}"
+                    loading="lazy"
+                    fetchpriority="low"
                     decoding="async"
                     draggable="false"
                 >
@@ -6733,27 +5807,12 @@ function createVideoCard(video,prioritizeLoad = false){
     }
 
 
-    if(thumbnail){
-
-        const aspectProbe =
-            new Image();
-
-
-        aspectProbe.onload =
-            function(){
-
-                applyVideoCardAspect(
-                    card,
-                    aspectProbe.naturalWidth,
-                    aspectProbe.naturalHeight
-                );
-
-            };
-
-
-        aspectProbe.src =
-            thumbnail;
-
+    const thumbnailImage = card.querySelector(".thumbnail-fallback");
+    if(thumbnailImage){
+        thumbnailImage.addEventListener("load",function(){
+            applyVideoCardAspect(card,thumbnailImage.naturalWidth,thumbnailImage.naturalHeight);
+            scheduleFeedThumbnailWindow();
+        });
     }
 
 
@@ -7213,7 +6272,7 @@ function scheduleVideoURLPrefetch(videos){
 
     /*
      * Give GIF/thumbnail requests the first paint, then prepare every URL on
-     * the current 20-video page in ONE lightweight signing request.
+     * the current feed in ONE lightweight signing request.
      */
     window.setTimeout(
         () => {
@@ -7242,6 +6301,8 @@ function shouldWarmVideoBytes(){
         navigator.connection ||
         navigator.mozConnection ||
         navigator.webkitConnection;
+
+    if(hasPendingFeedThumbnails()) return false;
 
     if(connection){
         if(connection.saveData){
@@ -7426,8 +6487,7 @@ function scheduleVideoByteWarm(videos){
 
     if(
         !Array.isArray(videos) ||
-        videos.length === 0 ||
-        !shouldWarmVideoBytes()
+        videos.length === 0
     ){
         return;
     }
@@ -7445,11 +6505,16 @@ function scheduleVideoByteWarm(videos){
     const warmNext = async (index = 0) => {
         if(
             scheduleId !== videoByteWarmScheduleId ||
-            !shouldWarmVideoBytes() ||
             index >= candidates.length
         ){
             return;
         }
+
+        if(hasPendingFeedThumbnails() && canLoadFeedThumbnails()){
+            window.setTimeout(() => warmNext(index),500);
+            return;
+        }
+        if(!shouldWarmVideoBytes()) return;
 
         /* A previous render/hover can already be warming another video.
            Wait for it rather than adding parallel background downloads. */
@@ -7575,7 +6640,7 @@ function ensureHlsLibrary(){
 function scheduleHlsLibraryPreload(videos){
 
     if(hlsLibraryPreloadScheduled || window.Hls ||
-        shouldUseNativeHLSPlayback() || !shouldWarmVideoBytes()){
+        shouldUseNativeHLSPlayback()){
         return;
     }
 
@@ -7596,6 +6661,14 @@ function scheduleHlsLibraryPreload(videos){
     hlsLibraryPreloadScheduled = true;
 
     const preload = () => {
+        if(hasPendingFeedThumbnails() && canLoadFeedThumbnails()){
+            window.setTimeout(preload,500);
+            return;
+        }
+        if(!shouldWarmVideoBytes()){
+            hlsLibraryPreloadScheduled = false;
+            return;
+        }
         void ensureHlsLibrary().catch(error => {
             hlsLibraryPreloadScheduled = false;
             console.warn(
@@ -7884,12 +6957,9 @@ async function attachVideoSource(videoURL){
    PLAYBACK NETWORK/CPU PRIORITY
    ---------------------------------------------------------
    Do not compete with the user's tap. While the player is open,
-   pause feed GIF painting and cancel only GIF/image requests that
-   are still unfinished. Loaded thumbnails stay cached.
+   pause new thumbnail requests while the player is open.
+   Loaded thumbnail sources stay stable and cached.
 ========================================================= */
-
-const STREAMX_EMPTY_IMAGE =
-    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
 function suspendFeedMediaForPlayback(){
 
@@ -7922,6 +6992,7 @@ function resumeFeedMediaAfterPlayback(){
     }
 
     resumeVisibleFeedVideoPreviews();
+    scheduleFeedThumbnailWindow();
     scheduleVideoByteWarm(videoByteWarmCandidates);
 }
 
@@ -8501,9 +7572,7 @@ function closeVideoPlayer(){
      * Resume low-priority preview warming only after video playback
      * has released network priority.
      */
-    scheduleUpcomingGifPreloads(
-        500
-    );
+    scheduleFeedThumbnailWindow();
 
     stopWatchTimeTracking();
 

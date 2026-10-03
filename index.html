@@ -5411,14 +5411,50 @@ function renderVideos(){
 
 /* =========================================================
    ROLLING WEBSITE PREVIEW WINDOW
-   Request visible previews first, then the next ten cards in feed order.
-   Advancing one card adds one new preview to the end of that window.
-   Retain loaded sources so scrolling does not restart GIFs or previews.
+   Keep the next ten cards queued while limiting background downloads.
+   Visible cards, mobile startup, and opened-video playback take priority.
+   Retain successfully loaded GIF sources through player transitions.
 ========================================================= */
 let streamxThumbnailObserver = null;
 let streamxThumbnailRAF = 0;
 let streamxThumbnailListenersInstalled = false;
 const STREAMX_THUMBNAIL_AHEAD = 10;
+let streamxFeedPreloadReadyAt = 0;
+let streamxFeedPreloadTimer = null;
+
+function getFeedPreloadConcurrency(){
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    return window.innerWidth < 700 || connection?.effectiveType === '3g' ? 1 : 2;
+}
+
+function isFeedCardPreviewLoading(card){
+    const image = card.querySelector('.thumbnail-fallback');
+    const preview = card.querySelector('.thumbnail-preview-video');
+    return image?.dataset.thumbnailState === 'loading' ||
+        preview?.dataset.streamxPreviewNetworkPending === '1';
+}
+
+function stopUnfinishedFeedPreviewRequests(){
+    if(streamxFeedPreloadTimer !== null){
+        window.clearTimeout(streamxFeedPreloadTimer);
+        streamxFeedPreloadTimer = null;
+    }
+    if(!videoGrid) return;
+    videoGrid.querySelectorAll('.thumbnail-fallback').forEach(image => {
+        if(image.dataset.thumbnailState !== 'loading') return;
+        image.removeAttribute('src');
+        delete image.dataset.thumbnailState;
+    });
+    videoGrid.querySelectorAll('.thumbnail-preview-video').forEach(preview => {
+        if(preview.dataset.streamxPreviewNetworkPending !== '1' && preview.networkState !== 2) return;
+        preview.pause();
+        preview.removeAttribute('src');
+        preview.load();
+        delete preview.dataset.streamxPreviewPrepared;
+        delete preview.dataset.streamxPreviewNetworkPending;
+        preview.classList.remove('streamx-preview-ready');
+    });
+}
 
 function getFeedPreviewWindow(){
     if(!videoGrid) return {visible:[],upcoming:[]};
@@ -5485,9 +5521,32 @@ function refreshFeedThumbnailWindow(){
     if(!canLoadFeedThumbnails()) return;
     const previewWindow = getFeedPreviewWindow();
     previewWindow.visible.forEach(({card}) => requestFeedCardPreview(card,'high'));
-    // Begin all ten upcoming previews now; do not wait for visible GIFs to finish.
-    if(!canPreloadFeedThumbnails()) return;
-    previewWindow.upcoming.forEach(({card}) => requestFeedCardPreview(card,'low'));
+    // Keep ten queued, but give the initial mobile feed and opened video priority.
+    if(!canPreloadFeedThumbnails() || hasPendingVisibleFeedThumbnails()) return;
+    const delay = streamxFeedPreloadReadyAt - Date.now();
+    if(delay > 0){
+        if(streamxFeedPreloadTimer === null){
+            streamxFeedPreloadTimer = window.setTimeout(() => {
+                streamxFeedPreloadTimer = null;
+                scheduleFeedThumbnailWindow();
+            },delay);
+        }
+        return;
+    }
+    let available = Math.max(0,getFeedPreloadConcurrency() -
+        Array.from(videoGrid.querySelectorAll('.video-card')).filter(card =>
+            !previewWindow.visible.some(item => item.card === card) &&
+            isFeedCardPreviewLoading(card)).length);
+    previewWindow.upcoming.forEach(({card}) => {
+        if(available <= 0 || isFeedCardPreviewLoading(card)) return;
+        const image = card.querySelector('.thumbnail-fallback');
+        const preview = card.querySelector('.thumbnail-preview-video');
+        const needsImage = image?.dataset.thumbnailSrc && !image.dataset.thumbnailState;
+        const needsPreview = preview?.dataset.previewSrc && preview.dataset.streamxPreviewPrepared !== '1';
+        if(!needsImage && !needsPreview) return;
+        requestFeedCardPreview(card,'low');
+        if(isFeedCardPreviewLoading(card)) available--;
+    });
 }
 
 function scheduleFeedThumbnailWindow(){
@@ -5496,6 +5555,7 @@ function scheduleFeedThumbnailWindow(){
 }
 
 function setupFeedThumbnailWindow(){
+    streamxFeedPreloadReadyAt = Date.now() + 500;
     if(streamxThumbnailObserver) streamxThumbnailObserver.disconnect();
     if(!videoGrid) return;
     videoGrid.querySelectorAll('.thumbnail-fallback').forEach(image => {
@@ -6237,8 +6297,6 @@ function shouldWarmVideoBytes(){
         navigator.mozConnection ||
         navigator.webkitConnection;
 
-    if(hasPendingFeedThumbnails()) return false;
-
     if(connection){
 
         if(connection.saveData){
@@ -6450,10 +6508,6 @@ function scheduleVideoByteWarm(videos){
             return;
         }
 
-        if(hasPendingFeedThumbnails() && canLoadFeedThumbnails()){
-            window.setTimeout(() => warmNext(index),500);
-            return;
-        }
         if(!shouldWarmVideoBytes()) return;
 
         /* A previous render/hover can already be warming another video.
@@ -6601,10 +6655,6 @@ function scheduleHlsLibraryPreload(videos){
     hlsLibraryPreloadScheduled = true;
 
     const preload = () => {
-        if(hasPendingFeedThumbnails() && canLoadFeedThumbnails()){
-            window.setTimeout(preload,500);
-            return;
-        }
         if(!shouldWarmVideoBytes()){
             hlsLibraryPreloadScheduled = false;
             return;
@@ -6891,77 +6941,45 @@ let streamxPreviewPlayObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
 
 function prepareFeedVideoPreview(video){
-
-    if(
-        !video ||
-        video.dataset.streamxPreviewPrepared === "1"
-    ){
-        return;
-    }
-
-    const source =
-        video.dataset.previewSrc;
-
-    if(!source){
-        return;
-    }
-
-    video.dataset.streamxPreviewPrepared =
-        "1";
-
-    video.preload = "auto";
-    video.src = source;
-
-    const markReady = () => {
-        video.classList.add(
-            "streamx-preview-ready"
-        );
-    };
-
-    video.addEventListener(
-        "loadeddata",
-        markReady,
-        {once:true}
-    );
-
-    video.addEventListener(
-        "canplay",
-        markReady,
-        {once:true}
-    );
-
-    video.addEventListener(
-        "error",
-        () => {
-
-            if(
-                video.dataset.streamxPreviewRetryDone === "1"
-            ){
-                return;
+    if(!video || !canLoadFeedThumbnails() || video.dataset.streamxPreviewPrepared === '1') return;
+    const source = video.dataset.previewSrc;
+    if(!source) return;
+    if(video.dataset.streamxPreviewTracked !== '1'){
+        video.dataset.streamxPreviewTracked = '1';
+        const finishNetwork = () => {
+            if(video.networkState === 2) return;
+            delete video.dataset.streamxPreviewNetworkPending;
+            scheduleFeedThumbnailWindow();
+        };
+        const markReady = () => {
+            if(video.getAttribute('src') !== video.dataset.previewSrc) return;
+            video.classList.add('streamx-preview-ready');
+            finishNetwork();
+        };
+        video.addEventListener('loadeddata',markReady);
+        video.addEventListener('canplay',markReady);
+        video.addEventListener('suspend',finishNetwork);
+        video.addEventListener('error',() => {
+            if(video.getAttribute('src') !== video.dataset.previewSrc) return;
+            video.classList.remove('streamx-preview-ready');
+            delete video.dataset.streamxPreviewNetworkPending;
+            if(video.dataset.streamxPreviewRetryDone !== '1'){
+                video.dataset.streamxPreviewRetryDone = '1';
+                window.setTimeout(() => {
+                    if(!video.isConnected) return;
+                    video.removeAttribute('src');
+                    video.load();
+                    delete video.dataset.streamxPreviewPrepared;
+                    scheduleFeedThumbnailWindow();
+                },500);
             }
-
-            video.dataset.streamxPreviewRetryDone =
-                "1";
-
-            window.setTimeout(
-                () => {
-
-                    if(!video.isConnected){
-                        return;
-                    }
-
-                    video.removeAttribute("src");
-                    video.load();
-                    video.src = source;
-                    video.load();
-
-                },
-                500
-            );
-        },
-        {once:true}
-    );
-
+            scheduleFeedThumbnailWindow();
+        });
+    }
+    video.dataset.streamxPreviewPrepared = '1';
+    video.dataset.streamxPreviewNetworkPending = '1';
+    video.preload = 'auto';
+    video.src = source;
     video.load();
 }
 
@@ -7110,6 +7128,7 @@ function resumeVisibleFeedVideoPreviews(){
 function suspendFeedMediaForPlayback(){
 
     pauseAllFeedVideoPreviews();
+    stopUnfinishedFeedPreviewRequests();
 
     if(!videoGrid){
         return;

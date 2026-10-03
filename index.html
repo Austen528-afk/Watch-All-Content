@@ -7408,10 +7408,10 @@ async function updateLikeCount(videoId){
         });
 
     // Update heart color/status
-    await updateLikeButton(videoId);
+    await updateLikeButton(videoId, true);
 }
 
-async function updateLikeButton(videoId){
+async function updateLikeButton(videoId, refresh = false){
 
     const key = String(videoId);
 
@@ -7432,7 +7432,7 @@ async function updateLikeButton(videoId){
         return;
     }
 
-    if(likeSummaryReady && videoLikeSummary.has(key)){
+    if(!refresh && likeSummaryReady && videoLikeSummary.has(key)){
         setLikeButtonState(
             key,
             likedVideoIds.has(key)

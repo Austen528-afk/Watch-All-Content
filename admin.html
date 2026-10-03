@@ -1407,6 +1407,16 @@ textarea{
     background:#333;
 }
 
+.reset-likes-button{
+    border-color:#674915;
+    color:#ffc86a;
+}
+
+.reset-likes-button:disabled{
+    opacity:0.65;
+    cursor:wait;
+}
+
 .delete-button:hover{
     background:#a90025;
 }
@@ -9226,6 +9236,8 @@ function createVideoCard(
         );
 
 
+    card.dataset.likeCount = String(likes);
+
     card.innerHTML = `
 
         <div class="video-image">
@@ -9292,7 +9304,7 @@ function createVideoCard(
                 font-weight:bold;
             ">
                 ❤️ Likes:
-                ${likes.toLocaleString()}
+                <span class="video-like-count">${likes.toLocaleString()}</span>
             </p>
 
 
@@ -9348,6 +9360,15 @@ function createVideoCard(
 
 
                 <button
+                    type="button"
+                    class="card-button reset-likes-button"
+                    onclick="resetVideoLikes(${JSON.stringify(video.id)}, this)"
+                >
+                    ♡ Reset likes
+                </button>
+
+
+                <button
                     class="card-button delete-button"
                     onclick="deleteVideo(${JSON.stringify(video.id)}, this)"
                 >
@@ -9365,6 +9386,104 @@ function createVideoCard(
         .getElementById("videoGrid")
         .appendChild(card);
 
+}
+
+
+/* =====================================================
+   RESET VIDEO LIKES
+===================================================== */
+
+const resettingVideoLikesIds = new Set();
+
+function updateAdminVideoLikeCount(id, count){
+
+    const grid = document.getElementById("videoGrid");
+    const card = grid && grid.querySelector(
+        '.video-card[data-video-id="' + CSS.escape(String(id)) + '"]'
+    );
+
+    if(!card) return;
+
+    const likes = Math.max(0, Math.floor(Number(count) || 0));
+    card.dataset.likeCount = String(likes);
+
+    const counter = card.querySelector(".video-like-count");
+    if(counter) counter.textContent = likes.toLocaleString();
+
+    const total = document.getElementById("totalLikes");
+    if(total){
+        total.textContent = Array.from(
+            grid.querySelectorAll(".video-card")
+        ).reduce(
+            (sum, item) => sum + (Number(item.dataset.likeCount) || 0),
+            0
+        ).toLocaleString();
+    }
+}
+
+async function resetVideoLikes(id, button = null){
+
+    const key = String(id);
+    if(resettingVideoLikesIds.has(key)) return;
+
+    if(!/^[1-9][0-9]*$/.test(key)){
+        showMessage("Could not reset likes: invalid video ID.", "error");
+        return;
+    }
+
+    const grid = document.getElementById("videoGrid");
+    const card = grid && grid.querySelector(
+        '.video-card[data-video-id="' + CSS.escape(key) + '"]'
+    );
+    const title = card && card.querySelector(".video-content h3");
+
+    if(!confirm(
+        'Remove all likes from "' + (title ? title.textContent.trim() : "this video") +
+        '"?\n\nViewers will be able to like this video again.'
+    )) return;
+
+    resettingVideoLikesIds.add(key);
+    const originalText = button ? button.textContent : "";
+
+    if(button){
+        button.disabled = true;
+        button.textContent = "Resetting...";
+        button.setAttribute("aria-busy", "true");
+    }
+
+    try{
+        await requireStreamXAdminSession();
+
+        const result = await supabaseClient.rpc(
+            "reset_streamx_video_likes",
+            {p_video_id: key}
+        );
+
+        if(result.error) throw new Error(result.error.message);
+
+        const reset = Array.isArray(result.data) ? result.data[0] : null;
+        if(!reset || String(reset.video_id) !== key){
+            throw new Error("The server did not confirm the likes reset.");
+        }
+
+        updateAdminVideoLikeCount(key, reset.likes_count);
+        graphSourceCache = null;
+        graphSourceLoadedAt = 0;
+
+        showMessage("✓ Video likes reset successfully.", "success");
+    }
+    catch(error){
+        console.error("Reset video likes error:", error);
+        showMessage("Could not reset likes: " + error.message, "error");
+    }
+    finally{
+        resettingVideoLikesIds.delete(key);
+        if(button){
+            button.disabled = false;
+            button.textContent = originalText;
+            button.removeAttribute("aria-busy");
+        }
+    }
 }
 
 /* =====================================================

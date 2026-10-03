@@ -1696,8 +1696,8 @@ body{
     scroll-margin-top:calc(var(--streamx-topbar-height,0px) + 14px);
 }
 .category-back-btn{min-height:34px;font-size:12px}
-.video-actions{flex-wrap:wrap}
-.category-open-btn{margin-left:auto}
+.video-actions{flex-wrap:wrap;justify-content:flex-end}
+.video-actions .library-btn{margin-left:0}
 
 </style>
 
@@ -6431,18 +6431,13 @@ function createVideoCard(video,prioritizeLoad = false){
                 <div class="video-actions">
 
                     <button
-                        class="like-btn"
-                        data-id="${video.id}"
+                        class="category-open-btn"
                         type="button"
-                        aria-label="Like video"
-                        title="Like"
+                        aria-label="Open category: ${escapeHTML(category)}"
+                        title="Open category: ${escapeHTML(category)}"
                     >
-                        ♡
+                        Open category
                     </button>
-
-                    <span class="like-count">
-                        ${video.likes_count || 0}
-                    </span>
 
                     <button
                         class="library-btn"
@@ -6456,13 +6451,18 @@ function createVideoCard(video,prioritizeLoad = false){
                     </button>
 
                     <button
-                        class="category-open-btn"
+                        class="like-btn"
+                        data-id="${video.id}"
                         type="button"
-                        aria-label="Open category: ${escapeHTML(category)}"
-                        title="Open category: ${escapeHTML(category)}"
+                        aria-label="Like video"
+                        title="Like"
                     >
-                        Open category
+                        ♡
                     </button>
+
+                    <span class="like-count">
+                        ${video.likes_count || 0}
+                    </span>
 
                 </div>
 

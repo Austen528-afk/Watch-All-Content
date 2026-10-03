@@ -1734,8 +1734,8 @@ body.streamx-app-mode .feed-pagination{display:none!important}
     scroll-margin-top:calc(var(--streamx-topbar-height,0px) + 14px);
 }
 .category-back-btn{min-height:34px;font-size:12px}
-.video-actions{flex-wrap:wrap}
-.category-open-btn{margin-left:auto}
+.video-actions{flex-wrap:wrap;justify-content:flex-end}
+.video-actions .library-btn{margin-left:0}
 
 </style>
 
@@ -5369,17 +5369,14 @@ function createVideoCard(
 
 <div class="video-actions">
 
-<button
-    class="like-btn"
-    data-id="${video.id}"
-    type="button"
->
-    ♡
-</button>
-
-    <span class="like-count">
-        ${video.likes_count || 0}
-    </span>
+    <button
+        class="category-open-btn"
+        type="button"
+        aria-label="Open category: ${escapeHTML(category)}"
+        title="Open category: ${escapeHTML(category)}"
+    >
+        Open category
+    </button>
 
     <button
         class="library-btn"
@@ -5401,14 +5398,17 @@ function createVideoCard(
         ${saves}
     </span>
 
-    <button
-        class="category-open-btn"
-        type="button"
-        aria-label="Open category: ${escapeHTML(category)}"
-        title="Open category: ${escapeHTML(category)}"
-    >
-        Open category
-    </button>
+<button
+    class="like-btn"
+    data-id="${video.id}"
+    type="button"
+>
+    ♡
+</button>
+
+    <span class="like-count">
+        ${video.likes_count || 0}
+    </span>
 
 </div>
 

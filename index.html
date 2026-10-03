@@ -2414,7 +2414,8 @@ let allVideos = [];
 let currentCategory = "All";
 
 let searchTerm = "";
-let streamxAppMode = false;
+const WEBSITE_VIEW_MODE_STORAGE_KEY = "streamx_website_view_mode";
+let streamxAppMode = getInitialWebsiteViewMode();
 
 let libraryViewActive = false;
 let libraryPreviousCategory = "All";
@@ -4896,8 +4897,26 @@ function changeVideoPage(direction){
     }
 }
 
-function setWebsiteViewMode(useAppMode){
-    streamxAppMode = Boolean(useAppMode);
+function getInitialWebsiteViewMode(){
+    try{
+        const savedMode = localStorage.getItem(WEBSITE_VIEW_MODE_STORAGE_KEY);
+        if(savedMode === "app" || savedMode === "web"){
+            return savedMode === "app";
+        }
+    }
+    catch(error){}
+
+    const mobileHint = navigator.userAgentData?.mobile;
+    if(typeof mobileHint === "boolean"){
+        return mobileHint;
+    }
+
+    return /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|Opera Mini/i.test(
+        navigator.userAgent || ""
+    );
+}
+
+function applyWebsiteViewModeUI(){
     document.body.classList.toggle("streamx-app-mode",streamxAppMode);
     if(viewModeToggle){
         const label = streamxAppMode ? "Switch to Web mode" : "Switch to App mode";
@@ -4905,11 +4924,26 @@ function setWebsiteViewMode(useAppMode){
         viewModeToggle.title = label;
         viewModeToggle.setAttribute("aria-pressed",String(streamxAppMode));
     }
+}
+
+function setWebsiteViewMode(useAppMode){
+    streamxAppMode = Boolean(useAppMode);
+    try{
+        localStorage.setItem(
+            WEBSITE_VIEW_MODE_STORAGE_KEY,
+            streamxAppMode ? "app" : "web"
+        );
+    }
+    catch(error){}
+    applyWebsiteViewModeUI();
     currentVideoPage = 1;
     paginationFilterKey = "";
     renderVideos();
     if(videoGrid) videoGrid.scrollIntoView({behavior:"smooth",block:"start"});
 }
+
+applyWebsiteViewModeUI();
+
 if(viewModeToggle){
     viewModeToggle.addEventListener("click",function(){setWebsiteViewMode(!streamxAppMode);});
 }

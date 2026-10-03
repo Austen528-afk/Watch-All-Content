@@ -1656,6 +1656,49 @@ body{
 
     
 }
+
+/* Category links and return navigation. */
+.category-open-btn,
+.category-back-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    min-height:30px;
+    padding:5px 9px;
+    border:1px solid #343434;
+    border-radius:999px;
+    background:#171717;
+    color:#dedede;
+    font-size:10px;
+    font-weight:700;
+    white-space:nowrap;
+    cursor:pointer;
+}
+.category-open-btn:hover,
+.category-back-btn:hover{
+    border-color:#ff1744;
+    color:#fff;
+    background:#211016;
+}
+.category-open-btn:focus-visible,
+.category-back-btn:focus-visible{
+    outline:2px solid #ff1744;
+    outline-offset:3px;
+}
+.category-navigation{
+    display:flex;
+    margin-bottom:12px;
+}
+.category-navigation[hidden]{display:none}
+.category-navigation,
+.section-header{
+    scroll-margin-top:calc(var(--streamx-topbar-height,0px) + 14px);
+}
+.category-back-btn{min-height:34px;font-size:12px}
+.video-actions{flex-wrap:wrap}
+.category-open-btn{margin-left:auto}
+
 </style>
 
 </head>
@@ -1904,6 +1947,12 @@ body{
 
     </section>
 
+
+    <nav class="category-navigation" id="categoryNavigation" aria-label="Category navigation" hidden>
+        <button class="category-back-btn" id="categoryBackButton" type="button">
+            ← Back
+        </button>
+    </nav>
 
     <div class="section-header">
 
@@ -2436,6 +2485,7 @@ let allVideos = [];
 let currentCategory = "All";
 
 let searchTerm = "";
+let categoryReturnState = null;
 
 let libraryViewActive = false;
 let libraryPreviousCategory = "All";
@@ -2514,6 +2564,11 @@ const sectionTitle =
 
 const searchStatus =
     document.getElementById("searchStatus");
+
+const categoryNavigation =
+    document.getElementById("categoryNavigation");
+const categoryBackButton =
+    document.getElementById("categoryBackButton");
 
 const categorySuggestions =
     document.getElementById("categorySuggestions");
@@ -3366,6 +3421,8 @@ async function loadLibrary(){
 }
 
 function toggleLibraryView(){
+
+    categoryReturnState = null;
 
     if(!libraryViewActive){
 
@@ -4282,14 +4339,88 @@ function setupLikeRealtime(){
    FILTER
 ========================= */
 
+function getVideoCategoryName(video){
+    return String(video.category || "").trim() || "General";
+}
+
+function updateCategoryNavigation(){
+    if(!categoryNavigation || !categoryBackButton) return;
+    categoryNavigation.hidden = libraryViewActive || currentCategory === "All";
+    categoryBackButton.textContent = categoryReturnState?.libraryViewActive
+        ? "← Back to My Library"
+        : "← Back";
+}
+
+function openVideoCategory(category){
+    const nextCategory = String(category || "").trim() || "General";
+
+    if(nextCategory === "All"){
+        categoryReturnState = null;
+    }
+    else if(!categoryReturnState && (
+        libraryViewActive || searchTerm ||
+        String(currentCategory).toLowerCase() !== nextCategory.toLowerCase()
+    )){
+        categoryReturnState = {
+            currentCategory,
+            searchTerm,
+            searchInputValue:searchInput.value,
+            libraryViewActive,
+            feedVisibleCount,
+            scrollY:window.scrollY
+        };
+    }
+
+    libraryViewActive = false;
+    stopLibraryActivityTracking();
+    switchViewerTimeContext("outside");
+    currentCategory = categories.find(item =>
+        String(item).toLowerCase() === nextCategory.toLowerCase()
+    ) || nextCategory;
+    if(!categories.includes(currentCategory)) categories.push(currentCategory);
+    searchTerm = "";
+    searchInput.value = "";
+    clearSearch.style.display = "none";
+    categorySuggestions.style.display = "none";
+    renderCategoryButtons();
+    updateLibraryUI();
+    renderVideos();
+
+    const heading = categoryNavigation?.hidden
+        ? sectionTitle.parentElement
+        : categoryNavigation;
+    heading?.scrollIntoView({behavior:"instant",block:"start"});
+}
+
+function returnFromVideoCategory(){
+    const previous = categoryReturnState;
+    categoryReturnState = null;
+    const previousCategory = previous?.currentCategory || "All";
+    currentCategory = categories.some(category =>
+        String(category).toLowerCase() === String(previousCategory).toLowerCase()
+    ) ? previousCategory : "All";
+    searchTerm = previous?.searchTerm || "";
+    searchInput.value = previous?.searchInputValue || "";
+    clearSearch.style.display = searchTerm ? "flex" : "none";
+    categorySuggestions.style.display = "none";
+    libraryViewActive = Boolean(previous?.libraryViewActive);
+    switchViewerTimeContext(libraryViewActive ? "library" : "outside");
+    if(libraryViewActive) recordLibraryActivity();
+    else stopLibraryActivityTracking();
+    feedVisibleCount = previous?.feedVisibleCount || FEED_BATCH_SIZE;
+    feedRenderKey = getFeedRenderKey();
+    renderCategoryButtons();
+    updateLibraryUI();
+    renderVideos();
+    window.scrollTo({top:previous?.scrollY || 0,behavior:"instant"});
+}
+
 function getFilteredVideos(){
 
     return allVideos.filter(video => {
 
         const videoCategory =
-            String(
-                video.category || ""
-            );
+            getVideoCategoryName(video);
 
 
         const categoryMatch =
@@ -4554,6 +4685,8 @@ function setupInfiniteFeedObserver(){
 
 
 function renderVideos(){
+
+    updateCategoryNavigation();
 
     const allDisplayVideos =
         getVideosForDisplay();
@@ -6192,8 +6325,7 @@ function createVideoCard(video,prioritizeLoad = false){
 
 
     const category =
-        video.category ||
-        "General";
+        getVideoCategoryName(video);
 
 
     const views =
@@ -6323,6 +6455,15 @@ function createVideoCard(video,prioritizeLoad = false){
                         ☆ save
                     </button>
 
+                    <button
+                        class="category-open-btn"
+                        type="button"
+                        aria-label="Open category: ${escapeHTML(category)}"
+                        title="Open category: ${escapeHTML(category)}"
+                    >
+                        Open category
+                    </button>
+
                 </div>
 
             </div>
@@ -6382,6 +6523,13 @@ function createVideoCard(video,prioritizeLoad = false){
 
     }
 
+
+    const categoryButton = card.querySelector(".category-open-btn");
+    categoryButton.addEventListener("pointerdown",event => event.stopPropagation());
+    categoryButton.addEventListener("click",function(event){
+        event.stopPropagation();
+        openVideoCategory(category);
+    });
 
     const likeButton =
     card.querySelector(".like-btn");
@@ -8292,72 +8440,16 @@ if(libraryToggle){
 
 }
 
+if(categoryBackButton){
+    categoryBackButton.addEventListener("click",returnFromVideoCategory);
+}
+
 document
     .getElementById("categories")
-    .addEventListener(
-        "click",
-        function(event){
-
-            const button =
-                event.target.closest(
-                    ".category"
-                );
-
-
-            if(!button)
-                return;
-
-            libraryViewActive = false;
-            stopLibraryActivityTracking();
-            switchViewerTimeContext("outside");
-
-
-            document
-                .querySelectorAll(
-                    ".category"
-                )
-                .forEach(
-                    item => {
-
-                        item.classList.remove(
-                            "active"
-                        );
-
-                    }
-                );
-
-
-            button.classList.add(
-                "active"
-            );
-
-
-            currentCategory =
-                button.dataset.category;
-
-
-            searchInput.value =
-                "";
-
-
-            searchTerm =
-                "";
-
-
-            clearSearch.style.display =
-                "none";
-
-
-            categorySuggestions.style.display =
-                "none";
-
-            updateLibraryUI();
-
-            renderVideos();
-
-        }
-    );
-
+    .addEventListener("click",function(event){
+        const button = event.target.closest(".category");
+        if(button) openVideoCategory(button.dataset.category);
+    });
 
 /* =========================
    SEARCH

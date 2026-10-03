@@ -5410,28 +5410,32 @@ function renderVideos(){
 
 
 /* =========================================================
-   VIEWPORT-FIRST THUMBNAIL LOADING
-   Visible images start immediately. At most three nearby images are
-   prepared, with two background requests at a time. Use the actual DOM
-   image for dimensions and caching; never download a hidden aspect probe.
+   ROLLING WEBSITE PREVIEW WINDOW
+   Request visible previews first, then the next ten cards in feed order.
+   Advancing one card adds one new preview to the end of that window.
+   Retain loaded sources so scrolling does not restart GIFs or previews.
 ========================================================= */
 let streamxThumbnailObserver = null;
 let streamxThumbnailRAF = 0;
 let streamxThumbnailListenersInstalled = false;
-let streamxThumbnailLastY = window.scrollY || 0;
-let streamxThumbnailDirection = 1;
-const STREAMX_THUMBNAIL_AHEAD = 3;
-const STREAMX_THUMBNAIL_CONCURRENCY = 2;
+const STREAMX_THUMBNAIL_AHEAD = 10;
 
-function getFeedThumbnailItems(){
-    if(!videoGrid) return [];
+function getFeedPreviewWindow(){
+    if(!videoGrid) return {visible:[],upcoming:[]};
     const height = window.innerHeight || document.documentElement.clientHeight || 800;
     const width = window.innerWidth || document.documentElement.clientWidth || 800;
-    return Array.from(videoGrid.querySelectorAll('.thumbnail-fallback')).map(image => {
-        const rect = image.getBoundingClientRect();
-        return {image,rect,visible:rect.bottom > 0 && rect.top < height &&
+    const items = Array.from(videoGrid.querySelectorAll('.video-card')).map(card => {
+        const media = card.querySelector('.thumbnail') || card;
+        const rect = media.getBoundingClientRect();
+        return {card,rect,visible:rect.bottom > 0 && rect.top < height &&
             rect.right > 0 && rect.left < width};
     });
+    const visible = items.filter(item => item.visible);
+    // With several visible grid cards, count ten after the last visible card.
+    let start = visible.length ? items.indexOf(visible[visible.length - 1]) + 1 :
+        items.findIndex(item => item.rect.bottom > 0);
+    if(start < 0) start = items.length;
+    return {visible,upcoming:items.slice(start,start + STREAMX_THUMBNAIL_AHEAD)};
 }
 
 function canLoadFeedThumbnails(){
@@ -5446,55 +5450,44 @@ function canPreloadFeedThumbnails(){
 }
 
 function requestFeedThumbnail(image,priority){
+    if(!image) return;
     const source = image.dataset.thumbnailSrc;
     if(!source || image.dataset.thumbnailState === 'failed') return;
     image.fetchPriority = priority;
     image.loading = 'eager';
-    // Repeated scroll/resize callbacks must not restart the GIF.
     if(image.getAttribute('src') === source) return;
     image.dataset.thumbnailState = 'loading';
     image.src = source;
 }
 
 function hasPendingVisibleFeedThumbnails(){
-    return getFeedThumbnailItems().some(({image,visible}) => visible &&
-        image.dataset.thumbnailState !== 'loaded' &&
-        image.dataset.thumbnailState !== 'failed');
+    return getFeedPreviewWindow().visible.some(({card}) => {
+        const image = card.querySelector('.thumbnail-fallback');
+        return image && image.dataset.thumbnailState !== 'loaded' &&
+            image.dataset.thumbnailState !== 'failed';
+    });
 }
 
 function hasPendingFeedThumbnails(){
-    return hasPendingVisibleFeedThumbnails() || getFeedThumbnailItems().some(({image}) =>
-        image.dataset.thumbnailState === 'loading');
+    if(hasPendingVisibleFeedThumbnails()) return true;
+    return !!videoGrid && Array.from(videoGrid.querySelectorAll('.thumbnail-fallback'))
+        .some(image => image.dataset.thumbnailState === 'loading');
+}
+
+function requestFeedCardPreview(card,priority){
+    requestFeedThumbnail(card.querySelector('.thumbnail-fallback'),priority);
+    const preview = card.querySelector('.thumbnail-preview-video');
+    if(preview) prepareFeedVideoPreview(preview);
 }
 
 function refreshFeedThumbnailWindow(){
     streamxThumbnailRAF = 0;
     if(!canLoadFeedThumbnails()) return;
-    const currentY = window.scrollY || 0;
-    if(Math.abs(currentY - streamxThumbnailLastY) > 2){
-        streamxThumbnailDirection = currentY >= streamxThumbnailLastY ? 1 : -1;
-        streamxThumbnailLastY = currentY;
-    }
-    const height = window.innerHeight || document.documentElement.clientHeight || 800;
-    const items = getFeedThumbnailItems();
-    items.filter(item => item.visible).forEach(({image}) => requestFeedThumbnail(image,'high'));
-    // Visible previews own the connection until they have rendered.
-    if(hasPendingVisibleFeedThumbnails() || !canPreloadFeedThumbnails()) return;
-    const nearby = items.filter(({rect,visible}) => !visible &&
-        (streamxThumbnailDirection >= 0
-            ? rect.top >= height && rect.top < height * 3
-            : rect.bottom <= 0 && rect.bottom > -height * 2))
-        .sort((a,b) => streamxThumbnailDirection >= 0
-            ? a.rect.top - b.rect.top : b.rect.bottom - a.rect.bottom)
-        .slice(0,STREAMX_THUMBNAIL_AHEAD);
-    let available = Math.max(0,STREAMX_THUMBNAIL_CONCURRENCY -
-        items.filter(({image,visible}) => !visible && image.dataset.thumbnailState === 'loading').length);
-    nearby.forEach(({image}) => {
-        if(available > 0 && !image.dataset.thumbnailState){
-            requestFeedThumbnail(image,'low');
-            available--;
-        }
-    });
+    const previewWindow = getFeedPreviewWindow();
+    previewWindow.visible.forEach(({card}) => requestFeedCardPreview(card,'high'));
+    // Begin all ten upcoming previews now; do not wait for visible GIFs to finish.
+    if(!canPreloadFeedThumbnails()) return;
+    previewWindow.upcoming.forEach(({card}) => requestFeedCardPreview(card,'low'));
 }
 
 function scheduleFeedThumbnailWindow(){
@@ -5531,7 +5524,7 @@ function setupFeedThumbnailWindow(){
     if(typeof IntersectionObserver === 'function'){
         streamxThumbnailObserver = new IntersectionObserver(scheduleFeedThumbnailWindow,
             {root:null,rootMargin:'0px',threshold:0});
-        videoGrid.querySelectorAll('.thumbnail-fallback').forEach(image => streamxThumbnailObserver.observe(image));
+        videoGrid.querySelectorAll('.video-card').forEach(card => streamxThumbnailObserver.observe(card));
     }
     if(!streamxThumbnailListenersInstalled){
         streamxThumbnailListenersInstalled = true;
@@ -5539,7 +5532,6 @@ function setupFeedThumbnailWindow(){
         window.addEventListener('resize',scheduleFeedThumbnailWindow,{passive:true});
         document.addEventListener('visibilitychange',scheduleFeedThumbnailWindow);
     }
-    // Start first-screen requests without waiting for observer delivery.
     refreshFeedThumbnailWindow();
 }
 
@@ -7029,13 +7021,8 @@ function setupFeedVideoPreviewWindow(){
         return;
     }
 
-    /*
-     * PERFORMANCE RULE:
-     * Do not download preview MP4s while they are off-screen.
-     * The card already has its static poster, so the first page can
-     * paint immediately. The tiny preview is requested only when the
-     * card is actually visible to the user.
-     */
+    /* Upcoming MP4 previews are prepared by the rolling ten-card window.
+       This observer controls playback only: offscreen videos remain paused. */
     streamxPreviewPlayObserver =
         new IntersectionObserver(
             entries => {

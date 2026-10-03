@@ -5799,6 +5799,26 @@ async function uploadOriginalVideoToR2(
 }
 
 
+async function uploadThumbnailToR2(session, file){
+    if(!session?.access_token){
+        throw new Error("Your admin session has expired. Please log in again.");
+    }
+    const response = await fetch(STREAMX_MEDIA_WORKER_URL + "/admin/upload-thumbnail", {
+        method:"POST",
+        headers:{
+            "Authorization":"Bearer " + session.access_token,
+            "Content-Type":file.type || "application/octet-stream"
+        },
+        body:file
+    });
+    const payload = await response.json().catch(() => null);
+    if(!response.ok || !payload?.publicUrl){
+        throw new Error(payload?.error || "R2 thumbnail upload failed.");
+    }
+    return payload.publicUrl;
+}
+
+
 async function deleteR2MediaObject(
     session,
     publicUrl
@@ -8735,7 +8755,7 @@ async function uploadVideo(){
             videoName;
 
 
-        let thumbnailPath =
+        let thumbnailURL =
             null;
 
 
@@ -8787,58 +8807,17 @@ async function uploadVideo(){
             !selectedThumbnailIsGif
         ){
 
-            const thumbnailName =
-                cleanFileName(
-                    selectedThumbnailFile.name
-                );
-
-
-            thumbnailPath =
-                uniqueID +
-                "-" +
-                thumbnailName;
-
-
-            const thumbnailUpload =
-                await supabaseClient
-                    .storage
-                    .from("thumbnails")
-                    .upload(
-                        thumbnailPath,
-                        selectedThumbnailFile,
-                        {
-                            cacheControl:"3600",
-                            upsert:false,
-                            contentType:
-                                selectedThumbnailFile.type
-                        }
-                    );
-
-
-            if(thumbnailUpload.error){
-
+            try{
+                thumbnailURL = await uploadThumbnailToR2(session, selectedThumbnailFile);
+            }
+            catch(thumbnailError){
                 try{
-
-                    await deleteR2MediaObject(
-                        session,
-                        videoURL
-                    );
-
-                }catch(cleanupError){
-
-                    console.error(
-                        "R2 cleanup after thumbnail upload failure:",
-                        cleanupError
-                    );
-
+                    await deleteR2MediaObject(session, videoURL);
                 }
-
-
-                throw new Error(
-                    "Thumbnail upload failed: " +
-                    thumbnailUpload.error.message
-                );
-
+                catch(cleanupError){
+                    console.error("R2 cleanup after thumbnail upload failure:", cleanupError);
+                }
+                throw new Error("Thumbnail upload failed: " + thumbnailError.message);
             }
 
         }
@@ -8848,29 +8827,6 @@ async function uploadVideo(){
             85,
             "Creating database record..."
         );
-
-
-        /* =========================================
-           GET PUBLIC THUMBNAIL URL
-        ========================================= */
-
-        let thumbnailURL =
-            null;
-
-
-        if(thumbnailPath){
-
-            thumbnailURL =
-                supabaseClient
-                    .storage
-                    .from("thumbnails")
-                    .getPublicUrl(
-                        thumbnailPath
-                    )
-                    .data
-                    .publicUrl;
-
-        }
 
 
         /* =========================================
@@ -8949,18 +8905,14 @@ async function uploadVideo(){
 
 
             /* CLEAN THUMBNAIL */
-
-            if(thumbnailPath){
-
-                await supabaseClient
-                    .storage
-                    .from("thumbnails")
-                    .remove([
-                        thumbnailPath
-                    ]);
-
+            if(thumbnailURL){
+                try{
+                    await deleteR2MediaObject(session, thumbnailURL);
+                }
+                catch(cleanupError){
+                    console.error("R2 thumbnail cleanup after database insert failure:", cleanupError);
+                }
             }
-
 
             throw new Error(
                 "Database insert failed: " +
@@ -13431,7 +13383,12 @@ async function deleteVideo(id, button = null){
            DELETE THUMBNAIL
         ========================================= */
 
-        if(thumbnailPath){
+        if(String(video.thumbnail_url || "").startsWith(
+            "https://pub-9c0499ead7b74ac8b0f3e815ca988f82.r2.dev/thumbnails/"
+        )){
+            await deleteR2MediaObject(session, video.thumbnail_url);
+        }
+        else if(thumbnailPath){
 
             const deleteThumbnail =
                 await supabaseClient
@@ -18077,3 +18034,4 @@ checkSession();
 </body>
 
 </html>
+

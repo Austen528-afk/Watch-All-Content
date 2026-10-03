@@ -1407,12 +1407,14 @@ textarea{
     background:#333;
 }
 
-.reset-likes-button{
+.reset-likes-button,
+.reset-views-button{
     border-color:#674915;
     color:#ffc86a;
 }
 
-.reset-likes-button:disabled{
+.reset-likes-button:disabled,
+.reset-views-button:disabled{
     opacity:0.65;
     cursor:wait;
 }
@@ -9236,7 +9238,10 @@ function createVideoCard(
         );
 
 
+    const views = Math.max(0, Math.floor(Number(video.views) || 0));
+
     card.dataset.likeCount = String(likes);
+    card.dataset.viewCount = String(views);
 
     card.innerHTML = `
 
@@ -9292,9 +9297,7 @@ function createVideoCard(
 
             <p style="margin-top:5px;">
                 Views:
-                ${Number(
-                    video.views || 0
-                ).toLocaleString()}
+                <span class="video-view-count">${views.toLocaleString()}</span>
             </p>
 
 
@@ -9365,6 +9368,15 @@ function createVideoCard(
                     onclick="resetVideoLikes(${JSON.stringify(video.id)}, this)"
                 >
                     ♡ Reset likes
+                </button>
+
+
+                <button
+                    type="button"
+                    class="card-button reset-views-button"
+                    onclick="resetVideoViews(${JSON.stringify(video.id)}, this)"
+                >
+                    👁 Reset views
                 </button>
 
 
@@ -9478,6 +9490,104 @@ async function resetVideoLikes(id, button = null){
     }
     finally{
         resettingVideoLikesIds.delete(key);
+        if(button){
+            button.disabled = false;
+            button.textContent = originalText;
+            button.removeAttribute("aria-busy");
+        }
+    }
+}
+
+
+/* =====================================================
+   RESET VIDEO VIEWS
+===================================================== */
+
+const resettingVideoViewsIds = new Set();
+
+function updateAdminVideoViewCount(id, count){
+
+    const grid = document.getElementById("videoGrid");
+    const card = grid && grid.querySelector(
+        '.video-card[data-video-id="' + CSS.escape(String(id)) + '"]'
+    );
+
+    if(!card) return;
+
+    const views = Math.max(0, Math.floor(Number(count) || 0));
+    card.dataset.viewCount = String(views);
+
+    const counter = card.querySelector(".video-view-count");
+    if(counter) counter.textContent = views.toLocaleString();
+
+    const total = document.getElementById("totalViews");
+    if(total){
+        total.textContent = Array.from(
+            grid.querySelectorAll(".video-card")
+        ).reduce(
+            (sum, item) => sum + (Number(item.dataset.viewCount) || 0),
+            0
+        ).toLocaleString();
+    }
+}
+
+async function resetVideoViews(id, button = null){
+
+    const key = String(id);
+    if(resettingVideoViewsIds.has(key)) return;
+
+    if(!/^[1-9][0-9]*$/.test(key)){
+        showMessage("Could not reset views: invalid video ID.", "error");
+        return;
+    }
+
+    const grid = document.getElementById("videoGrid");
+    const card = grid && grid.querySelector(
+        '.video-card[data-video-id="' + CSS.escape(key) + '"]'
+    );
+    const title = card && card.querySelector(".video-content h3");
+
+    if(!confirm(
+        'Reset all views for "' + (title ? title.textContent.trim() : "this video") +
+        '" to zero?\n\nNew views will continue to be counted normally.'
+    )) return;
+
+    resettingVideoViewsIds.add(key);
+    const originalText = button ? button.textContent : "";
+
+    if(button){
+        button.disabled = true;
+        button.textContent = "Resetting...";
+        button.setAttribute("aria-busy", "true");
+    }
+
+    try{
+        await requireStreamXAdminSession();
+
+        const result = await supabaseClient.rpc(
+            "reset_streamx_video_views",
+            {p_video_id: key}
+        );
+
+        if(result.error) throw new Error(result.error.message);
+
+        const reset = Array.isArray(result.data) ? result.data[0] : null;
+        if(!reset || String(reset.video_id) !== key){
+            throw new Error("The server did not confirm the views reset.");
+        }
+
+        updateAdminVideoViewCount(key, reset.views);
+        graphSourceCache = null;
+        graphSourceLoadedAt = 0;
+
+        showMessage("✓ Video views reset successfully.", "success");
+    }
+    catch(error){
+        console.error("Reset video views error:", error);
+        showMessage("Could not reset views: " + error.message, "error");
+    }
+    finally{
+        resettingVideoViewsIds.delete(key);
         if(button){
             button.disabled = false;
             button.textContent = originalText;

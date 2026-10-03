@@ -279,70 +279,38 @@ for all to authenticated using ((select streamx_private.current_user_exists()))
 with check ((select streamx_private.current_user_exists()));
 
 -- Guard existing privileged analytics/migration writes against deleted JWTs.
-CREATE OR REPLACE FUNCTION public.claim_streamx_legacy_identity(p_legacy_like_user_id text DEFAULT NULL::text, p_legacy_viewer_id text DEFAULT NULL::text, p_platform text DEFAULT NULL::text)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO ''
+CREATE OR REPLACE FUNCTION public.claim_streamx_legacy_identity(
+    p_legacy_like_user_id text DEFAULT NULL::text,
+    p_legacy_viewer_id text DEFAULT NULL::text,
+    p_platform text DEFAULT NULL::text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path TO ''
 AS $function$
-declare
+DECLARE
     current_user_id uuid := auth.uid();
-    current_user_text text;
-    legacy_like_id text;
-    legacy_viewer_id text;
-    copied_likes integer := 0;
-    copied_saves integer := 0;
-begin
-    if not streamx_private.current_user_exists() then
-        raise exception 'The viewer session has ended. Please reopen StreamX.' using errcode = '42501';
-    end if;
+BEGIN
+    IF current_user_id IS NULL OR NOT streamx_private.current_user_exists() THEN
+        RAISE EXCEPTION 'The viewer session has ended. Please reopen StreamX.'
+            USING errcode = '42501';
+    END IF;
 
-    if current_user_id is null then
-        raise exception 'Authentication required';
-    end if;
+    IF p_platform IS NULL OR p_platform NOT IN ('website', 'mini_app') THEN
+        RAISE EXCEPTION 'Invalid platform' USING errcode = '22023';
+    END IF;
 
-    if p_platform not in ('website', 'mini_app') then
-        raise exception 'Invalid platform';
-    end if;
-
-    current_user_text := current_user_id::text;
-    legacy_like_id := nullif(left(btrim(coalesce(p_legacy_like_user_id, '')), 200), '');
-    legacy_viewer_id := nullif(left(btrim(coalesce(p_legacy_viewer_id, '')), 200), '');
-
-    -- Copy only. Never delete the legacy rows during the migration period.
-    if legacy_like_id is not null
-       and legacy_like_id <> current_user_text then
-
-        insert into public.video_likes (video_id, user_id)
-        select l.video_id, current_user_text
-        from public.video_likes l
-        where l.user_id::text = legacy_like_id
-        on conflict do nothing;
-
-        get diagnostics copied_likes = row_count;
-    end if;
-
-    if legacy_viewer_id is not null
-       and legacy_viewer_id <> current_user_text then
-
-        insert into public.video_library (viewer_id, platform, video_id)
-        select current_user_text, p_platform, lib.video_id
-        from public.video_library lib
-        where lib.viewer_id = legacy_viewer_id
-          and lib.platform = p_platform
-        on conflict do nothing;
-
-        get diagnostics copied_saves = row_count;
-    end if;
-
-    return jsonb_build_object(
-        'user_id', current_user_text,
-        'copied_likes', copied_likes,
-        'copied_saves', copied_saves
+    -- Raw legacy IDs are not proof of ownership. Never copy another identity's
+    -- likes or library. Keep this startup RPC and response compatible with the
+    -- existing clients; all previously migrated and current account data stays.
+    RETURN jsonb_build_object(
+        'user_id', current_user_id::text,
+        'copied_likes', 0,
+        'copied_saves', 0
     );
-end;
-$function$
-;
+END;
+$function$;
 CREATE OR REPLACE FUNCTION public.increment_video_views(p_video_id bigint)
  RETURNS bigint
  LANGUAGE plpgsql

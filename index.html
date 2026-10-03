@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://iojjmoywrlnzpyatahyh.supabase.co" crossorigin>
 <link rel="dns-prefetch" href="//iojjmoywrlnzpyatahyh.supabase.co">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous"></script>
 
 <style>
 
@@ -6463,7 +6463,10 @@ function ensureHlsLibrary(){
                 document.createElement("script");
 
             script.src =
-                "https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js";
+                "https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js";
+
+                script.integrity = "sha384-cciJ0zi8d1uMKC2zJd7jvPY4HQt7W4ByUI/FlMkltvBi31aW61rcpVBhpmW8/NwX";
+                script.crossOrigin = "anonymous";
 
             script.async = true;
 

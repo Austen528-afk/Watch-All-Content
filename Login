@@ -302,55 +302,14 @@ input:focus{
 
 <script>
 
+// The current admin panel verifies Supabase Auth and database admin access.
+// Legacy password checks and browser session flags cannot grant access.
 function login(event){
-
     event.preventDefault();
-
-    const password =
-        document.getElementById("password").value;
-
-    const error =
-        document.getElementById("errorMessage");
-
-    /*
-       ADMIN PASSWORD
-    */
-
-    const adminPassword = "123@Austin";
-
-    if(password === adminPassword){
-
-        /*
-           Store temporary login status.
-           This lasts only for the current browser session.
-        */
-
-        sessionStorage.setItem(
-            "streamx_admin_logged_in",
-            "true"
-        );
-
-        /*
-           Redirect to your actual admin dashboard.
-        */
-
-        window.location.href = "dashboard.html";
-
-    }else{
-
-        error.style.display = "block";
-
-        document.getElementById(
-            "password"
-        ).value = "";
-
-        document.getElementById(
-            "password"
-        ).focus();
-
-    }
-
+    window.location.replace("admin.html");
 }
+
+window.location.replace("admin.html");
 
 
 function togglePassword(){

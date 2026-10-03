@@ -2716,6 +2716,8 @@ const videoByteWarmPromiseCache = new Map();
 const videoByteWarmControllers = new Map();
 let videoByteWarmCandidates = [];
 let videoByteWarmScheduleId = 0;
+let videoByteWarmWindowKey = "";
+let videoByteWarmTimer = null;
 const VIDEOS_PER_PAGE = 20;
 let currentVideoPage = 1;
 let paginationFilterKey = "";
@@ -5404,7 +5406,7 @@ function renderVideos(){
 
     scheduleHlsLibraryPreload(videos);
     scheduleVideoURLPrefetch(videos);
-    scheduleVideoByteWarm(videos);
+    scheduleVideoByteWarm();
 
 }
 
@@ -5519,6 +5521,7 @@ function requestFeedCardPreview(card,priority){
 function refreshFeedThumbnailWindow(){
     streamxThumbnailRAF = 0;
     if(!canLoadFeedThumbnails()) return;
+    scheduleVideoByteWarm();
     const previewWindow = getFeedPreviewWindow();
     previewWindow.visible.forEach(({card}) => requestFeedCardPreview(card,'high'));
     // Keep ten queued, but give the initial mobile feed and opened video priority.
@@ -5605,6 +5608,8 @@ function createVideoCard(video){
     const card =
         document.createElement("article");
 
+
+    card.streamxPlaybackVideo = video;
 
     card.className =
         "video-card";
@@ -5863,7 +5868,7 @@ if(likeButton){
     card.addEventListener(
         "pointerenter",
         function(){
-            void warmVideoBytes(video);
+            scheduleVideoByteWarm(video);
         },
         {once:true,passive:true}
     );
@@ -6317,10 +6322,16 @@ function shouldWarmVideoBytes(){
     return true;
 }
 
-function cancelVideoByteWarming(){
-
+function cancelVideoByteWarming(openingVideo){
     videoByteWarmScheduleId++;
-    videoByteWarmControllers.forEach(controller => controller.abort());
+    videoByteWarmWindowKey = "";
+    if(videoByteWarmTimer !== null) window.clearTimeout(videoByteWarmTimer);
+    videoByteWarmTimer = null;
+    const keepKey = openingVideo ? getVideoWarmCacheKey(openingVideo) : null;
+    videoByteWarmControllers.forEach((controller,key) => {
+        // Let the tapped video's pending opening request feed the player.
+        if(key !== keepKey) controller.abort();
+    });
 }
 
 async function warmVideoBytes(video){
@@ -6349,7 +6360,7 @@ async function warmVideoBytes(video){
 
         /*
          * Chrome/Edge cannot warm .m3u8 by assigning it directly to <video>.
-         * Use HLS.js to cache the manifest and first low-quality fragment.
+         * Prepare manifests and a few opening seconds for the playback loader.
          */
         if(isHLSVideoURL(videoURL)){
 
@@ -6439,105 +6450,79 @@ async function warmVideoBytes(video){
     }
 }
 
-function getVideoByteWarmPlan(){
-
-    const connection =
-        navigator.connection ||
-        navigator.mozConnection ||
-        navigator.webkitConnection;
-
-    const effectiveType =
-        String(connection?.effectiveType || "").toLowerCase();
-
-    /*
-     * Faster networks can safely prepare more likely videos earlier.
-     * 3G stays conservative; 2G/Save-Data was already blocked above.
-     */
-    if(effectiveType === "4g"){
-        return {
-            count:3,
-            delay:1400,
-            stagger:350,
-            idleTimeout:1000
-        };
+function getFeedVideoByteWarmCandidates(preferredVideo){
+    if(!videoGrid) return [];
+    const height = window.innerHeight || document.documentElement.clientHeight || 800;
+    const width = window.innerWidth || document.documentElement.clientWidth || 800;
+    const items = Array.from(videoGrid.querySelectorAll(".video-card")).map(card => {
+        const rect = (card.querySelector(".thumbnail") || card).getBoundingClientRect();
+        return {video:card.streamxPlaybackVideo,rect,visible:
+            rect.bottom > 0 && rect.top < height && rect.right > 0 && rect.left < width};
+    });
+    const visible = items.filter(item => item.visible);
+    let start = visible.length ? items.indexOf(visible[visible.length - 1]) + 1 :
+        items.findIndex(item => item.rect.bottom > 0);
+    if(start < 0) start = items.length;
+    const candidates = [...visible,...items.slice(start,start + 10)]
+        .map(item => item.video).filter(video => video && video.video_url);
+    // Hover/touch changes priority inside this same bounded window.
+    if(preferredVideo && candidates.includes(preferredVideo)){
+        candidates.splice(candidates.indexOf(preferredVideo),1);
+        candidates.unshift(preferredVideo);
     }
-
-    if(effectiveType === "3g"){
-        return {
-            count:1,
-            delay:2400,
-            stagger:0,
-            idleTimeout:1600
-        };
-    }
-
-    return {
-        count:2,
-        delay:1800,
-        stagger:450,
-        idleTimeout:1300
-    };
+    return candidates;
 }
 
-function scheduleVideoByteWarm(videos){
+function getVideoByteWarmPlan(){
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const slow = connection?.effectiveType === "3g";
+    return {delay:slow ? 750 : 500,stagger:slow ? 250 : 100};
+}
 
+function scheduleVideoByteWarm(preferredVideo){
+    // Use mounted cards after recommendations, scrolling and pagination.
+    // Catalog order and Telegram's last appended batch can target the wrong videos.
+    const candidates = getFeedVideoByteWarmCandidates(preferredVideo);
+    videoByteWarmCandidates = candidates;
+    const signature = candidates.map(getVideoWarmCacheKey).join("\n");
+    if(signature === videoByteWarmWindowKey && !preferredVideo) return;
+    videoByteWarmWindowKey = signature;
     const scheduleId = ++videoByteWarmScheduleId;
-
-    if(
-        !Array.isArray(videos) ||
-        videos.length === 0
-    ){
-        return;
-    }
-
+    if(videoByteWarmTimer !== null) window.clearTimeout(videoByteWarmTimer);
+    videoByteWarmTimer = null;
+    const wanted = new Set(candidates.map(getVideoWarmCacheKey));
+    videoByteWarmControllers.forEach((controller,key) => {
+        if(!wanted.has(key)) controller.abort();
+    });
+    if(!candidates.length) return;
     const plan = getVideoByteWarmPlan();
-
-    /* Include HLS again, but prepare only the first few likely videos,
-       serially. Each HLS warm-up caches just its opening fragment. */
-    videoByteWarmCandidates = videos;
-    const candidates = videos
-        .filter(video => video && video.video_url &&
-            !videoByteWarmCache.has(getVideoWarmCacheKey(video)))
-        .slice(0,Math.min(plan.count,videos.length));
-
-    const warmNext = async (index = 0) => {
-        if(
-            scheduleId !== videoByteWarmScheduleId ||
-            index >= candidates.length
-        ){
-            return;
-        }
-
-        if(!shouldWarmVideoBytes()) return;
-
-        /* A previous render/hover can already be warming another video.
-           Wait for it rather than adding parallel background downloads. */
-        if(videoByteWarmPromiseCache.size){
-            window.setTimeout(() => warmNext(index),plan.stagger || 350);
-            return;
-        }
-
-        try{
-            await warmVideoBytes(candidates[index]);
-        }
-        catch(error){}
-
-        if(scheduleId === videoByteWarmScheduleId){
-            window.setTimeout(() => warmNext(index + 1),plan.stagger);
-        }
+    const queueNext = (index,delay) => {
+        if(scheduleId !== videoByteWarmScheduleId) return;
+        videoByteWarmTimer = window.setTimeout(() => {
+            videoByteWarmTimer = null;
+            void warmNext(index);
+        },delay);
     };
-
-    window.setTimeout(
-        () => {
-            if("requestIdleCallback" in window){
-                window.requestIdleCallback(() => { void warmNext(); },{timeout:plan.idleTimeout});
-            }
-            else{
-                void warmNext();
-            }
-        },
-        plan.delay
-    );
+    const warmNext = async index => {
+        if(scheduleId !== videoByteWarmScheduleId || index >= candidates.length) return;
+        if(!shouldWarmVideoBytes()){
+            videoByteWarmWindowKey = "";
+            return;
+        }
+        if(videoByteWarmCache.has(getVideoWarmCacheKey(candidates[index]))){
+            queueNext(index + 1,0);
+            return;
+        }
+        // Only one opening-video download runs, including hover preparation.
+        if(videoByteWarmPromiseCache.size){
+            queueNext(index,100);
+            return;
+        }
+        try{ await warmVideoBytes(candidates[index]); }
+        catch(error){}
+        queueNext(index + 1,plan.stagger);
+    };
+    queueNext(0,preferredVideo ? 0 : plan.delay);
 }
 
 /* =========================================================
@@ -6684,108 +6669,189 @@ function scheduleHlsLibraryPreload(videos){
     );
 }
 
-async function warmHlsVideoStart(videoURL, cacheKey){
+// Keep only short opening data. The full video continues through the normal loader.
+const HLS_OPENING_CACHE_TTL_MS = 10 * 60 * 1000;
+const HLS_OPENING_CACHE_MAX_BYTES = 12 * 1024 * 1024;
+const HLS_OPENING_RESPONSE_MAX_BYTES = 2 * 1024 * 1024;
+const hlsOpeningCache = new Map();
+const hlsOpeningRequests = new Map();
+let hlsOpeningCacheBytes = 0;
 
-    if(!shouldWarmVideoBytes()){
-        return false;
+function dropHlsOpeningResponse(url){
+    const entry = hlsOpeningCache.get(url);
+    if(!entry) return;
+    hlsOpeningCacheBytes -= entry.size;
+    hlsOpeningCache.delete(url);
+    videoByteWarmCache.delete(entry.cacheKey);
+}
+
+function getHlsOpeningResponse(url){
+    const entry = hlsOpeningCache.get(url);
+    if(!entry) return null;
+    if(entry.expiresAt <= Date.now()){
+        dropHlsOpeningResponse(url);
+        return null;
     }
+    hlsOpeningCache.delete(url);
+    hlsOpeningCache.set(url,entry);
+    return entry;
+}
 
-    /* Cache opening bytes without another HLS player, worker or decoder.
-       R2 job URLs are immutable and already have long-lived cache headers. */
-    const controller = new AbortController();
-    videoByteWarmControllers.set(cacheKey,controller);
+function rememberHlsOpeningResponse(url,response,cacheKey){
+    if(!response.size || response.size > HLS_OPENING_RESPONSE_MAX_BYTES) return;
+    dropHlsOpeningResponse(url);
+    for(const [key,entry] of hlsOpeningCache){
+        if(entry.expiresAt <= Date.now()) dropHlsOpeningResponse(key);
+    }
+    while(hlsOpeningCache.size && (hlsOpeningCacheBytes + response.size > HLS_OPENING_CACHE_MAX_BYTES ||
+        hlsOpeningCache.size >= 80)){
+        dropHlsOpeningResponse(hlsOpeningCache.keys().next().value);
+    }
+    hlsOpeningCache.set(url,{...response,cacheKey,expiresAt:Date.now() + HLS_OPENING_CACHE_TTL_MS});
+    hlsOpeningCacheBytes += response.size;
+}
 
-    const timeoutId = window.setTimeout(
-        () => controller.abort(),
-        VIDEO_BYTE_WARM_TIMEOUT_MS
-    );
-
-    const options = {
-        signal:controller.signal,
-        cache:"default",
-        priority:"low"
-    };
-
-    const readPlaylist = async url => {
-        const response = await fetch(url,options);
-        if(!response.ok){
-            throw new Error("HLS warm request failed.");
+function createOpeningHlsLoader(HlsClass){
+    return class extends HlsClass.DefaultConfig.loader {
+        constructor(config){
+            super(config);
+            this.streamxLoadId = 0;
+            this.streamxWaitTimer = null;
         }
-        return {
-            url:response.url || url,
-            text:await response.text()
-        };
-    };
-
-    try{
-        let playlist = await readPlaylist(videoURL);
-        const lines = playlist.text.split(/\r?\n/).map(line => line.trim());
-        const variants = [];
-
-        lines.forEach((line,index) => {
-            if(!line.startsWith("#EXT-X-STREAM-INF:")){
+        abort(){
+            this.streamxLoadId++;
+            window.clearTimeout(this.streamxWaitTimer);
+            this.streamxWaitTimer = null;
+            super.abort();
+        }
+        destroy(){
+            this.abort();
+            super.destroy();
+        }
+        load(context,config,callbacks){
+            const loadId = ++this.streamxLoadId;
+            window.clearTimeout(this.streamxWaitTimer);
+            this.streamxWaitTimer = null;
+            // Range/key requests and cache misses keep HLS.js retry/error handling.
+            const cached = getHlsOpeningResponse(context.url);
+            const pending = hlsOpeningRequests.get(context.url);
+            if(context.rangeEnd || context.rangeStart || (!cached && !pending)){
+                super.load(context,config,callbacks);
                 return;
             }
+            this.context = context;
+            let settled = false;
+            const fallback = () => {
+                if(settled || loadId !== this.streamxLoadId) return;
+                settled = true;
+                window.clearTimeout(this.streamxWaitTimer);
+                this.streamxWaitTimer = null;
+                super.load(context,config,callbacks);
+            };
+            // A slow speculative request must not hold normal playback back.
+            if(!cached) this.streamxWaitTimer = window.setTimeout(fallback,350);
+            Promise.resolve(cached || pending).then(entry => {
+                if(settled || loadId !== this.streamxLoadId) return;
+                const binary = context.responseType === "arraybuffer";
+                if(!entry || (binary ? !(entry.data instanceof ArrayBuffer) : typeof entry.data !== "string")){
+                    fallback();
+                    return;
+                }
+                settled = true;
+                window.clearTimeout(this.streamxWaitTimer);
+                this.streamxWaitTimer = null;
+                const stats = this.stats;
+                const now = Math.max(1,performance.now());
+                // A memory copy is not a network-speed measurement. Keep startup
+                // estimates conservative until real streaming supplies ABR samples.
+                const sampleMs = binary ? Math.min(now,Math.max(1,entry.size * 8000 / 650000)) : 1;
+                stats.aborted = false;
+                stats.loading.start = stats.loading.first = now - sampleMs;
+                stats.loading.end = now;
+                stats.loaded = stats.total = entry.size;
+                stats.chunkCount = 1;
+                // Workers may transfer/detach buffers; retain the reusable original.
+                const data = binary ? entry.data.slice(0) : entry.data;
+                callbacks.onSuccess({url:entry.url,data,code:200},stats,context,null);
+            }).catch(fallback);
+        }
+    };
+}
+
+async function warmHlsVideoStart(videoURL, cacheKey){
+    if(!shouldWarmVideoBytes()) return false;
+    const controller = new AbortController();
+    videoByteWarmControllers.set(cacheKey,controller);
+    const timeoutId = window.setTimeout(() => controller.abort(),VIDEO_BYTE_WARM_TIMEOUT_MS);
+    const options = {signal:controller.signal,cache:"default",priority:"low"};
+    const read = async (url,binary = false) => {
+        const cached = getHlsOpeningResponse(url);
+        if(cached) return cached;
+        const request = (async () => {
+            const response = await fetch(url,options);
+            if(!response.ok || Number(response.headers?.get("content-length")) > HLS_OPENING_RESPONSE_MAX_BYTES){
+                throw new Error("Opening preload unavailable.");
+            }
+            const data = binary ? await response.arrayBuffer() : await response.text();
+            if(controller.signal.aborted) throw new Error("Opening preload cancelled.");
+            const size = binary ? data.byteLength : new TextEncoder().encode(data).byteLength;
+            if(size > HLS_OPENING_RESPONSE_MAX_BYTES) throw new Error("Opening preload too large.");
+            return {url:response.url || url,data,size};
+        })();
+        hlsOpeningRequests.set(url,request);
+        try{ return await request; }
+        finally{
+            if(hlsOpeningRequests.get(url) === request) hlsOpeningRequests.delete(url);
+        }
+    };
+    try{
+        const master = await read(videoURL);
+        let playlist = master;
+        let playlistURL = videoURL;
+        const lines = master.data.split(/\r?\n/).map(line => line.trim());
+        const variants = [];
+        lines.forEach((line,index) => {
+            if(!line.startsWith("#EXT-X-STREAM-INF:")) return;
             const uri = lines[index + 1];
             const bandwidth = line.match(/(?:[:,])BANDWIDTH=(\d+)/);
-            if(uri && !uri.startsWith("#")){
-                variants.push({
-                    uri,
-                    bandwidth:bandwidth ? Number(bandwidth[1]) : Infinity
-                });
-            }
+            if(uri && !uri.startsWith("#")) variants.push({uri,bandwidth:bandwidth ? Number(bandwidth[1]) : Infinity});
         });
-
         if(variants.length){
             variants.sort((a,b) => a.bandwidth - b.bandwidth);
-            playlist = await readPlaylist(
-                new URL(variants[0].uri,playlist.url).href
-            );
+            playlistURL = new URL(variants[0].uri,master.url).href;
+            playlist = await read(playlistURL);
         }
-
-        /* Keep live, encrypted and byte-range streams on normal playback.
-           StreamX's worker produces ordinary immutable VOD segments. */
-        if(
-            !playlist.text.includes("#EXT-X-ENDLIST") ||
-            /#EXT-X-(?:BYTERANGE|KEY):/.test(playlist.text)
-        ){
-            return false;
-        }
-
-        const firstFragment = playlist.text
-            .split(/\r?\n/)
-            .map(line => line.trim())
-            .find(line => line && !line.startsWith("#"));
-
-        if(!firstFragment){
-            return false;
-        }
-
-        const download = async uri => {
-            const response = await fetch(new URL(uri,playlist.url).href,options);
-            if(!response.ok){
-                throw new Error("HLS fragment warm request failed.");
+        if(!playlist.data.includes("#EXT-X-ENDLIST") || /#EXT-X-(?:BYTERANGE|KEY):/.test(playlist.data)) return false;
+        // Warm approximately two seconds, capped at two low-quality segments.
+        const fragments = [];
+        let seconds = 0;
+        let duration = 0;
+        for(const line of playlist.data.split(/\r?\n/).map(value => value.trim())){
+            if(line.startsWith("#EXTINF:")) duration = Number(line.slice(8).split(",")[0]) || 0;
+            else if(line && !line.startsWith("#")){
+                fragments.push(line);
+                seconds += duration;
+                if(seconds >= 2 || fragments.length >= 2) break;
             }
-            await response.arrayBuffer();
-        };
-
-        const initSegment = playlist.text.match(/#EXT-X-MAP:[^\r\n]*URI="([^"]+)"/);
-        if(initSegment){
-            await download(initSegment[1]);
         }
-        await download(firstFragment);
+        if(!fragments.length) return false;
+        rememberHlsOpeningResponse(videoURL,master,cacheKey);
+        rememberHlsOpeningResponse(playlistURL,playlist,cacheKey);
+        const download = async uri => {
+            const url = new URL(uri,playlist.url).href;
+            rememberHlsOpeningResponse(url,await read(url,true),cacheKey);
+        };
+        const initSegment = playlist.data.match(/#EXT-X-MAP:[^\r\n]*URI="([^"]+)"/);
+        if(initSegment) await download(initSegment[1]);
+        for(const fragment of fragments) await download(fragment);
         videoByteWarmCache.add(cacheKey);
+        window.setTimeout(() => videoByteWarmCache.delete(cacheKey),HLS_OPENING_CACHE_TTL_MS);
         return true;
     }
-    catch(error){
-        /* A missed warm-up must never prevent normal playback. */
-        return false;
-    }
+    catch(error){ controller.abort(); return false; }
     finally{
         window.clearTimeout(timeoutId);
-        if(videoByteWarmControllers.get(cacheKey) === controller){
-            videoByteWarmControllers.delete(cacheKey);
-        }
+        if(videoByteWarmControllers.get(cacheKey) === controller) videoByteWarmControllers.delete(cacheKey);
     }
 }
 
@@ -6865,6 +6931,7 @@ async function attachVideoSource(videoURL){
         const hls =
             new HlsClass({
                 enableWorker:true,
+                loader:createOpeningHlsLoader(HlsClass),
                 startLevel:0,
                 capLevelToPlayerSize:true,
 
@@ -7177,7 +7244,7 @@ function resumeFeedMediaAfterPlayback(){
 
     resumeVisibleFeedVideoPreviews();
     scheduleFeedThumbnailWindow();
-    scheduleVideoByteWarm(videoByteWarmCandidates);
+    scheduleVideoByteWarm();
 }
 
 
@@ -7189,7 +7256,7 @@ async function openPlayer(video){
 
     const requestId = ++playerOpenRequestId;
 
-    cancelVideoByteWarming();
+    cancelVideoByteWarming(video);
 
     /*
      * Once the user taps, playback becomes network/CPU priority #1.

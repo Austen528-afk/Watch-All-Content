@@ -5133,19 +5133,6 @@ function createVideoCard(
         getLibrarySaveCount(video.id).toLocaleString();
 
 
-    let date = "";
-
-
-    if(video.created_at){
-
-        date =
-            new Date(
-                video.created_at
-            ).toLocaleDateString();
-
-    }
-
-
     card.innerHTML = `
 
         ${streamxAppMode ? `<div class="app-mode-video-title">${escapeHTML(title)}</div>` : ""}
@@ -5244,10 +5231,6 @@ function createVideoCard(
 
     <span class="view-count-${video.id}">
         ${views} views
-    </span>
-
-    <span>
-        ${escapeHTML(date)}
     </span>
 
 </div>

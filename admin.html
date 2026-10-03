@@ -3130,6 +3130,24 @@ textarea{
     }
 }
 
+
+/* Viewer management */
+.viewer-management-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.viewer-management-button{padding:10px 14px;border:1px solid #674915;border-radius:8px;background:#222;color:#ffc86a;font-size:12px;cursor:pointer;}
+.viewer-management-button:disabled{opacity:.65;cursor:wait;}
+.viewer-management-modal{position:fixed;inset:0;z-index:2200;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.8);}
+.viewer-management-panel{width:min(760px,100%);max-height:90vh;overflow:auto;padding:22px;border:1px solid #333;border-radius:16px;background:#151515;}
+.viewer-management-toolbar{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:18px 0;}
+.viewer-management-description{color:#999;font-size:13px;line-height:1.6;margin-top:10px;}
+.viewer-management-list{display:grid;gap:10px;}
+.viewer-management-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;border:1px solid #2c2c2c;border-radius:10px;background:#1b1b1b;}
+.viewer-management-info{min-width:0;}
+.viewer-management-info strong{display:block;overflow-wrap:anywhere;font-size:13px;}
+.viewer-management-info small{display:block;color:#999;line-height:1.5;margin-top:5px;overflow-wrap:anywhere;}
+.viewer-management-reset{flex-shrink:0;}
+.viewer-management-pagination{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:18px;font-size:12px;color:#999;}
+@media(max-width:480px){.viewer-management-panel{padding:16px;}.viewer-management-row{gap:10px;padding:11px;}.viewer-management-reset{padding:9px;font-size:11px;}}
+
 </style>
 
 </head>
@@ -3534,12 +3552,9 @@ textarea{
      ACTIVE USERS
 ===================================================== -->
 
-<div class="section-heading">
-
-    <h2>
-        Active Users
-    </h2>
-
+<div class="section-heading viewer-management-heading">
+    <h2>Active Users</h2>
+    <button type="button" class="viewer-management-button" id="manageViewersButton" onclick="openViewerManagement()">Manage / Reset users</button>
 </div>
 
 <div class="stats">
@@ -5497,6 +5512,30 @@ textarea{
     </div>
 
 </main>
+
+<!-- Viewer management -->
+<div class="viewer-management-modal" id="viewerManagementModal" role="dialog" aria-modal="true" aria-labelledby="viewerManagementTitle" onclick="if(event.target === this) closeViewerManagement()">
+    <div class="viewer-management-panel">
+        <div class="viewer-management-heading">
+            <h2 id="viewerManagementTitle">Manage users</h2>
+            <button type="button" class="viewer-management-button" id="closeViewerManagementButton" onclick="closeViewerManagement()">Close</button>
+        </div>
+        <p class="viewer-management-description">Reset deletes a viewer's account, likes, saved library and activity history. They can return as a new user. Admin accounts and video view totals are preserved.</p>
+        <div class="viewer-management-toolbar">
+            <span id="viewerManagementCount">Loading users...</span>
+            <button type="button" class="viewer-management-button" onclick="loadViewerManagement()">Refresh users</button>
+        </div>
+        <p class="viewer-management-description" id="viewerManagementStatus" role="status" aria-live="polite"></p>
+        <div class="viewer-management-list" id="viewerManagementList"></div>
+        <div class="viewer-management-pagination">
+            <button type="button" class="viewer-management-button" id="viewerManagementPrevious" onclick="changeViewerManagementPage(-1)">← Previous</button>
+            <span id="viewerManagementPage">Page 1</span>
+            <button type="button" class="viewer-management-button" id="viewerManagementNext" onclick="changeViewerManagementPage(1)">Next →</button>
+        </div>
+    </div>
+</div>
+
+
 
 
 <!-- =====================================================
@@ -7490,6 +7529,142 @@ setInterval(
     loadActiveUsers,
     5000
 );
+
+
+/* =====================================================
+   MANAGE / RESET VIEWERS
+===================================================== */
+
+let viewerManagementOffset = 0;
+let viewerManagementTotal = 0;
+let viewerManagementLoading = false;
+let viewerResetRunning = false;
+const VIEWER_MANAGEMENT_PAGE_SIZE = 50;
+
+function setViewerManagementBusy(busy){
+    document.querySelectorAll('#viewerManagementModal button').forEach(button => {
+        button.disabled = busy;
+    });
+    if(!busy){
+        document.getElementById('viewerManagementPrevious').disabled = viewerManagementOffset === 0;
+        document.getElementById('viewerManagementNext').disabled = viewerManagementOffset + VIEWER_MANAGEMENT_PAGE_SIZE >= viewerManagementTotal;
+    }
+}
+
+async function openViewerManagement(){
+    viewerManagementOffset = 0;
+    document.getElementById('viewerManagementModal').style.display = 'flex';
+    document.getElementById('closeViewerManagementButton').focus();
+    await loadViewerManagement();
+}
+
+function closeViewerManagement(){
+    if(viewerResetRunning) return;
+    document.getElementById('viewerManagementModal').style.display = 'none';
+    document.getElementById('manageViewersButton').focus();
+}
+
+async function changeViewerManagementPage(direction){
+    if(viewerManagementLoading || viewerResetRunning) return;
+    const next = viewerManagementOffset + direction * VIEWER_MANAGEMENT_PAGE_SIZE;
+    if(next < 0 || next >= viewerManagementTotal) return;
+    viewerManagementOffset = next;
+    await loadViewerManagement();
+}
+
+async function loadViewerManagement(){
+    if(viewerManagementLoading) return;
+    viewerManagementLoading = true;
+    setViewerManagementBusy(true);
+    const status = document.getElementById('viewerManagementStatus');
+    status.textContent = 'Loading users...';
+    try{
+        await requireStreamXAdminSession();
+        const result = await supabaseClient.rpc('get_streamx_admin_viewers', {
+            p_offset:viewerManagementOffset, p_limit:VIEWER_MANAGEMENT_PAGE_SIZE
+        });
+        if(result.error) throw new Error(result.error.message);
+        if(!result.data || !Array.isArray(result.data.users)) throw new Error('The server did not return the users.');
+        viewerManagementTotal = Number(result.data.total) || 0;
+        const list = document.getElementById('viewerManagementList');
+        list.replaceChildren();
+        result.data.users.forEach(viewer => {
+            const row = document.createElement('div');
+            row.className = 'viewer-management-row';
+            row.dataset.viewerId = String(viewer.viewer_id);
+            const info = document.createElement('div');
+            info.className = 'viewer-management-info';
+            const title = document.createElement('strong');
+            title.textContent = 'User ' + String(viewer.viewer_id);
+            const details = document.createElement('small');
+            const platforms = (viewer.platforms || []).map(platform => platform === 'mini_app' ? 'Mini App' : 'Website').join(' / ') || 'No recorded platform';
+            details.textContent = platforms + ' · ' + Number(viewer.likes_count || 0).toLocaleString() + ' likes · ' + Number(viewer.saves_count || 0).toLocaleString() + ' saved videos';
+            info.append(title, details);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'viewer-management-button viewer-management-reset';
+            button.textContent = 'Reset user';
+            button.addEventListener('click', () => resetStreamXViewers(String(viewer.viewer_id), button));
+            row.append(info,button);
+            list.appendChild(row);
+        });
+        document.getElementById('viewerManagementCount').textContent = viewerManagementTotal.toLocaleString() + (viewerManagementTotal === 1 ? ' user' : ' users');
+        document.getElementById('viewerManagementPage').textContent = 'Page ' + (Math.floor(viewerManagementOffset / VIEWER_MANAGEMENT_PAGE_SIZE) + 1);
+        status.textContent = viewerManagementTotal ? '' : 'No users to reset.';
+    }
+    catch(error){
+        status.textContent = 'Could not load users: ' + error.message;
+    }
+    finally{
+        viewerManagementLoading = false;
+        setViewerManagementBusy(viewerResetRunning);
+    }
+}
+
+async function resetStreamXViewers(viewerId, button = null){
+    if(viewerResetRunning || viewerManagementLoading) return;
+    if(typeof viewerId !== 'string' || !viewerId.trim() || viewerId.length > 200){
+        showMessage('Select a user to reset.','error');
+        return;
+    }
+    const target = 'user ' + viewerId;
+    if(!confirm('Delete ' + target + '?\n\nTheir likes, saved libraries and activity history will be removed. They can return as new users. Admin accounts and video view totals stay unchanged.')) return;
+    viewerResetRunning = true;
+    setViewerManagementBusy(true);
+    const originalText = button ? button.textContent : '';
+    if(button){button.textContent = 'Resetting...';button.setAttribute('aria-busy','true');}
+    const status = document.getElementById('viewerManagementStatus');
+    status.textContent = 'Resetting users...';
+    try{
+        await requireStreamXAdminSession();
+        const result = await supabaseClient.rpc('reset_streamx_viewers', {p_viewer_id:viewerId});
+        if(result.error) throw new Error(result.error.message);
+        if(!result.data || !Number.isFinite(Number(result.data.deleted_users))) throw new Error('The server did not confirm the user reset.');
+        (result.data.likes_updates || []).forEach(video => updateAdminVideoLikeCount(video.video_id,video.likes_count));
+        graphSourceCache = null;
+        graphSourceLoadedAt = 0;
+        dailyPerformanceLoadedDays = 0;
+        const removed = Number(result.data.deleted_users);
+        viewerManagementTotal = Math.max(0,viewerManagementTotal - removed);
+        viewerManagementOffset = Math.min(viewerManagementOffset, Math.max(0,Math.ceil(viewerManagementTotal / VIEWER_MANAGEMENT_PAGE_SIZE) - 1) * VIEWER_MANAGEMENT_PAGE_SIZE);
+        await loadActiveUsers();
+        await loadViewerManagement();
+        showMessage('✓ ' + removed.toLocaleString() + (removed === 1 ? ' user reset successfully.' : ' users reset successfully.'),'success');
+    }
+    catch(error){
+        status.textContent = 'Could not reset users: ' + error.message;
+        showMessage(status.textContent,'error');
+    }
+    finally{
+        viewerResetRunning = false;
+        if(button){button.textContent = originalText;button.removeAttribute('aria-busy');}
+        setViewerManagementBusy(viewerManagementLoading);
+    }
+}
+
+document.addEventListener('keydown', event => {
+    if(event.key === 'Escape' && document.getElementById('viewerManagementModal').style.display === 'flex') closeViewerManagement();
+});
 
 /* =====================================================
    LIVE ADAPTIVE PROCESSING STATUS

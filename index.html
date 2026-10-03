@@ -2294,6 +2294,9 @@ async function adoptPublicAuthSession(session){
     publicAuthAccessToken =
         session?.access_token || null;
 
+    publicAuthUserId = authUserId;
+    LIBRARY_VIEWER_ID = authUserId;
+
     await migrateLegacyPublicIdentity(authUserId);
     return session;
 }
@@ -2303,11 +2306,71 @@ supabaseClient.auth.onAuthStateChange((_event,session) => {
     publicAuthAccessToken =
         session?.access_token || null;
 
+    if(!session){
+        publicAuthUserId = null;
+        publicAuthVerifiedUserId = null;
+        publicAuthVerifiedAt = 0;
+    }
+
     if(session?.user?.id){
         publicAuthUserId =
             session.user.id;
     }
 });
+
+
+let publicAuthVerifiedUserId = null;
+let publicAuthVerifiedAt = 0;
+
+function clearPublicViewerRecords(){
+    publicAuthUserId = null;
+    publicAuthAccessToken = null;
+    publicAuthVerifiedUserId = null;
+    publicAuthVerifiedAt = 0;
+    publicIdentityMigrationPromise = null;
+    try{
+        localStorage.removeItem('streamx_like_user_id');
+        localStorage.removeItem('streamx_website_user_id');
+        localStorage.removeItem('streamx_website_library');
+        const keys = Array.from({length:localStorage.length},(_,index) => localStorage.key(index));
+        keys.forEach(key => {
+            if(key && key.startsWith('streamx_website_') && key.endsWith('_recommendation_history')) localStorage.removeItem(key);
+        });
+    }catch(error){console.warn('Could not clear the previous viewer cache:',error);}
+    libraryVideoIds.clear();
+    libraryPendingIds.clear();
+
+    likedVideoIds.clear();
+    likeOptimisticState.clear();
+    videoLikeSummary.clear();
+    likeSummaryReady = false;
+    likeSummaryPromise = null;
+    videoLibrarySummary.clear();
+    librarySummaryReady = false;
+    librarySummaryPromise = null;
+    recommendationVideos = [];
+    recommendationTriggerVideoId = null;
+    document.querySelectorAll('.like-btn').forEach(button => {
+        button.textContent = '♡';
+        button.classList.remove('liked');
+    });
+    updateLibraryUI();
+}
+
+async function verifyPublicViewerSession(session){
+    const userId = session?.user?.id;
+    if(!userId) return false;
+    if(publicAuthVerifiedUserId === userId && Date.now() - publicAuthVerifiedAt < 60000) return true;
+    const result = await supabaseClient.rpc('is_streamx_viewer_session_active');
+    if(result.error){
+        if(['PGRST301','PGRST303'].includes(result.error.code)) return false;
+        throw new Error(result.error.message || 'Could not verify the viewer session.');
+    }
+    if(result.data !== true) return false;
+    publicAuthVerifiedUserId = userId;
+    publicAuthVerifiedAt = Date.now();
+    return true;
+}
 
 async function ensurePublicAuthSession(){
 
@@ -2329,7 +2392,18 @@ async function ensurePublicAuthSession(){
             }
 
             if(data?.session?.user?.id){
-                return adoptPublicAuthSession(data.session);
+                if(await verifyPublicViewerSession(data.session)){
+                    return adoptPublicAuthSession(data.session);
+                }
+                clearPublicViewerRecords();
+                const signedOut = await supabaseClient.auth.signOut({scope:'local'});
+                if(signedOut.error) throw signedOut.error;
+            }
+            else{
+                const previousViewerId = localStorage.getItem('streamx_website_user_id');
+                if(previousViewerId && localStorage.getItem('streamx_public_identity_migrated_v1_' + previousViewerId) === '1'){
+                    clearPublicViewerRecords();
+                }
             }
 
             const {data:anonymousData,error:anonymousError} =
@@ -2343,6 +2417,8 @@ async function ensurePublicAuthSession(){
                 return null;
             }
 
+            publicAuthVerifiedUserId = anonymousData?.session?.user?.id || null;
+            publicAuthVerifiedAt = Date.now();
             return adoptPublicAuthSession(
                 anonymousData?.session || null
             );

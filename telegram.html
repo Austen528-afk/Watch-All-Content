@@ -2247,6 +2247,10 @@ async function adoptMiniAppAuthSession(session){
     miniAppAuthAccessToken =
         session?.access_token || null;
 
+    miniAppAuthUserId = authUserId;
+    LIBRARY_VIEWER_ID = authUserId;
+    MINI_APP_USER_ID = authUserId;
+
     await migrateLegacyMiniAppIdentity(authUserId);
     return session;
 }
@@ -2256,6 +2260,12 @@ supabaseClient.auth.onAuthStateChange((_event,session) => {
     miniAppAuthAccessToken =
         session?.access_token || null;
 
+    if(!session){
+        miniAppAuthUserId = null;
+        miniAppAuthVerifiedUserId = null;
+        miniAppAuthVerifiedAt = 0;
+    }
+
     if(session?.user?.id){
         miniAppAuthUserId =
             session.user.id;
@@ -2263,6 +2273,58 @@ supabaseClient.auth.onAuthStateChange((_event,session) => {
             session.user.id;
     }
 });
+
+
+let miniAppAuthVerifiedUserId = null;
+let miniAppAuthVerifiedAt = 0;
+
+function clearMiniAppViewerRecords(){
+    miniAppAuthUserId = null;
+    miniAppAuthAccessToken = null;
+    miniAppAuthVerifiedUserId = null;
+    miniAppAuthVerifiedAt = 0;
+    miniAppIdentityMigrationPromise = null;
+    try{
+        localStorage.removeItem('streamx_like_user_id');
+        localStorage.removeItem('streamx_mini_app_user_id');
+        localStorage.removeItem('streamx_mini_app_library');
+        const keys = Array.from({length:localStorage.length},(_,index) => localStorage.key(index));
+        keys.forEach(key => {
+            if(key && key.startsWith('streamx_mini_app_') && key.endsWith('_recommendation_history')) localStorage.removeItem(key);
+        });
+    }catch(error){console.warn('Could not clear the previous viewer cache:',error);}
+    libraryVideoIds.clear();
+    libraryPendingIds.clear();
+    libraryLocalOverrides.clear();
+    likedVideoIds.clear();
+    likeOptimisticState.clear();
+    videoLikeSummary.clear();
+    likeSummaryReady = false;
+    likeSummaryPromise = null;
+
+    recommendationVideos = [];
+    recommendationTriggerVideoId = null;
+    document.querySelectorAll('.like-btn').forEach(button => {
+        button.textContent = '♡';
+        button.classList.remove('liked');
+    });
+    updateLibraryUI();
+}
+
+async function verifyMiniAppViewerSession(session){
+    const userId = session?.user?.id;
+    if(!userId) return false;
+    if(miniAppAuthVerifiedUserId === userId && Date.now() - miniAppAuthVerifiedAt < 60000) return true;
+    const result = await supabaseClient.rpc('is_streamx_viewer_session_active');
+    if(result.error){
+        if(['PGRST301','PGRST303'].includes(result.error.code)) return false;
+        throw new Error(result.error.message || 'Could not verify the viewer session.');
+    }
+    if(result.data !== true) return false;
+    miniAppAuthVerifiedUserId = userId;
+    miniAppAuthVerifiedAt = Date.now();
+    return true;
+}
 
 async function ensureMiniAppAuthSession(){
 
@@ -2284,7 +2346,18 @@ async function ensureMiniAppAuthSession(){
             }
 
             if(data?.session?.user?.id){
-                return adoptMiniAppAuthSession(data.session);
+                if(await verifyMiniAppViewerSession(data.session)){
+                    return adoptMiniAppAuthSession(data.session);
+                }
+                clearMiniAppViewerRecords();
+                const signedOut = await supabaseClient.auth.signOut({scope:'local'});
+                if(signedOut.error) throw signedOut.error;
+            }
+            else{
+                const previousViewerId = localStorage.getItem('streamx_mini_app_user_id');
+                if(previousViewerId && localStorage.getItem('streamx_mini_app_identity_migrated_v1_' + previousViewerId) === '1'){
+                    clearMiniAppViewerRecords();
+                }
             }
 
             const {data:anonymousData,error:anonymousError} =
@@ -2298,6 +2371,8 @@ async function ensureMiniAppAuthSession(){
                 return null;
             }
 
+            miniAppAuthVerifiedUserId = anonymousData?.session?.user?.id || null;
+            miniAppAuthVerifiedAt = Date.now();
             return adoptMiniAppAuthSession(
                 anonymousData?.session || null
             );

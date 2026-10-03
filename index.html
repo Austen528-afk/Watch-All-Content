@@ -649,7 +649,8 @@ body.streamx-app-mode .section-header{margin-bottom:14px}
 body.streamx-app-mode .video-grid{display:grid;grid-template-columns:1fr;gap:28px}
 
 body.streamx-app-mode .video-card{
-    width:min(100%,520px);
+    width:100%;
+    --streamx-media-width:min(100cqw,520px);
     justify-self:center;
     background:transparent;
     border:none;
@@ -658,10 +659,10 @@ body.streamx-app-mode .video-card{
     transform:none;
 }
 body.streamx-app-mode .video-card:hover{transform:translateY(-2px);border-color:transparent;background:transparent}
-body.streamx-app-mode .video-card.streamx-landscape{width:min(94%,520px)}
-body.streamx-app-mode .video-card.streamx-square{width:min(76%,400px)}
-body.streamx-app-mode .video-card.streamx-portrait{width:min(72%,370px)}
-body.streamx-app-mode .video-card.streamx-tall{width:min(66%,340px)}
+body.streamx-app-mode .video-card.streamx-landscape{--streamx-media-width:min(94cqw,520px)}
+body.streamx-app-mode .video-card.streamx-square{--streamx-media-width:min(76cqw,400px)}
+body.streamx-app-mode .video-card.streamx-portrait{--streamx-media-width:min(72cqw,370px)}
+body.streamx-app-mode .video-card.streamx-tall{--streamx-media-width:min(66cqw,340px)}
 
 body.streamx-app-mode .video-card.streamx-landscape .thumbnail{aspect-ratio:16/9}
 body.streamx-app-mode .video-card.streamx-square .thumbnail{aspect-ratio:1/1}
@@ -754,27 +755,19 @@ body.streamx-app-mode .feed-pagination{display:none!important}
     }
 
     body.streamx-app-mode .video-card{
-        width:min(84%,440px);
+        --streamx-media-width:min(84cqw,440px);
         background:transparent;
         border:none;
         border-radius:0;
         transform:none!important;
     }
 
-    body.streamx-app-mode .video-card.streamx-landscape{width:min(84%,440px)}
-    body.streamx-app-mode .video-card.streamx-square{width:min(64%,320px)}
-    body.streamx-app-mode .video-card.streamx-portrait{width:min(44%,220px)}
-    body.streamx-app-mode .video-card.streamx-tall{width:min(52%,260px)}
-
-    /* Same left shift as the Mini App: text stays at the edge, media has an inset. */
-    body.streamx-app-mode .thumbnail{
-        position:relative;
-        left:calc((100% - (100vw - 20px)) / 2 + 18px);
-    }
+    body.streamx-app-mode .video-card.streamx-landscape{--streamx-media-width:min(84cqw,440px)}
+    body.streamx-app-mode .video-card.streamx-square{--streamx-media-width:min(64cqw,320px)}
+    body.streamx-app-mode .video-card.streamx-portrait{--streamx-media-width:min(44cqw,220px)}
+    body.streamx-app-mode .video-card.streamx-tall{--streamx-media-width:min(52cqw,260px)}
 
     body.streamx-app-mode .video-info{
-        position:relative;
-        left:calc((100% - (100vw - 20px)) / 2 + 18px);
         padding:6px 1px 0;
         gap:6px;
     }
@@ -816,10 +809,10 @@ body.streamx-app-mode .feed-pagination{display:none!important}
 @media(max-width:480px){
     .view-mode-toggle{min-height:36px;padding:7px 11px;font-size:10px}
     body.streamx-app-mode .main{padding-left:10px;padding-right:10px}
-    body.streamx-app-mode .video-card.streamx-landscape{width:80%}
-    body.streamx-app-mode .video-card.streamx-square{width:68%}
-    body.streamx-app-mode .video-card.streamx-portrait{width:48%}
-    body.streamx-app-mode .video-card.streamx-tall{width:56%}
+    body.streamx-app-mode .video-card.streamx-landscape{--streamx-media-width:80cqw}
+    body.streamx-app-mode .video-card.streamx-square{--streamx-media-width:68cqw}
+    body.streamx-app-mode .video-card.streamx-portrait{--streamx-media-width:48cqw}
+    body.streamx-app-mode .video-card.streamx-tall{--streamx-media-width:56cqw}
 }
 
 /* =========================
@@ -1736,6 +1729,49 @@ body.streamx-app-mode .feed-pagination{display:none!important}
 .category-back-btn{min-height:34px;font-size:12px}
 .video-actions{flex-wrap:wrap;justify-content:flex-end}
 .video-actions .library-btn{margin-left:0}
+
+
+/* Center each video over one complete engagement row. */
+.video-media-block{display:contents}
+body.streamx-app-mode .video-card{container-type:inline-size}
+body.streamx-app-mode .video-media-block{
+    display:grid;
+    grid-template-columns:max-content;
+    justify-items:center;
+    width:max-content;
+    max-width:100%;
+    margin:0 auto;
+}
+body.streamx-app-mode .video-media-block .thumbnail{
+    width:var(--streamx-media-width);
+    max-width:100%;
+    left:auto;
+}
+body.streamx-app-mode .video-info{width:100%}
+body.streamx-app-mode .video-info{
+    flex-wrap:nowrap;
+    min-width:max-content;
+}
+body.streamx-app-mode .video-meta,
+body.streamx-app-mode .video-actions{
+    flex-shrink:0;
+    white-space:nowrap;
+}
+body.streamx-app-mode .video-actions{
+    flex-wrap:nowrap;
+    margin-top:0;
+}
+@media(max-width:800px){
+    body.streamx-app-mode .video-media-block{
+        margin-left:calc((100cqw - (100vw - 20px)) / 2 + 18px);
+        margin-right:0;
+    }
+}
+@media(max-width:380px){
+    body.streamx-app-mode .category-open-btn{padding:4px 6px;font-size:9px}
+    body.streamx-app-mode .library-btn{padding:4px 6px}
+    body.streamx-app-mode .video-actions{gap:3px}
+}
 
 </style>
 
@@ -5275,6 +5311,8 @@ function createVideoCard(
                 : ""
         }
 
+        <div class="video-media-block">
+
         <div class="thumbnail">
 
             ${
@@ -5411,6 +5449,8 @@ function createVideoCard(
     </span>
 
 </div>
+
+        </div>
 
         </div>
 

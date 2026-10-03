@@ -700,24 +700,25 @@ body{
 
 /* Adaptive feed sizing: cards stay centered and reflect source aspect. */
 .video-card{
-    width:min(100%,520px);
+    width:100%;
+    --streamx-media-width:min(100cqw,520px);
     justify-self:center;
 }
 
 .video-card.streamx-landscape{
-    width:min(94%,520px);
+    --streamx-media-width:min(94cqw,520px);
 }
 
 .video-card.streamx-square{
-    width:min(76%,400px);
+    --streamx-media-width:min(76cqw,400px);
 }
 
 .video-card.streamx-portrait{
-    width:min(72%,370px);
+    --streamx-media-width:min(72cqw,370px);
 }
 
 .video-card.streamx-tall{
-    width:min(66%,340px);
+    --streamx-media-width:min(66cqw,340px);
 }
 
 .video-card.streamx-landscape .thumbnail{
@@ -1329,7 +1330,7 @@ body{
      * comfortable inside a phone screen.
      */
     .video-card{
-        width:min(84%,440px);
+        --streamx-media-width:min(84cqw,440px);
         background:transparent;
         border:none;
         border-radius:0;
@@ -1339,23 +1340,23 @@ body{
     .thumbnail{
         border-radius:12px;
         position:relative;
-        left:calc((100% - (100vw - 20px)) / 2 + 18px);
+        left:auto;
     }
 
     .video-card.streamx-landscape{
-        width:min(84%,440px);
+        --streamx-media-width:min(84cqw,440px);
     }
 
     .video-card.streamx-square{
-        width:min(64%,320px);
+        --streamx-media-width:min(64cqw,320px);
     }
 
     .video-card.streamx-portrait{
-        width:min(44%,220px);
+        --streamx-media-width:min(44cqw,220px);
     }
 
     .video-card.streamx-tall{
-        width:min(52%,260px);
+        --streamx-media-width:min(52cqw,260px);
     }
 
     .video-title{
@@ -1376,8 +1377,6 @@ body{
     .video-engagement-row{
         gap:6px;
         margin-bottom:5px;
-        position:relative;
-        left:calc((100% - (100vw - 20px)) / 2 + 18px);
     }
 
     .video-description{
@@ -1432,19 +1431,19 @@ body{
     }
 
     .video-card.streamx-landscape{
-        width:80%;
+        --streamx-media-width:80cqw;
     }
 
     .video-card.streamx-square{
-        width:68%;
+        --streamx-media-width:68cqw;
     }
 
     .video-card.streamx-portrait{
-        width:48%;
+        --streamx-media-width:48cqw;
     }
 
     .video-card.streamx-tall{
-        width:56%;
+        --streamx-media-width:56cqw;
     }
 
     .video-title{
@@ -1698,6 +1697,48 @@ body{
 .category-back-btn{min-height:34px;font-size:12px}
 .video-actions{flex-wrap:wrap;justify-content:flex-end}
 .video-actions .library-btn{margin-left:0}
+
+
+/* Center each video over one complete engagement row. */
+.video-card{container-type:inline-size}
+.video-media-block{
+    display:grid;
+    grid-template-columns:max-content;
+    justify-items:center;
+    width:max-content;
+    max-width:100%;
+    margin:0 auto;
+}
+.video-media-block .thumbnail{
+    width:var(--streamx-media-width);
+    max-width:100%;
+    left:auto;
+}
+.video-info{width:100%}
+.video-engagement-row{
+    flex-wrap:nowrap;
+    min-width:max-content;
+}
+.video-meta,
+.video-actions{
+    flex-shrink:0;
+    white-space:nowrap;
+}
+.video-actions{
+    flex-wrap:nowrap;
+    margin-top:0;
+}
+@media(max-width:800px){
+    .video-media-block{
+        margin-left:calc((100cqw - (100vw - 20px)) / 2 + 18px);
+        margin-right:0;
+    }
+}
+@media(max-width:380px){
+    .category-open-btn{padding:4px 6px;font-size:9px}
+    .library-btn{padding:4px 6px}
+    .video-actions{gap:3px}
+}
 
 </style>
 
@@ -6355,6 +6396,8 @@ function createVideoCard(video,prioritizeLoad = false){
             ""
         }
 
+        <div class="video-media-block">
+
         <div class="thumbnail">
 
             ${
@@ -6467,6 +6510,8 @@ function createVideoCard(video,prioritizeLoad = false){
                 </div>
 
             </div>
+
+        </div>
 
         </div>
 

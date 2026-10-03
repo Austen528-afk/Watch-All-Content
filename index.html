@@ -1778,6 +1778,88 @@ body.streamx-app-mode .video-actions{
     body.streamx-app-mode .video-actions{gap:3px}
 }
 
+
+/* Keep popup controls visible while long metadata scrolls above them. */
+#videoModal{
+    padding-top:max(20px,env(safe-area-inset-top));
+    padding-bottom:max(20px,env(safe-area-inset-bottom));
+}
+#videoModal .player-container{
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100vh - 40px);
+    max-height:calc(100dvh - 40px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+#videoModal .player-header{flex:0 0 auto;gap:12px}
+#videoModal .player-title{
+    min-width:0;
+    padding-right:0;
+    overflow-wrap:anywhere;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+}
+#videoModal .player-video{
+    flex:0 0 auto;
+    object-fit:contain;
+    max-height:min(60vh,max(60px,calc(100vh - 180px)));
+    max-height:min(60dvh,max(60px,calc(100dvh - 180px)));
+}
+#videoModal .player-info{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+}
+#videoModal .player-description{overflow-wrap:anywhere}
+#videoModal .player-engagement{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    flex-wrap:nowrap;
+    gap:10px;
+    padding:12px 18px;
+    border-top:1px solid #242424;
+    overflow-x:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+}
+#videoModal .player-engagement .video-meta{
+    display:flex;
+    flex:0 0 auto;
+    align-items:center;
+    color:#777;
+    font-size:10px;
+    white-space:nowrap;
+}
+#videoModal .player-engagement .video-actions{
+    display:flex;
+    flex:0 0 auto;
+    align-items:center;
+    flex-wrap:nowrap;
+    margin:0 0 0 auto;
+    gap:8px;
+    white-space:nowrap;
+}
+#videoModal .player-engagement .library-btn{margin:0}
+#videoModal .player-engagement .like-count,
+#videoModal .player-engagement .save-count{flex:0 0 auto;color:#999}
+#videoModal .player-engagement button:disabled{opacity:.55;cursor:wait}
+@media(max-width:480px){
+    #videoModal .player-header{padding:10px 12px}
+    #videoModal .player-title{font-size:13px}
+    #videoModal .player-info{padding:12px}
+    #videoModal .player-engagement{padding:10px 12px;gap:6px}
+    #videoModal .player-engagement .video-meta{font-size:8.5px}
+    #videoModal .player-engagement .video-actions{gap:4px}
+    #videoModal .player-engagement .category-open-btn{padding:4px 6px;font-size:9px}
+    #videoModal .player-engagement .library-btn{min-height:28px;padding:5px 7px;font-size:10px}
+    #videoModal .player-engagement .like-btn{font-size:18px}
+    #videoModal .player-engagement .like-count,
+    #videoModal .player-engagement .save-count{font-size:10px}
+}
+
 </style>
 
 </head>
@@ -2159,16 +2241,21 @@ body.streamx-app-mode .video-actions{
                 id="playerDescription"
             ></p>
 
-            <button
-                class="player-library-button"
-                id="playerLibraryButton"
-                type="button"
-                aria-pressed="false"
-                disabled
-            >
-                ☆ Save to My Library
-            </button>
+        </div>
 
+        <div class="player-engagement" aria-label="Video actions">
+            <div class="video-meta">
+                <span class="player-view-count" id="playerViewCount">0 views</span>
+            </div>
+            <div class="video-actions">
+                <button class="category-open-btn" id="playerCategoryButton" type="button" disabled>Open category</button>
+                <button class="library-btn" id="playerLibraryButton" type="button" aria-pressed="false" aria-label="Save to My Library" title="Save to My Library" disabled>☆ save</button>
+
+                <span class="save-count" id="playerSaveCount" aria-label="Total saves" title="Total saves">0</span>
+
+                <button class="like-btn" id="playerLikeButton" type="button" aria-pressed="false" aria-label="Like video" title="Like" disabled>♡</button>
+                <span class="like-count" id="playerLikeCount">0</span>
+            </div>
         </div>
 
     </div>
@@ -2592,6 +2679,7 @@ let libraryPendingIds = new Set();
 let libraryLoading = false;
 let libraryStatusTimer = null;
 let currentPlayerVideoId = null;
+let playerOpenRequestId = 0;
 let libraryActivityTimer = null;
 let libraryActivityLastSeen = 0;
 let libraryActivityRequestInFlight = false;
@@ -2713,6 +2801,11 @@ const libraryStatus =
 
 const playerLibraryButton =
     document.getElementById("playerLibraryButton");
+const playerCategoryButton = document.getElementById("playerCategoryButton");
+const playerLikeButton = document.getElementById("playerLikeButton");
+const playerLikeCount = document.getElementById("playerLikeCount");
+const playerViewCount = document.getElementById("playerViewCount");
+const playerSaveCount = document.getElementById("playerSaveCount");
 
 
 /* =========================
@@ -3608,33 +3701,57 @@ function updatePlayerLibraryButton(){
 
     if(!playerLibraryButton) return;
 
-    const hasVideo =
-        currentPlayerVideoId !== null &&
-        currentPlayerVideoId !== undefined;
-
-    if(!hasVideo){
-
+    if(currentPlayerVideoId === null || currentPlayerVideoId === undefined){
+        delete playerLibraryButton.dataset.id;
         playerLibraryButton.disabled = true;
         playerLibraryButton.classList.remove("saved");
         playerLibraryButton.setAttribute("aria-pressed","false");
-        playerLibraryButton.textContent = "☆ Save to My Library";
+        playerLibraryButton.setAttribute("aria-busy","false");
+        playerLibraryButton.textContent = "☆ save";
         return;
-
     }
 
-    const saved = libraryVideoIds.has(
-        String(currentPlayerVideoId)
-    );
-
-    playerLibraryButton.disabled = libraryPendingIds.has(
-        String(currentPlayerVideoId)
-    );
-    playerLibraryButton.classList.toggle("saved",saved);
-    playerLibraryButton.setAttribute("aria-pressed",String(saved));
-    playerLibraryButton.textContent = saved
-        ? "★ Remove from My Library"
-        : "☆ Save to My Library";
+    const key = String(currentPlayerVideoId);
+    playerLibraryButton.dataset.id = key;
+    updateLibraryButtonState(playerLibraryButton,key);
+    playerLibraryButton.setAttribute("aria-busy",String(libraryPendingIds.has(key)));
 }
+
+function updatePlayerActions(video){
+    const key = String(video.id);
+    const category = getVideoCategoryName(video);
+    playerCategoryButton.dataset.category = category;
+    playerCategoryButton.disabled = false;
+    playerCategoryButton.setAttribute("aria-label","Open category: " + category);
+    playerCategoryButton.title = "Open category: " + category;
+    playerLikeButton.dataset.id = key;
+    playerLikeButton.disabled = false;
+    playerLikeCount.textContent = Number(videoLikeSummary.get(key) ?? video.likes_count ?? 0).toLocaleString();
+    playerViewCount.className = "player-view-count view-count-" + key;
+    playerViewCount.textContent = Number(video.views || 0).toLocaleString() + " views";
+    playerSaveCount.dataset.id = key;
+    playerSaveCount.textContent = getLibrarySaveCount(video.id).toLocaleString();
+
+    updatePlayerLibraryButton();
+    setLikeButtonState(video.id,likedVideoIds.has(key));
+    // Reuse cached/background heart state without delaying playback startup.
+    void updateLikeButton(video.id);
+    videoModal.querySelector(".player-info").scrollTop = 0;
+    videoModal.querySelector(".player-engagement").scrollLeft = 0;
+}
+
+function resetPlayerActions(){
+    updatePlayerLibraryButton();
+    delete playerLikeButton.dataset.id;
+    delete playerCategoryButton.dataset.category;
+    delete playerSaveCount.dataset.id;
+
+    playerLikeButton.disabled = true;
+    playerCategoryButton.disabled = true;
+    playerViewCount.className = "player-view-count";
+}
+
+
 
 function updateLibraryUI(){
 
@@ -4433,6 +4550,9 @@ function setLikeButtonState(videoId,isLiked){
     buttons.forEach(button => {
         button.textContent = isLiked ? "♥" : "♡";
         button.classList.toggle("liked",isLiked);
+        button.setAttribute("aria-pressed",String(isLiked));
+        button.setAttribute("aria-label",isLiked ? "Unlike video" : "Like video");
+        button.title = isLiked ? "Unlike" : "Like";
     });
 }
 
@@ -7000,6 +7120,8 @@ function resumeFeedMediaAfterPlayback(){
 
 async function openPlayer(video){
 
+    const requestId = ++playerOpenRequestId;
+
     cancelVideoByteWarming();
 
     /*
@@ -7015,7 +7137,7 @@ async function openPlayer(video){
     stopWatchTimeTracking();
 
     currentPlayerVideoId = video.id;
-    updatePlayerLibraryButton();
+    updatePlayerActions(video);
 
     playerTitle.textContent =
         video.title ||
@@ -7057,6 +7179,10 @@ async function openPlayer(video){
     const videoURL =
         await videoURLPromise;
 
+    if(requestId !== playerOpenRequestId || !videoModal.classList.contains("show")){
+        return;
+    }
+
 
     if(!videoURL){
 
@@ -7078,6 +7204,8 @@ async function openPlayer(video){
     }
     catch(error){
 
+        if(requestId !== playerOpenRequestId) return;
+
         console.error(
             "Video source attach error:",
             error
@@ -7092,6 +7220,12 @@ async function openPlayer(video){
         return;
     }
 
+
+
+
+    if(requestId !== playerOpenRequestId || !videoModal.classList.contains("show")){
+        return;
+    }
 
     startWatchTimeTracking(video.id);
 
@@ -7174,19 +7308,7 @@ async function updateViews(video){
             newViewCount;
 
 
-        const viewElement =
-            document.querySelector(
-                `.view-count-${CSS.escape(String(video.id))}`
-            );
-
-
-        if(viewElement){
-
-            viewElement.textContent =
-                newViewCount.toLocaleString() +
-                " views";
-
-        }
+        updateRealtimeViewUI(video.id,newViewCount);
 
     }
     catch(error){
@@ -7563,13 +7685,15 @@ async function updateLikeButton(videoId, refresh = false){
 
 function closeVideoPlayer(){
 
+    playerOpenRequestId++;
+
     resumeFeedMediaAfterPlayback();
 
     stopWatchTimeTracking();
 
     const recentlyWatchedVideoId = currentPlayerVideoId;
     currentPlayerVideoId = null;
-    updatePlayerLibraryButton();
+    resetPlayerActions();
 
     playerVideo.pause();
 
@@ -7608,6 +7732,24 @@ closePlayer.addEventListener(
     "click",
     closeVideoPlayer
 );
+
+playerCategoryButton.addEventListener("click",function(event){
+    event.stopPropagation();
+    if(currentPlayerVideoId === null || currentPlayerVideoId === undefined) return;
+    const category = playerCategoryButton.dataset.category;
+    closeVideoPlayer();
+    openVideoCategory(category);
+});
+
+playerLikeButton.addEventListener("click",async function(event){
+    event.stopPropagation();
+    if(currentPlayerVideoId === null || currentPlayerVideoId === undefined) return;
+    const videoId = currentPlayerVideoId;
+    animateAction(playerLikeButton,"like");
+    await toggleLike(videoId);
+});
+
+
 
 if(playerLibraryButton){
 

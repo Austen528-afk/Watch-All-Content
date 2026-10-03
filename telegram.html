@@ -6709,15 +6709,28 @@ function createOpeningHlsLoader(HlsClass){
             super(config);
             this.streamxLoadId = 0;
             this.streamxWaitTimer = null;
+            this.streamxCachedCallbacks = null;
         }
         abort(){
             this.streamxLoadId++;
             window.clearTimeout(this.streamxWaitTimer);
             this.streamxWaitTimer = null;
+            const callbacks = this.streamxCachedCallbacks;
+            this.streamxCachedCallbacks = null;
+            if(callbacks){
+                this.stats.aborted = true;
+                callbacks.onAbort?.(this.stats,this.context,null);
+                return;
+            }
             super.abort();
         }
         destroy(){
-            this.abort();
+            // Destruction also follows SUCCESS. Public abort() would report an
+            // abort during SDK cleanup and recursively destroy the same loader.
+            this.streamxLoadId++;
+            window.clearTimeout(this.streamxWaitTimer);
+            this.streamxWaitTimer = null;
+            this.streamxCachedCallbacks = null;
             super.destroy();
         }
         load(context,config,callbacks){
@@ -6732,12 +6745,14 @@ function createOpeningHlsLoader(HlsClass){
                 return;
             }
             this.context = context;
+            this.streamxCachedCallbacks = callbacks;
             let settled = false;
             const fallback = () => {
                 if(settled || loadId !== this.streamxLoadId) return;
                 settled = true;
                 window.clearTimeout(this.streamxWaitTimer);
                 this.streamxWaitTimer = null;
+                this.streamxCachedCallbacks = null;
                 super.load(context,config,callbacks);
             };
             // A slow speculative request must not hold normal playback back.
@@ -6761,11 +6776,21 @@ function createOpeningHlsLoader(HlsClass){
                 stats.loading.start = stats.loading.first = now - sampleMs;
                 stats.loading.end = now;
                 stats.loaded = stats.total = entry.size;
-                stats.chunkCount = 1;
+                // HLS increments chunkCount when it consumes progress payloads.
                 // Workers may transfer/detach buffers; retain the reusable original.
                 const data = binary ? entry.data.slice(0) : entry.data;
+                // Match the native XHR loader: send bytes to the transmuxer
+                // before reporting completion, including for cache hits.
+                callbacks.onProgress?.(stats,context,data,null);
+                if(loadId !== this.streamxLoadId) return;
+                this.streamxCachedCallbacks = null;
                 callbacks.onSuccess({url:entry.url,data,code:200},stats,context,null);
-            }).catch(fallback);
+            }).catch(error => {
+                if(!settled){ fallback(); return; }
+                if(loadId !== this.streamxLoadId) return;
+                this.streamxCachedCallbacks = null;
+                callbacks.onError?.({code:0,text:"Prepared HLS response failed."},context,null,this.stats);
+            });
         }
     };
 }

@@ -1,6 +1,6 @@
 -- Run through an authorized database connection after setup_admin_session_time.sql.
 -- All fixtures are rolled back; no accounts, media or existing activity change.
-begin;
+begin isolation level repeatable read;
 do $test$
 declare
     viewer uuid;
@@ -13,6 +13,8 @@ declare
     segment_three uuid := gen_random_uuid();
     before_metrics jsonb;
     after_metrics jsonb;
+    before_overall jsonb;
+    after_overall jsonb;
     saved bigint;
 begin
     select id into viewer from auth.users where is_anonymous order by created_at limit 1;
@@ -21,6 +23,7 @@ begin
     assert viewer is not null and other_viewer is not null and admin_id is not null, 'Existing test identities required';
 
     perform set_config('request.jwt.claim.sub', admin_id::text, true);
+    before_overall := public.get_streamx_admin_viewers(0,50)->'overall';
     select u into before_metrics from jsonb_array_elements(public.get_streamx_admin_viewers(0,50)->'users') u
         where u->>'viewer_id' = viewer::text;
 
@@ -73,11 +76,19 @@ begin
     perform set_config('request.jwt.claim.sub', admin_id::text, true);
     select u into after_metrics from jsonb_array_elements(public.get_streamx_admin_viewers(0,50)->'users') u
         where u->>'viewer_id' = viewer::text;
+    after_overall := public.get_streamx_admin_viewers(0,50)->'overall';
     assert (after_metrics->>'session_count')::bigint = (before_metrics->>'session_count')::bigint + 4, 'Context segments must not inflate the visit count';
     assert (after_metrics->>'total_session_seconds')::numeric = (before_metrics->>'total_session_seconds')::numeric + 232, 'All recorded durations must contribute exactly once';
     assert (after_metrics->>'estimated_session_count')::bigint = (before_metrics->>'estimated_session_count')::bigint + 2, 'Historical estimates must be labelled';
     assert abs((after_metrics->>'average_session_seconds')::numeric -
         (after_metrics->>'total_session_seconds')::numeric / (after_metrics->>'session_count')::numeric) < 0.00001, 'Average must be total time divided by visits';
+
+    assert (after_overall->>'session_count')::bigint = (before_overall->>'session_count')::bigint + 4, 'Overall count must include every new visit once';
+    assert (after_overall->>'total_session_seconds')::numeric = (before_overall->>'total_session_seconds')::numeric + 232, 'Overall duration must include all users';
+    assert abs((after_overall->>'average_session_seconds')::numeric -
+        (after_overall->>'total_session_seconds')::numeric / (after_overall->>'session_count')::numeric) < 0.00001, 'Overall average must weight all visits equally';
+    assert public.get_streamx_admin_viewers(0,1)->'overall' = after_overall, 'A one-user page must still return the all-user average';
+    assert public.get_streamx_admin_viewers(9999,1)->'overall' = after_overall, 'An empty user page must still return the all-user average';
 
     assert not has_function_privilege('anon','public.record_viewer_visit_time(uuid,uuid,text,text,text,bigint,boolean)','execute'), 'Anonymous API keys cannot write';
     assert has_function_privilege('authenticated','public.record_viewer_visit_time(uuid,uuid,text,text,text,bigint,boolean)','execute'), 'Authenticated clients can record their own visits';

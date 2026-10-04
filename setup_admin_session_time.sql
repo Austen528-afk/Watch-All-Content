@@ -1,4 +1,4 @@
--- StreamX individual session averages. Run after setup_admin_users_reset.sql.
+-- StreamX individual and overall session averages. Run after setup_admin_users_reset.sql.
 -- Additive: preserves all activity, accounts, engagement and the legacy writer.
 
 alter table public.viewer_time_sessions add column if not exists visit_id uuid;
@@ -107,7 +107,7 @@ begin
         offset p_offset limit p_limit
     ), segments as (
         select s.* from public.viewer_time_sessions s
-        join page p on p.viewer_id = s.viewer_id
+        join viewer_rows p on p.viewer_id = s.viewer_id
     ), legacy_ordered as (
         select s.*,
             lag(s.context) over w as previous_context,
@@ -148,6 +148,14 @@ begin
     )
     select jsonb_build_object(
         'total', (select count(*) from viewer_rows),
+        -- Weight every recorded visit equally, across the full user inventory.
+        -- Pagination affects only the individual rows, never this average.
+        'overall', (select jsonb_build_object(
+            'session_count', count(*),
+            'total_session_seconds', coalesce(sum(v.duration_seconds),0),
+            'average_session_seconds', avg(v.duration_seconds),
+            'estimated_session_count', count(*) filter (where v.estimated)
+        ) from visits v),
         'users', coalesce((select jsonb_agg(to_jsonb(p)
             order by p.last_seen desc nulls last, p.joined_at desc nulls last, p.viewer_id)
             from enriched_page p), '[]'::jsonb)

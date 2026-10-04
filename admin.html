@@ -3160,6 +3160,8 @@ textarea{
 .viewer-session-table td:first-child{max-width:290px;overflow-wrap:anywhere;}
 .viewer-session-table tbody tr:last-child td{border-bottom:0;}
 .viewer-session-average{color:#ffc86a;font-weight:700;white-space:nowrap;}
+.viewer-session-summary-note{color:#999;font-size:12px;line-height:1.5;margin-top:10px;}
+#overallAverageSessionTime{font-size:clamp(24px,2vw,34px);}
 
 </style>
 
@@ -3556,6 +3558,13 @@ textarea{
             0
         </div>
 
+    </div>
+
+    <div class="stat" title="Total visible time divided by all recorded sessions across the Website and Mini App. Background time is excluded. ~ includes earlier estimated sessions.">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-label">Average Session Time — All Users</div>
+        <div class="stat-number" id="overallAverageSessionTime">—</div>
+        <div class="viewer-session-summary-note" id="overallAverageSessionCount">Loading session average...</div>
     </div>
 
 </div>
@@ -7694,6 +7703,16 @@ function formatViewerSessionAverage(viewer){
     return (Number(viewer.estimated_session_count || 0) > 0 ? '~ ' : '') + formatWatchTime(Math.round(average));
 }
 
+function renderOverallViewerSessionTime(overall){
+    if(!overall || !Number.isFinite(Number(overall.session_count))){
+        throw new Error('The server did not return the overall session average.');
+    }
+    document.getElementById('overallAverageSessionTime').textContent = formatViewerSessionAverage(overall);
+    const count = Number(overall.session_count);
+    document.getElementById('overallAverageSessionCount').textContent =
+        'Website + Mini App · ' + count.toLocaleString() + (count === 1 ? ' recorded session' : ' recorded sessions');
+}
+
 function renderViewerSessionRows(viewers){
     const list = document.getElementById('viewerSessionRows');
     list.replaceChildren();
@@ -7739,12 +7758,15 @@ async function loadViewerSessionStatistics(silent = false){
         if(!result.data || !Array.isArray(result.data.users)) throw new Error('The server did not return session times.');
         if(streamXVerifiedAdminUserId !== session.user.id || document.getElementById('app').style.display === 'none') return;
         viewerSessionTotal = Number(result.data.total) || 0;
+        renderOverallViewerSessionTime(result.data.overall);
         renderViewerSessionRows(result.data.users);
         document.getElementById('viewerSessionPage').textContent = 'Page ' + (Math.floor(offset / VIEWER_SESSION_PAGE_SIZE) + 1) + ' · ' + viewerSessionTotal.toLocaleString() + ' users';
         status.textContent = viewerSessionTotal ? '' : 'No users have been recorded yet.';
     }
     catch(error){
         status.textContent = 'Could not load session times: ' + error.message;
+        document.getElementById('overallAverageSessionTime').textContent = 'Unavailable';
+        document.getElementById('overallAverageSessionCount').textContent = 'Refresh session times to retry.';
     }
     finally{
         viewerSessionLoading = false;

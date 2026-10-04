@@ -96,7 +96,7 @@ for (const file of ['index.html', 'telegram.html']) {
 const admin = read('admin.html');
 function adminContext(extra = {}) {
     const ctx = vm.createContext(extra);
-    vm.runInContext(['formatWatchTime', 'formatViewerSessionAverage', 'renderViewerSessionRows'].map(name => extract(admin, name)).join('\n'), ctx);
+    vm.runInContext(['formatWatchTime', 'formatViewerSessionAverage', 'renderOverallViewerSessionTime', 'renderViewerSessionRows'].map(name => extract(admin, name)).join('\n'), ctx);
     return ctx;
 }
 
@@ -147,4 +147,29 @@ test('Admin does not render a pending metrics response after logout', async () =
     vm.runInContext('streamXVerifiedAdminUserId = null;', ctx);
     finish({ data: { total: 1, users: [{ viewer_id: 'viewer' }] } });
     await pending;
+});
+
+test('the dashboard uses the overall session average even when the visible user page has a different average', async () => {
+    const nodes = new Map();
+    const get = id => { if (!nodes.has(id)) nodes.set(id, element('div')); return nodes.get(id); };
+    get('app').style.display = 'block';
+    const ctx = adminContext({
+        document: { getElementById: get, createElement: element },
+        requireStreamXAdminSession: async () => ({ user: { id: 'admin' } }),
+        supabaseClient: { rpc: async (name, params) => {
+            assert.equal(name, 'get_streamx_admin_viewers');
+            assert.equal(params.p_offset, 50);
+            return { data: {
+                total: 100,
+                overall: { session_count: 10, total_session_seconds: 1140, average_session_seconds: 114, estimated_session_count: 8 },
+                users: [{ viewer_id: 'page-two-user', platforms: ['website'], session_count: 1, average_session_seconds: 600, total_session_seconds: 600 }]
+            } };
+        } }
+    });
+    vm.runInContext('let viewerSessionLoading = false, viewerSessionOffset = 50, viewerSessionTotal = 0, streamXVerifiedAdminUserId = "admin"; const VIEWER_SESSION_PAGE_SIZE = 50;\nasync ' + extract(admin, 'loadViewerSessionStatistics'), ctx);
+    await ctx.loadViewerSessionStatistics();
+    assert.equal(get('overallAverageSessionTime').textContent, '~ 1m 54s');
+    assert.equal(get('overallAverageSessionCount').textContent, 'Website + Mini App · 10 recorded sessions');
+    assert.equal(get('viewerSessionRows').children[0].children[2].textContent, '10m 0s');
+    assert.equal(get('viewerSessionStatus').textContent, '');
 });

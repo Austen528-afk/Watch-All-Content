@@ -506,6 +506,20 @@ body{
 }
 
 
+@media(min-width:851px){
+
+    .stats.dashboard-overview-stats{
+        grid-template-columns:repeat(5,minmax(0,1fr));
+        gap:16px;
+    }
+
+    .dashboard-overview-stats .stat{
+        min-width:0;
+        padding:18px 16px;
+    }
+
+}
+
 /* =====================================================
    SECTION
 ===================================================== */
@@ -3479,7 +3493,7 @@ textarea{
      STATISTICS
 ================================================= -->
 
-<div class="stats">
+<div class="stats dashboard-overview-stats">
 
     <div class="stat">
 

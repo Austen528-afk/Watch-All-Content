@@ -3151,6 +3151,16 @@ textarea{
 .viewer-management-pagination{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:18px;font-size:12px;color:#999;}
 @media(max-width:480px){.viewer-management-panel{padding:16px;}.viewer-management-row{gap:10px;padding:11px;}.viewer-management-reset{padding:9px;font-size:11px;}}
 
+/* Individual viewer session time */
+.viewer-session-section{margin-top:32px;}
+.viewer-session-table-wrap{overflow:auto;margin-top:16px;border:1px solid #333;border-radius:12px;background:#151515;}
+.viewer-session-table{width:100%;min-width:650px;border-collapse:collapse;font-size:13px;text-align:left;}
+.viewer-session-table th,.viewer-session-table td{padding:14px 16px;border-bottom:1px solid #2c2c2c;}
+.viewer-session-table th{color:#999;font-size:12px;font-weight:600;}
+.viewer-session-table td:first-child{max-width:290px;overflow-wrap:anywhere;}
+.viewer-session-table tbody tr:last-child td{border-bottom:0;}
+.viewer-session-average{color:#ffc86a;font-weight:700;white-space:nowrap;}
+
 </style>
 
 </head>
@@ -3690,6 +3700,27 @@ textarea{
 </div>
 
 
+
+<section class="viewer-session-section" aria-labelledby="viewerSessionTitle">
+    <div class="section-heading viewer-management-heading">
+        <h2 id="viewerSessionTitle">User session time</h2>
+        <button type="button" class="viewer-management-button" id="viewerSessionRefresh" onclick="loadViewerSessionStatistics()">Refresh session times</button>
+    </div>
+    <p class="viewer-management-description">Average time per session for each user, including browsing, videos and My Library. A session is one visit to the Website or Mini App; hidden/background time is excluded.</p>
+    <p class="viewer-management-description">Average = total visible time ÷ sessions. ~ marks averages that include earlier estimated sessions. Open visits update every 10 seconds.</p>
+    <p class="viewer-management-description" id="viewerSessionStatus" role="status" aria-live="polite">Loading session times...</p>
+    <div class="viewer-session-table-wrap">
+        <table class="viewer-session-table">
+            <thead><tr><th scope="col">User</th><th scope="col">Platform</th><th scope="col">Avg time / session</th><th scope="col">Sessions</th><th scope="col">Total time</th></tr></thead>
+            <tbody id="viewerSessionRows"></tbody>
+        </table>
+    </div>
+    <div class="viewer-management-pagination">
+        <button type="button" class="viewer-management-button" id="viewerSessionPrevious" onclick="changeViewerSessionPage(-1)" disabled>← Previous</button>
+        <span id="viewerSessionPage">Page 1</span>
+        <button type="button" class="viewer-management-button" id="viewerSessionNext" onclick="changeViewerSessionPage(1)" disabled>Next →</button>
+    </div>
+</section>
 
     </div>
 
@@ -6835,6 +6866,8 @@ async function showApplication(session){
 
     await loadActiveUsers();
 
+    await loadViewerSessionStatistics();
+
     await refreshAdminVideoCounters();
 
 }
@@ -7646,6 +7679,102 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("focus", refreshAdminVideoCounters);
 
 /* =====================================================
+   INDIVIDUAL VIEWER SESSION TIME
+===================================================== */
+
+let viewerSessionOffset = 0;
+let viewerSessionTotal = 0;
+let viewerSessionLoading = false;
+const VIEWER_SESSION_PAGE_SIZE = 50;
+
+function formatViewerSessionAverage(viewer){
+    const count = Number(viewer.session_count || 0);
+    const average = Number(viewer.average_session_seconds);
+    if(count < 1 || viewer.average_session_seconds == null || !Number.isFinite(average)) return 'No sessions yet';
+    return (Number(viewer.estimated_session_count || 0) > 0 ? '~ ' : '') + formatWatchTime(Math.round(average));
+}
+
+function renderViewerSessionRows(viewers){
+    const list = document.getElementById('viewerSessionRows');
+    list.replaceChildren();
+    viewers.forEach(viewer => {
+        const row = document.createElement('tr');
+        row.dataset.viewerId = String(viewer.viewer_id);
+        const platforms = (viewer.platforms || []).map(platform => platform === 'mini_app' ? 'Mini App' : 'Website').join(' / ') || '—';
+        const values = [
+            'User ' + String(viewer.viewer_id), platforms, formatViewerSessionAverage(viewer),
+            Number(viewer.session_count || 0).toLocaleString(),
+            formatWatchTime(viewer.total_session_seconds || 0)
+        ];
+        values.forEach((value, index) => {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            if(index === 2){
+                cell.className = 'viewer-session-average';
+                if(Number(viewer.estimated_session_count || 0) > 0){
+                    cell.title = 'Includes earlier sessions estimated by joining adjacent library/browsing records.';
+                }
+            }
+            row.appendChild(cell);
+        });
+        list.appendChild(row);
+    });
+}
+
+async function loadViewerSessionStatistics(silent = false){
+    if(viewerSessionLoading) return;
+    viewerSessionLoading = true;
+    const status = document.getElementById('viewerSessionStatus');
+    const offset = viewerSessionOffset;
+    if(!silent) status.textContent = 'Loading session times...';
+    document.getElementById('viewerSessionRefresh').disabled = true;
+    document.getElementById('viewerSessionPrevious').disabled = true;
+    document.getElementById('viewerSessionNext').disabled = true;
+    try{
+        const session = await requireStreamXAdminSession();
+        const result = await supabaseClient.rpc('get_streamx_admin_viewers', {
+            p_offset:offset, p_limit:VIEWER_SESSION_PAGE_SIZE
+        });
+        if(result.error) throw new Error(result.error.message);
+        if(!result.data || !Array.isArray(result.data.users)) throw new Error('The server did not return session times.');
+        if(streamXVerifiedAdminUserId !== session.user.id || document.getElementById('app').style.display === 'none') return;
+        viewerSessionTotal = Number(result.data.total) || 0;
+        renderViewerSessionRows(result.data.users);
+        document.getElementById('viewerSessionPage').textContent = 'Page ' + (Math.floor(offset / VIEWER_SESSION_PAGE_SIZE) + 1) + ' · ' + viewerSessionTotal.toLocaleString() + ' users';
+        status.textContent = viewerSessionTotal ? '' : 'No users have been recorded yet.';
+    }
+    catch(error){
+        status.textContent = 'Could not load session times: ' + error.message;
+    }
+    finally{
+        viewerSessionLoading = false;
+        document.getElementById('viewerSessionRefresh').disabled = false;
+        document.getElementById('viewerSessionPrevious').disabled = viewerSessionOffset === 0;
+        document.getElementById('viewerSessionNext').disabled = viewerSessionOffset + VIEWER_SESSION_PAGE_SIZE >= viewerSessionTotal;
+    }
+}
+
+async function changeViewerSessionPage(direction){
+    if(viewerSessionLoading) return;
+    const next = viewerSessionOffset + direction * VIEWER_SESSION_PAGE_SIZE;
+    if(next < 0 || next >= viewerSessionTotal) return;
+    viewerSessionOffset = next;
+    await loadViewerSessionStatistics();
+}
+
+function refreshViewerSessionStatistics(){
+    const app = document.getElementById('app');
+    const dashboard = document.getElementById('dashboardPage');
+    if(document.hidden || !app || app.style.display === 'none' || !dashboard.classList.contains('active')) return;
+    void loadViewerSessionStatistics(true);
+}
+
+setInterval(refreshViewerSessionStatistics, 10000);
+document.addEventListener('visibilitychange', () => {
+    if(!document.hidden) refreshViewerSessionStatistics();
+});
+
+/* =====================================================
    MANAGE / RESET VIEWERS
 ===================================================== */
 
@@ -7818,6 +7947,9 @@ async function loadViewerManagement(){
             const platforms = (viewer.platforms || []).map(platform => platform === 'mini_app' ? 'Mini App' : 'Website').join(' / ') || 'No recorded platform';
             details.textContent = platforms + ' · ' + Number(viewer.likes_count || 0).toLocaleString() + ' likes · ' + Number(viewer.saves_count || 0).toLocaleString() + ' saved videos';
             info.append(title, details);
+            const sessionTime = document.createElement('small');
+            sessionTime.textContent = 'Avg session: ' + formatViewerSessionAverage(viewer) + ' · ' + Number(viewer.session_count || 0).toLocaleString() + ' sessions · Total: ' + formatWatchTime(viewer.total_session_seconds || 0);
+            info.appendChild(sessionTime);
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'viewer-management-button viewer-management-reset';
@@ -18034,4 +18166,3 @@ checkSession();
 </body>
 
 </html>
-

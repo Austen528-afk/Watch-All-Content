@@ -3148,6 +3148,8 @@ const VIEWER_TIME_HEARTBEAT_MS = 10 * 1000;
 
 let viewerTimeState = null;
 let viewerTimeTimer = null;
+let viewerVisitId = null;
+let viewerTimeHasStarted = false;
 
 function stopLibraryActivityTracking(){
 
@@ -3216,7 +3218,7 @@ function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
     );
 
     return fetch(
-        SUPABASE_URL + "/rest/v1/rpc/record_viewer_time",
+        SUPABASE_URL + "/rest/v1/rpc/record_viewer_visit_time",
         {
             method:"POST",
             keepalive:true,
@@ -3227,6 +3229,7 @@ function sendViewerTimeHeartbeat(ended = false, stateOverride = null){
             },
             body:JSON.stringify({
                 p_session_id:state.sessionId,
+                p_visit_id:state.visitId,
                 p_viewer_id:authViewerId,
                 p_platform:state.platform,
                 p_context:state.context,
@@ -3263,8 +3266,10 @@ function startViewerTimeTracking(context){
         ? "library"
         : "outside";
 
+    viewerTimeHasStarted = true;
     viewerTimeState = {
         sessionId:createWatchTimeId(),
+        visitId:viewerVisitId || (viewerVisitId = createWatchTimeId()),
         viewerId:LIBRARY_VIEWER_ID,
         platform:LIBRARY_PLATFORM,
         context:normalizedContext,
@@ -3421,7 +3426,14 @@ document.addEventListener("visibilitychange",function(){
 window.addEventListener("pagehide",function(){
     stopLibraryActivityTracking();
     stopViewerTimeTracking();
+    viewerVisitId = null;
     stopLikeCountFallback();
+});
+
+window.addEventListener("pageshow",function(event){
+    if(event.persisted && viewerTimeHasStarted){
+        startViewerTimeTracking(libraryViewActive ? "library" : "outside");
+    }
 });
 
 function normalizeLibraryIds(values){

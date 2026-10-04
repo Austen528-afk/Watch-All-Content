@@ -3638,6 +3638,12 @@ textarea{
         </div>
 
     </div>
+
+    <div class="stat">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Total Users</div>
+        <div class="stat-number" id="totalUsers">0</div>
+    </div>
 </div>
 
 
@@ -7527,6 +7533,10 @@ async function loadActiveUsers(){
         ).textContent =
             miniAppUsers.size.toLocaleString();
 
+        document.getElementById(
+            "totalUsers"
+        ).textContent =
+            (websiteUsers.size + miniAppUsers.size).toLocaleString();
 
         document.getElementById(
             "libraryUsers"

@@ -3952,7 +3952,7 @@ textarea{
                     </strong>
 
                     <small>
-                        JPG, PNG, WebP
+                        JPG, PNG, WebP, full-length GIF
                     </small>
 
                     <div
@@ -7068,10 +7068,9 @@ thumbnailFile.addEventListener(
             return;
 
 
-        /* GIFs are accepted for the existing upload workflow.
-           To protect feed speed, a selected GIF is NOT published as the live
-           thumbnail. Railway will generate the lightweight preview.mp4 +
-           poster.jpg from the uploaded video instead. */
+        /* Full-length GIFs are stored unchanged on R2 and remain the live
+           feed animation. The worker may generate a poster/MP4 backup,
+           but it will not replace an explicitly selected GIF. */
         const thumbnailExtension =
             String(selectedThumbnailFile.name || "")
                 .split(".")
@@ -7111,7 +7110,7 @@ thumbnailFile.addEventListener(
             selectedThumbnailFile.name +
             (
                 thumbnailExtension === "gif"
-                    ? " — GIF recognized; lightweight preview/poster will be generated"
+                    ? " — full-length animation will be uploaded unchanged"
                     : ""
             );
 
@@ -8997,7 +8996,7 @@ async function uploadVideo(){
         updateProgress(
             70,
             selectedThumbnailIsGif
-                ? "Video uploaded. GIF recognized — preparing lightweight preview + poster..."
+                ? "Video uploaded. Uploading original full-length GIF..."
                 : "Video uploaded. Processing thumbnail..."
         );
 
@@ -9006,10 +9005,7 @@ async function uploadVideo(){
            UPLOAD THUMBNAIL
         ========================================= */
 
-        if(
-            selectedThumbnailFile &&
-            !selectedThumbnailIsGif
-        ){
+        if(selectedThumbnailFile){
 
             try{
                 thumbnailURL = await uploadThumbnailToR2(session, selectedThumbnailFile);
@@ -9058,9 +9054,7 @@ async function uploadVideo(){
                     video_url:
                         videoURL,
 
-                    /* The original video is stored directly in Cloudflare R2.
-                       It remains the immediate playback source while the worker
-                       prepares the lightweight preview/poster in the background. */
+                    /* Original video playback remains separate from the GIF thumbnail. */
                     source_video_url:
                         videoURL,
 
@@ -9863,10 +9857,16 @@ function createVideoCard(
                 >
                     ✏️ Edit Metadata
                 </button>
+                <button
+                    class="card-button"
+                    onclick="replaceVideoGif(${JSON.stringify(video.id)}, this)"
+                >
+                    🖼 Upload Full GIF
+                </button>
 
 
                 ${
-                    !video.preview_video_url
+                    !video.preview_video_url && !/\.gif(?:[?#]|$)/i.test(String(video.thumbnail_url || ""))
                     ?
                     `
                     <button
@@ -10244,6 +10244,55 @@ function closeVideoMetadataEditor(){
 
 }
 
+
+
+/* Attach a full-duration GIF to an existing video without reuploading
+   the original or changing HLS/video playback. */
+async function replaceVideoGif(videoId, button){
+    const picker = document.createElement("input");
+    picker.type = "file";
+    picker.accept = "image/gif,.gif";
+    picker.style.display = "none";
+    document.body.appendChild(picker);
+    picker.addEventListener("change", async () => {
+        const file = picker.files?.[0];
+        picker.remove();
+        if(!file) return;
+        if(!/\.gif$/i.test(file.name) || file.type !== "image/gif"){
+            alert("Choose an actual GIF file.");
+            return;
+        }
+        const oldLabel = button.textContent;
+        button.disabled = true;
+        button.textContent = "Uploading full GIF...";
+        let newUrl = null;
+        try{
+            const session = await requireAuthenticatedUser();
+            newUrl = await uploadThumbnailToR2(session, file);
+            const { data: current, error: readError } = await supabaseClient
+                .from("videos").select("thumbnail_url").eq("id", videoId).single();
+            if(readError) throw readError;
+            const { data, error } = await supabaseClient.from("videos")
+                .update({ thumbnail_url: newUrl })
+                .eq("id", videoId).eq("thumbnail_url", current.thumbnail_url)
+                .select("id");
+            if(error) throw error;
+            if(!data?.length) throw new Error("Thumbnail changed during upload. Please retry.");
+            button.textContent = "✓ Full GIF saved";
+            await loadVideos();
+        }catch(error){
+            if(newUrl){
+                try{
+                    const session = await requireAuthenticatedUser();
+                    await deleteR2MediaObject(session, newUrl);
+                }catch(cleanupError){ console.warn("GIF cleanup failed", cleanupError); }
+            }
+            alert("Could not save full GIF: " + error.message);
+            button.textContent = oldLabel;
+        }finally{ button.disabled = false; }
+    }, { once:true });
+    picker.click();
+}
 
 async function editVideoMetadata(videoId){
 
@@ -12620,14 +12669,9 @@ async function optimizeAllGifPreviews(){
         }
 
 
-        const candidates =
-            (videosResult.data || [])
-                .filter(
-                    video =>
-                        isGifThumbnailUrl(
-                            video.thumbnail_url
-                        )
-                );
+        /* Full-length GIFs are intentional; bulk optimization must not
+           overwrite them. Keep the legacy control harmless. */
+        const candidates = [];
 
 
         if(candidates.length === 0){

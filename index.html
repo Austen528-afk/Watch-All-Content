@@ -5752,7 +5752,7 @@ function createVideoCard(video){
 
 
     const previewVideoURL =
-        video.preview_video_url
+        !/\.gif(?:[?#]|$)/i.test(String(video.thumbnail_url || "")) && video.preview_video_url
             ? getPublicURL(
                 video.preview_video_url,
                 "streamx-hls"

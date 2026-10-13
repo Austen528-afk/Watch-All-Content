@@ -108,6 +108,13 @@ BEGIN
         SELECT
             s.video_id::bigint AS video_id,
             SUM(GREATEST(COALESCE(s.watched_seconds, 0), 0))::numeric AS watch_seconds,
+            COALESCE(
+                SUM(GREATEST(COALESCE(s.watched_seconds, 0), 0)) FILTER (
+                    WHERE COALESCE(s.updated_at, s.created_at)
+                        >= NOW() - INTERVAL '90 days'
+                ),
+                0
+            )::numeric AS recent_watch_seconds,
             MAX(
                 COALESCE(
                     NULLIF(BTRIM(v.category), ''),
@@ -140,59 +147,26 @@ BEGIN
            AND p.like_user_id = l.user_id::text
         GROUP BY l.video_id
     ),
-    all_category_watch AS (
+    user_category_watch AS (
         SELECT
-            LOWER(
-                COALESCE(
-                    NULLIF(BTRIM(v.category), ''),
-                    NULLIF(BTRIM(s.video_category), ''),
-                    'Uncategorized'
-                )
-            ) AS category_key,
-            SUM(GREATEST(COALESCE(s.watched_seconds, 0), 0))::numeric AS watch_seconds
-        FROM public.video_watch_sessions s
-        JOIN params p
-            ON p.viewer_id = s.viewer_id
-           AND p.platform = s.platform
-        LEFT JOIN public.videos v
-            ON v.id = s.video_id
-        WHERE s.video_id IS NOT NULL
-        GROUP BY 1
-    ),
-    recent_category_watch AS (
-        SELECT
-            LOWER(
-                COALESCE(
-                    NULLIF(BTRIM(v.category), ''),
-                    NULLIF(BTRIM(s.video_category), ''),
-                    'Uncategorized'
-                )
-            ) AS category_key,
-            SUM(GREATEST(COALESCE(s.watched_seconds, 0), 0))::numeric AS watch_seconds
-        FROM public.video_watch_sessions s
-        JOIN params p
-            ON p.viewer_id = s.viewer_id
-           AND p.platform = s.platform
-        LEFT JOIN public.videos v
-            ON v.id = s.video_id
-        WHERE s.video_id IS NOT NULL
-          AND COALESCE(s.updated_at, s.created_at) >= NOW() - INTERVAL '90 days'
-        GROUP BY 1
+            LOWER(uw.category) AS category_key,
+            SUM(uw.watch_seconds)::numeric AS all_time_watch_seconds,
+            SUM(uw.recent_watch_seconds)::numeric AS recent_watch_seconds
+        FROM user_watch uw
+        GROUP BY LOWER(uw.category)
     ),
     recent_watch_total AS (
-        SELECT COALESCE(SUM(r.watch_seconds), 0)::numeric AS watch_seconds
-        FROM recent_category_watch r
+        SELECT COALESCE(SUM(ucw.recent_watch_seconds), 0)::numeric AS watch_seconds
+        FROM user_category_watch ucw
     ),
     category_watch_profile AS (
         SELECT
-            a.category_key,
+            ucw.category_key,
             CASE
-                WHEN rwt.watch_seconds > 0 THEN COALESCE(r.watch_seconds, 0)
-                ELSE a.watch_seconds
+                WHEN rwt.watch_seconds > 0 THEN ucw.recent_watch_seconds
+                ELSE ucw.all_time_watch_seconds
             END::numeric AS watch_seconds
-        FROM all_category_watch a
-        LEFT JOIN recent_category_watch r
-            ON r.category_key = a.category_key
+        FROM user_category_watch ucw
         CROSS JOIN recent_watch_total rwt
     ),
     category_signal_rows AS (

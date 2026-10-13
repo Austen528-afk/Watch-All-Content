@@ -55,14 +55,14 @@ function makeImage(url, { complete = false, naturalWidth = 0 } = {}) {
     };
 }
 
-function runQueueHarness(page, width) {
+function runQueueHarness(page, width, { connectionType = "4g", deviceMemory = 8 } = {}) {
     const source = sourceOf(page);
     const start = source.indexOf("const streamxGifLoadQueue = new Map();");
     const end = source.indexOf("function canPreloadFeedThumbnails()", start);
     assert.ok(start >= 0 && end > start, page + " GIF queue helpers");
     const images = [makeImage("one.gif"), makeImage("two.gif"), makeImage("three.gif")];
     const context = {
-        navigator: { connection: { effectiveType: "4g" }, deviceMemory: 8 },
+        navigator: { connection: { effectiveType: connectionType }, deviceMemory },
         window: { innerWidth: width, innerHeight: 800, setTimeout: () => 1, clearTimeout() {} },
         document: { documentElement: { clientHeight: 800 } },
         canLoadFeedThumbnails: () => true,
@@ -231,11 +231,17 @@ test("opening playback does not cancel or reset an in-flight GIF image", () => {
 test("visible GIF downloads are bounded and repeated visibility calls keep the same src", () => {
     for (const page of pages) {
         const mobile = runQueueHarness(page, 390);
-        assert.equal(mobile.activeCount, 1, page + " mobile concurrency");
-        assert.deepEqual(mobile.initialAssignments, [1, 0, 0], page + " mobile queue");
+        assert.equal(mobile.activeCount, 2, page + " normal mobile concurrency");
+        assert.deepEqual(mobile.initialAssignments, [1, 1, 0], page + " visible GIFs start together");
         assert.equal(mobile.repeatAssignments, 1, page + " repeated request");
         assert.equal(mobile.afterScrollAssignments, 1, page + " source retained");
         assert.equal(mobile.nextStarted, 1, page + " advances after load");
+
+        const slowMobile = runQueueHarness(page, 390, { connectionType: "3g", deviceMemory: 4 });
+        assert.equal(slowMobile.activeCount, 1, page + " slow-network concurrency");
+
+        const lowMemoryMobile = runQueueHarness(page, 390, { connectionType: "4g", deviceMemory: 2 });
+        assert.equal(lowMemoryMobile.activeCount, 1, page + " low-memory concurrency");
 
         const desktop = runQueueHarness(page, 1200);
         assert.equal(desktop.activeCount, 2, page + " desktop concurrency");

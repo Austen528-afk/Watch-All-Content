@@ -5537,9 +5537,11 @@ function getFeedThumbnailItems(){
 
 const streamxGifLoadQueue = new Map();
 const streamxGifActiveRequests = new Set();
+const streamxGifLoadTimers = new WeakMap();
 let streamxGifDesired = new Set();
 const STREAMX_GIF_PREFETCH_MAX_BYTES = 20 * 1024 * 1024;
-const STREAMX_GIF_DECODE_TIMEOUT_MS = 10000;
+const STREAMX_GIF_LOAD_NOTICE_MS = 12000;
+const STREAMX_GIF_LOAD_TIMEOUT_MS = 90000;
 
 function getFeedGifConcurrency(){
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -5575,6 +5577,9 @@ function requestFeedGif(image,priority){
     image.loading = "eager";
     if(image.dataset.gifState === "loading"){
         streamxGifActiveRequests.add(image);
+        if(image.getAttribute("src") === source && image.complete && image.naturalWidth){
+            markFeedGifReady(image);
+        }
         return;
     }
     if(image.dataset.gifState === "queued"){
@@ -5613,7 +5618,19 @@ function pumpFeedGifQueue(){
         if(!source || !image.isConnected) continue;
         image.dataset.gifState = "loading";
         streamxGifActiveRequests.add(image);
-        if(image.getAttribute("src") !== source) image.src = source;
+        const sourceAlreadyAssigned = image.getAttribute("src") === source;
+        if(!sourceAlreadyAssigned) image.src = source;
+        if(sourceAlreadyAssigned && image.complete){
+            if(image.naturalWidth){
+                markFeedGifReady(image);
+                continue;
+            }
+            if(image.currentSrc){
+                markFeedGifFailed(image,"Animation failed to load");
+                continue;
+            }
+        }
+        watchFeedGifLoad(image,source);
     }
 }
 
@@ -5647,13 +5664,65 @@ function queueFeedGifPreviews(visibleCards,upcomingCards){
     pumpFeedGifQueue();
 }
 
+function clearFeedGifLoadTimer(image){
+    const timer = streamxGifLoadTimers.get(image);
+    if(timer){
+        window.clearTimeout(timer);
+        streamxGifLoadTimers.delete(image);
+    }
+}
+
+function watchFeedGifLoad(image,source){
+    clearFeedGifLoadTimer(image);
+    const noticeTimer = window.setTimeout(() => {
+        if(!image.isConnected || image.dataset.gifSrc !== source ||
+            image.dataset.gifState !== "loading") return;
+        const status = image.closest(".thumbnail")?.querySelector(".thumbnail-gif-status");
+        if(status) status.textContent = "Large animation is still loading…";
+        const timeoutTimer = window.setTimeout(() => {
+            if(!image.isConnected || image.dataset.gifSrc !== source ||
+                image.dataset.gifState !== "loading") return;
+            if(image.complete && image.naturalWidth){
+                markFeedGifReady(image);
+                return;
+            }
+            markFeedGifFailed(image,image.complete
+                ? "Animation failed to load"
+                : "Animation did not finish loading");
+        },STREAMX_GIF_LOAD_TIMEOUT_MS - STREAMX_GIF_LOAD_NOTICE_MS);
+        streamxGifLoadTimers.set(image,timeoutTimer);
+    },STREAMX_GIF_LOAD_NOTICE_MS);
+    streamxGifLoadTimers.set(image,noticeTimer);
+}
+
+function markFeedGifReady(image){
+    if(!image || !image.isConnected || !image.naturalWidth ||
+        image.getAttribute("src") !== image.dataset.gifSrc) return false;
+    clearFeedGifLoadTimer(image);
+    streamxGifLoadQueue.delete(image);
+    image.dataset.gifState = "loaded";
+    streamxGifActiveRequests.delete(image);
+    const thumbnail = image.closest(".thumbnail");
+    if(thumbnail){
+        thumbnail.classList.remove("streamx-gif-failed");
+        thumbnail.classList.add("streamx-gif-ready");
+    }
+    scheduleFeedThumbnailWindow();
+    pumpFeedGifQueue();
+    return true;
+}
+
 function markFeedGifFailed(image,message){
     if(!image) return;
+    clearFeedGifLoadTimer(image);
     image.dataset.gifState = "failed";
     streamxGifLoadQueue.delete(image);
     streamxGifActiveRequests.delete(image);
     const thumbnail = image.closest(".thumbnail");
-    if(thumbnail) thumbnail.classList.add("streamx-gif-failed");
+    if(thumbnail){
+        thumbnail.classList.remove("streamx-gif-ready");
+        thumbnail.classList.add("streamx-gif-failed");
+    }
     const status = thumbnail?.querySelector(".thumbnail-gif-status");
     if(status) status.textContent = message || "Animation unavailable on this device";
     scheduleFeedThumbnailWindow();
@@ -5671,34 +5740,19 @@ function trackFeedGifPreviews(){
                 markFeedGifFailed(image,"Animation unavailable");
                 return;
             }
-            const source = image.dataset.gifSrc;
-            let timer = 0;
-            const timeout = new Promise(resolve => {
-                timer = window.setTimeout(() => resolve(false),STREAMX_GIF_DECODE_TIMEOUT_MS);
-            });
-            const decoded = typeof image.decode === "function"
-                ? image.decode().then(() => true).catch(() => false)
-                : Promise.resolve(true);
-            Promise.race([decoded,timeout]).then(ready => {
-                window.clearTimeout(timer);
-                if(!image.isConnected || image.dataset.gifSrc !== source ||
-                    image.dataset.gifState !== "loading") return;
-                if(!ready){
-                    markFeedGifFailed(image,"Animation could not start on this device");
-                    return;
-                }
-                image.dataset.gifState = "loaded";
-                streamxGifActiveRequests.delete(image);
-                const thumbnail = image.closest(".thumbnail");
-                if(thumbnail) thumbnail.classList.add("streamx-gif-ready");
-                scheduleFeedThumbnailWindow();
-                pumpFeedGifQueue();
-            });
+            // The load event means the first frame is available. Do not wait for
+            // decode(), which may stall for a large animated GIF in mobile WebViews.
+            markFeedGifReady(image);
         });
         image.addEventListener("error",() => {
             if(image.getAttribute("src") !== image.dataset.gifSrc) return;
             markFeedGifFailed(image,"Animation failed to load");
         });
+        // Telegram can restore a cached image without emitting another load event.
+        if(image.getAttribute("src") === image.dataset.gifSrc &&
+            image.complete && image.naturalWidth){
+            markFeedGifReady(image);
+        }
     });
 }
 

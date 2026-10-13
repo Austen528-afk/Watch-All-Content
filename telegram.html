@@ -4582,14 +4582,70 @@ function setupVideoRealtime(){
             "postgres_changes",
             { event:"INSERT", schema:"public", table:"videos" },
             payload => {
-                mergeRealtimeVideo(payload.new);
+                const video = payload.new;
+                const existingVideo = allVideos.find(
+                    item => String(item.id) === String(video && video.id)
+                );
+                const createdAt = Date.parse(
+                    String(video && video.created_at || "")
+                );
+                const now = Date.now();
+                const isRecentUpload =
+                    Number.isFinite(createdAt) &&
+                    createdAt <= now &&
+                    createdAt >= now - 14 * 24 * 60 * 60 * 1000;
+                const hasVideoURL = Boolean(
+                    String(video && video.video_url || "").trim()
+                );
+                const justBecameAvailable =
+                    !existingVideo ||
+                    !existingVideo.video_url ||
+                    (
+                        video &&
+                        video.media_status === "ready" &&
+                        existingVideo.media_status !== "ready"
+                    );
+
+                mergeRealtimeVideo(video);
+
+                if(isRecentUpload && hasVideoURL && justBecameAvailable){
+                    scheduleRecommendationRefresh(900);
+                }
             }
         )
         .on(
             "postgres_changes",
             { event:"UPDATE", schema:"public", table:"videos" },
             payload => {
-                mergeRealtimeVideo(payload.new);
+                const video = payload.new;
+                const existingVideo = allVideos.find(
+                    item => String(item.id) === String(video && video.id)
+                );
+                const createdAt = Date.parse(
+                    String(video && video.created_at || "")
+                );
+                const now = Date.now();
+                const isRecentUpload =
+                    Number.isFinite(createdAt) &&
+                    createdAt <= now &&
+                    createdAt >= now - 14 * 24 * 60 * 60 * 1000;
+                const hasVideoURL = Boolean(
+                    String(video && video.video_url || "").trim()
+                );
+                const justBecameAvailable =
+                    !existingVideo ||
+                    !existingVideo.video_url ||
+                    (
+                        video &&
+                        video.media_status === "ready" &&
+                        existingVideo.media_status !== "ready"
+                    );
+
+                mergeRealtimeVideo(video);
+
+                if(isRecentUpload && hasVideoURL && justBecameAvailable){
+                    scheduleRecommendationRefresh(900);
+                }
             }
         )
         .on(

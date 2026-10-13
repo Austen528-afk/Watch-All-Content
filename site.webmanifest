@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "XxxFilms",
+  "short_name": "XxxFilms",
+  "description": "XxxFilms streaming",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    {
+      "src": "/xxxfilms-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

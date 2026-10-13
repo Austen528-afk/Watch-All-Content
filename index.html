@@ -10,8 +10,14 @@
 <meta charset="UTF-8">
 <meta name="monetag" content="c41e830bf810acd1f3a6be0cae3ef614">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#080808">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="icon" href="/xxxfilms-icon.svg" type="image/svg+xml">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="XxxFilms">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
 <title>XxxFilms</title>
 
@@ -210,6 +216,7 @@ body{
 .site-top{
     position:fixed;
     top:0;
+    padding-top:env(safe-area-inset-top, 0px);
     background:#080808;
     left:0;
     right:0;

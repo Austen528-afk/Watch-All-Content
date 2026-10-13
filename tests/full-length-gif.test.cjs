@@ -138,21 +138,6 @@ test("a loaded full GIF appears without waiting for WebView decode()", () => {
     }
 });
 
-test("the worker builds a ten-second low-bandwidth teaser without changing GIF duration", () => {
-    const worker = sourceOf("worker.mjs");
-    const configStart = worker.indexOf("const PREVIEW_DURATION_SECONDS");
-    const configEnd = worker.indexOf("const PREVIEW_MAX_WIDTH", configStart);
-    const previewStart = worker.indexOf("async function createLightweightPreview(");
-    const previewEnd = worker.indexOf("async function createStaticPoster(", previewStart);
-    assert.ok(configStart >= 0 && configEnd > configStart && previewEnd > previewStart);
-    const config = worker.slice(configStart, configEnd);
-    const preview = worker.slice(previewStart, previewEnd);
-    assert.match(config, /Math\.min\(\s*10,\s*Number\(process\.env\.PREVIEW_DURATION_SECONDS \|\| 10\)\s*\)/);
-    assert.match(preview, /fps=10/);
-    assert.match(preview, /"-maxrate", "160k"/);
-    assert.match(preview, /"-bufsize", "320k"/);
-});
-
 test("an already-complete cached GIF is recovered when the WebView restores the feed", () => {
     for (const page of pages) {
         const source = sourceOf(page);

@@ -321,21 +321,6 @@ BEGIN
             cp.preference_rank,
             cp.preference_share,
             CASE
-                WHEN c.created_at IS NULL
-                  OR c.created_at < NOW() - INTERVAL '14 days'
-                    THEN 0::numeric
-                ELSE GREATEST(
-                    0::numeric,
-                    1::numeric -
-                    (
-                        GREATEST(
-                            EXTRACT(EPOCH FROM (NOW() - c.created_at)),
-                            0
-                        )::numeric / 1209600::numeric
-                    )
-                ) * 20::numeric
-            END AS freshness_score,
-            CASE
                 WHEN NOT h.has_history THEN
                     (LN(1 + c.views::numeric) / m.max_log_views) * 60
                     + (LN(1 + c.likes_count::numeric) / m.max_log_likes) * 40

@@ -1560,6 +1560,7 @@ body{
     pointer-events:none;
 }
 .thumbnail.streamx-gif-ready .thumbnail-gif-preview{opacity:1;}
+.thumbnail.streamx-gif-loading .thumbnail-gif-preview{opacity:1;}
 .thumbnail.streamx-gif-ready .thumbnail-fallback{opacity:0;}
 .thumbnail.streamx-gif-ready .thumbnail-preview-video{opacity:0;}
 .thumbnail-fallback{transition:opacity .12s ease;}
@@ -5275,13 +5276,23 @@ function renderVideos(){
 /* =========================================================
    TELEGRAM LIGHTWEIGHT VIDEO PREVIEW WINDOW
    ---------------------------------------------------------
-   New processed uploads use tiny muted MP4 previews instead of GIF.
-   The static poster is shown first; the MP4 is requested only when the
-   preview card is actually visible, and only visible previews play.
+   GIF previews take priority when attached. Tiny muted MP4 previews are
+   fallbacks only when the GIF is unavailable; MP4 loads only for visible
+   preview cards.
 ========================================================= */
 
 let streamxPreviewPlayObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
+
+function feedCardGifOwnsPreview(video){
+    const image = video?.closest(".thumbnail")
+        ?.querySelector(".thumbnail-gif-preview");
+    return Boolean(
+        image &&
+        image.dataset.gifSrc &&
+        image.dataset.gifState !== "failed"
+    );
+}
 
 function prepareThumbnailVideoPreview(video){
 
@@ -5289,6 +5300,10 @@ function prepareThumbnailVideoPreview(video){
         !video ||
         video.dataset.streamxPreviewPrepared === "1"
     ){
+        return;
+    }
+
+    if(feedCardGifOwnsPreview(video)){
         return;
     }
 
@@ -5400,6 +5415,11 @@ function playThumbnailVideoPreview(video){
         !video ||
         streamxFeedPreviewPlaybackSuspended
     ){
+        return;
+    }
+
+    if(feedCardGifOwnsPreview(video)){
+        pauseThumbnailVideoPreview(video);
         return;
     }
 
@@ -5650,6 +5670,9 @@ function requestFeedGif(image,priority){
     const source = image.dataset.gifSrc;
     if(!source || image.dataset.gifState === "failed" ||
         image.dataset.gifState === "loaded") return;
+    const thumbnail = image.closest(".thumbnail");
+    thumbnail?.classList.add("streamx-gif-loading");
+    stopFeedVideoPreviewForGif(image);
     image.fetchPriority = priority || "high";
     image.loading = "eager";
     if(image.dataset.gifState === "loading"){
@@ -5782,6 +5805,7 @@ function markFeedGifReady(image){
     const thumbnail = image.closest(".thumbnail");
     if(thumbnail){
         thumbnail.classList.remove("streamx-gif-failed");
+        thumbnail.classList.remove("streamx-gif-loading");
         thumbnail.classList.add("streamx-gif-ready");
         const status = thumbnail.querySelector(".thumbnail-gif-status");
         if(status) status.textContent = "";
@@ -5811,7 +5835,16 @@ function markFeedGifFailed(image,message){
     const thumbnail = image.closest(".thumbnail");
     if(thumbnail){
         thumbnail.classList.remove("streamx-gif-ready");
+        thumbnail.classList.remove("streamx-gif-loading");
         thumbnail.classList.add("streamx-gif-failed");
+        const preview = thumbnail.querySelector(".thumbnail-preview-video");
+        if(preview){
+            const rect = preview.getBoundingClientRect();
+            const height = window.innerHeight || document.documentElement.clientHeight || 800;
+            if(rect.bottom > 0 && rect.top < height){
+                playThumbnailVideoPreview(preview);
+            }
+        }
     }
     const status = thumbnail?.querySelector(".thumbnail-gif-status");
     if(status) status.textContent = message || "Animation unavailable on this device";

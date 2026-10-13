@@ -215,10 +215,16 @@ body{
 .site-top{
     position:sticky;
     top:0;
-    padding-top:env(safe-area-inset-top, 0px);
+    padding-top:0;
     background:#080808;
     width:100%;
     z-index:1100;
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen){
+    .site-top{
+        padding-top:env(safe-area-inset-top, 0px);
+    }
 }
 
 .header{

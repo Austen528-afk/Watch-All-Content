@@ -15,12 +15,18 @@ function makeImage(url, { complete = false, naturalWidth = 0 } = {}) {
     const listeners = new Map();
     const classes = new Set();
     const status = { textContent: "Loading animation…" };
+    const previewClasses = new Set(["streamx-preview-ready"]);
+    const preview = {
+        paused: false,
+        pause() { this.paused = true; },
+        classList: { remove: name => previewClasses.delete(name) },
+    };
     const thumbnail = {
         classList: {
             add: name => classes.add(name),
             remove: name => classes.delete(name),
         },
-        querySelector: () => status,
+        querySelector: selector => selector === ".thumbnail-preview-video" ? preview : status,
     };
     return {
         dataset: { gifSrc: url, gifState: "" },
@@ -34,6 +40,8 @@ function makeImage(url, { complete = false, naturalWidth = 0 } = {}) {
         listeners,
         classes,
         status,
+        preview,
+        previewClasses,
         addEventListener(name, listener) { listeners.set(name, listener); },
         closest() { return thumbnail; },
         decode() { throw new Error("decode() must not block GIF display"); },
@@ -92,7 +100,9 @@ test("website and Telegram render full GIFs above a retained static poster", () 
         assert.match(source, /markFeedGifReady\(image\)/, page);
         assert.doesNotMatch(source, /image\.decode\(\)/, page + " must not gate display on decode()");
         assert.match(source, /gif_preview_url/, page);
-        assert.match(source, /!gifPreviewURL && video\.preview_video_url/, page);
+        assert.match(source, /const previewVideoURL = video\.preview_video_url/, page);
+        assert.match(source, /thumbnail\.streamx-gif-ready \.thumbnail-preview-video\{opacity:0;\}/, page);
+        assert.match(source, /streamx-preview-active/, page);
     }
 });
 
@@ -117,10 +127,14 @@ test("a loaded full GIF appears without waiting for WebView decode()", () => {
         context.trackFeedGifPreviews();
         image.complete = true;
         image.naturalWidth = 640;
+        image.classes.add("streamx-preview-active");
         image.fire("load");
         assert.equal(image.dataset.gifState, "loaded", page);
         assert.equal(image.classes.has("streamx-gif-ready"), true, page);
-        assert.equal(image.status.textContent, "Loading animation…", page + " status is hidden by ready state");
+        assert.equal(image.classes.has("streamx-preview-active"), false, page + " full GIF replaces the teaser");
+        assert.equal(image.preview.paused, true, page + " pauses the teaser after the full GIF loads");
+        assert.equal(image.previewClasses.has("streamx-preview-ready"), false, page + " hides the teaser");
+        assert.equal(image.status.textContent, "", page + " clears its loading label when ready");
     }
 });
 

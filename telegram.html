@@ -1561,6 +1561,7 @@ body{
 }
 .thumbnail.streamx-gif-ready .thumbnail-gif-preview{opacity:1;}
 .thumbnail.streamx-gif-ready .thumbnail-fallback{opacity:0;}
+.thumbnail.streamx-gif-ready .thumbnail-preview-video{opacity:0;}
 .thumbnail-fallback{transition:opacity .12s ease;}
 .thumbnail-gif-status{
     position:absolute;
@@ -1577,7 +1578,8 @@ body{
     pointer-events:none;
 }
 .thumbnail.streamx-gif-ready .thumbnail-gif-status{display:none;}
-.thumbnail.streamx-gif-failed .thumbnail-gif-status{background:rgba(0,0,0,.82);}
+.thumbnail.streamx-preview-active .thumbnail-gif-status{display:none;}
+.thumbnail.streamx-gif-failed .thumbnail-gif-status{display:block;background:rgba(0,0,0,.82);}
 
 
 .thumbnail-preview-loading{
@@ -5234,6 +5236,10 @@ function prepareThumbnailVideoPreview(video){
         return;
     }
 
+    if(video.closest(".thumbnail")?.classList.contains("streamx-gif-ready")){
+        return;
+    }
+
     const source =
         video.dataset.previewSrc;
 
@@ -5252,9 +5258,17 @@ function prepareThumbnailVideoPreview(video){
 
     const markPlaying = () => {
 
+        const thumbnail = video.closest(".thumbnail");
+        if(thumbnail?.classList.contains("streamx-gif-ready")){
+            pauseThumbnailVideoPreview(video);
+            return;
+        }
+
         video.classList.add(
             "streamx-preview-ready"
         );
+
+        thumbnail?.classList.add("streamx-preview-active");
 
         const card =
             video.closest(
@@ -5333,6 +5347,11 @@ function playThumbnailVideoPreview(video){
         return;
     }
 
+    if(video.closest(".thumbnail")?.classList.contains("streamx-gif-ready")){
+        pauseThumbnailVideoPreview(video);
+        return;
+    }
+
     prepareThumbnailVideoPreview(
         video
     );
@@ -5365,6 +5384,8 @@ function pauseThumbnailVideoPreview(video){
     video.classList.remove(
         "streamx-preview-ready"
     );
+
+    video.closest(".thumbnail")?.classList.remove("streamx-preview-active");
 
     const card =
         video.closest(
@@ -5706,10 +5727,23 @@ function markFeedGifReady(image){
     if(thumbnail){
         thumbnail.classList.remove("streamx-gif-failed");
         thumbnail.classList.add("streamx-gif-ready");
+        const status = thumbnail.querySelector(".thumbnail-gif-status");
+        if(status) status.textContent = "";
+        stopFeedVideoPreviewForGif(image);
     }
     scheduleFeedThumbnailWindow();
     pumpFeedGifQueue();
     return true;
+}
+
+function stopFeedVideoPreviewForGif(image){
+    const thumbnail = image?.closest(".thumbnail");
+    if(!thumbnail) return;
+    thumbnail.classList.remove("streamx-preview-active");
+    const preview = thumbnail.querySelector(".thumbnail-preview-video");
+    if(!preview || typeof preview.pause !== "function") return;
+    try{ preview.pause(); }catch(error){}
+    preview.classList.remove("streamx-preview-ready");
 }
 
 function markFeedGifFailed(image,message){
@@ -5976,7 +6010,7 @@ function createVideoCard(video){
         legacyGifURL ? "" : video.thumbnail_url,
         "thumbnails"
     );
-    const previewVideoURL = !gifPreviewURL && video.preview_video_url
+    const previewVideoURL = video.preview_video_url
         ? getPublicURL(video.preview_video_url, "streamx-hls")
         : null;
     const gifSizeBytes = Math.max(0, Number(video.gif_size_bytes) || 0);

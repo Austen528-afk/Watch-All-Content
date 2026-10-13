@@ -2,13 +2,7 @@
 <html lang="en">
 
 <head>
-<!-- XxxFilms temporary Monetag website preview: In-Page Push -->
-<script>(function(s){s.dataset.zone='11947111',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-<!-- End Monetag website preview -->
-
-
 <meta charset="UTF-8">
-<meta name="monetag" content="c41e830bf810acd1f3a6be0cae3ef614">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#080808">
@@ -1578,6 +1572,39 @@ body.streamx-app-mode .feed-pagination{display:none!important}
     opacity:1;
 }
 
+.thumbnail-gif-preview{
+    position:absolute;
+    inset:0;
+    z-index:1;
+    width:100%;
+    height:100%;
+    display:block;
+    object-fit:cover;
+    opacity:0;
+    transition:opacity .12s ease;
+    pointer-events:none;
+}
+.thumbnail.streamx-gif-ready .thumbnail-gif-preview{opacity:1;}
+.thumbnail.streamx-gif-ready .thumbnail-fallback{opacity:0;}
+.thumbnail-fallback{transition:opacity .12s ease;}
+.thumbnail-gif-status{
+    position:absolute;
+    z-index:2;
+    left:8px;
+    bottom:8px;
+    max-width:calc(100% - 16px);
+    padding:4px 7px;
+    border-radius:5px;
+    background:rgba(0,0,0,.72);
+    color:#fff;
+    font-size:10px;
+    line-height:1.2;
+    pointer-events:none;
+}
+.thumbnail.streamx-gif-ready .thumbnail-gif-status{display:none;}
+.thumbnail.streamx-gif-failed .thumbnail-gif-status{background:rgba(0,0,0,.82);}
+
+
 
 
 /* =====================================================
@@ -1929,26 +1956,46 @@ body.streamx-app-mode .video-actions{
         >
 
             <div class="age-gate-logo">
-                <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-                <g transform="rotate(45 32 32)">
-                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
-                <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
-                <g fill="#100b08">
-                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
-                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
-                </g>
-                </g>
-                <g transform="rotate(-45 32 32)">
-                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
-                <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
-                <g fill="#100b08">
-                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
-                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
-                </g>
-                </g>
-                <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
-                <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
-                </svg>
+                <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+
+                <g transform="rotate(45 32 32)">
+
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
+
+                <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
+
+                <g fill="#100b08">
+
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+
+                </g>
+
+                </g>
+
+                <g transform="rotate(-45 32 32)">
+
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
+
+                <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
+
+                <g fill="#100b08">
+
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+
+                </g>
+
+                </g>
+
+                <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
+
+                <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
+
+                </svg>
+
                 <span class="brand-logo__wordmark">XxxFilms</span>
             </div>
 
@@ -1995,26 +2042,46 @@ body.streamx-app-mode .video-actions{
         >
 
             <div class="age-gate-logo">
-                <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-                <g transform="rotate(45 32 32)">
-                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
-                <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
-                <g fill="#100b08">
-                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
-                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
-                </g>
-                </g>
-                <g transform="rotate(-45 32 32)">
-                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
-                <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
-                <g fill="#100b08">
-                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
-                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
-                </g>
-                </g>
-                <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
-                <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
-                </svg>
+                <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+
+                <g transform="rotate(45 32 32)">
+
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
+
+                <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
+
+                <g fill="#100b08">
+
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+
+                </g>
+
+                </g>
+
+                <g transform="rotate(-45 32 32)">
+
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
+
+                <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
+
+                <g fill="#100b08">
+
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+
+                </g>
+
+                </g>
+
+                <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
+
+                <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
+
+                </svg>
+
                 <span class="brand-logo__wordmark">XxxFilms</span>
             </div>
 
@@ -2051,26 +2118,46 @@ body.streamx-app-mode .video-actions{
     <div class="header-inner">
 
         <div class="logo">
-            <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-            <g transform="rotate(45 32 32)">
-            <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
-            <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
-            <g fill="#100b08">
-            <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
-            <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
-            </g>
-            </g>
-            <g transform="rotate(-45 32 32)">
-            <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
-            <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
-            <g fill="#100b08">
-            <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
-            <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
-            </g>
-            </g>
-            <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
-            <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
-            </svg>
+            <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+
+            <g transform="rotate(45 32 32)">
+
+            <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
+
+            <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
+
+            <g fill="#100b08">
+
+            <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+
+            <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+
+            </g>
+
+            </g>
+
+            <g transform="rotate(-45 32 32)">
+
+            <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
+
+            <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
+
+            <g fill="#100b08">
+
+            <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+
+            <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+
+            </g>
+
+            </g>
+
+            <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
+
+            <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
+
+            </svg>
+
             <span class="brand-logo__wordmark">XxxFilms</span>
         </div>
 
@@ -4383,6 +4470,10 @@ function setupCategoryRealtime(){
 
 function normalizeRecommendationVideo(row){
 
+    const sourceVideo=(allVideos || []).find(video =>
+        String(video.id)===String(row && row.video_id)
+    );
+
     return {
         id:row && row.video_id,
         title:row && row.title || "Untitled Video",
@@ -4391,6 +4482,8 @@ function normalizeRecommendationVideo(row){
         video_url:row && row.video_url || "",
         thumbnail_url:row && row.thumbnail_url || "",
         preview_video_url:row && row.preview_video_url || "",
+        gif_preview_url:row && row.gif_preview_url || sourceVideo && sourceVideo.gif_preview_url || "",
+        gif_size_bytes:Number(row && row.gif_size_bytes || sourceVideo && sourceVideo.gif_size_bytes || 0),
         created_at:row && row.created_at || null,
         views:Number(row && row.views || 0),
         likes_count:Number(row && row.likes_count || 0),
@@ -4834,7 +4927,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,created_at,views")
+                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,gif_preview_url,gif_size_bytes,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -5634,6 +5727,174 @@ function getFeedPreviewWindow(){
     return {visible,upcoming:items.slice(start,start + STREAMX_THUMBNAIL_AHEAD)};
 }
 
+
+const streamxGifLoadQueue = new Map();
+const streamxGifActiveRequests = new Set();
+let streamxGifDesired = new Set();
+const STREAMX_GIF_PREFETCH_MAX_BYTES = 20 * 1024 * 1024;
+const STREAMX_GIF_DECODE_TIMEOUT_MS = 10000;
+
+function getFeedGifConcurrency(){
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const lowMemory = Number(navigator.deviceMemory || 0) > 0 &&
+        Number(navigator.deviceMemory) <= 2;
+    return window.innerWidth < 700 || lowMemory ||
+        /^(slow-2g|2g|3g)$/.test(connection?.effectiveType || "") ? 1 : 2;
+}
+
+function getVisibleFeedGifCards(){
+    if(!videoGrid) return {visible:[],upcoming:[]};
+    const height = window.innerHeight || document.documentElement.clientHeight || 800;
+    const width = window.innerWidth || document.documentElement.clientWidth || 800;
+    const cards = Array.from(videoGrid.querySelectorAll(".video-card")).map(card => {
+        const rect = (card.querySelector(".thumbnail") || card).getBoundingClientRect();
+        return {card,rect,visible:rect.bottom > 0 && rect.top < height &&
+            rect.right > 0 && rect.left < width};
+    });
+    const visible = cards.filter(item => item.visible);
+    let start = visible.length ? cards.indexOf(visible[visible.length - 1]) + 1 :
+        cards.findIndex(item => item.rect.bottom > 0);
+    if(start < 0) start = cards.length;
+    return {visible:visible.map(item => item.card),
+        upcoming:cards.slice(start,start + 10).map(item => item.card)};
+}
+
+function requestFeedGif(image,priority){
+    if(!image || !image.isConnected) return;
+    const source = image.dataset.gifSrc;
+    if(!source || image.dataset.gifState === "failed" ||
+        image.dataset.gifState === "loaded") return;
+    image.fetchPriority = priority || "high";
+    image.loading = "eager";
+    if(image.dataset.gifState === "loading"){
+        streamxGifActiveRequests.add(image);
+        return;
+    }
+    if(image.dataset.gifState === "queued"){
+        if(priority === "high") streamxGifLoadQueue.set(image,0);
+        return;
+    }
+    image.dataset.gifState = "queued";
+    streamxGifLoadQueue.set(image,priority === "low" ? 1 : 0);
+    pumpFeedGifQueue();
+}
+
+function pumpFeedGifQueue(){
+    if(!canLoadFeedThumbnails()) return;
+    for(const [image] of streamxGifLoadQueue){
+        if(!image.isConnected || !streamxGifDesired.has(image)){
+            streamxGifLoadQueue.delete(image);
+            if(image.dataset.gifState === "queued") delete image.dataset.gifState;
+        }
+    }
+    const limit = getFeedGifConcurrency();
+    while(streamxGifActiveRequests.size < limit && streamxGifLoadQueue.size){
+        const candidates = Array.from(streamxGifLoadQueue.entries()).sort((a,b) => {
+            const priority = a[1] - b[1];
+            if(priority) return priority;
+            const distance = image => {
+                const rect = image.getBoundingClientRect();
+                const height = window.innerHeight || document.documentElement.clientHeight || 800;
+                return rect.top >= height ? rect.top - height :
+                    rect.bottom <= 0 ? -rect.bottom : 0;
+            };
+            return distance(a[0]) - distance(b[0]);
+        });
+        const image = candidates[0][0];
+        streamxGifLoadQueue.delete(image);
+        const source = image.dataset.gifSrc;
+        if(!source || !image.isConnected) continue;
+        image.dataset.gifState = "loading";
+        streamxGifActiveRequests.add(image);
+        if(image.getAttribute("src") !== source) image.src = source;
+    }
+}
+
+function queueFeedGifPreviews(visibleCards,upcomingCards){
+    const visibleImages = (visibleCards || [])
+        .map(card => card.querySelector(".thumbnail-gif-preview"))
+        .filter(Boolean);
+    const desired = new Set(visibleImages);
+    const visibleReady = visibleImages.every(image =>
+        image.dataset.gifState === "loaded" || image.dataset.gifState === "failed");
+    let prefetchImage = null;
+    if(visibleReady && canPreloadFeedThumbnails()){
+        prefetchImage = (upcomingCards || [])
+            .map(card => card.querySelector(".thumbnail-gif-preview"))
+            .find(image => {
+                const size = Number(image?.dataset.gifSize || 0);
+                return image && !image.dataset.gifState && size > 0 &&
+                    size <= STREAMX_GIF_PREFETCH_MAX_BYTES;
+            }) || null;
+        if(prefetchImage) desired.add(prefetchImage);
+    }
+    streamxGifDesired = desired;
+    for(const [image] of streamxGifLoadQueue){
+        if(!desired.has(image)){
+            streamxGifLoadQueue.delete(image);
+            if(image.dataset.gifState === "queued") delete image.dataset.gifState;
+        }
+    }
+    visibleImages.forEach(image => requestFeedGif(image,"high"));
+    if(prefetchImage) requestFeedGif(prefetchImage,"low");
+    pumpFeedGifQueue();
+}
+
+function markFeedGifFailed(image,message){
+    if(!image) return;
+    image.dataset.gifState = "failed";
+    streamxGifLoadQueue.delete(image);
+    streamxGifActiveRequests.delete(image);
+    const thumbnail = image.closest(".thumbnail");
+    if(thumbnail) thumbnail.classList.add("streamx-gif-failed");
+    const status = thumbnail?.querySelector(".thumbnail-gif-status");
+    if(status) status.textContent = message || "Animation unavailable on this device";
+    scheduleFeedThumbnailWindow();
+    pumpFeedGifQueue();
+}
+
+function trackFeedGifPreviews(){
+    if(!videoGrid) return;
+    videoGrid.querySelectorAll(".thumbnail-gif-preview").forEach(image => {
+        if(image.dataset.gifTracked === "1") return;
+        image.dataset.gifTracked = "1";
+        image.addEventListener("load",() => {
+            if(image.getAttribute("src") !== image.dataset.gifSrc) return;
+            if(!image.naturalWidth){
+                markFeedGifFailed(image,"Animation unavailable");
+                return;
+            }
+            const source = image.dataset.gifSrc;
+            let timer = 0;
+            const timeout = new Promise(resolve => {
+                timer = window.setTimeout(() => resolve(false),STREAMX_GIF_DECODE_TIMEOUT_MS);
+            });
+            const decoded = typeof image.decode === "function"
+                ? image.decode().then(() => true).catch(() => false)
+                : Promise.resolve(true);
+            Promise.race([decoded,timeout]).then(ready => {
+                window.clearTimeout(timer);
+                if(!image.isConnected || image.dataset.gifSrc !== source ||
+                    image.dataset.gifState !== "loading") return;
+                if(!ready){
+                    markFeedGifFailed(image,"Animation could not start on this device");
+                    return;
+                }
+                image.dataset.gifState = "loaded";
+                streamxGifActiveRequests.delete(image);
+                const thumbnail = image.closest(".thumbnail");
+                if(thumbnail) thumbnail.classList.add("streamx-gif-ready");
+                scheduleFeedThumbnailWindow();
+                pumpFeedGifQueue();
+            });
+        });
+        image.addEventListener("error",() => {
+            if(image.getAttribute("src") !== image.dataset.gifSrc) return;
+            markFeedGifFailed(image,"Animation failed to load");
+        });
+    });
+}
+
 function canLoadFeedThumbnails(){
     return document.visibilityState !== 'hidden' &&
         !streamxFeedPreviewPlaybackSuspended;
@@ -5681,6 +5942,10 @@ function refreshFeedThumbnailWindow(){
     if(!canLoadFeedThumbnails()) return;
     scheduleVideoByteWarm();
     const previewWindow = getFeedPreviewWindow();
+    queueFeedGifPreviews(
+        previewWindow.visible.map(item => item.card),
+        previewWindow.upcoming.map(item => item.card)
+    );
     previewWindow.visible.forEach(({card}) => requestFeedCardPreview(card,'high'));
     // Keep ten queued, but give the initial mobile feed and opened video priority.
     if(!canPreloadFeedThumbnails() || hasPendingVisibleFeedThumbnails()) return;
@@ -5740,6 +6005,7 @@ function setupFeedThumbnailWindow(){
             scheduleFeedThumbnailWindow();
         });
     });
+    trackFeedGifPreviews();
     if(typeof IntersectionObserver === 'function'){
         streamxThumbnailObserver = new IntersectionObserver(scheduleFeedThumbnailWindow,
             {root:null,rootMargin:'0px',threshold:0});
@@ -5785,20 +6051,22 @@ function createVideoCard(video){
 
 
 
-    const thumbnail =
-        getPublicURL(
-            video.thumbnail_url,
-            "thumbnails"
-        );
-
-
-    const previewVideoURL =
-        !/\.gif(?:[?#]|$)/i.test(String(video.thumbnail_url || "")) && video.preview_video_url
-            ? getPublicURL(
-                video.preview_video_url,
-                "streamx-hls"
-            )
-            : null;
+    const rawThumbnailURL = String(video.thumbnail_url || "").trim();
+    const legacyGifURL = /\.gif(?:[?#]|$)/i.test(rawThumbnailURL)
+        ? rawThumbnailURL
+        : "";
+    const gifPreviewURL = getPublicURL(
+        video.gif_preview_url || legacyGifURL,
+        "thumbnails"
+    );
+    const thumbnail = getPublicURL(
+        legacyGifURL ? "" : video.thumbnail_url,
+        "thumbnails"
+    );
+    const previewVideoURL = !gifPreviewURL && video.preview_video_url
+        ? getPublicURL(video.preview_video_url, "streamx-hls")
+        : null;
+    const gifSizeBytes = Math.max(0, Number(video.gif_size_bytes) || 0);
 
 
     const title =
@@ -5844,6 +6112,16 @@ function createVideoCard(video){
                     alt="${escapeHTML(title)}" loading="lazy" decoding="async"
                     fetchpriority="low" draggable="false">
             ` : `<div class="no-thumbnail">🎬</div>`}
+
+            ${gifPreviewURL ? `
+                <img class="thumbnail-gif-preview"
+                    data-gif-src="${escapeHTML(gifPreviewURL)}"
+                    data-gif-size="${gifSizeBytes}"
+                    alt="${escapeHTML(title)} animated preview"
+                    loading="lazy" decoding="async" fetchpriority="low"
+                    aria-hidden="true" draggable="false">
+                <span class="thumbnail-gif-status" aria-live="polite">Loading animation…</span>
+            ` : ""}
 
             ${previewVideoURL ? `
                 <video class="thumbnail-preview-video"
@@ -5959,6 +6237,12 @@ function createVideoCard(video){
             thumbnailImage.addEventListener("load",function(){
                 applyWebsiteAppCardAspect(thumbnailImage.naturalWidth,thumbnailImage.naturalHeight);
                 scheduleFeedThumbnailWindow();
+            });
+        }
+        const gifImage = card.querySelector(".thumbnail-gif-preview");
+        if(gifImage){
+            gifImage.addEventListener("load",function(){
+                applyWebsiteAppCardAspect(gifImage.naturalWidth,gifImage.naturalHeight);
             });
         }
     }

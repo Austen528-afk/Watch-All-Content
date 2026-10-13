@@ -214,7 +214,7 @@ body{
 
 .site-top{
     position:sticky;
-    top:0;
+    top:var(--streamx-visual-viewport-top, 0px);
     padding-top:0;
     background:#080808;
     width:100%;
@@ -2695,6 +2695,45 @@ window.addEventListener(
 );
 
 
+/* Keep the sticky top bar aligned with the visible viewport on mobile browsers. */
+let lastStreamXViewportTop = null;
+
+function syncTopBarViewportOffset(){
+    const viewport = window.visualViewport;
+    const offsetTop = viewport
+        ? Math.max(0, Math.round((viewport.offsetTop || 0) * 10) / 10)
+        : 0;
+    const value = String(offsetTop) + "px";
+
+    if(value === lastStreamXViewportTop){
+        return;
+    }
+
+    document.documentElement.style.setProperty(
+        "--streamx-visual-viewport-top",
+        value
+    );
+    lastStreamXViewportTop = value;
+}
+
+if(window.visualViewport){
+    window.visualViewport.addEventListener(
+        "scroll",
+        syncTopBarViewportOffset,
+        {passive:true}
+    );
+    window.visualViewport.addEventListener(
+        "resize",
+        syncTopBarViewportOffset,
+        {passive:true}
+    );
+}
+
+window.addEventListener("scroll",syncTopBarViewportOffset,{passive:true});
+window.addEventListener("resize",syncTopBarViewportOffset,{passive:true});
+window.addEventListener("orientationchange",syncTopBarViewportOffset,{passive:true});
+syncTopBarViewportOffset();
+
 /* =========================
    AGE VERIFICATION
 ========================= */
@@ -2709,6 +2748,8 @@ function enterWebsite(){
 
     syncTopBarHeight();
     requestAnimationFrame(syncTopBarHeight);
+    syncTopBarViewportOffset();
+    requestAnimationFrame(syncTopBarViewportOffset);
 
     document.body.style.overflow =
         "";

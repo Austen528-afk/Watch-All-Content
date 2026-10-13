@@ -7,7 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>StreamX</title>
+<title>XxxFilms</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2" integrity="sha384-WgXwGL6fUsYJWNaKJgVbrJKGRQwc1vieh2oy4kw9nXqpNDz3tdSsqEYUgeHD/NuF" crossorigin="anonymous"></script>
 
@@ -62,14 +62,47 @@ body{
 }
 
 .age-gate-logo{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:11px;
     font-size:32px;
     font-weight:900;
-    letter-spacing:-1px;
     margin-bottom:25px;
 }
 
-.age-gate-logo span{
-    color:#ff1744;
+.brand-logo__icon{
+    display:block;
+    flex:0 0 auto;
+    width:1.45em;
+    height:1.45em;
+    filter:drop-shadow(0 2px 7px rgba(223,157,69,.34));
+}
+
+.brand-logo__wordmark{
+    display:inline-block;
+    position:relative;
+    padding-bottom:5px;
+    font-size:inherit;
+    font-weight:900;
+    letter-spacing:-1.1px;
+    line-height:1;
+    white-space:nowrap;
+    color:#f1ca83;
+    background:linear-gradient(135deg,#fff1cd 0%,#d99d4e 43%,#fff0c4 70%,#9f5c25 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.brand-logo__wordmark::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:2px;
+    background:linear-gradient(90deg,#ff3827 0%,#ff3827 38%,rgba(255,56,39,0) 100%);
 }
 
 .age-gate-icon{
@@ -191,14 +224,12 @@ body{
 }
 
 .logo{
+    display:flex;
+    align-items:center;
+    gap:9px;
     font-size:27px;
     font-weight:900;
-    letter-spacing:-1px;
     white-space:nowrap;
-}
-
-.logo span{
-    color:#ff1744;
 }
 
 
@@ -1846,7 +1877,27 @@ body{
         >
 
             <div class="age-gate-logo">
-                Stream<span>X</span>
+                <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                <g transform="rotate(45 32 32)">
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
+                <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
+                <g fill="#100b08">
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+                </g>
+                </g>
+                <g transform="rotate(-45 32 32)">
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
+                <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
+                <g fill="#100b08">
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+                </g>
+                </g>
+                <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
+                <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
+                </svg>
+                <span class="brand-logo__wordmark">XxxFilms</span>
             </div>
 
             <div class="age-gate-icon">
@@ -1892,7 +1943,27 @@ body{
         >
 
             <div class="age-gate-logo">
-                Stream<span>X</span>
+                <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                <g transform="rotate(45 32 32)">
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
+                <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
+                <g fill="#100b08">
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+                </g>
+                </g>
+                <g transform="rotate(-45 32 32)">
+                <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
+                <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
+                <g fill="#100b08">
+                <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+                <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+                </g>
+                </g>
+                <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
+                <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
+                </svg>
+                <span class="brand-logo__wordmark">XxxFilms</span>
             </div>
 
             <div class="age-gate-icon">
@@ -1928,7 +1999,27 @@ body{
     <div class="header-inner">
 
         <div class="logo">
-            Stream<span>X</span>
+            <svg class="brand-logo__icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <g transform="rotate(45 32 32)">
+            <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#c58a46" stroke="#f2cd87" stroke-width="1"/>
+            <path d="M7 32H57" stroke="#1a120d" stroke-width="5"/>
+            <g fill="#100b08">
+            <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+            <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+            </g>
+            </g>
+            <g transform="rotate(-45 32 32)">
+            <rect x="6" y="26" width="52" height="12" rx="2.5" fill="#a7482d" stroke="#f17d4c" stroke-width="1"/>
+            <path d="M7 32H57" stroke="#1a100d" stroke-width="5"/>
+            <g fill="#100b08">
+            <rect x="10" y="26.2" width="2.4" height="3" rx=".4"/><rect x="22" y="26.2" width="2.4" height="3" rx=".4"/><rect x="34" y="26.2" width="2.4" height="3" rx=".4"/><rect x="46" y="26.2" width="2.4" height="3" rx=".4"/>
+            <rect x="10" y="34.8" width="2.4" height="3" rx=".4"/><rect x="22" y="34.8" width="2.4" height="3" rx=".4"/><rect x="34" y="34.8" width="2.4" height="3" rx=".4"/><rect x="46" y="34.8" width="2.4" height="3" rx=".4"/>
+            </g>
+            </g>
+            <path d="M32 25 39 32 32 39 25 32Z" fill="#19120d" stroke="#edbd70" stroke-width="1.3"/>
+            <path d="M32 28.5 35.5 32 32 35.5 28.5 32Z" fill="#f0c276"/>
+            </svg>
+            <span class="brand-logo__wordmark">XxxFilms</span>
         </div>
 
         <div class="search-wrapper">
@@ -2035,14 +2126,14 @@ body{
 
 <main class="main">
 
-    <section class="hero" aria-label="StreamX highlights">
+    <section class="hero" aria-label="XxxFilms highlights">
 
         <div class="hero-rotator" aria-live="polite">
 
             <div class="hero-message">
                 <h1>
                     Welcome to
-                    <span>StreamX</span>
+                    <span>XxxFilms</span>
                 </h1>
                 <p>Browse the latest content or search for a video or category.</p>
                 <span class="hero-kicker">Discover something worth saving</span>
@@ -2059,10 +2150,10 @@ body{
 
             <div class="hero-message">
                 <h1>
-                    Take StreamX
+                    Take XxxFilms
                     <span>with you</span>
                 </h1>
-                <p>Open StreamX in Telegram to join the Mini App for quick access.</p>
+                <p>Open XxxFilms in Telegram to join the Mini App for quick access.</p>
                 <span class="hero-kicker">Web + Telegram Mini App</span>
             </div>
 
@@ -2215,7 +2306,7 @@ body{
 
 <footer class="footer">
 
-    © 2026 StreamX
+    © 2026 XxxFilms
 
 </footer>
 
@@ -2307,7 +2398,7 @@ async function migrateLegacyMiniAppIdentity(authUserId){
         }
         catch(error){
             console.warn(
-                "StreamX Mini App identity migration failed:",
+                "XxxFilms Mini App identity migration failed:",
                 error?.message || error
             );
             return false;
@@ -2425,7 +2516,7 @@ async function ensureMiniAppAuthSession(){
 
             if(error){
                 console.warn(
-                    "StreamX Mini App auth session check failed:",
+                    "XxxFilms Mini App auth session check failed:",
                     error.message || error
                 );
             }
@@ -2450,7 +2541,7 @@ async function ensureMiniAppAuthSession(){
 
             if(anonymousError){
                 console.warn(
-                    "StreamX Mini App anonymous sign-in failed:",
+                    "XxxFilms Mini App anonymous sign-in failed:",
                     anonymousError.message || anonymousError
                 );
                 return null;
@@ -2464,7 +2555,7 @@ async function ensureMiniAppAuthSession(){
         }
         catch(error){
             console.warn(
-                "StreamX Mini App auth initialization failed:",
+                "XxxFilms Mini App auth initialization failed:",
                 error
             );
             return null;
@@ -3268,7 +3359,7 @@ async function sendLibraryActivityHeartbeat(){
         const authenticatedViewerId = session?.user?.id;
 
         if(!authenticatedViewerId){
-            throw new Error("Authenticated StreamX Mini App viewer ID is unavailable");
+            throw new Error("Authenticated XxxFilms Mini App viewer ID is unavailable");
         }
 
         LIBRARY_VIEWER_ID = authenticatedViewerId;

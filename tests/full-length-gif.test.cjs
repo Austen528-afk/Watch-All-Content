@@ -10,14 +10,34 @@ function sourceOf(file) {
     return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
-function makeImage(url) {
+function makeImage(url, { complete = false, naturalWidth = 0 } = {}) {
     let src = "";
+    const listeners = new Map();
+    const classes = new Set();
+    const status = { textContent: "Loading animation…" };
+    const thumbnail = {
+        classList: {
+            add: name => classes.add(name),
+            remove: name => classes.delete(name),
+        },
+        querySelector: () => status,
+    };
     return {
         dataset: { gifSrc: url, gifState: "" },
         isConnected: true,
         assignments: 0,
         fetchPriority: "",
         loading: "",
+        complete,
+        naturalWidth,
+        currentSrc: url,
+        listeners,
+        classes,
+        status,
+        addEventListener(name, listener) { listeners.set(name, listener); },
+        closest() { return thumbnail; },
+        decode() { throw new Error("decode() must not block GIF display"); },
+        fire(name) { listeners.get(name)?.(); },
         set src(value) { src = value; this.assignments += 1; },
         get src() { return src; },
         getAttribute(name) { return name === "src" ? src : null; },
@@ -30,14 +50,16 @@ function makeImage(url) {
 function runQueueHarness(page, width) {
     const source = sourceOf(page);
     const start = source.indexOf("const streamxGifLoadQueue = new Map();");
-    const end = source.indexOf("function queueFeedGifPreviews(", start);
+    const end = source.indexOf("function canPreloadFeedThumbnails()", start);
     assert.ok(start >= 0 && end > start, page + " GIF queue helpers");
     const images = [makeImage("one.gif"), makeImage("two.gif"), makeImage("three.gif")];
     const context = {
         navigator: { connection: { effectiveType: "4g" }, deviceMemory: 8 },
-        window: { innerWidth: width, innerHeight: 800 },
+        window: { innerWidth: width, innerHeight: 800, setTimeout: () => 1, clearTimeout() {} },
         document: { documentElement: { clientHeight: 800 } },
         canLoadFeedThumbnails: () => true,
+        streamxFeedPreviewPlaybackSuspended: false,
+        scheduleFeedThumbnailWindow() {},
         Set, Map, Array, Number, Promise
     };
     vm.createContext(context);
@@ -66,10 +88,107 @@ test("website and Telegram render full GIFs above a retained static poster", () 
         assert.match(source, /class="thumbnail-gif-preview"/, page);
         assert.match(source, /class="thumbnail-gif-status"/, page);
         assert.match(source, /thumbnail\.streamx-gif-ready \.thumbnail-gif-preview\{opacity:1;\}/, page);
-        assert.match(source, /image\.decode\(\)/, page);
-        assert.match(source, /STREAMX_GIF_DECODE_TIMEOUT_MS/, page);
+        assert.match(source, /image\.addEventListener\("load"/, page);
+        assert.match(source, /markFeedGifReady\(image\)/, page);
+        assert.doesNotMatch(source, /image\.decode\(\)/, page + " must not gate display on decode()");
         assert.match(source, /gif_preview_url/, page);
         assert.match(source, /!gifPreviewURL && video\.preview_video_url/, page);
+    }
+});
+
+test("a loaded full GIF appears without waiting for WebView decode()", () => {
+    for (const page of pages) {
+        const source = sourceOf(page);
+        const start = source.indexOf("const streamxGifLoadQueue = new Map();");
+        const end = source.indexOf("function canPreloadFeedThumbnails()", start);
+        const image = makeImage("https://media.example/full.gif");
+        image.src = image.dataset.gifSrc;
+        const context = {
+            navigator: { connection: { effectiveType: "4g" }, deviceMemory: 8 },
+            window: { innerWidth: 390, innerHeight: 800, setTimeout: () => 1, clearTimeout() {} },
+            document: { visibilityState: "visible", documentElement: { clientHeight: 800 } },
+            videoGrid: { querySelectorAll: () => [image] },
+            streamxFeedPreviewPlaybackSuspended: false,
+            scheduleFeedThumbnailWindow() {},
+            Set, Map, WeakMap, Array, Number, Promise,
+        };
+        vm.createContext(context);
+        vm.runInContext(source.slice(start, end), context, { filename: page + "-gif-display.js" });
+        context.trackFeedGifPreviews();
+        image.complete = true;
+        image.naturalWidth = 640;
+        image.fire("load");
+        assert.equal(image.dataset.gifState, "loaded", page);
+        assert.equal(image.classes.has("streamx-gif-ready"), true, page);
+        assert.equal(image.status.textContent, "Loading animation…", page + " status is hidden by ready state");
+    }
+});
+
+test("an already-complete cached GIF is recovered when the WebView restores the feed", () => {
+    for (const page of pages) {
+        const source = sourceOf(page);
+        const start = source.indexOf("const streamxGifLoadQueue = new Map();");
+        const end = source.indexOf("function canPreloadFeedThumbnails()", start);
+        const image = makeImage("https://media.example/cached.gif", { complete: true, naturalWidth: 480 });
+        image.src = image.dataset.gifSrc;
+        const context = {
+            navigator: { connection: { effectiveType: "4g" }, deviceMemory: 8 },
+            window: { innerWidth: 390, innerHeight: 800, setTimeout: () => 1, clearTimeout() {} },
+            document: { visibilityState: "visible", documentElement: { clientHeight: 800 } },
+            videoGrid: { querySelectorAll: () => [image] },
+            streamxFeedPreviewPlaybackSuspended: false,
+            scheduleFeedThumbnailWindow() {},
+            Set, Map, WeakMap, Array, Number, Promise,
+        };
+        vm.createContext(context);
+        vm.runInContext(source.slice(start, end), context, { filename: page + "-gif-restore.js" });
+        context.trackFeedGifPreviews();
+        assert.equal(image.dataset.gifState, "loaded", page);
+        assert.equal(image.classes.has("streamx-gif-ready"), true, page);
+    }
+});
+
+test("a slow full GIF gets a clear loading state, then recovers when its load completes", () => {
+    for (const page of pages) {
+        const source = sourceOf(page);
+        const start = source.indexOf("const streamxGifLoadQueue = new Map();");
+        const end = source.indexOf("function canPreloadFeedThumbnails()", start);
+        const timers = new Map();
+        let nextTimer = 0;
+        const image = makeImage("https://media.example/large-full.gif");
+        image.src = image.dataset.gifSrc;
+        const context = {
+            navigator: { connection: { effectiveType: "4g" }, deviceMemory: 8 },
+            window: {
+                innerWidth: 390,
+                innerHeight: 800,
+                setTimeout(callback, delay) { const id = ++nextTimer; timers.set(id, { callback, delay }); return id; },
+                clearTimeout(id) { timers.delete(id); },
+            },
+            document: { visibilityState: "visible", documentElement: { clientHeight: 800 } },
+            videoGrid: { querySelectorAll: () => [image] },
+            streamxFeedPreviewPlaybackSuspended: false,
+            scheduleFeedThumbnailWindow() {},
+            Set, Map, WeakMap, Array, Number, Promise,
+        };
+        vm.createContext(context);
+        vm.runInContext(source.slice(start, end), context, { filename: page + "-gif-slow-load.js" });
+        context.trackFeedGifPreviews();
+        context.testGifImage = image;
+        vm.runInContext("streamxGifDesired = new Set([testGifImage]);", context);
+        context.requestFeedGif(image, "high");
+        const notice = [...timers.entries()].find(([, timer]) => timer.delay === 12000);
+        assert.ok(notice, page + " starts a visible load watchdog");
+        timers.delete(notice[0]);
+        notice[1].callback();
+        assert.equal(image.status.textContent, "Large animation is still loading…", page);
+
+        image.complete = true;
+        image.naturalWidth = 640;
+        image.fire("load");
+        assert.equal(image.dataset.gifState, "loaded", page);
+        assert.equal(image.classes.has("streamx-gif-ready"), true, page);
+        assert.equal(timers.size, 0, page + " clears the watchdog when the full file loads");
     }
 });
 

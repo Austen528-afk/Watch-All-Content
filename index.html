@@ -5997,7 +5997,7 @@ function markFeedGifFailed(image,message){
         thumbnail.classList.remove("streamx-gif-loading");
         thumbnail.classList.add("streamx-gif-failed");
         const preview = thumbnail.querySelector(".thumbnail-preview-video");
-        if(preview){
+        if(preview && thumbnail.dataset.gifPreviewExpected !== "1"){
             const rect = preview.getBoundingClientRect();
             const height = window.innerHeight || document.documentElement.clientHeight || 800;
             if(rect.bottom > 0 && rect.top < height){
@@ -6198,10 +6198,20 @@ function createVideoCard(video){
     const legacyGifURL = /\.gif(?:[?#]|$)/i.test(rawThumbnailURL)
         ? rawThumbnailURL
         : "";
+    const fullGifURL = String(video.gif_preview_url || legacyGifURL || "").trim();
+    const gifTeaserURL = String(video.gif_teaser_url || "").trim();
+    const fullGifSizeBytes = Math.max(0, Number(video.gif_size_bytes) || 0);
+    const gifTeaserSizeBytes = Math.max(0, Number(video.gif_teaser_size_bytes) || 0);
+    const hasGifSource = Boolean(gifTeaserURL || fullGifURL || legacyGifURL);
+    const useSmallFullGif = !gifTeaserURL &&
+        Boolean(fullGifURL) &&
+        fullGifSizeBytes > 0 &&
+        fullGifSizeBytes <= 5 * 1024 * 1024;
     const gifPreviewURL = getPublicURL(
-        video.gif_preview_url || legacyGifURL,
+        gifTeaserURL || (useSmallFullGif ? fullGifURL : ""),
         "thumbnails"
     );
+    const gifPreviewPending = hasGifSource && !gifPreviewURL;
     const thumbnail = getPublicURL(
         legacyGifURL ? "" : video.thumbnail_url,
         "thumbnails"
@@ -6209,7 +6219,9 @@ function createVideoCard(video){
     const previewVideoURL = video.preview_video_url
         ? getPublicURL(video.preview_video_url, "streamx-hls")
         : null;
-    const gifSizeBytes = Math.max(0, Number(video.gif_size_bytes) || 0);
+    const gifSizeBytes = gifTeaserURL
+        ? gifTeaserSizeBytes
+        : fullGifSizeBytes;
 
 
     const title =
@@ -6247,7 +6259,7 @@ function createVideoCard(video){
 
         <div class="video-media-block">
 
-        <div class="thumbnail">
+        <div class="thumbnail" data-gif-preview-expected="${hasGifSource ? "1" : "0"}">
 
             ${thumbnail ? `
                 <img class="thumbnail-fallback"
@@ -6264,6 +6276,8 @@ function createVideoCard(video){
                     loading="lazy" decoding="async" fetchpriority="low"
                     aria-hidden="true" draggable="false">
                 <span class="thumbnail-gif-status" aria-live="polite">Loading animation…</span>
+            ` : gifPreviewPending ? `
+                <span class="thumbnail-gif-status" aria-live="polite">Preparing lighter animation preview…</span>
             ` : ""}
 
             ${previewVideoURL ? `
@@ -7616,8 +7630,11 @@ let streamxPreviewPlayObserver = null;
 let streamxFeedPreviewPlaybackSuspended = false;
 
 function feedCardGifOwnsPreview(video){
-    const image = video?.closest(".thumbnail")
-        ?.querySelector(".thumbnail-gif-preview");
+    const thumbnail = video?.closest(".thumbnail");
+    if (thumbnail?.dataset.gifPreviewExpected === "1") {
+        return true;
+    }
+    const image = thumbnail?.querySelector(".thumbnail-gif-preview");
     return Boolean(
         image &&
         image.dataset.gifSrc &&

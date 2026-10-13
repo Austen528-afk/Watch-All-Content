@@ -205,7 +205,6 @@ body{
 
 #siteContent{
     display:none;
-    padding-top:var(--streamx-topbar-height,0px);
 }
 
 
@@ -214,12 +213,10 @@ body{
 ========================= */
 
 .site-top{
-    position:fixed;
+    position:sticky;
     top:0;
     padding-top:env(safe-area-inset-top, 0px);
     background:#080808;
-    left:0;
-    right:0;
     width:100%;
     z-index:1100;
 }

@@ -5568,7 +5568,7 @@ function getFeedGifConcurrency(){
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const lowMemory = Number(navigator.deviceMemory || 0) > 0 &&
         Number(navigator.deviceMemory) <= 2;
-    return window.innerWidth < 700 || lowMemory ||
+    return lowMemory ||
         /^(slow-2g|2g|3g)$/.test(connection?.effectiveType || "") ? 1 : 2;
 }
 

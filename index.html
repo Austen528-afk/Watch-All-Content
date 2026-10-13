@@ -5800,16 +5800,18 @@ const streamxGifLoadQueue = new Map();
 const streamxGifActiveRequests = new Set();
 const streamxGifLoadTimers = new WeakMap();
 let streamxGifDesired = new Set();
-const STREAMX_GIF_PREFETCH_MAX_BYTES = 20 * 1024 * 1024;
+const STREAMX_GIF_PREFETCH_MAX_BYTES = 1 * 1024 * 1024;
 const STREAMX_GIF_LOAD_NOTICE_MS = 12000;
 const STREAMX_GIF_LOAD_TIMEOUT_MS = 90000;
 
 function getFeedGifConcurrency(){
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const connectionType = connection?.effectiveType || "";
     const lowMemory = Number(navigator.deviceMemory || 0) > 0 &&
         Number(navigator.deviceMemory) <= 2;
-    return lowMemory ||
-        /^(slow-2g|2g|3g)$/.test(connection?.effectiveType || "") ? 1 : 2;
+    if(lowMemory || /^(slow-2g|2g)$/.test(connectionType)) return 1;
+    if(connectionType === "3g") return 2;
+    return 3;
 }
 
 function getVisibleFeedGifCards(){
@@ -5903,15 +5905,14 @@ function queueFeedGifPreviews(visibleCards,upcomingCards){
         .map(card => card.querySelector(".thumbnail-gif-preview"))
         .filter(Boolean);
     const desired = new Set(visibleImages);
-    const visibleReady = visibleImages.every(image =>
-        image.dataset.gifState === "loaded" || image.dataset.gifState === "failed");
     let prefetchImage = null;
-    if(visibleReady && canPreloadFeedThumbnails()){
+    if(canPreloadFeedThumbnails()){
         prefetchImage = (upcomingCards || [])
             .map(card => card.querySelector(".thumbnail-gif-preview"))
             .find(image => {
                 const size = Number(image?.dataset.gifSize || 0);
-                return image && !image.dataset.gifState && size > 0 &&
+                return image && image.dataset.gifState !== "loaded" &&
+                    image.dataset.gifState !== "failed" && size > 0 &&
                     size <= STREAMX_GIF_PREFETCH_MAX_BYTES;
             }) || null;
         if(prefetchImage) desired.add(prefetchImage);
@@ -5923,11 +5924,19 @@ function queueFeedGifPreviews(visibleCards,upcomingCards){
             if(image.dataset.gifState === "queued") delete image.dataset.gifState;
         }
     }
+    // Stop offscreen downloads so they cannot occupy slots while the viewer
+    // is waiting on the cards currently in view.
+    for(const image of Array.from(streamxGifActiveRequests)){
+        if(desired.has(image)) continue;
+        clearFeedGifLoadTimer(image);
+        image.removeAttribute("src");
+        delete image.dataset.gifState;
+        streamxGifActiveRequests.delete(image);
+    }
     visibleImages.forEach(image => requestFeedGif(image,"high"));
     if(prefetchImage) requestFeedGif(prefetchImage,"low");
     pumpFeedGifQueue();
 }
-
 function clearFeedGifLoadTimer(image){
     const timer = streamxGifLoadTimers.get(image);
     if(timer){
@@ -5942,7 +5951,7 @@ function watchFeedGifLoad(image,source){
         if(!image.isConnected || image.dataset.gifSrc !== source ||
             image.dataset.gifState !== "loading") return;
         const status = image.closest(".thumbnail")?.querySelector(".thumbnail-gif-status");
-        if(status) status.textContent = "Large animation is still loading…";
+        if(status) status.textContent = "Animation is taking longer to load…";
         const timeoutTimer = window.setTimeout(() => {
             if(!image.isConnected || image.dataset.gifSrc !== source ||
                 image.dataset.gifState !== "loading") return;

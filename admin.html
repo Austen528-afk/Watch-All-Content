@@ -12700,16 +12700,10 @@ async function optimizeAllGifPreviews(){
             );
 
 
-            const rpcName =
-                video.preview_video_url
-                    ? "queue_streamx_poster_processing"
-                    : "queue_streamx_preview_processing";
-
-
             const queueResult =
                 await supabaseClient
                     .rpc(
-                        rpcName,
+                        "queue_streamx_feed_gif_processing",
                         {
                             p_video_id:
                                 video.id

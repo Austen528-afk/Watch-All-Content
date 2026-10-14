@@ -4487,6 +4487,7 @@ allVideos.forEach(video => {
 
 likeSummaryPromise = loadLikeSummary();
 renderVideos();
+syncRecentFeedGifMetadataPolling();
 void likeSummaryPromise.catch(() => {});
 
     }
@@ -4578,6 +4579,7 @@ function mergeRealtimeVideo(video){
     else{
         updateRealtimeViewUI(video.id,video.views);
     }
+    syncRecentFeedGifMetadataPolling();
 }
 
 function setupVideoRealtime(){
@@ -5651,6 +5653,133 @@ const STREAMX_GIF_PREFETCH_MAX_BYTES = 20 * 1024 * 1024;
 const STREAMX_GIF_LOAD_NOTICE_MS = 12000;
 const STREAMX_GIF_LOAD_TIMEOUT_MS = 90000;
 
+const STREAMX_RECENT_GIF_WAIT_MS = 24 * 60 * 60 * 1000;
+const STREAMX_GIF_METADATA_POLL_INTERVAL_MS = 15000;
+const STREAMX_GIF_METADATA_FIELDS = [
+    "gif_preview_url",
+    "gif_size_bytes",
+    "gif_teaser_url",
+    "gif_teaser_size_bytes",
+    "gif_teaser_duration_seconds",
+    "thumbnail_url",
+    "preview_video_url"
+];
+let streamxGifMetadataPollTimer = null;
+let streamxGifMetadataPollBusy = false;
+
+function hasRenderableFeedGifPreview(video){
+    if(String(video && video.gif_teaser_url || "").trim()) return true;
+    const fullGifURL = String(video && video.gif_preview_url || "").trim();
+    const fullGifSizeBytes = Number(video && video.gif_size_bytes || 0);
+    return Boolean(
+        fullGifURL &&
+        fullGifSizeBytes > 0 &&
+        fullGifSizeBytes <= 5 * 1024 * 1024
+    );
+}
+
+function shouldWaitForRecentFeedGif(video,gifPreviewURL){
+    const createdAt = Date.parse(String(video && video.created_at || ""));
+    const age = Date.now() - createdAt;
+    return Boolean(
+        !gifPreviewURL &&
+        Number.isFinite(createdAt) &&
+        age >= 0 &&
+        age < STREAMX_RECENT_GIF_WAIT_MS &&
+        String(video && (video.video_url || video.preview_video_url) || "").trim() &&
+        !hasRenderableFeedGifPreview(video)
+    );
+}
+
+function stopRecentFeedGifMetadataPolling(){
+    if(!streamxGifMetadataPollTimer) return;
+    window.clearInterval(streamxGifMetadataPollTimer);
+    streamxGifMetadataPollTimer = null;
+}
+
+async function refreshRecentFeedGifMetadata(){
+    if(streamxGifMetadataPollBusy) return;
+    const pendingVideos = (allVideos || []).filter(video =>
+        shouldWaitForRecentFeedGif(video,null)
+    );
+    if(!pendingVideos.length){
+        stopRecentFeedGifMetadataPolling();
+        return;
+    }
+
+    streamxGifMetadataPollBusy = true;
+    try{
+        const {data,error} = await supabaseClient
+            .from("videos")
+            .select(
+                "id,gif_preview_url,gif_size_bytes,gif_teaser_url," +
+                "gif_teaser_size_bytes,gif_teaser_duration_seconds," +
+                "thumbnail_url,preview_video_url"
+            )
+            .in("id",pendingVideos.map(video => video.id));
+
+        if(error || !Array.isArray(data)) return;
+
+        let changed = false;
+        data.forEach(update => {
+            const index = allVideos.findIndex(video =>
+                String(video.id) === String(update.id)
+            );
+            if(index < 0) return;
+            const previous = allVideos[index];
+            const next = {...previous,...update};
+            if(STREAMX_GIF_METADATA_FIELDS.some(field =>
+                String(previous[field] ?? "") !== String(next[field] ?? "")
+            )){
+                allVideos[index] = next;
+                changed = true;
+            }
+        });
+
+        if(changed) renderVideos();
+
+        if(!(allVideos || []).some(video =>
+            shouldWaitForRecentFeedGif(video,null)
+        )){
+            stopRecentFeedGifMetadataPolling();
+        }
+    }
+    catch(error){
+        console.warn("Recent GIF preview metadata refresh failed:",error);
+    }
+    finally{
+        streamxGifMetadataPollBusy = false;
+    }
+}
+
+function syncRecentFeedGifMetadataPolling(){
+    const hasPendingVideo = (allVideos || []).some(video =>
+        shouldWaitForRecentFeedGif(video,null)
+    );
+    if(!hasPendingVideo){
+        stopRecentFeedGifMetadataPolling();
+        return;
+    }
+    if(streamxGifMetadataPollTimer) return;
+
+    void refreshRecentFeedGifMetadata();
+    streamxGifMetadataPollTimer = window.setInterval(() => {
+        if(document.visibilityState === "visible"){
+            void refreshRecentFeedGifMetadata();
+        }
+    },STREAMX_GIF_METADATA_POLL_INTERVAL_MS);
+}
+
+document.addEventListener("visibilitychange",function(){
+    if(
+        document.visibilityState === "visible" &&
+        streamxGifMetadataPollTimer
+    ){
+        void refreshRecentFeedGifMetadata();
+    }
+});
+
+
 function getFeedGifConcurrency(){
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const lowMemory = Number(navigator.deviceMemory || 0) > 0 &&
@@ -6115,7 +6244,8 @@ function createVideoCard(video){
         gifTeaserURL || (useSmallFullGif ? fullGifURL : ""),
         "thumbnails"
     );
-    const gifPreviewPending = hasGifSource && !gifPreviewURL;
+    const gifPreviewExpected = hasGifSource ||
+        shouldWaitForRecentFeedGif(video,gifPreviewURL);
     const thumbnail = getPublicURL(
         legacyGifURL ? "" : video.thumbnail_url,
         "thumbnails"
@@ -6171,7 +6301,7 @@ function createVideoCard(video){
 
         <div class="video-media-block">
 
-        <div class="thumbnail" data-gif-preview-expected="${hasGifSource ? "1" : "0"}">
+        <div class="thumbnail" data-gif-preview-expected="${gifPreviewExpected ? "1" : "0"}">
 
             ${thumbnail ? `
                 <img class="thumbnail-fallback"
@@ -6188,12 +6318,10 @@ function createVideoCard(video){
                     loading="lazy" decoding="async" fetchpriority="low"
                     aria-hidden="true" draggable="false">
                 <span class="thumbnail-gif-status" aria-live="polite">Loading animation…</span>
-            ` : gifPreviewPending ? `
-                <span class="thumbnail-gif-status" aria-live="polite">Preparing lighter animation preview…</span>
             ` : ""}
 
             ${
-                previewVideoURL
+                previewVideoURL && !gifPreviewExpected
                 ?
 
                 `

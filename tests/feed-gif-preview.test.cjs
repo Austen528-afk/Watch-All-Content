@@ -82,6 +82,15 @@ test("both feeds retain small legacy GIF fallback and five-second teaser loading
     }
 });
 
+test("both feeds never render MP4 preview video elements", () => {
+    for (const page of pages) {
+        const source = sourceOf(page);
+        assert.doesNotMatch(source, /class="thumbnail-preview-video"/, page);
+        assert.doesNotMatch(source, /data-preview-src=/, page);
+        assert.match(source, /data-gif-src="\$\{escapeHTML\(gifPreviewURL\)\}"/, page);
+    }
+});
+
 test("admin no longer exposes full-length GIF batch or regeneration controls", () => {
     const admin = sourceOf("admin.html");
     assert.doesNotMatch(admin, /Full-Length GIF Management|gifManagementRows|gif-management-panel/);

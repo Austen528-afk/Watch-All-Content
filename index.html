@@ -2926,6 +2926,27 @@ let recommendationRefreshTimer = null;
 let recommendationLoading = false;
 let recommendationRefreshQueued = false;
 let recommendationTriggerVideoId = null;
+function lockFeedRecommendationOrder(){
+    if(feedRecommendationOrderLocked) return;
+    feedRecommendationOrderLocked = true;
+    feedOrderRecommendations = (
+        Array.isArray(feedOrderRecommendations)
+            ? feedOrderRecommendations
+            : recommendationVideos
+    ).slice();
+}
+
+function getActiveFeedRecommendations(){
+    return Array.isArray(feedOrderRecommendations)
+        ? feedOrderRecommendations
+        : recommendationVideos;
+}
+
+window.addEventListener(
+    "scroll",
+    lockFeedRecommendationOrder,
+    {passive:true}
+);
 const RECOMMENDATION_COOLDOWN_MS = 20 * 60 * 1000;
 const RECOMMENDATION_HISTORY_LIMIT = 48;
 let videoLikeSummary = new Map();
@@ -4618,21 +4639,27 @@ function renderRecommendations(rows){
 
     rememberRecommendations(recommendationVideos);
 
-    /* Reorder the cards already on screen instead of rebuilding every card.
-       Rebuilding would restart GIF/image downloads and make the feed feel
-       slower whenever recommendations refresh. */
+    /* Once browsing starts, keep this session's card order stable. New
+   recommendations are used when the feed is opened again. */
+if(!feedRecommendationOrderLocked){
+    feedOrderRecommendations = recommendationVideos.slice();
     prioritizeRenderedRecommendationCards();
+}
 }
 
 /* The viewport scheduler determines image priority after cards are mounted. */
 
 function prioritizeRenderedRecommendationCards(){
 
+    const activeRecommendations =
+        getActiveFeedRecommendations();
+
     if(
         !videoGrid ||
         libraryViewActive ||
         searchTerm ||
-        String(currentCategory).toLowerCase() !== "all"
+        String(currentCategory).toLowerCase() !== "all" ||
+        activeRecommendations.length === 0
     ){
         return;
     }
@@ -4654,7 +4681,7 @@ function prioritizeRenderedRecommendationCards(){
     const ordered = [];
     const used = new Set();
 
-    recommendationVideos.forEach(recommendation => {
+    activeRecommendations.forEach(recommendation => {
 
         const card = cardsById.get(
             String(recommendation.id)
@@ -4738,6 +4765,9 @@ async function loadRecommendations(){
     catch(error){
 
         recommendationVideos = [];
+        if(!feedRecommendationOrderLocked){
+            feedOrderRecommendations = [];
+        }
         prioritizeRenderedRecommendationCards();
 
         /* Recommendations are optional; the normal video feed remains usable
@@ -5455,6 +5485,7 @@ function getFilteredVideos(){
 function getVideosForDisplay(){
 
     const videos = getFilteredVideos();
+    const activeRecommendations = getActiveFeedRecommendations();
     const showPrioritizedVideos =
         !libraryViewActive &&
         !searchTerm &&
@@ -5462,7 +5493,7 @@ function getVideosForDisplay(){
 
     if(
         !showPrioritizedVideos ||
-        recommendationVideos.length === 0
+        activeRecommendations.length === 0
     ){
         return videos;
     }
@@ -5473,7 +5504,7 @@ function getVideosForDisplay(){
     const prioritizedIds = new Set();
     const prioritizedVideos = [];
 
-    recommendationVideos.forEach(recommendation => {
+    activeRecommendations.forEach(recommendation => {
 
         const key = String(recommendation.id);
         const video = videosById.get(key) || recommendation;
@@ -7918,6 +7949,8 @@ function resumeFeedMediaAfterPlayback(){
 ========================= */
 
 async function openPlayer(video){
+
+    lockFeedRecommendationOrder();
 
     const requestId = ++playerOpenRequestId;
 

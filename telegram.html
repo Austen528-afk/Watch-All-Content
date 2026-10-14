@@ -2836,6 +2836,27 @@ let libraryActivityRequestInFlight = false;
 let recommendationVideos = [];
 let recommendationRefreshTimer = null;
 let recommendationLoading = false;
+function lockFeedRecommendationOrder(){
+    if(feedRecommendationOrderLocked) return;
+    feedRecommendationOrderLocked = true;
+    feedOrderRecommendations = (
+        Array.isArray(feedOrderRecommendations)
+            ? feedOrderRecommendations
+            : recommendationVideos
+    ).slice();
+}
+
+function getActiveFeedRecommendations(){
+    return Array.isArray(feedOrderRecommendations)
+        ? feedOrderRecommendations
+        : recommendationVideos;
+}
+
+window.addEventListener(
+    "scroll",
+    lockFeedRecommendationOrder,
+    {passive:true}
+);
 let videoLikeSummary = new Map();
 let likedVideoIds = new Set();
 let likeOptimisticState = new Map();
@@ -4180,22 +4201,27 @@ function renderRecommendations(rows){
                 video.video_url
             );
 
-    /* Reorder the cards already on screen instead of rebuilding every card.
-       Rebuilding would restart GIF/image downloads and make the feed feel
-       slower whenever recommendations refresh. */
+    /* Once browsing starts, keep this session's card order stable. New
+   recommendations are used when the feed is opened again. */
+if(!feedRecommendationOrderLocked){
+    feedOrderRecommendations = recommendationVideos.slice();
     prioritizeRenderedRecommendationCards();
+}
 }
 
 /* Thumbnail priority is assigned from the viewport after cards mount. */
 
 function prioritizeRenderedRecommendationCards(){
 
+    const activeRecommendations =
+        getActiveFeedRecommendations();
+
     if(
         !videoGrid ||
         libraryViewActive ||
         searchTerm ||
         String(currentCategory).toLowerCase() !== "all" ||
-        recommendationVideos.length === 0
+        activeRecommendations.length === 0
     ){
         return;
     }
@@ -4217,7 +4243,7 @@ function prioritizeRenderedRecommendationCards(){
     const ordered = [];
     const used = new Set();
 
-    recommendationVideos.forEach(recommendation => {
+    activeRecommendations.forEach(recommendation => {
 
         const card = cardsById.get(
             String(recommendation.id)
@@ -4273,6 +4299,9 @@ async function loadRecommendations(){
     catch(error){
 
         recommendationVideos = [];
+        if(!feedRecommendationOrderLocked){
+            feedOrderRecommendations = [];
+        }
 
         /* Recommendations are optional; the normal video feed remains usable
            when the SQL function has not been installed yet. */
@@ -4897,6 +4926,7 @@ function getFilteredVideos(){
 function getVideosForDisplay(){
 
     const videos = getFilteredVideos();
+    const activeRecommendations = getActiveFeedRecommendations();
     const showPrioritizedVideos =
         !libraryViewActive &&
         !searchTerm &&
@@ -4904,7 +4934,7 @@ function getVideosForDisplay(){
 
     if(
         !showPrioritizedVideos ||
-        recommendationVideos.length === 0
+        activeRecommendations.length === 0
     ){
         return videos;
     }
@@ -4915,7 +4945,7 @@ function getVideosForDisplay(){
     const prioritizedIds = new Set();
     const prioritizedVideos = [];
 
-    recommendationVideos.forEach(recommendation => {
+    activeRecommendations.forEach(recommendation => {
 
         const key = String(recommendation.id);
         const video = videosById.get(key) || recommendation;
@@ -5030,7 +5060,9 @@ function setupInfiniteFeedObserver(){
         typeof IntersectionObserver !== "function"
     ){
         return;
-    }
+    }    const observedFeedKey = feedRenderKey;
+
+
 
 
     feedLoadObserver =
@@ -5044,7 +5076,8 @@ function setupInfiniteFeedObserver(){
                 if(
                     !entry ||
                     !entry.isIntersecting ||
-                    feedLoadBusy
+                    feedLoadBusy ||
+                    observedFeedKey !== feedRenderKey
                 ){
                     return;
                 }
@@ -5072,24 +5105,25 @@ function setupInfiniteFeedObserver(){
 
 
                 window.requestAnimationFrame(
-                    () => {
+    () => {
+        if(observedFeedKey !== feedRenderKey){
+            feedLoadBusy = false;
+            return;
+        }
 
-                        feedVisibleCount =
-                            Math.min(
-                                totalItems,
-                                feedVisibleCount +
-                                    FEED_BATCH_SIZE
-                            );
+        const previousVisibleCount = feedVisibleCount;
+        feedVisibleCount = Math.min(
+            totalItems,
+            previousVisibleCount + FEED_BATCH_SIZE
+        );
 
+        renderVideos({
+            appendFromIndex:previousVisibleCount
+        });
 
-                        renderVideos();
-
-
-                        feedLoadBusy =
-                            false;
-
-                    }
-                );
+        feedLoadBusy = false;
+    }
+);
 
             },
             {
@@ -5107,7 +5141,12 @@ function setupInfiniteFeedObserver(){
 }
 
 
-function renderVideos(){
+function renderVideos(options = {}){
+
+    const requestedAppendFromIndex =
+        Number.isInteger(options.appendFromIndex)
+            ? options.appendFromIndex
+            : null;
 
     updateCategoryNavigation();
 
@@ -5153,9 +5192,21 @@ function renderVideos(){
             feedVisibleCount
         );
 
+    const appendFromIndex =
+        requestedAppendFromIndex !== null &&
+        requestedAppendFromIndex >= 0 &&
+        requestedAppendFromIndex <= videos.length
+            ? requestedAppendFromIndex
+            : null;
 
-    videoGrid.innerHTML =
-        "";
+    const videosToRender = appendFromIndex === null
+        ? videos
+        : videos.slice(appendFromIndex);
+
+
+    if(appendFromIndex === null){
+        videoGrid.innerHTML = "";
+    }
 
 
     if(searchTerm){
@@ -5205,7 +5256,7 @@ function renderVideos(){
         );
 
 
-    if(videos.length === 0){
+    if(videos.length === 0 && appendFromIndex === null){
 
         updateFeedLoadStatus(
             0
@@ -5222,7 +5273,7 @@ function renderVideos(){
         document.createDocumentFragment();
 
 
-    videos.forEach(
+    videosToRender.forEach(
         (video,index) => {
 
             cardFragment.appendChild(
@@ -7565,6 +7616,8 @@ function resumeFeedMediaAfterPlayback(){
 ========================= */
 
 async function openPlayer(video){
+
+    lockFeedRecommendationOrder();
 
     const requestId = ++playerOpenRequestId;
 

@@ -4159,6 +4159,9 @@ function normalizeRecommendationVideo(row){
         preview_video_url:row && row.preview_video_url || "",
         gif_preview_url:row && row.gif_preview_url || sourceVideo && sourceVideo.gif_preview_url || "",
         gif_size_bytes:Number(row && row.gif_size_bytes || sourceVideo && sourceVideo.gif_size_bytes || 0),
+        gif_teaser_url:row && row.gif_teaser_url || sourceVideo && sourceVideo.gif_teaser_url || "",
+        gif_teaser_size_bytes:Number(row && row.gif_teaser_size_bytes || sourceVideo && sourceVideo.gif_teaser_size_bytes || 0),
+        gif_teaser_duration_seconds:Number(row && row.gif_teaser_duration_seconds || sourceVideo && sourceVideo.gif_teaser_duration_seconds || 0),
         created_at:row && row.created_at || null,
         views:Number(row && row.views || 0),
         likes_count:Number(row && row.likes_count || 0),
@@ -4418,7 +4421,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,gif_preview_url,gif_size_bytes,created_at,views")
+                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,gif_preview_url,gif_size_bytes,gif_teaser_url,gif_teaser_size_bytes,gif_teaser_duration_seconds,created_at,views")
                 .order(
                     "created_at",
                     {

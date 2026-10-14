@@ -1590,6 +1590,7 @@ body.streamx-app-mode .feed-pagination{display:none!important}
 .thumbnail.streamx-gif-ready .thumbnail-preview-video{opacity:0;}
 .thumbnail-fallback{transition:opacity .12s ease;}
 .thumbnail-gif-status{
+    display:none;
     position:absolute;
     z-index:2;
     left:8px;
@@ -1603,6 +1604,7 @@ body.streamx-app-mode .feed-pagination{display:none!important}
     line-height:1.2;
     pointer-events:none;
 }
+.thumbnail.streamx-gif-loading .thumbnail-gif-status{display:block;}
 .thumbnail.streamx-gif-ready .thumbnail-gif-status{display:none;}
 .thumbnail.streamx-preview-active .thumbnail-gif-status{display:none;}
 .thumbnail.streamx-gif-failed .thumbnail-gif-status{display:block;background:rgba(0,0,0,.82);}

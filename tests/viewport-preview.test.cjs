@@ -27,6 +27,7 @@ test('upcoming cards request posters without starting their MP4 previews', () =>
 test('a stale visibility callback cannot request an offscreen MP4', () => {
     const ctx = vm.createContext({
         canLoadFeedThumbnails: () => true,
+        feedCardGifOwnsPreview: () => false,
         window: { innerHeight: 800, innerWidth: 390 },
         document: { documentElement: {} },
         scheduleFeedThumbnailWindow() {}
@@ -40,6 +41,7 @@ test('a stale visibility callback cannot request an offscreen MP4', () => {
         const video = {
             dataset: { previewSrc: 'https://media.example/preview.mp4' },
             getBoundingClientRect: () => rect,
+            closest: () => ({ classList: { contains: () => false } }),
             load() { assert.fail('Offscreen preview requested'); }
         };
         ctx.prepareFeedVideoPreview(video);
@@ -50,6 +52,7 @@ test('a stale visibility callback cannot request an offscreen MP4', () => {
     const visible = {
         dataset: { previewSrc: 'https://media.example/preview.mp4', streamxPreviewTracked: '1' },
         getBoundingClientRect: () => ({ top: 0, bottom: 300, left: 0, right: 300 }),
+        closest: () => ({ classList: { contains: () => false } }),
         load() { loads++; }
     };
     ctx.prepareFeedVideoPreview(visible);

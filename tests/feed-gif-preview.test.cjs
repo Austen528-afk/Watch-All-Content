@@ -60,6 +60,7 @@ test("both feeds allow a higher-quality teaser up to three MiB", () => {
 
         assert.equal(selected.gifPreviewURL, "https://media.example/feed-preview.gif", page);
         assert.equal(selected.gifSizeBytes, 2.5 * 1024 * 1024, page);
+        assert.match(sourceOf(page), /STREAMX_GIF_PREFETCH_MAX_BYTES\\s*=\\s*3\\s*\\*\\s*1024\\s*\\*\\s*1024/, page);
     }
 });
 

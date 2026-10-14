@@ -154,7 +154,18 @@ test("admin repair queues missing and overlong teasers while retaining valid pre
     assert.equal(context.needsRepair({ gif_teaser_url: "no-source.gif" }), false);
 
     const batch = admin.slice(admin.indexOf("async function optimizeAllGifPreviews(){"));
-    assert.match(batch, /queue_streamx_poster_processing/);
+    assert.match(batch, /queue_streamx_feed_gif_processing/);
+    assert.doesNotMatch(batch, /queue_streamx_poster_processing|queue_streamx_preview_processing/);
     assert.match(batch, /Generate the missing five-second feed GIF previews/);
     assert.match(batch, /Each GIF uses up to five seconds/);
+});
+
+test("feed GIF queue RPC can refresh static JPG posters", () => {
+    const migration = sourceOf(
+        "supabase/migrations/20261014200000_queue_feed_gif_previews.sql"
+    );
+    assert.match(migration, /queue_streamx_feed_gif_processing\\s*\\(\\s*p_video_id bigint\\s*\\)/);
+    assert.match(migration, /public\\.is_streamx_admin\\(\\)/);
+    assert.match(migration, /processing_type[\\s\\S]*?'poster'/);
+    assert.doesNotMatch(migration, /thumbnail_value[\\s\\S]*?not like '%\\.gif'/);
 });

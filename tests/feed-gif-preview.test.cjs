@@ -49,6 +49,20 @@ test("both feeds choose a compact GIF teaser before a full GIF", () => {
     }
 });
 
+test("both feeds allow a higher-quality teaser up to three MiB", () => {
+    for (const page of pages) {
+        const selected = previewSelectionFor(page, {
+            thumbnail_url: "https://media.example/poster.jpg",
+            gif_teaser_url: "https://media.example/feed-preview.gif",
+            gif_teaser_size_bytes: 2.5 * 1024 * 1024,
+            gif_teaser_duration_seconds: 5,
+        });
+
+        assert.equal(selected.gifPreviewURL, "https://media.example/feed-preview.gif", page);
+        assert.equal(selected.gifSizeBytes, 2.5 * 1024 * 1024, page);
+    }
+});
+
 test("both feeds avoid starting a large full GIF when no teaser exists", () => {
     for (const page of pages) {
         const selected = previewSelectionFor(page, {
@@ -148,6 +162,12 @@ test("admin repair queues missing and overlong teasers while retaining valid pre
     }), false);
     assert.equal(context.needsRepair({
         source_video_url: "source.mp4",
+        gif_teaser_url: "higher-quality-five-seconds.gif",
+        gif_teaser_size_bytes: 2.5 * 1024 * 1024,
+        gif_teaser_duration_seconds: 5,
+    }), false);
+    assert.equal(context.needsRepair({
+        source_video_url: "source.mp4",
         gif_preview_url: "small-legacy.gif",
         gif_size_bytes: 3 * 1024 * 1024,
     }), false);
@@ -157,7 +177,7 @@ test("admin repair queues missing and overlong teasers while retaining valid pre
     assert.match(batch, /queue_streamx_feed_gif_processing/);
     assert.doesNotMatch(batch, /queue_streamx_poster_processing|queue_streamx_preview_processing/);
     assert.match(batch, /Generate the missing five-second feed GIF previews/);
-    assert.match(batch, /Each GIF uses up to five seconds/);
+    assert.match(batch, /Each GIF uses up to five seconds of video and is capped at 3 MiB/);
 });
 
 test("feed GIF queue RPC can refresh static JPG posters", () => {

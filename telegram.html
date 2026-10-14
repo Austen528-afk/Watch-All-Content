@@ -5673,7 +5673,7 @@ function hasRenderableFeedGifPreview(video){
     if(teaserURL){
         const teaserSizeBytes = Number(video && video.gif_teaser_size_bytes || 0);
         const teaserDuration = Number(video && video.gif_teaser_duration_seconds || 0);
-        return teaserSizeBytes > 0 && teaserSizeBytes <= 1 * 1024 * 1024 &&
+        return teaserSizeBytes > 0 && teaserSizeBytes <= 3 * 1024 * 1024 &&
             teaserDuration > 0 && teaserDuration <= 5.5;
     }
     const fullGifURL = String(video && video.gif_preview_url || "").trim();
@@ -6268,7 +6268,7 @@ function createVideoCard(video){
     const useFiveSecondTeaser = Boolean(
         gifTeaserURL &&
         gifTeaserSizeBytes > 0 &&
-        gifTeaserSizeBytes <= 1 * 1024 * 1024 &&
+        gifTeaserSizeBytes <= 3 * 1024 * 1024 &&
         gifTeaserDurationSeconds > 0 &&
         gifTeaserDurationSeconds <= 5.5
     );

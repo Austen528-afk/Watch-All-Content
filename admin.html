@@ -12545,7 +12545,7 @@ function hasUsableFeedGifPreview(video){
     const teaserSize = Number(video && video.gif_teaser_size_bytes || 0);
     const teaserDuration = Number(video && video.gif_teaser_duration_seconds || 0);
     if(teaserURL){
-        return teaserSize > 0 && teaserSize <= 1024 * 1024 &&
+        return teaserSize > 0 && teaserSize <= 3 * 1024 * 1024 &&
             teaserDuration > 0 && teaserDuration <= 5.5;
     }
 
@@ -12655,7 +12655,7 @@ async function optimizeAllGifPreviews(){
                 "Generate the missing five-second feed GIF previews?\n\n" +
                 "Videos to queue: " +
                 candidates.length +
-                "\n\nEach GIF uses up to five seconds of video and is capped at 1 MiB.\n" +
+                "\n\nEach GIF uses up to five seconds of video and is capped at 3 MiB.\n" +
                 "Railway will process the jobs one at a time; generated GIFs use R2 storage."
             );
 

@@ -6272,9 +6272,6 @@ function createVideoCard(video){
         legacyGifURL ? "" : video.thumbnail_url,
         "thumbnails"
     );
-    const previewVideoURL = video.preview_video_url
-        ? getPublicURL(video.preview_video_url, "streamx-hls")
-        : null;
     const gifSizeBytes = gifTeaserURL
         ? gifTeaserSizeBytes
         : fullGifSizeBytes;
@@ -6342,27 +6339,6 @@ function createVideoCard(video){
                 <span class="thumbnail-gif-status" aria-live="polite">Loading animation…</span>
             ` : ""}
 
-            ${
-                previewVideoURL && !gifPreviewExpected
-                ?
-
-                `
-                <video
-                    class="thumbnail-preview-video"
-                    data-preview-src="${escapeHTML(previewVideoURL)}"
-                    muted
-                    loop
-                    playsinline
-                    preload="none"
-                    disablepictureinpicture
-                    aria-hidden="true"
-                ></video>
-                `
-
-                :
-
-                ""
-            }
 
             <div class="play-overlay">
 

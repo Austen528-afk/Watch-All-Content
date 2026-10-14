@@ -4487,6 +4487,9 @@ function normalizeRecommendationVideo(row){
         preview_video_url:row && row.preview_video_url || "",
         gif_preview_url:row && row.gif_preview_url || sourceVideo && sourceVideo.gif_preview_url || "",
         gif_size_bytes:Number(row && row.gif_size_bytes || sourceVideo && sourceVideo.gif_size_bytes || 0),
+        gif_duration_seconds:Number(row && row.gif_duration_seconds || sourceVideo && sourceVideo.gif_duration_seconds || 0),
+        gif_original_duration_seconds:Number(row && row.gif_original_duration_seconds || sourceVideo && sourceVideo.gif_original_duration_seconds || 0),
+        gif_verified_at:row && row.gif_verified_at || sourceVideo && sourceVideo.gif_verified_at || "",
         gif_teaser_url:row && row.gif_teaser_url || sourceVideo && sourceVideo.gif_teaser_url || "",
         gif_teaser_size_bytes:Number(row && row.gif_teaser_size_bytes || sourceVideo && sourceVideo.gif_teaser_size_bytes || 0),
         gif_teaser_duration_seconds:Number(row && row.gif_teaser_duration_seconds || sourceVideo && sourceVideo.gif_teaser_duration_seconds || 0),
@@ -4933,7 +4936,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,gif_preview_url,gif_size_bytes,gif_teaser_url,gif_teaser_size_bytes,gif_teaser_duration_seconds,created_at,views")
+                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,gif_preview_url,gif_size_bytes,gif_duration_seconds,gif_original_duration_seconds,gif_verified_at,gif_teaser_url,gif_teaser_size_bytes,gif_teaser_duration_seconds,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -5035,6 +5038,9 @@ function mergeRealtimeVideo(video){
         "thumbnail_url",
         "gif_preview_url",
         "gif_size_bytes",
+        "gif_duration_seconds",
+        "gif_original_duration_seconds",
+        "gif_verified_at",
         "gif_teaser_url",
         "gif_teaser_size_bytes",
         "gif_teaser_duration_seconds",
@@ -5812,9 +5818,13 @@ const STREAMX_GIF_LOAD_TIMEOUT_MS = 90000;
 
 const STREAMX_RECENT_GIF_WAIT_MS = 24 * 60 * 60 * 1000;
 const STREAMX_GIF_METADATA_POLL_INTERVAL_MS = 15000;
+const STREAMX_GIF_FEED_MAX_BYTES = 64 * 1024 * 1024;
 const STREAMX_GIF_METADATA_FIELDS = [
     "gif_preview_url",
     "gif_size_bytes",
+    "gif_duration_seconds",
+    "gif_original_duration_seconds",
+    "gif_verified_at",
     "gif_teaser_url",
     "gif_teaser_size_bytes",
     "gif_teaser_duration_seconds",
@@ -5825,13 +5835,21 @@ let streamxGifMetadataPollTimer = null;
 let streamxGifMetadataPollBusy = false;
 
 function hasRenderableFeedGifPreview(video){
-    if(String(video && video.gif_teaser_url || "").trim()) return true;
     const fullGifURL = String(video && video.gif_preview_url || "").trim();
     const fullGifSizeBytes = Number(video && video.gif_size_bytes || 0);
+    const gifDuration = Number(video && video.gif_duration_seconds || 0);
+    const originalDuration = Number(video && video.gif_original_duration_seconds || 0);
+    const verifiedAt = String(video && video.gif_verified_at || "").trim();
+    const durationToleranceSeconds = Math.max(0.5, (1 / 3) + 0.12);
     return Boolean(
         fullGifURL &&
+        /\.gif(?:[?#]|$)/i.test(fullGifURL) &&
         fullGifSizeBytes > 0 &&
-        fullGifSizeBytes <= 5 * 1024 * 1024
+        fullGifSizeBytes <= STREAMX_GIF_FEED_MAX_BYTES &&
+        gifDuration > 0 &&
+        originalDuration > 0 &&
+        Math.abs(gifDuration - originalDuration) <= durationToleranceSeconds &&
+        verifiedAt
     );
 }
 
@@ -5869,7 +5887,8 @@ async function refreshRecentFeedGifMetadata(){
         const {data,error} = await supabaseClient
             .from("videos")
             .select(
-                "id,gif_preview_url,gif_size_bytes,gif_teaser_url," +
+                "id,gif_preview_url,gif_size_bytes,gif_duration_seconds," +
+                "gif_original_duration_seconds,gif_verified_at,gif_teaser_url," +
                 "gif_teaser_size_bytes,gif_teaser_duration_seconds," +
                 "thumbnail_url,preview_video_url"
             )
@@ -5889,6 +5908,8 @@ async function refreshRecentFeedGifMetadata(){
                 const incoming = update[field];
                 const numericField = [
                     "gif_size_bytes",
+                    "gif_duration_seconds",
+                    "gif_original_duration_seconds",
                     "gif_teaser_size_bytes",
                     "gif_teaser_duration_seconds"
                 ].includes(field);
@@ -5991,6 +6012,8 @@ function requestFeedGif(image,priority){
     if(!source || image.dataset.gifState === "failed" ||
         image.dataset.gifState === "loaded") return;
     const thumbnail = image.closest(".thumbnail");
+    const gifSizeBytes = Number(image.dataset.gifSize) || 0;
+    if(priority === "low" && gifSizeBytes > 5 * 1024 * 1024) return;
     thumbnail?.classList.add("streamx-gif-loading");
     stopFeedVideoPreviewForGif(image);
     image.fetchPriority = priority || "high";
@@ -6366,20 +6389,13 @@ function createVideoCard(video){
     const legacyGifURL = /\.gif(?:[?#]|$)/i.test(rawThumbnailURL)
         ? rawThumbnailURL
         : "";
-    const fullGifURL = String(video.gif_preview_url || legacyGifURL || "").trim();
-    const gifTeaserURL = String(video.gif_teaser_url || "").trim();
+    const fullGifURL = String(video.gif_preview_url || "").trim();
     const fullGifSizeBytes = Math.max(0, Number(video.gif_size_bytes) || 0);
-    const gifTeaserSizeBytes = Math.max(0, Number(video.gif_teaser_size_bytes) || 0);
-    const hasGifSource = Boolean(gifTeaserURL || fullGifURL || legacyGifURL);
-    const useSmallFullGif = !gifTeaserURL &&
-        Boolean(fullGifURL) &&
-        fullGifSizeBytes > 0 &&
-        fullGifSizeBytes <= 5 * 1024 * 1024;
-    const gifPreviewURL = getPublicURL(
-        gifTeaserURL || (useSmallFullGif ? fullGifURL : ""),
-        "thumbnails"
-    );
-    const gifPreviewExpected = hasGifSource ||
+    const hasFullLengthGif = hasRenderableFeedGifPreview(video);
+    const gifPreviewURL = hasFullLengthGif
+        ? getPublicURL(fullGifURL, "thumbnails")
+        : "";
+    const gifPreviewExpected = hasFullLengthGif ||
         shouldWaitForRecentFeedGif(video,gifPreviewURL);
     const thumbnail = getPublicURL(
         legacyGifURL ? "" : video.thumbnail_url,
@@ -6388,9 +6404,7 @@ function createVideoCard(video){
     const previewVideoURL = video.preview_video_url
         ? getPublicURL(video.preview_video_url, "streamx-hls")
         : null;
-    const gifSizeBytes = gifTeaserURL
-        ? gifTeaserSizeBytes
-        : fullGifSizeBytes;
+    const gifSizeBytes = fullGifSizeBytes;
 
 
     const title =

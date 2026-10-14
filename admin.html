@@ -3940,7 +3940,7 @@ textarea{
                     <input
                         type="file"
                         id="thumbnailFile"
-                        accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                     >
 
                     <div class="upload-icon">
@@ -3983,6 +3983,26 @@ textarea{
 
                 </div>
 
+            </div>
+
+            <div class="form-group">
+                <label>Animated GIF preview (optional)</label>
+                <small style="display:block;color:#777;line-height:1.5;margin:0 0 9px;">
+                    Leave empty to use the short video preview. A GIF selected here is used only on this post (maximum 5 MiB).
+                </small>
+
+                <label class="upload-box" id="adminGifUploadBox">
+                    <input type="file" id="adminGifFile" accept="image/gif,.gif">
+                    <div class="upload-icon">🎞️</div>
+                    <strong>Choose GIF preview</strong>
+                    <small>GIF, up to 5 MiB</small>
+                    <div class="file-name" id="adminGifFileName"></div>
+                </label>
+
+                <div class="thumbnail-preview" id="adminGifPreview">
+                    <img id="adminGifImage" alt="Optional animated GIF preview">
+                    <button type="button" class="remove-thumbnail" onclick="removeAdminGif(event)">×</button>
+                </div>
             </div>
 
 
@@ -4202,15 +4222,6 @@ textarea{
 
 
             <div class="storage-maintenance-actions">
-
-                <button
-                    id="optimizeAllGifButton"
-                    class="storage-clean-button"
-                    type="button"
-                    onclick="optimizeAllGifPreviews()"
-                >
-                    Generate Missing 5s GIF Previews
-                </button>
 
                 <button
                     id="storageCleanButton"
@@ -6225,6 +6236,8 @@ let selectedVideoFile = null;
 
 let selectedThumbnailFile = null;
 
+let selectedAdminGifFile = null;
+
 let editingVideoMetadataId = null;
 
 let allCategories = [];
@@ -6275,6 +6288,9 @@ const videoFile =
 
 const thumbnailFile =
     document.getElementById("thumbnailFile");
+
+const adminGifFile =
+    document.getElementById("adminGifFile");
 
 
 /* =====================================================
@@ -7068,10 +7084,6 @@ thumbnailFile.addEventListener(
             return;
 
 
-        /* GIFs are accepted for the existing upload workflow.
-           To protect feed speed, a selected GIF is NOT published as the live
-           thumbnail. Railway will generate the lightweight preview.mp4 +
-           poster.jpg from the uploaded video instead. */
         const thumbnailExtension =
             String(selectedThumbnailFile.name || "")
                 .split(".")
@@ -7079,7 +7091,7 @@ thumbnailFile.addEventListener(
                 .toLowerCase();
 
         if(
-            !["jpg","jpeg","png","webp","gif"].includes(
+            !["jpg","jpeg","png","webp"].includes(
                 thumbnailExtension
             )
         ){
@@ -7096,7 +7108,7 @@ thumbnailFile.addEventListener(
                 "";
 
             showMessage(
-                "❌ Use JPG, PNG, WebP or GIF for thumbnails.",
+                "❌ Use JPG, PNG or WebP for the poster. Add an optional GIF in the GIF preview field.",
                 "error"
             );
 
@@ -7108,12 +7120,7 @@ thumbnailFile.addEventListener(
             "thumbnailFileName"
         ).textContent =
             "✓ " +
-            selectedThumbnailFile.name +
-            (
-                thumbnailExtension === "gif"
-                    ? " — GIF recognized; lightweight preview/poster will be generated"
-                    : ""
-            );
+            selectedThumbnailFile.name;
 
 
         const reader =
@@ -7147,6 +7154,42 @@ thumbnailFile.addEventListener(
             selectedThumbnailFile
         );
 
+    }
+);
+
+
+adminGifFile.addEventListener(
+    "change",
+    function(){
+        selectedAdminGifFile = this.files[0] || null;
+        if(!selectedAdminGifFile){
+            document.getElementById("adminGifFileName").textContent = "";
+            return;
+        }
+
+        const extension = String(selectedAdminGifFile.name || "")
+            .split(".").pop().toLowerCase();
+        const maxBytes = 5 * 1024 * 1024;
+        if(extension !== "gif" || selectedAdminGifFile.size > maxBytes){
+            selectedAdminGifFile = null;
+            this.value = "";
+            document.getElementById("adminGifFileName").textContent = "";
+            document.getElementById("adminGifPreview").style.display = "none";
+            document.getElementById("adminGifUploadBox").style.display = "flex";
+            showMessage("❌ Choose a GIF file up to 5 MiB.", "error");
+            return;
+        }
+
+        document.getElementById("adminGifFileName").textContent =
+            "✓ " + selectedAdminGifFile.name;
+
+        const reader = new FileReader();
+        reader.onload = event => {
+            document.getElementById("adminGifImage").src = event.target.result;
+            document.getElementById("adminGifPreview").style.display = "block";
+            document.getElementById("adminGifUploadBox").style.display = "none";
+        };
+        reader.readAsDataURL(selectedAdminGifFile);
     }
 );
 
@@ -7187,6 +7230,18 @@ function removeThumbnail(event){
     ).textContent =
         "";
 
+}
+
+
+function removeAdminGif(event){
+    event.preventDefault();
+    event.stopPropagation();
+    selectedAdminGifFile = null;
+    adminGifFile.value = "";
+    document.getElementById("adminGifPreview").style.display = "none";
+    document.getElementById("adminGifUploadBox").style.display = "flex";
+    document.getElementById("adminGifFileName").textContent = "";
+    document.getElementById("adminGifImage").removeAttribute("src");
 }
 
 
@@ -8961,20 +9016,7 @@ async function uploadVideo(){
 
         let thumbnailURL =
             null;
-
-
-        const selectedThumbnailExtension =
-            selectedThumbnailFile
-                ? String(selectedThumbnailFile.name || "")
-                    .split(".")
-                    .pop()
-                    .toLowerCase()
-                : "";
-
-
-        const selectedThumbnailIsGif =
-            selectedThumbnailExtension ===
-            "gif";
+        let adminGifURL = null;
 
 
         /* =========================================
@@ -8996,8 +9038,8 @@ async function uploadVideo(){
 
         updateProgress(
             70,
-            selectedThumbnailIsGif
-                ? "Video uploaded. GIF recognized — preparing lightweight preview + poster..."
+            selectedAdminGifFile
+                ? "Video uploaded. Uploading optional GIF preview..."
                 : "Video uploaded. Processing thumbnail..."
         );
 
@@ -9006,24 +9048,25 @@ async function uploadVideo(){
            UPLOAD THUMBNAIL
         ========================================= */
 
-        if(
-            selectedThumbnailFile &&
-            !selectedThumbnailIsGif
-        ){
-
-            try{
+        try{
+            if(selectedThumbnailFile){
                 thumbnailURL = await uploadThumbnailToR2(session, selectedThumbnailFile);
             }
-            catch(thumbnailError){
+            if(selectedAdminGifFile){
+                adminGifURL = await uploadThumbnailToR2(session, selectedAdminGifFile);
+            }
+        }
+        catch(imageUploadError){
+            for(const publicUrl of [adminGifURL,thumbnailURL,videoURL]){
+                if(!publicUrl) continue;
                 try{
-                    await deleteR2MediaObject(session, videoURL);
+                    await deleteR2MediaObject(session, publicUrl);
                 }
                 catch(cleanupError){
-                    console.error("R2 cleanup after thumbnail upload failure:", cleanupError);
+                    console.error("R2 cleanup after optional media upload failure:", cleanupError);
                 }
-                throw new Error("Thumbnail upload failed: " + thumbnailError.message);
             }
-
+            throw new Error("Thumbnail or GIF upload failed: " + imageUploadError.message);
         }
 
 
@@ -9070,6 +9113,12 @@ async function uploadVideo(){
                     thumbnail_url:
                         thumbnailURL,
 
+                    admin_gif_url:
+                        adminGifURL,
+
+                    admin_gif_size_bytes:
+                        selectedAdminGifFile ? selectedAdminGifFile.size : null,
+
                     views:0
 
                 })
@@ -9115,6 +9164,15 @@ async function uploadVideo(){
                 }
                 catch(cleanupError){
                     console.error("R2 thumbnail cleanup after database insert failure:", cleanupError);
+                }
+            }
+
+            if(adminGifURL){
+                try{
+                    await deleteR2MediaObject(session, adminGifURL);
+                }
+                catch(cleanupError){
+                    console.error("R2 GIF cleanup after database insert failure:", cleanupError);
                 }
             }
 
@@ -12537,273 +12595,6 @@ async function loadSingleVideo(
 
 
 /* =====================================================
-   BATCH GIF PREVIEW OPTIMIZATION
-===================================================== */
-
-function hasUsableFeedGifPreview(video){
-    const teaserURL = String(video && video.gif_teaser_url || "").trim();
-    const teaserSize = Number(video && video.gif_teaser_size_bytes || 0);
-    const teaserDuration = Number(video && video.gif_teaser_duration_seconds || 0);
-    if(teaserURL){
-        return teaserSize > 0 && teaserSize <= 3 * 1024 * 1024 &&
-            teaserDuration > 0 && teaserDuration <= 5.5;
-    }
-
-    const fullGifURL = String(video && video.gif_preview_url || "").trim();
-    const fullGifSize = Number(video && video.gif_size_bytes || 0);
-    return Boolean(
-        fullGifURL &&
-        fullGifSize > 0 &&
-        fullGifSize <= 5 * 1024 * 1024
-    );
-}
-
-function needsFeedGifPreviewGeneration(video){
-    return Boolean(
-        String(video && video.source_video_url || "").trim() &&
-        !hasUsableFeedGifPreview(video)
-    );
-}
-
-
-function setOptimizeAllGifButtonBusy(
-    busy,
-    label
-){
-
-    const button =
-        document.getElementById(
-            "optimizeAllGifButton"
-        );
-
-    if(!button){
-        return;
-    }
-
-    button.disabled =
-        Boolean(busy);
-
-    button.textContent =
-        label ||
-        (
-            busy
-                ? "Queueing..."
-                : "Generate Missing 5s GIF Previews"
-        );
-}
-
-
-async function optimizeAllGifPreviews(){
-
-    setOptimizeAllGifButtonBusy(
-        true,
-        "Checking..."
-    );
-
-    setStorageMaintenanceStatus(
-        "Checking for missing or overlong feed GIF previews..."
-    );
-
-
-    try{
-
-        await requireAuthenticatedUser();
-
-
-        const videosResult =
-            await supabaseClient
-                .from("videos")
-                .select(
-                    "id,source_video_url,thumbnail_url,preview_video_url," +
-                    "gif_preview_url,gif_size_bytes,gif_teaser_url," +
-                    "gif_teaser_size_bytes,gif_teaser_duration_seconds"
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending:true
-                    }
-                );
-
-
-        if(videosResult.error){
-
-            throw new Error(
-                videosResult.error.message
-            );
-        }
-
-
-        const candidates =
-            (videosResult.data || [])
-                .filter(needsFeedGifPreviewGeneration);
-
-
-        if(candidates.length === 0){
-
-            setStorageMaintenanceStatus(
-                "✓ All feed GIF previews are already ready.",
-                "success"
-            );
-
-            return;
-        }
-
-
-        const confirmed =
-            confirm(
-                "Generate the missing five-second feed GIF previews?\n\n" +
-                "Videos to queue: " +
-                candidates.length +
-                "\n\nEach GIF uses up to five seconds of video and is capped at 3 MiB.\n" +
-                "Railway will process the jobs one at a time; generated GIFs use R2 storage."
-            );
-
-
-        if(!confirmed){
-
-            setStorageMaintenanceStatus(
-                "GIF generation cancelled. Nothing was queued."
-            );
-
-            return;
-        }
-
-
-        let queuedCount = 0;
-        let failedCount = 0;
-        const failures = [];
-
-
-        for(
-            let index = 0;
-            index < candidates.length;
-            index++
-        ){
-
-            const video =
-                candidates[index];
-
-
-            setOptimizeAllGifButtonBusy(
-                true,
-                `Queueing ${index + 1}/${candidates.length}`
-            );
-
-
-            setStorageMaintenanceStatus(
-                "Queueing five-second GIF preview " +
-                (index + 1) +
-                " of " +
-                candidates.length +
-                "..."
-            );
-
-
-            const queueResult =
-                await supabaseClient
-                    .rpc(
-                        "queue_streamx_feed_gif_processing",
-                        {
-                            p_video_id:
-                                video.id
-                        }
-                    );
-
-
-            if(queueResult.error){
-
-                failedCount++;
-
-                failures.push(
-                    "Video " +
-                    video.id +
-                    ": " +
-                    queueResult.error.message
-                );
-
-                console.warn(
-                    "Batch GIF optimization queue error:",
-                    video.id,
-                    queueResult.error
-                );
-
-            }
-            else{
-
-                queuedCount++;
-
-            }
-
-        }
-
-
-        if(failedCount > 0){
-
-            setStorageMaintenanceStatus(
-                "Queued " +
-                queuedCount +
-                 " five-second GIF previews.  +
-                failedCount +
-                " could not be queued. Check the browser console for details.",
-                "warning"
-            );
-
-        }
-        else{
-
-            setStorageMaintenanceStatus(
-                "✓ Queued all " +
-                queuedCount +
-                " five-second feed GIF previews. Railway will process them in the background. Run Clean Orphaned Storage after processing finishes.",
-                "success"
-            );
-
-        }
-
-
-        /*
-         * Refresh cards so any jobs that completed very quickly can reflect
-         * their new preview/poster state without changing other Admin logic.
-         */
-        try{
-            await loadVideos();
-        }
-        catch(refreshError){
-            console.warn(
-                "Video grid refresh after batch queue failed:",
-                refreshError
-            );
-        }
-
-
-    }catch(error){
-
-        console.error(
-            "Batch GIF optimization error:",
-            error
-        );
-
-
-        setStorageMaintenanceStatus(
-            "Batch optimization failed: " +
-            error.message,
-            "error"
-        );
-
-    }
-    finally{
-
-        setOptimizeAllGifButtonBusy(
-            false
-        );
-
-    }
-
-}
-
-
-/* =====================================================
    ORPHAN STORAGE CLEANUP
 ===================================================== */
 
@@ -13784,12 +13575,18 @@ function clearForm(){
     thumbnailFile.value =
         "";
 
+    adminGifFile.value =
+        "";
+
 
     selectedVideoFile =
         null;
 
 
     selectedThumbnailFile =
+        null;
+
+    selectedAdminGifFile =
         null;
 
 
@@ -13815,6 +13612,11 @@ function clearForm(){
         "thumbnailUploadBox"
     ).style.display =
         "flex";
+
+    document.getElementById("adminGifFileName").textContent = "";
+    document.getElementById("adminGifPreview").style.display = "none";
+    document.getElementById("adminGifUploadBox").style.display = "flex";
+    document.getElementById("adminGifImage").removeAttribute("src");
 
 
     document.getElementById(

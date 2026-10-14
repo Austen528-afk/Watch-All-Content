@@ -19,65 +19,122 @@ function previewSelectionFor(page, video) {
     const context = {
         video,
         getPublicURL: value => value || "",
-        shouldWaitForRecentFeedGif: () => false,
     };
     vm.createContext(context);
     vm.runInContext(
         source.slice(start, end) +
-            "\nglobalThis.previewSelection = {gifPreviewURL,gifSizeBytes,gifPreviewExpected};",
+            "\nglobalThis.previewSelection = {gifPreviewURL,gifSizeBytes,previewVideoURL,thumbnail};",
         context,
         { filename: page + "-preview-selection.js" }
     );
     return context.previewSelection;
 }
 
-test("both feeds choose a compact GIF teaser before a full GIF", () => {
+test("both feeds default to the short MP4 preview and ignore generated GIFs", () => {
     for (const page of pages) {
         const selected = previewSelectionFor(page, {
             thumbnail_url: "https://media.example/poster.jpg",
-            gif_preview_url: "https://media.example/full.gif",
-            gif_size_bytes: 54 * 1024 * 1024,
-            gif_teaser_url: "https://media.example/feed-preview.gif",
-            gif_teaser_size_bytes: 780000,
-            gif_teaser_duration_seconds: 5,
+            preview_video_url: "https://media.example/first-ten-seconds.mp4",
+            gif_preview_url: "https://media.example/automatic-full.gif",
+            gif_teaser_url: "https://media.example/automatic-teaser.gif",
+            gif_size_bytes: 800000,
+        });
+
+        assert.equal(selected.gifPreviewURL, "", page);
+        assert.equal(selected.previewVideoURL, "https://media.example/first-ten-seconds.mp4", page);
+        assert.equal(selected.thumbnail, "https://media.example/poster.jpg", page);
+
+        const source = sourceOf(page);
+        assert.match(source, /class="thumbnail-preview-video"/, page);
+        assert.match(source, /data-preview-src="\$\{escapeHTML\(previewVideoURL\)\}"/, page);
+        assert.doesNotMatch(source, /syncRecentFeedGifMetadataPolling\(\);/, page);
+    }
+});
+
+test("an admin-supplied GIF overrides the MP4 only for that post", () => {
+    for (const page of pages) {
+        const selected = previewSelectionFor(page, {
+            thumbnail_url: "https://media.example/poster.jpg",
             preview_video_url: "https://media.example/preview.mp4",
+            admin_gif_url: "https://media.example/admin-preview.gif",
+            admin_gif_size_bytes: 1.2 * 1024 * 1024,
+            gif_preview_url: "https://media.example/automatic-full.gif",
+            gif_teaser_url: "https://media.example/automatic-teaser.gif",
         });
 
-        assert.equal(selected.gifPreviewURL, "https://media.example/feed-preview.gif", page);
-        assert.equal(selected.gifSizeBytes, 780000, page);
-        assert.equal(selected.gifPreviewExpected, true, page);
+        assert.equal(selected.gifPreviewURL, "https://media.example/admin-preview.gif", page);
+        assert.equal(selected.gifSizeBytes, 1.2 * 1024 * 1024, page);
+        assert.equal(selected.previewVideoURL, "https://media.example/preview.mp4", page);
     }
 });
 
-test("both feeds allow a higher-quality teaser up to three MiB", () => {
+test("oversized admin GIFs fall back to the short video preview", () => {
     for (const page of pages) {
         const selected = previewSelectionFor(page, {
-            thumbnail_url: "https://media.example/poster.jpg",
-            gif_teaser_url: "https://media.example/feed-preview.gif",
-            gif_teaser_size_bytes: 2.5 * 1024 * 1024,
-            gif_teaser_duration_seconds: 5,
+            thumbnail_url: "poster.jpg",
+            preview_video_url: "preview.mp4",
+            admin_gif_url: "too-large.gif",
+            admin_gif_size_bytes: 6 * 1024 * 1024,
         });
 
-        assert.equal(selected.gifPreviewURL, "https://media.example/feed-preview.gif", page);
-        assert.equal(selected.gifSizeBytes, 2.5 * 1024 * 1024, page);
-        assert.match(sourceOf(page), /STREAMX_GIF_PREFETCH_MAX_BYTES\s*=\s*3\s*\*\s*1024\s*\*\s*1024/, page);
+        assert.equal(selected.gifPreviewURL, "", page);
+        assert.equal(selected.previewVideoURL, "preview.mp4", page);
     }
 });
 
-test("both feeds keep the GIF queue moving when playback is already closed", () => {
+test("legacy admin GIF thumbnails remain eligible after the migration", () => {
+    for (const page of pages) {
+        const selected = previewSelectionFor(page, {
+            thumbnail_url: "https://media.example/legacy-admin.gif",
+            preview_video_url: "preview.mp4",
+            gif_size_bytes: 2 * 1024 * 1024,
+        });
+
+        assert.equal(selected.gifPreviewURL, "https://media.example/legacy-admin.gif", page);
+        assert.equal(selected.thumbnail, "", page);
+    }
+});
+
+test("GIF failure releases the short video preview fallback", () => {
+    for (const page of pages) {
+        const source = sourceOf(page);
+        const start = source.indexOf("function feedCardGifOwnsPreview(video){");
+        const end = source.indexOf("function ", start + 12);
+        assert.ok(start >= 0 && end > start, page + " GIF preview ownership helper");
+
+        const context = {};
+        vm.createContext(context);
+        vm.runInContext(
+            source.slice(start, end) +
+                "\nglobalThis.ownsPreview = feedCardGifOwnsPreview;",
+            context,
+            { filename: page + "-gif-preview-ownership.js" }
+        );
+
+        const image = { dataset: { gifSrc: "preview.gif", gifState: "loading" } };
+        const thumbnail = { querySelector: () => image };
+        const video = { closest: () => thumbnail };
+        assert.equal(context.ownsPreview(video), true, page);
+        image.dataset.gifState = "failed";
+        assert.equal(context.ownsPreview(video), false, page);
+
+        assert.match(source, /if\(preview\)\{[\s\S]*?play(?:Feed|Thumbnail)VideoPreview\(preview\)/, page);
+    }
+});
+
+test("feed GIF loading still prioritizes visible posts and pauses for the player", () => {
     for (const page of pages) {
         const source = sourceOf(page);
         const start = source.indexOf("function canLoadFeedThumbnails(){");
         const end = source.indexOf("function canPreloadFeedThumbnails(){", start);
         assert.ok(start >= 0 && end > start, page + " GIF load gate");
 
-        const canLoad = ({ visibility, modalOpen, suspended }) => {
+        const canLoad = ({ visibility, modalOpen }) => {
             const context = {
                 document: { visibilityState: visibility },
                 videoModal: {
                     classList: { contains: name => name === "show" && modalOpen },
                 },
-                streamxFeedPreviewPlaybackSuspended: suspended,
             };
             vm.createContext(context);
             vm.runInContext(source.slice(start, end), context, {
@@ -86,135 +143,25 @@ test("both feeds keep the GIF queue moving when playback is already closed", () 
             return context.canLoadFeedThumbnails();
         };
 
-        assert.equal(canLoad({ visibility: "visible", modalOpen: false, suspended: true }), true, page);
-        assert.equal(canLoad({ visibility: "visible", modalOpen: true, suspended: false }), false, page);
-        assert.equal(canLoad({ visibility: "hidden", modalOpen: false, suspended: false }), false, page);
+        assert.equal(canLoad({ visibility: "visible", modalOpen: false }), true, page);
+        assert.equal(canLoad({ visibility: "visible", modalOpen: true }), false, page);
+        assert.equal(canLoad({ visibility: "hidden", modalOpen: false }), false, page);
     }
 });
 
-test("both feeds avoid starting a large full GIF when no teaser exists", () => {
-    for (const page of pages) {
-        const selected = previewSelectionFor(page, {
-            thumbnail_url: "https://media.example/poster.jpg",
-            gif_preview_url: "https://media.example/full.gif",
-            gif_size_bytes: 54 * 1024 * 1024,
-            gif_teaser_url: "",
-            gif_teaser_size_bytes: 0,
-            gif_teaser_duration_seconds: 0,
-            preview_video_url: "https://media.example/preview.mp4",
-        });
-
-        assert.equal(selected.gifPreviewURL, "", page);
-        assert.equal(selected.gifPreviewExpected, true, page);
-    }
-});
-
-test("both feeds retain small legacy GIF fallback and five-second teaser loading", () => {
-    for (const page of pages) {
-        const source = sourceOf(page);
-        const selected = previewSelectionFor(page, {
-            thumbnail_url: "https://media.example/poster.jpg",
-            gif_preview_url: "https://media.example/legacy.gif",
-            gif_size_bytes: 3 * 1024 * 1024,
-            gif_teaser_url: "",
-            gif_teaser_size_bytes: 0,
-            gif_teaser_duration_seconds: 0,
-            preview_video_url: "",
-        });
-
-        assert.equal(selected.gifPreviewURL, "https://media.example/legacy.gif", page);
-        assert.equal(selected.gifSizeBytes, 3 * 1024 * 1024, page);
-        assert.match(source, /data-gif-src="\$\{escapeHTML\(gifPreviewURL\)\}"/, page);
-    }
-});
-
-test("both feeds reject teasers longer than five seconds", () => {
-    for (const page of pages) {
-        const selected = previewSelectionFor(page, {
-            thumbnail_url: "https://media.example/poster.jpg",
-            gif_preview_url: "https://media.example/full.gif",
-            gif_size_bytes: 740000,
-            gif_teaser_url: "https://media.example/ten-second-preview.gif",
-            gif_teaser_size_bytes: 900000,
-            gif_teaser_duration_seconds: 10,
-        });
-
-        assert.equal(selected.gifPreviewURL, "", page);
-        assert.equal(selected.gifPreviewExpected, true, page);
-    }
-});
-
-test("both feeds never render the MP4 source as a thumbnail preview", () => {
-    for (const page of pages) {
-        const source = sourceOf(page);
-        assert.doesNotMatch(source, /class=["']thumbnail-preview-video["']/ , page);
-        assert.doesNotMatch(source, /data-preview-src=/, page);
-        assert.match(source, /data-gif-src="\$\{escapeHTML\(gifPreviewURL\)\}"/, page);
-    }
-});
-
-test("admin no longer exposes full-length GIF batch or regeneration controls", () => {
+test("admin has an optional per-post GIF upload and no automatic GIF batch queue", () => {
     const admin = sourceOf("admin.html");
+    assert.match(admin, /id="adminGifFile" accept="image\/gif,\.gif"/);
+    assert.match(admin, /admin_gif_url:\s*adminGifURL/);
+    assert.match(admin, /admin_gif_size_bytes:\s*selectedAdminGifFile\s*\?\s*selectedAdminGifFile\.size\s*:\s*null/);
+    assert.match(admin, /selectedAdminGifFile\.size > maxBytes/);
+    assert.doesNotMatch(admin, /optimizeAllGifPreviews|queue_streamx_feed_gif_processing|Generate Missing 5s GIF Previews/);
     assert.doesNotMatch(admin, /Full-Length GIF Management|gifManagementRows|gif-management-panel/);
-    assert.doesNotMatch(admin, /queueStreamXGif|regenerateStreamXGif|replaceVideoGif/);
-    assert.doesNotMatch(admin, /\/admin\/queue-gif|\/admin\/gif-estimate|gifQueued/);
 });
 
-test("admin repair queues missing and overlong teasers while retaining valid previews", () => {
-    const admin = sourceOf("admin.html");
-    const start = admin.indexOf("function hasUsableFeedGifPreview(video){");
-    const end = admin.indexOf("function setOptimizeAllGifButtonBusy(", start);
-    assert.ok(start >= 0 && end > start, "admin feed GIF repair predicate");
-    const context = {};
-    vm.createContext(context);
-    vm.runInContext(
-        admin.slice(start, end) +
-            "globalThis.needsRepair = needsFeedGifPreviewGeneration;",
-        context,
-        { filename: "admin-gif-repair-predicate.js" }
-    );
-
-    assert.equal(context.needsRepair({ source_video_url: "source.mp4" }), true);
-    assert.equal(context.needsRepair({
-        source_video_url: "source.mp4",
-        gif_teaser_url: "ten-seconds.gif",
-        gif_teaser_size_bytes: 900000,
-        gif_teaser_duration_seconds: 10,
-        gif_preview_url: "small-full.gif",
-        gif_size_bytes: 740000,
-    }), true);
-    assert.equal(context.needsRepair({
-        source_video_url: "source.mp4",
-        gif_teaser_url: "five-seconds.gif",
-        gif_teaser_size_bytes: 900000,
-        gif_teaser_duration_seconds: 5,
-    }), false);
-    assert.equal(context.needsRepair({
-        source_video_url: "source.mp4",
-        gif_teaser_url: "higher-quality-five-seconds.gif",
-        gif_teaser_size_bytes: 2.5 * 1024 * 1024,
-        gif_teaser_duration_seconds: 5,
-    }), false);
-    assert.equal(context.needsRepair({
-        source_video_url: "source.mp4",
-        gif_preview_url: "small-legacy.gif",
-        gif_size_bytes: 3 * 1024 * 1024,
-    }), false);
-    assert.equal(context.needsRepair({ gif_teaser_url: "no-source.gif" }), false);
-
-    const batch = admin.slice(admin.indexOf("async function optimizeAllGifPreviews(){"));
-    assert.match(batch, /queue_streamx_feed_gif_processing/);
-    assert.doesNotMatch(batch, /queue_streamx_poster_processing|queue_streamx_preview_processing/);
-    assert.match(batch, /Generate the missing five-second feed GIF previews/);
-    assert.match(batch, /Each GIF uses up to five seconds of video and is capped at 3 MiB/);
-});
-
-test("feed GIF queue RPC can refresh static JPG posters", () => {
-    const migration = sourceOf(
-        "supabase/migrations/20261014200000_queue_feed_gif_previews.sql"
-    );
-    assert.match(migration, /queue_streamx_feed_gif_processing\s*\(\s*p_video_id bigint\s*\)/);
-    assert.match(migration, /public\.is_streamx_admin\(\)/);
-    assert.match(migration, /processing_type[\s\S]*?'poster'/);
-    assert.doesNotMatch(migration, /thumbnail_value[\s\S]*?not like '%\.gif'/);
+test("schema keeps a separate admin GIF override and backfills old admin GIF thumbnails", () => {
+    const migration = sourceOf("supabase/migrations/20261014220449_admin_gif_preview_override.sql");
+    assert.match(migration, /add column if not exists admin_gif_url text/);
+    assert.match(migration, /add column if not exists admin_gif_size_bytes bigint/);
+    assert.match(migration, /thumbnail_url ~\* '\\.gif\(\[\?\#\]\|\$\)'/);
 });

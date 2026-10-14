@@ -39,6 +39,7 @@ test("both feeds choose a compact GIF teaser before a full GIF", () => {
             gif_size_bytes: 54 * 1024 * 1024,
             gif_teaser_url: "https://media.example/feed-preview.gif",
             gif_teaser_size_bytes: 780000,
+            gif_teaser_duration_seconds: 5,
             preview_video_url: "https://media.example/preview.mp4",
         });
 
@@ -56,6 +57,7 @@ test("both feeds avoid starting a large full GIF when no teaser exists", () => {
             gif_size_bytes: 54 * 1024 * 1024,
             gif_teaser_url: "",
             gif_teaser_size_bytes: 0,
+            gif_teaser_duration_seconds: 0,
             preview_video_url: "https://media.example/preview.mp4",
         });
 
@@ -73,19 +75,36 @@ test("both feeds retain small legacy GIF fallback and five-second teaser loading
             gif_size_bytes: 3 * 1024 * 1024,
             gif_teaser_url: "",
             gif_teaser_size_bytes: 0,
+            gif_teaser_duration_seconds: 0,
             preview_video_url: "",
         });
 
         assert.equal(selected.gifPreviewURL, "https://media.example/legacy.gif", page);
         assert.equal(selected.gifSizeBytes, 3 * 1024 * 1024, page);
-        assert.match(source, /data-gif-src=\"\$\{escapeHTML\(gifPreviewURL\)\}\"/, page);
+        assert.match(source, /data-gif-src="\$\{escapeHTML\(gifPreviewURL\)\}"/, page);
     }
 });
 
-test("both feeds never render MP4 preview video elements", () => {
+test("both feeds reject teasers longer than five seconds", () => {
+    for (const page of pages) {
+        const selected = previewSelectionFor(page, {
+            thumbnail_url: "https://media.example/poster.jpg",
+            gif_preview_url: "https://media.example/full.gif",
+            gif_size_bytes: 740000,
+            gif_teaser_url: "https://media.example/ten-second-preview.gif",
+            gif_teaser_size_bytes: 900000,
+            gif_teaser_duration_seconds: 10,
+        });
+
+        assert.equal(selected.gifPreviewURL, "", page);
+        assert.equal(selected.gifPreviewExpected, true, page);
+    }
+});
+
+test("both feeds never render the MP4 source as a thumbnail preview", () => {
     for (const page of pages) {
         const source = sourceOf(page);
-        assert.doesNotMatch(source, /class="thumbnail-preview-video"/, page);
+        assert.doesNotMatch(source, /class=["']thumbnail-preview-video["']/ , page);
         assert.doesNotMatch(source, /data-preview-src=/, page);
         assert.match(source, /data-gif-src="\$\{escapeHTML\(gifPreviewURL\)\}"/, page);
     }
@@ -96,4 +115,46 @@ test("admin no longer exposes full-length GIF batch or regeneration controls", (
     assert.doesNotMatch(admin, /Full-Length GIF Management|gifManagementRows|gif-management-panel/);
     assert.doesNotMatch(admin, /queueStreamXGif|regenerateStreamXGif|replaceVideoGif/);
     assert.doesNotMatch(admin, /\/admin\/queue-gif|\/admin\/gif-estimate|gifQueued/);
+});
+
+test("admin repair queues missing and overlong teasers while retaining valid previews", () => {
+    const admin = sourceOf("admin.html");
+    const start = admin.indexOf("function hasUsableFeedGifPreview(video){");
+    const end = admin.indexOf("function setOptimizeAllGifButtonBusy(", start);
+    assert.ok(start >= 0 && end > start, "admin feed GIF repair predicate");
+    const context = {};
+    vm.createContext(context);
+    vm.runInContext(
+        admin.slice(start, end) +
+            "globalThis.needsRepair = needsFeedGifPreviewGeneration;",
+        context,
+        { filename: "admin-gif-repair-predicate.js" }
+    );
+
+    assert.equal(context.needsRepair({ source_video_url: "source.mp4" }), true);
+    assert.equal(context.needsRepair({
+        source_video_url: "source.mp4",
+        gif_teaser_url: "ten-seconds.gif",
+        gif_teaser_size_bytes: 900000,
+        gif_teaser_duration_seconds: 10,
+        gif_preview_url: "small-full.gif",
+        gif_size_bytes: 740000,
+    }), true);
+    assert.equal(context.needsRepair({
+        source_video_url: "source.mp4",
+        gif_teaser_url: "five-seconds.gif",
+        gif_teaser_size_bytes: 900000,
+        gif_teaser_duration_seconds: 5,
+    }), false);
+    assert.equal(context.needsRepair({
+        source_video_url: "source.mp4",
+        gif_preview_url: "small-legacy.gif",
+        gif_size_bytes: 3 * 1024 * 1024,
+    }), false);
+    assert.equal(context.needsRepair({ gif_teaser_url: "no-source.gif" }), false);
+
+    const batch = admin.slice(admin.indexOf("async function optimizeAllGifPreviews(){"));
+    assert.match(batch, /queue_streamx_poster_processing/);
+    assert.match(batch, /Generate the missing five-second feed GIF previews/);
+    assert.match(batch, /Each GIF uses up to five seconds/);
 });

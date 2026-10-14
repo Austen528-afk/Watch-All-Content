@@ -4209,7 +4209,7 @@ textarea{
                     type="button"
                     onclick="optimizeAllGifPreviews()"
                 >
-                    Optimize All GIF Previews
+                    Generate Missing 5s GIF Previews
                 </button>
 
                 <button
@@ -12540,16 +12540,28 @@ async function loadSingleVideo(
    BATCH GIF PREVIEW OPTIMIZATION
 ===================================================== */
 
-function isGifThumbnailUrl(value){
+function hasUsableFeedGifPreview(video){
+    const teaserURL = String(video && video.gif_teaser_url || "").trim();
+    const teaserSize = Number(video && video.gif_teaser_size_bytes || 0);
+    const teaserDuration = Number(video && video.gif_teaser_duration_seconds || 0);
+    if(teaserURL){
+        return teaserSize > 0 && teaserSize <= 1024 * 1024 &&
+            teaserDuration > 0 && teaserDuration <= 5.5;
+    }
 
-    const normalized =
-        String(value || "")
-            .split("?")[0]
-            .split("#")[0]
-            .toLowerCase();
+    const fullGifURL = String(video && video.gif_preview_url || "").trim();
+    const fullGifSize = Number(video && video.gif_size_bytes || 0);
+    return Boolean(
+        fullGifURL &&
+        fullGifSize > 0 &&
+        fullGifSize <= 5 * 1024 * 1024
+    );
+}
 
-    return normalized.endsWith(
-        ".gif"
+function needsFeedGifPreviewGeneration(video){
+    return Boolean(
+        String(video && video.source_video_url || "").trim() &&
+        !hasUsableFeedGifPreview(video)
     );
 }
 
@@ -12576,7 +12588,7 @@ function setOptimizeAllGifButtonBusy(
         (
             busy
                 ? "Queueing..."
-                : "Optimize All GIF Previews"
+                : "Generate Missing 5s GIF Previews"
         );
 }
 
@@ -12589,7 +12601,7 @@ async function optimizeAllGifPreviews(){
     );
 
     setStorageMaintenanceStatus(
-        "Checking remaining GIF thumbnails..."
+        "Checking for missing or overlong feed GIF previews..."
     );
 
 
@@ -12602,7 +12614,9 @@ async function optimizeAllGifPreviews(){
             await supabaseClient
                 .from("videos")
                 .select(
-                    "id,thumbnail_url,preview_video_url"
+                    "id,source_video_url,thumbnail_url,preview_video_url," +
+                    "gif_preview_url,gif_size_bytes,gif_teaser_url," +
+                    "gif_teaser_size_bytes,gif_teaser_duration_seconds"
                 )
                 .order(
                     "created_at",
@@ -12622,18 +12636,13 @@ async function optimizeAllGifPreviews(){
 
         const candidates =
             (videosResult.data || [])
-                .filter(
-                    video =>
-                        isGifThumbnailUrl(
-                            video.thumbnail_url
-                        )
-                );
+                .filter(needsFeedGifPreviewGeneration);
 
 
         if(candidates.length === 0){
 
             setStorageMaintenanceStatus(
-                "✓ No GIF thumbnails remain to optimize.",
+                "✓ All feed GIF previews are already ready.",
                 "success"
             );
 
@@ -12643,20 +12652,18 @@ async function optimizeAllGifPreviews(){
 
         const confirmed =
             confirm(
-                "Optimize all remaining GIF previews?\n\n" +
-                "Videos to optimize: " +
+                "Generate the missing five-second feed GIF previews?\n\n" +
+                "Videos to queue: " +
                 candidates.length +
-                "\n\n" +
-                "Videos without a lightweight preview will get preview.mp4 + poster.jpg.\n" +
-                "Videos that already have preview.mp4 will get poster.jpg only.\n\n" +
-                "Railway will process the queued jobs one at a time in the background."
+                "\n\nEach GIF uses up to five seconds of video and is capped at 1 MiB.\n" +
+                "Railway will process the jobs one at a time; generated GIFs use R2 storage."
             );
 
 
         if(!confirmed){
 
             setStorageMaintenanceStatus(
-                "Batch optimization cancelled. Nothing was queued."
+                "GIF generation cancelled. Nothing was queued."
             );
 
             return;
@@ -12685,7 +12692,7 @@ async function optimizeAllGifPreviews(){
 
 
             setStorageMaintenanceStatus(
-                "Queueing GIF optimization " +
+                "Queueing five-second GIF preview " +
                 (index + 1) +
                 " of " +
                 candidates.length +
@@ -12742,7 +12749,7 @@ async function optimizeAllGifPreviews(){
             setStorageMaintenanceStatus(
                 "Queued " +
                 queuedCount +
-                " GIF optimizations. " +
+                 " five-second GIF previews.  +
                 failedCount +
                 " could not be queued. Check the browser console for details.",
                 "warning"
@@ -12754,7 +12761,7 @@ async function optimizeAllGifPreviews(){
             setStorageMaintenanceStatus(
                 "✓ Queued all " +
                 queuedCount +
-                " remaining GIF optimizations. Railway will process them in the background. Run Clean Orphaned Storage after processing finishes.",
+                " five-second feed GIF previews. Railway will process them in the background. Run Clean Orphaned Storage after processing finishes.",
                 "success"
             );
 

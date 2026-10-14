@@ -5825,7 +5825,13 @@ let streamxGifMetadataPollTimer = null;
 let streamxGifMetadataPollBusy = false;
 
 function hasRenderableFeedGifPreview(video){
-    if(String(video && video.gif_teaser_url || "").trim()) return true;
+    const teaserURL = String(video && video.gif_teaser_url || "").trim();
+    if(teaserURL){
+        const teaserSizeBytes = Number(video && video.gif_teaser_size_bytes || 0);
+        const teaserDuration = Number(video && video.gif_teaser_duration_seconds || 0);
+        return teaserSizeBytes > 0 && teaserSizeBytes <= 1 * 1024 * 1024 &&
+            teaserDuration > 0 && teaserDuration <= 5.5;
+    }
     const fullGifURL = String(video && video.gif_preview_url || "").trim();
     const fullGifSizeBytes = Number(video && video.gif_size_bytes || 0);
     return Boolean(
@@ -6370,13 +6376,21 @@ function createVideoCard(video){
     const gifTeaserURL = String(video.gif_teaser_url || "").trim();
     const fullGifSizeBytes = Math.max(0, Number(video.gif_size_bytes) || 0);
     const gifTeaserSizeBytes = Math.max(0, Number(video.gif_teaser_size_bytes) || 0);
+    const gifTeaserDurationSeconds = Math.max(0, Number(video.gif_teaser_duration_seconds) || 0);
     const hasGifSource = Boolean(gifTeaserURL || fullGifURL || legacyGifURL);
+    const useFiveSecondTeaser = Boolean(
+        gifTeaserURL &&
+        gifTeaserSizeBytes > 0 &&
+        gifTeaserSizeBytes <= 1 * 1024 * 1024 &&
+        gifTeaserDurationSeconds > 0 &&
+        gifTeaserDurationSeconds <= 5.5
+    );
     const useSmallFullGif = !gifTeaserURL &&
         Boolean(fullGifURL) &&
         fullGifSizeBytes > 0 &&
         fullGifSizeBytes <= 5 * 1024 * 1024;
     const gifPreviewURL = getPublicURL(
-        gifTeaserURL || (useSmallFullGif ? fullGifURL : ""),
+        useFiveSecondTeaser ? gifTeaserURL : (useSmallFullGif ? fullGifURL : ""),
         "thumbnails"
     );
     const gifPreviewExpected = hasGifSource ||
@@ -6385,7 +6399,7 @@ function createVideoCard(video){
         legacyGifURL ? "" : video.thumbnail_url,
         "thumbnails"
     );
-    const gifSizeBytes = gifTeaserURL
+    const gifSizeBytes = useFiveSecondTeaser
         ? gifTeaserSizeBytes
         : fullGifSizeBytes;
 

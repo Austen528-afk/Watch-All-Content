@@ -1260,32 +1260,6 @@ textarea{
 
 }
 
-/* Full-length GIF processing management */
-.gif-management-panel{margin:0 0 20px;padding:16px;border:1px solid #292929;border-radius:10px;background:#101010;}
-.gif-management-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
-.gif-management-title{font-size:14px;font-weight:800;color:#fff;}
-.gif-management-copy{margin-top:5px;color:#888;font-size:11px;line-height:1.5;}
-.gif-management-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
-.gif-management-button{min-height:38px;padding:9px 13px;border:1px solid #343434;border-radius:8px;background:#1b1b1b;color:#fff;font-size:11px;font-weight:750;cursor:pointer;}
-.gif-management-button.primary{border-color:rgba(255,23,68,.45);background:rgba(255,23,68,.13);}
-.gif-management-button:hover{background:#252525;}
-.gif-management-button:disabled{opacity:.55;cursor:not-allowed;}
-.gif-management-status{margin-top:12px;color:#aaa;font-size:11px;line-height:1.5;}
-.gif-management-status.success{color:#50d69a;}
-.gif-management-status.warning{color:#e5c35e;}
-.gif-management-status.error{color:#ff6b88;}
-.gif-management-progress{min-height:18px;margin-top:7px;color:#d4d4d4;font-size:11px;line-height:1.5;}
-.gif-management-table-wrap{width:100%;margin-top:12px;overflow:auto;border:1px solid #262626;border-radius:8px;}
-.gif-management-table{width:100%;min-width:930px;border-collapse:collapse;font-size:11px;}
-.gif-management-table th,.gif-management-table td{padding:9px 10px;border-bottom:1px solid #252525;text-align:left;vertical-align:middle;}
-.gif-management-table th{position:sticky;top:0;z-index:1;background:#181818;color:#aaa;font-weight:750;}
-.gif-management-table td{color:#ddd;}
-.gif-management-table tr:last-child td{border-bottom:0;}
-.gif-management-table .gif-warning{color:#e5c35e;}
-.gif-management-row-actions{display:flex;gap:6px;white-space:nowrap;}
-.gif-management-row-actions .gif-management-button{min-height:30px;padding:6px 8px;font-size:10px;}
-@media(max-width:700px){.gif-management-heading{flex-direction:column;}.gif-management-actions{display:grid;grid-template-columns:1fr;}.gif-management-button{width:100%;}}
-
 @media(max-width:700px){
 
     .storage-maintenance{
@@ -3978,7 +3952,7 @@ textarea{
                     </strong>
 
                     <small>
-                        JPG, PNG, WebP, full-length GIF
+                        JPG, PNG, WebP
                     </small>
 
                     <div
@@ -4230,6 +4204,15 @@ textarea{
             <div class="storage-maintenance-actions">
 
                 <button
+                    id="optimizeAllGifButton"
+                    class="storage-clean-button"
+                    type="button"
+                    onclick="optimizeAllGifPreviews()"
+                >
+                    Optimize All GIF Previews
+                </button>
+
+                <button
                     id="storageCleanButton"
                     class="storage-clean-button"
                     type="button"
@@ -4242,39 +4225,6 @@ textarea{
 
         </div>
 
-
-        <section class="gif-management-panel" aria-labelledby="gifManagementTitle">
-            <div class="gif-management-heading">
-                <div>
-                    <div id="gifManagementTitle" class="gif-management-title">Full-Length GIF Management</div>
-                    <div class="gif-management-copy">
-                        GIF jobs run one at a time after ordinary HLS jobs. Every generated GIF is duration-checked and uploaded to a new immutable R2 path before it is assigned. Existing working previews stay live until verification succeeds.
-                    </div>
-                </div>
-            </div>
-            <div class="gif-management-actions">
-                <button class="gif-management-button" type="button" onclick="estimateStreamXGifWork('missing')">Estimate Missing GIFs</button>
-                <button class="gif-management-button primary" type="button" onclick="generateMissingStreamXGifs()">Generate Missing GIFs</button>
-                <button class="gif-management-button" type="button" onclick="retryFailedStreamXGifs()">Retry Failed</button>
-                <button class="gif-management-button" type="button" onclick="regenerateAllStreamXGifs()">Regenerate All GIFs</button>
-            </div>
-            <div id="gifManagementStatus" class="gif-management-status" role="status" aria-live="polite">
-                Loading GIF processing status…
-            </div>
-            <div id="gifManagementProgress" class="gif-management-progress"></div>
-            <div class="gif-management-table-wrap">
-                <table class="gif-management-table">
-                    <thead><tr>
-                        <th>Video ID</th><th>Title</th><th>Original duration</th>
-                        <th>GIF duration</th><th>GIF size</th>
-                        <th>Processing status</th><th>Actions</th>
-                    </tr></thead>
-                    <tbody id="gifManagementRows">
-                        <tr><td colspan="7">Loading…</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
 
         <div
             id="videoGrid"
@@ -6174,334 +6124,6 @@ async function queueFullProcessing(
 
 
 
-
-let streamXGifActiveBatchId = null;
-let streamXGifActiveJobId = null;
-let streamXGifRefreshTimer = null;
-
-async function requestStreamXGifWorker(session,path,payload){
-    if(!session?.access_token) throw new Error("Your admin session expired. Please sign in again.");
-    const response = await fetch(STREAMX_MEDIA_WORKER_URL + path,{
-        method:"POST",
-        headers:{
-            "Authorization":"Bearer " + session.access_token,
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify(payload || {})
-    });
-    const result = await response.json().catch(() => null);
-    if(!response.ok || !result?.ok){
-        throw new Error(result?.error || "GIF processing request failed with HTTP " + response.status + ".");
-    }
-    return result;
-}
-
-async function queueStreamXGif(session,videoId,{force=false}={}){
-    return requestStreamXGifWorker(session,"/admin/queue-gif",{
-        videoId:Number(videoId),
-        force:Boolean(force)
-    });
-}
-
-function setGifManagementStatus(message,state){
-    const status=document.getElementById("gifManagementStatus");
-    if(!status) return;
-    status.textContent=String(message || "");
-    status.className="gif-management-status" + (state ? " " + state : "");
-}
-
-function formatGifDuration(value){
-    const seconds=Number(value || 0);
-    if(!Number.isFinite(seconds) || seconds <= 0) return "Not measured";
-    if(seconds < 60) return seconds.toFixed(2) + "s";
-    const minutes=Math.floor(seconds/60);
-    return minutes + "m " + (seconds-minutes*60).toFixed(1) + "s";
-}
-
-function formatGifFileSize(value){
-    const bytes=Number(value || 0);
-    if(!Number.isFinite(bytes) || bytes <= 0) return "—";
-    if(bytes >= 1024*1024) return (bytes/(1024*1024)).toFixed(1) + " MB";
-    if(bytes >= 1024) return (bytes/1024).toFixed(0) + " KB";
-    return bytes + " B";
-}
-
-function setGifManagementBusy(busy){
-    document.querySelectorAll(".gif-management-actions .gif-management-button")
-        .forEach(button => { button.disabled=Boolean(busy); });
-}
-
-async function loadFullLengthGifManagement(){
-    const table=document.getElementById("gifManagementRows");
-    if(!table) return;
-    if(streamXGifRefreshTimer){
-        clearTimeout(streamXGifRefreshTimer);
-        streamXGifRefreshTimer=null;
-    }
-    try{
-        await requireAuthenticatedUser();
-        const [videosResult,jobsResult]=await Promise.all([
-            supabaseClient.from("videos")
-                .select("id,title,thumbnail_url,gif_preview_url,gif_original_duration_seconds,gif_duration_seconds,gif_size_bytes,gif_verified_at")
-                .order("created_at",{ascending:false}).limit(5000),
-            supabaseClient.from("video_gif_processing_jobs")
-                .select("id,video_id,status,stage,progress_percent,attempts,original_duration_seconds,gif_duration_seconds,gif_size_bytes,error_message,batch_id,created_at")
-                .order("created_at",{ascending:false}).limit(5000)
-        ]);
-        if(videosResult.error) throw new Error(videosResult.error.message);
-        if(jobsResult.error) throw new Error(jobsResult.error.message);
-        const videos=videosResult.data || [];
-        const jobs=jobsResult.data || [];
-        const latestByVideo=new Map();
-        jobs.forEach(job=>{
-            const key=String(job.video_id);
-            if(!latestByVideo.has(key)) latestByVideo.set(key,job);
-        });
-        const summary={
-            ready:videos.filter(video=>video.gif_preview_url || /\.gif(?:[?#]|$)/i.test(String(video.thumbnail_url || ""))).length,
-            total:videos.length,
-            queued:jobs.filter(job=>job.status==="queued").length,
-            processing:jobs.filter(job=>job.status==="processing").length,
-            failed:jobs.filter(job=>job.status==="failed").length
-        };
-        const trackedJobs=streamXGifActiveBatchId
-            ? jobs.filter(job=>job.batch_id===streamXGifActiveBatchId)
-            : streamXGifActiveJobId
-                ? jobs.filter(job=>job.id===streamXGifActiveJobId)
-                : [];
-        const trackedCompleted=trackedJobs.filter(job=>job.status==="completed").length;
-        const trackedRemaining=trackedJobs.filter(job=>job.status==="queued" || job.status==="processing").length;
-        const trackedFailed=trackedJobs.filter(job=>job.status==="failed").length;
-        const progress=document.getElementById("gifManagementProgress");
-        if(progress){
-            if(trackedJobs.length){
-                const current=trackedJobs.find(job=>job.status==="processing");
-                progress.textContent="Batch progress: " + trackedCompleted + " completed, " +
-                    trackedRemaining + " remaining, " + trackedFailed + " failed." +
-                    (current ? " Current: video " + current.video_id + ", " +
-                        (current.stage || "processing") + " (" +
-                        Number(current.progress_percent || 0) + "%)." : "");
-            }else{
-                progress.textContent="GIF previews ready for " + summary.ready + " of " +
-                    summary.total + " videos. Queue: " + summary.queued + " queued, " +
-                    summary.processing + " processing, " + summary.failed + " failed.";
-            }
-        }
-        if(!videos.length){
-            table.innerHTML='<tr><td colspan="7">No videos found.</td></tr>';
-        }else{
-            table.innerHTML=videos.map(video=>{
-                const job=latestByVideo.get(String(video.id));
-                const originalDuration=video.gif_original_duration_seconds ||
-                    job?.original_duration_seconds;
-                const gifDuration=video.gif_duration_seconds || job?.gif_duration_seconds;
-                const gifSize=video.gif_size_bytes || job?.gif_size_bytes;
-                let status=job?.status || (video.gif_preview_url
-                    ? (video.gif_verified_at ? "completed" : "existing · unverified")
-                    : /\.gif(?:[?#]|$)/i.test(String(video.thumbnail_url || ""))
-                        ? "existing · unverified" : "missing");
-                if(job?.status==="failed" && video.gif_preview_url){
-                    status+=" · prior GIF retained";
-                }
-                const large=Number(gifSize || 0)>20*1024*1024;
-                if(large) status+=" · large file";
-                const error=job?.error_message ? ' title="' + escapeHTML(job.error_message) + '"' : "";
-                const retry=job?.status==="failed"
-                    ? '<button class="gif-management-button" type="button" onclick="regenerateStreamXGif('+
-                        JSON.stringify(video.id)+',this,true)">Retry Failed</button>'
-                    : "";
-                return '<tr><td>'+escapeHTML(String(video.id))+'</td>'+
-                    '<td>'+escapeHTML(video.title || "Untitled Video")+'</td>'+
-                    '<td>'+escapeHTML(formatGifDuration(originalDuration))+'</td>'+
-                    '<td>'+escapeHTML(formatGifDuration(gifDuration))+'</td>'+
-                    '<td class="'+(large?'gif-warning':'')+'">'+escapeHTML(formatGifFileSize(gifSize))+'</td>'+
-                    '<td'+error+'>'+escapeHTML(status)+'</td>'+
-                    '<td><div class="gif-management-row-actions">'+
-                    '<button class="gif-management-button" type="button" onclick="regenerateStreamXGif('+
-                        JSON.stringify(video.id)+',this,false)">Regenerate Selected GIF</button>'+
-                    retry+'</div></td></tr>';
-            }).join("");
-        }
-
-        if(trackedRemaining>0){
-            streamXGifRefreshTimer=window.setTimeout(
-                ()=>void loadFullLengthGifManagement(),
-                4000
-            );
-        }else if(trackedJobs.length){
-            streamXGifActiveBatchId=null;
-            streamXGifActiveJobId=null;
-        }
-    }catch(error){
-        console.error("Load GIF management status error:",error);
-        setGifManagementStatus("Could not load GIF processing status: " + error.message,"error");
-        table.innerHTML='<tr><td colspan="7">Status is unavailable. Refresh the admin panel to retry.</td></tr>';
-    }
-}
-
-async function runStreamXGifEstimate(mode){
-    const session=await requireAuthenticatedUser();
-    let afterId=0;
-    let complete=false;
-    let latest=null;
-    const exceptions=[];
-    let pageNumber=0;
-    while(!complete){
-        const result=await requestStreamXGifWorker(session,"/admin/gif-estimate",{
-            mode,
-            afterId,
-            limit:10,
-            probeDurations:true
-        });
-        latest=result.estimate;
-        exceptions.push(...(result.exceptions || []));
-        complete=Boolean(result.complete);
-        afterId=result.nextAfterId ? Number(result.nextAfterId) : afterId;
-        pageNumber++;
-        const progress=document.getElementById("gifManagementProgress");
-        if(progress) progress.textContent="Probing original durations: batch " + pageNumber +
-            " complete; " + Number(latest?.videosWithKnownDuration || 0) + " of " +
-            Number(latest?.videos || 0) + " durations known.";
-    }
-    return {estimate:latest,exceptions};
-}
-
-function formatStreamXGifEstimate(estimate){
-    const outputGb=Number(estimate?.estimatedOutputGb || 0);
-    const workerMinutes=Number(estimate?.estimatedWorkerMinutes || 0);
-    const railwayUsd=Number(estimate?.estimatedRailwayUsd || 0);
-    const r2Usd=Number(estimate?.estimatedR2UsdMonthly || 0);
-    const unknown=Number(estimate?.unknownDurationCount || 0);
-    const large=Number(estimate?.estimatedLargeGifCount || 0);
-    return "Estimated output: " + outputGb.toFixed(2) + " GB; worker time: about " +
-        workerMinutes.toFixed(1) + " minutes; Railway compute + egress: about $" +
-        railwayUsd.toFixed(2) + "; added R2 storage: about $" +
-        r2Usd.toFixed(2) + "/month after the standalone 10 GB free allowance. " +
-        (large ? large + " GIFs may exceed 20 MB. " : "") +
-        (unknown ? unknown + " source durations remain unknown. " : "") +
-        "Estimate uses " + Number(estimate?.sampleCount || 0) +
-        " completed sample GIFs. " + String(estimate?.assumptions || "");
-}
-
-async function estimateStreamXGifWork(mode){
-    setGifManagementBusy(true);
-    setGifManagementStatus("Estimating output size and processing cost. Source durations are checked in small batches…");
-    try{
-        const result=await runStreamXGifEstimate(mode || "missing");
-        const estimate=result.estimate || {};
-        const warning=Number(estimate.unknownDurationCount || 0)>0 || result.exceptions.length>0;
-        setGifManagementStatus(
-            formatStreamXGifEstimate(estimate)+
-                (result.exceptions.length ? " Probe exceptions: "+result.exceptions.map(item=>"video "+item.videoId+": "+item.reason).join("; ") : ""),
-            warning?"warning":"success"
-        );
-        await loadFullLengthGifManagement();
-        return result;
-    }catch(error){
-        setGifManagementStatus("Estimate failed: "+error.message,"error");
-        throw error;
-    }finally{
-        setGifManagementBusy(false);
-    }
-}
-
-async function runStreamXGifBulk(mode){
-    setGifManagementBusy(true);
-    setGifManagementStatus("Checking every source duration and estimating the batch before queueing…");
-    try{
-        const result=await runStreamXGifEstimate(mode);
-        const estimate=result.estimate || {};
-        if(Number(estimate.unknownDurationCount || 0)>0 || result.exceptions.length){
-            setGifManagementStatus(
-                "Bulk queue paused because "+Number(estimate.unknownDurationCount || 0)+
-                " source durations could not be verified. Resolve or retry those exceptions first.",
-                "warning"
-            );
-            return;
-        }
-        if(Number(estimate.sampleCount || 0)<2){
-            setGifManagementStatus(
-                "Bulk queue paused. Complete and verify two sample GIFs, including one longer video, before starting a library batch.",
-                "warning"
-            );
-            return;
-        }
-        const warnings=Number(estimate.estimatedOutputGb || 0)>1
-            ? "\n\nEstimated output exceeds 1 GB."
-            : "";
-        const confirmText="Queue "+Number(estimate.videos || 0)+" "+mode+
-            " full-duration GIF jobs?\n\n"+formatStreamXGifEstimate(estimate)+
-            warnings+"\n\nEach GIF is capped at 10 minutes and 64 MB. Videos exceeding safe limits will be reported as exceptions, never shortened.";
-        if(!confirm(confirmText)){
-            setGifManagementStatus("No GIF jobs were queued.");
-            return;
-        }
-        const session=await requireAuthenticatedUser();
-        const queued=await requestStreamXGifWorker(
-            session,
-            "/admin/queue-gif-bulk",
-            {mode}
-        );
-        streamXGifActiveBatchId=queued.batchId || null;
-        streamXGifActiveJobId=null;
-        setGifManagementStatus(
-            "Batch "+queued.batchId+": "+queued.queued+" queued, "+
-            queued.alreadyActive+" already active, "+queued.skipped+
-            " skipped. "+(queued.exceptions?.length || 0)+" exceptions.",
-            queued.exceptions?.length?"warning":"success"
-        );
-        if(queued.exceptions?.length){
-            console.warn("Full-length GIF batch exceptions:",queued.exceptions);
-        }
-        await loadFullLengthGifManagement();
-    }catch(error){
-        setGifManagementStatus("GIF batch could not be queued: "+error.message,"error");
-    }finally{
-        setGifManagementBusy(false);
-    }
-}
-
-async function generateMissingStreamXGifs(){
-    return runStreamXGifBulk("missing");
-}
-
-async function regenerateAllStreamXGifs(){
-    return runStreamXGifBulk("all");
-}
-
-async function retryFailedStreamXGifs(){
-    return runStreamXGifBulk("failed");
-}
-
-async function regenerateStreamXGif(videoId,button,retryFailed=false){
-    const id=Number(videoId);
-    if(!Number.isInteger(id) || id<=0) return;
-    const card=document.querySelector('.video-card[data-video-id="'+CSS.escape(String(id))+'"]');
-    const title=card?.querySelector(".video-content h3")?.textContent?.trim() || "video "+id;
-    const action=retryFailed?"Retry the failed GIF job for ":"Regenerate the full-length GIF for ";
-    if(!confirm(action+'"'+title+'"? The current working preview will remain assigned until a verified replacement is ready.')){
-        return;
-    }
-    const oldText=button?.textContent || "";
-    if(button){button.disabled=true;button.textContent=retryFailed?"Retrying…":"Queueing…";}
-    try{
-        const session=await requireAuthenticatedUser();
-        const result=await queueStreamXGif(session,id,{force:true});
-        streamXGifActiveJobId=result.jobId || null;
-        streamXGifActiveBatchId=null;
-        setGifManagementStatus(
-            result.active?"GIF job is already "+result.status+".":
-                result.skipped?"GIF job skipped: "+result.reason:"GIF regeneration queued.",
-            result.skipped?"warning":"success"
-        );
-        await loadFullLengthGifManagement();
-    }catch(error){
-        setGifManagementStatus("Could not queue GIF regeneration: "+error.message,"error");
-    }finally{
-        if(button){button.disabled=false;button.textContent=oldText;}
-    }
-}
-
 /* =====================================================
    STREAMX ADMIN AUTHORIZATION
 ===================================================== */
@@ -7446,9 +7068,10 @@ thumbnailFile.addEventListener(
             return;
 
 
-        /* Full-length GIFs are stored unchanged on R2 and remain the live
-           feed animation. The worker may generate a poster/MP4 backup,
-           but it will not replace an explicitly selected GIF. */
+        /* GIFs are accepted for the existing upload workflow.
+           To protect feed speed, a selected GIF is NOT published as the live
+           thumbnail. Railway will generate the lightweight preview.mp4 +
+           poster.jpg from the uploaded video instead. */
         const thumbnailExtension =
             String(selectedThumbnailFile.name || "")
                 .split(".")
@@ -7488,7 +7111,7 @@ thumbnailFile.addEventListener(
             selectedThumbnailFile.name +
             (
                 thumbnailExtension === "gif"
-                    ? " — full-length animation will be uploaded unchanged"
+                    ? " — GIF recognized; lightweight preview/poster will be generated"
                     : ""
             );
 
@@ -9374,7 +8997,7 @@ async function uploadVideo(){
         updateProgress(
             70,
             selectedThumbnailIsGif
-                ? "Video uploaded. Uploading original full-length GIF..."
+                ? "Video uploaded. GIF recognized — preparing lightweight preview + poster..."
                 : "Video uploaded. Processing thumbnail..."
         );
 
@@ -9383,7 +9006,10 @@ async function uploadVideo(){
            UPLOAD THUMBNAIL
         ========================================= */
 
-        if(selectedThumbnailFile){
+        if(
+            selectedThumbnailFile &&
+            !selectedThumbnailIsGif
+        ){
 
             try{
                 thumbnailURL = await uploadThumbnailToR2(session, selectedThumbnailFile);
@@ -9432,7 +9058,9 @@ async function uploadVideo(){
                     video_url:
                         videoURL,
 
-                    /* Original video playback remains separate from the GIF thumbnail. */
+                    /* The original video is stored directly in Cloudflare R2.
+                       It remains the immediate playback source while the worker
+                       prepares the lightweight preview/poster in the background. */
                     source_video_url:
                         videoURL,
 
@@ -9540,23 +9168,6 @@ async function uploadVideo(){
         }
 
 
-        /* Queue an independent GIF job for new uploads. The worker keeps HLS
-           work first and a user-supplied GIF is left untouched. */
-        let gifQueued = false;
-        if(insertedVideoId){
-            try{
-                const gifQueue = await queueStreamXGif(
-                    session,
-                    insertedVideoId,
-                    { force:false }
-                );
-                gifQueued = Boolean(gifQueue.queued || gifQueue.active);
-            }catch(gifQueueError){
-                console.warn("Full-length GIF queue failed for new video:",gifQueueError);
-            }
-        }
-
-
         /* =========================================
            LIVE FEED OPTIMIZATION STATUS
         ========================================= */
@@ -9622,24 +9233,18 @@ async function uploadVideo(){
            SUCCESS
         ========================================= */
 
-        const gifUploadStatus = selectedThumbnailIsGif
-            ? " An uploaded full GIF is attached."
-            : gifQueued
-                ? " Full-length GIF generation is queued."
-                : " Full-length GIF generation did not queue; retry it from GIF Management.";
         updateProgress(
             100,
             processingQueued
-                ? "Upload complete. HLS processing queued." + (gifQueued ? " Full GIF queued." : "")
+                ? "Upload complete. Full HLS processing queued!"
                 : "Upload complete!"
         );
 
 
         showMessage(
-            (processingQueued
-                ? "✓ Video uploaded successfully. HLS, preview and poster are processing in the background."
-                : "✓ Video uploaded successfully. The original video is available, but full HLS processing was not queued.") +
-                gifUploadStatus,
+            processingQueued
+                ? "✓ Video uploaded successfully. HLS, preview and poster are now processing in the background."
+                : "✓ Video uploaded successfully. The original video is available, but full HLS processing was not queued.",
             "success"
         );
 
@@ -10101,7 +9706,6 @@ document.getElementById(
     }
     finally{
         adminVideoLibraryLoading = false;
-        void loadFullLengthGifManagement();
     }
 
 }
@@ -10259,23 +9863,10 @@ function createVideoCard(
                 >
                     ✏️ Edit Metadata
                 </button>
-                <button
-                    class="card-button"
-                    onclick="replaceVideoGif(${JSON.stringify(video.id)}, this)"
-                >
-                    🖼 Upload Full GIF
-                </button>
-
-                <button
-                    class="card-button"
-                    onclick="regenerateStreamXGif(${JSON.stringify(video.id)}, this)"
-                >
-                    ♻ Regenerate Selected GIF
-                </button>
 
 
                 ${
-                    !video.preview_video_url && !/\.gif(?:[?#]|$)/i.test(String(video.thumbnail_url || ""))
+                    !video.preview_video_url
                     ?
                     `
                     <button
@@ -10653,62 +10244,6 @@ function closeVideoMetadataEditor(){
 
 }
 
-
-
-/* Attach a full-duration GIF to an existing video without reuploading
-   the original or changing HLS/video playback. */
-async function replaceVideoGif(videoId, button){
-    const picker = document.createElement("input");
-    picker.type = "file";
-    picker.accept = "image/gif,.gif";
-    picker.style.display = "none";
-    document.body.appendChild(picker);
-    picker.addEventListener("change", async () => {
-        const file = picker.files?.[0];
-        picker.remove();
-        if(!file) return;
-        if(!/\.gif$/i.test(file.name) || file.type !== "image/gif"){
-            alert("Choose an actual GIF file.");
-            return;
-        }
-        const oldLabel = button.textContent;
-        button.disabled = true;
-        button.textContent = "Uploading full GIF...";
-        let newUrl = null;
-        try{
-            const session = await requireAuthenticatedUser();
-            newUrl = await uploadThumbnailToR2(session, file);
-            const { data: current, error: readError } = await supabaseClient
-                .from("videos").select("thumbnail_url").eq("id", videoId).single();
-            if(readError) throw readError;
-            const { data, error } = await supabaseClient.from("videos")
-                .update({
-                    thumbnail_url: newUrl,
-                    gif_preview_url: newUrl,
-                    gif_original_duration_seconds: null,
-                    gif_duration_seconds: null,
-                    gif_size_bytes: file.size,
-                    gif_verified_at: null
-                })
-                .eq("id", videoId).eq("thumbnail_url", current.thumbnail_url)
-                .select("id");
-            if(error) throw error;
-            if(!data?.length) throw new Error("Thumbnail changed during upload. Please retry.");
-            button.textContent = "✓ Full GIF saved";
-            await loadVideos();
-        }catch(error){
-            if(newUrl){
-                try{
-                    const session = await requireAuthenticatedUser();
-                    await deleteR2MediaObject(session, newUrl);
-                }catch(cleanupError){ console.warn("GIF cleanup failed", cleanupError); }
-            }
-            alert("Could not save full GIF: " + error.message);
-            button.textContent = oldLabel;
-        }finally{ button.disabled = false; }
-    }, { once:true });
-    picker.click();
-}
 
 async function editVideoMetadata(videoId){
 
@@ -13085,9 +12620,14 @@ async function optimizeAllGifPreviews(){
         }
 
 
-        /* Full-length GIFs are intentional; bulk optimization must not
-           overwrite them. Keep the legacy control harmless. */
-        const candidates = [];
+        const candidates =
+            (videosResult.data || [])
+                .filter(
+                    video =>
+                        isGifThumbnailUrl(
+                            video.thumbnail_url
+                        )
+                );
 
 
         if(candidates.length === 0){

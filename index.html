@@ -5064,6 +5064,7 @@ function mergeRealtimeVideo(video){
     else{
         updateRealtimeViewUI(video.id,video.views);
     }
+
     syncRecentFeedGifMetadataPolling();
 }
 
@@ -5883,7 +5884,28 @@ async function refreshRecentFeedGifMetadata(){
             );
             if(index < 0) return;
             const previous = allVideos[index];
-            const next = {...previous,...update};
+            const next = {...previous};
+            STREAMX_GIF_METADATA_FIELDS.forEach(field => {
+                const incoming = update[field];
+                const numericField = [
+                    "gif_size_bytes",
+                    "gif_teaser_size_bytes",
+                    "gif_teaser_duration_seconds"
+                ].includes(field);
+                const missingIncoming =
+                    incoming === null ||
+                    incoming === undefined ||
+                    (typeof incoming === "string" && !incoming.trim()) ||
+                    (numericField && Number(incoming) === 0);
+                const hasPreviousValue =
+                    previous[field] !== null &&
+                    previous[field] !== undefined &&
+                    previous[field] !== "" &&
+                    !(numericField && Number(previous[field]) === 0);
+                if(!missingIncoming || !hasPreviousValue){
+                    next[field] = incoming;
+                }
+            });
             if(STREAMX_GIF_METADATA_FIELDS.some(field =>
                 String(previous[field] ?? "") !== String(next[field] ?? "")
             )){

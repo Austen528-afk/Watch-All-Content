@@ -21,6 +21,10 @@ function functionSource(source, name) {
 test("recommendation order stays fixed after the viewer starts browsing", () => {
     for (const page of pages) {
         const source = sourceOf(page);
+        const feedOrderState = source.match(
+            /let feedOrderRecommendations = null;\s*let feedRecommendationOrderLocked = false;/
+        );
+        assert.ok(feedOrderState, page + " declares feed-order state");
         const lockSource = functionSource(
             source,
             "lockFeedRecommendationOrder"
@@ -31,10 +35,8 @@ test("recommendation order stays fixed after the viewer starts browsing", () => 
         );
         const context = vm.createContext({
             recommendationVideos: [{ id: 1 }],
-            feedOrderRecommendations: null,
-            feedRecommendationOrderLocked: false,
         });
-        vm.runInContext(lockSource + activeSource, context, {
+        vm.runInContext(feedOrderState[0] + lockSource + activeSource, context, {
             filename: page + "-feed-order.js",
         });
 

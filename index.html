@@ -6214,7 +6214,7 @@ function trackFeedGifPreviews(){
 
 function canLoadFeedThumbnails(){
     return document.visibilityState !== 'hidden' &&
-        !streamxFeedPreviewPlaybackSuspended;
+        !videoModal.classList.contains("show");
 }
 
 function canPreloadFeedThumbnails(){

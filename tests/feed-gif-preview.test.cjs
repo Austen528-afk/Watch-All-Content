@@ -60,7 +60,35 @@ test("both feeds allow a higher-quality teaser up to three MiB", () => {
 
         assert.equal(selected.gifPreviewURL, "https://media.example/feed-preview.gif", page);
         assert.equal(selected.gifSizeBytes, 2.5 * 1024 * 1024, page);
-        assert.match(sourceOf(page), /STREAMX_GIF_PREFETCH_MAX_BYTES\\s*=\\s*3\\s*\\*\\s*1024\\s*\\*\\s*1024/, page);
+        assert.match(sourceOf(page), /STREAMX_GIF_PREFETCH_MAX_BYTES\s*=\s*3\s*\*\s*1024\s*\*\s*1024/, page);
+    }
+});
+
+test("both feeds keep the GIF queue moving when playback is already closed", () => {
+    for (const page of pages) {
+        const source = sourceOf(page);
+        const start = source.indexOf("function canLoadFeedThumbnails(){");
+        const end = source.indexOf("function canPreloadFeedThumbnails(){", start);
+        assert.ok(start >= 0 && end > start, page + " GIF load gate");
+
+        const canLoad = ({ visibility, modalOpen, suspended }) => {
+            const context = {
+                document: { visibilityState: visibility },
+                videoModal: {
+                    classList: { contains: name => name === "show" && modalOpen },
+                },
+                streamxFeedPreviewPlaybackSuspended: suspended,
+            };
+            vm.createContext(context);
+            vm.runInContext(source.slice(start, end), context, {
+                filename: page + "-gif-load-gate.js",
+            });
+            return context.canLoadFeedThumbnails();
+        };
+
+        assert.equal(canLoad({ visibility: "visible", modalOpen: false, suspended: true }), true, page);
+        assert.equal(canLoad({ visibility: "visible", modalOpen: true, suspended: false }), false, page);
+        assert.equal(canLoad({ visibility: "hidden", modalOpen: false, suspended: false }), false, page);
     }
 });
 
@@ -185,8 +213,8 @@ test("feed GIF queue RPC can refresh static JPG posters", () => {
     const migration = sourceOf(
         "supabase/migrations/20261014200000_queue_feed_gif_previews.sql"
     );
-    assert.match(migration, /queue_streamx_feed_gif_processing\\s*\\(\\s*p_video_id bigint\\s*\\)/);
-    assert.match(migration, /public\\.is_streamx_admin\\(\\)/);
-    assert.match(migration, /processing_type[\\s\\S]*?'poster'/);
-    assert.doesNotMatch(migration, /thumbnail_value[\\s\\S]*?not like '%\\.gif'/);
+    assert.match(migration, /queue_streamx_feed_gif_processing\s*\(\s*p_video_id bigint\s*\)/);
+    assert.match(migration, /public\.is_streamx_admin\(\)/);
+    assert.match(migration, /processing_type[\s\S]*?'poster'/);
+    assert.doesNotMatch(migration, /thumbnail_value[\s\S]*?not like '%\.gif'/);
 });

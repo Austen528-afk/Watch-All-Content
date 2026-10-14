@@ -2834,6 +2834,8 @@ let libraryActivityTimer = null;
 let libraryActivityLastSeen = 0;
 let libraryActivityRequestInFlight = false;
 let recommendationVideos = [];
+let feedOrderRecommendations = null;
+let feedRecommendationOrderLocked = false;
 let recommendationRefreshTimer = null;
 let recommendationLoading = false;
 function lockFeedRecommendationOrder(){

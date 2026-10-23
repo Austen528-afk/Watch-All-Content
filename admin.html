@@ -3203,6 +3203,20 @@ textarea{
 .viewer-session-summary-note{color:#999;font-size:12px;line-height:1.5;margin-top:10px;}
 #overallAverageSessionTime{font-size:clamp(24px,2vw,34px);}
 
+
+.storage-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:16px 0 22px}
+.storage-metric{background:#161616;border:1px solid #303030;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.storage-metric span{color:#999;font-size:13px}.storage-metric strong{font-size:clamp(19px,2.1vw,29px);color:#fff}
+.storage-status{color:#ccc;margin:12px 0;min-height:22px}.storage-status.error{color:#ff6780}
+.storage-caption{color:#999;font-size:12px;line-height:1.6;margin:13px 0 19px}
+.storage-meter{background:#242424;height:10px;border-radius:10px;overflow:hidden}.storage-meter>div{height:100%;width:0;background:#ff1744;transition:width .3s}
+.storage-table-wrap{width:100%;overflow-x:auto;margin-top:15px}
+.storage-table{width:100%;border-collapse:collapse;font-size:13px;min-width:620px}
+.storage-table td,.storage-table th{padding:13px 12px;text-align:left;border-bottom:1px solid #292929}
+.storage-table th{color:#aaa;font-weight:600}.storage-table td:first-child{max-width:450px;overflow-wrap:anywhere}
+.storage-review-pill{display:inline-block;padding:5px 9px;border-radius:6px;background:#38291d;color:#ffc27b;font-size:12px}
+@media(max-width:980px){.storage-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){.storage-summary{grid-template-columns:1fr}}
 </style>
 
 </head>
@@ -3409,6 +3423,10 @@ textarea{
         onclick="openPage('reportsPage', this)"
     >
         📋 Reports
+    </button>
+
+    <button class="nav-button" onclick="openPage('storagePage', this)">
+        💾 Storage
     </button>
 
     <button
@@ -5599,6 +5617,35 @@ textarea{
             </div>
 
             <p class="recommendations-note">This is a decision aid, not a prediction. It uses the latest available snapshot (up to 365 days) and becomes more reliable as the connected website and Telegram Mini App continue recording viewing sessions.</p>
+        </section>
+    </div>
+
+
+    <div id="storagePage" class="admin-page">
+        <div class="topbar">
+            <div>
+                <h1>Storage</h1>
+                <p>Cloudflare R2 file sizes, video assets and unlinked-file review.</p>
+            </div>
+            <button class="user-button" type="button" id="storageRefreshButton" onclick="loadStorageReport()">↻ Refresh storage</button>
+        </div>
+        <p id="storageStatus" class="storage-status" role="status">Open Storage to calculate usage.</p>
+        <div class="storage-summary">
+            <div class="storage-metric"><span>Total R2 content</span><strong id="storageTotal">—</strong></div>
+            <div class="storage-metric"><span>Estimated free-tier headroom</span><strong id="storageRemaining">—</strong></div>
+            <div class="storage-metric"><span>Linked content</span><strong id="storageLinked">—</strong></div>
+            <div class="storage-metric"><span>Review-needed files</span><strong id="storageReview">—</strong></div>
+        </div>
+        <div class="storage-meter"><div id="storageMeterFill"></div></div>
+        <p class="storage-caption">The 10 GB-month R2 Standard free tier is account-wide billing usage, not a hard cap. Remaining amount above is a bucket-only estimate, not your verified Cloudflare bill or a fixed quota. Other buckets and storage classes are not included.</p>
+        <section class="section">
+            <div class="section-heading"><h2>Individual video storage</h2><p>Includes all objects inside each video folder. GIFs, videos/HLS, and other assets are reported separately.</p></div>
+            <div class="storage-table-wrap"><table class="storage-table"><thead><tr><th>Video</th><th>Video + HLS</th><th>GIF</th><th>Other</th><th>Total</th></tr></thead><tbody id="storageVideoRows"><tr><td colspan="5">Load storage to see per-video usage.</td></tr></tbody></table></div>
+        </section>
+        <section class="section">
+            <div class="section-heading"><h2>Unlinked Files — Review needed</h2><p>Old R2 objects with no verified video association. This is not a deletion recommendation: check backups, prior references and external uses before removing anything.</p></div>
+            <p class="storage-caption" id="storageReviewCount"></p>
+            <div class="storage-table-wrap"><table class="storage-table"><thead><tr><th>R2 object key</th><th>Size</th><th>Uploaded / modified</th><th>Status</th></tr></thead><tbody id="storageCandidateRows"><tr><td colspan="4">No scan yet.</td></tr></tbody></table></div>
         </section>
     </div>
 
@@ -17915,6 +17962,66 @@ function renderVideoWatchTimeRanking(list,count,rows){
    PAGE NAVIGATION
 ===================================================== */
 
+
+let storageReportLoading = false;
+function formatStorageBytes(value) {
+    const n = Number(value);
+    if(!Number.isFinite(n) || n < 0) return "—";
+    if(n < 1024) return n.toFixed(0) + " B";
+    const units = ["KB","MB","GB","TB"];
+    const index = Math.min(Math.floor(Math.log(n) / Math.log(1024)) - 1,units.length - 1);
+    return (n / Math.pow(1024,index + 1)).toFixed(2) + " " + units[index];
+}
+async function loadStorageReport(){
+    if(storageReportLoading) return;
+    storageReportLoading = true;
+    const status = document.getElementById("storageStatus");
+    const refresh = document.getElementById("storageRefreshButton");
+    status.classList.remove("error");
+    status.textContent = "Scanning Cloudflare R2 and checking Supabase references…";
+    refresh.disabled = true;
+    try {
+        const {data:{session},error:sessionError} = await supabaseClient.auth.getSession();
+        if(sessionError || !session?.access_token) throw new Error("Log in to view storage.");
+        const response = await fetch(STREAMX_MEDIA_WORKER_URL + "/admin/storage-report",{
+            method:"POST",
+            headers:{"Authorization":"Bearer " + session.access_token}
+        });
+        const report = await response.json().catch(()=>null);
+        if(!response.ok || !report?.ok) throw new Error(report?.error || "Storage scan failed (HTTP " + response.status + ").");
+        document.getElementById("storageTotal").textContent = formatStorageBytes(report.totalBytes);
+        document.getElementById("storageRemaining").textContent = formatStorageBytes(report.estimatedBucketHeadroomBytes);
+        document.getElementById("storageLinked").textContent = formatStorageBytes(report.linkedBytes);
+        document.getElementById("storageReview").textContent = formatStorageBytes(report.reviewBytes);
+        const percentage = 100 * report.totalBytes / report.freeTierReferenceBytes;
+        document.getElementById("storageMeterFill").style.width = Math.min(100,Math.max(0,percentage)) + "%";
+        const videos = Array.isArray(report.videoStorage) ? report.videoStorage : [];
+        document.getElementById("storageVideoRows").innerHTML = videos.length ? videos.map(v=>`
+            <tr><td><strong>${escapeHTML(v.title)}</strong> <span style="color:#888">#${escapeHTML(v.id)}</span></td>
+            <td>${formatStorageBytes(v.videoBytes)}</td><td>${formatStorageBytes(v.gifBytes)}</td>
+            <td>${formatStorageBytes(v.otherBytes)}</td><td><strong>${formatStorageBytes(v.totalBytes)}</strong></td></tr>`).join("") :
+            '<tr><td colspan="5">No videos found.</td></tr>';
+        const candidates = Array.isArray(report.reviewCandidates) ? report.reviewCandidates : [];
+        document.getElementById("storageReviewCount").textContent = report.reviewCount +
+            " file(s) flagged for manual review (" + formatStorageBytes(report.reviewBytes) +
+            "). New objects and active processing files are excluded. Up to 500 candidates shown.";
+        document.getElementById("storageCandidateRows").innerHTML = candidates.length ? candidates.map(item=>`
+            <tr><td>${escapeHTML(item.key)}</td><td>${formatStorageBytes(item.sizeBytes)}</td>
+            <td>${item.lastModified ? escapeHTML(new Date(item.lastModified).toLocaleString()) : "Unknown"}</td>
+            <td><span class="storage-review-pill">Review needed</span></td></tr>`).join("") :
+            '<tr><td colspan="4">No older unmatched files were identified.</td></tr>';
+        status.textContent = "Scanned " + report.objectCount + " R2 objects at " +
+            new Date(report.generatedAt).toLocaleString() + ". " + report.recentCount +
+            " recent unmatched objects held for review later. No files were changed.";
+    } catch(error) {
+        status.classList.add("error");
+        status.textContent = error.message || "Unable to retrieve storage report.";
+    } finally {
+        storageReportLoading = false;
+        refresh.disabled = false;
+    }
+}
+
 function openPage(pageId, button){
 
     const pages =
@@ -17929,6 +18036,10 @@ function openPage(pageId, button){
 
     if(selectedPage){
         selectedPage.classList.add("active");
+    }
+
+    if(pageId === "storagePage"){
+        loadStorageReport();
     }
 
     if(pageId === "categoriesPage"){

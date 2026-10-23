@@ -7687,6 +7687,11 @@ function feedCardGifOwnsPreview(video){
 
 function prepareFeedVideoPreview(video){
     if(!video || !canLoadFeedThumbnails() || video.dataset.streamxPreviewPrepared === '1') return;
+    // Give the visible still picture first priority on slow connections.
+    const poster = video.closest(".thumbnail")?.querySelector(".thumbnail-fallback");
+    if(poster && poster.dataset.thumbnailSrc &&
+       poster.dataset.thumbnailState !== "loaded" &&
+       poster.dataset.thumbnailState !== "failed") return;
     if(feedCardGifOwnsPreview(video)) return;
     if(video.closest('.thumbnail')?.classList.contains('streamx-gif-ready')) return;
     const rect = video.getBoundingClientRect();

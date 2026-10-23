@@ -4006,7 +4006,7 @@ textarea{
             <div class="form-group">
                 <label>Animated GIF preview (optional)</label>
                 <small style="display:block;color:#777;line-height:1.5;margin:0 0 9px;">
-                    Leave empty to use the short video preview. A GIF selected here is used only on this post (maximum 5 MiB).
+                    Choose a GIF here OR a static picture beside it, not both. Leave both empty to use the short video preview (5 MiB maximum).
                 </small>
 
                 <label class="upload-box" id="adminGifUploadBox">
@@ -4023,6 +4023,24 @@ textarea{
                 </div>
             </div>
 
+            <!-- STATIC PREVIEW PICTURE: ALTERNATIVE TO OPTIONAL GIF -->
+            <div class="form-group" id="adminPictureField">
+                <label>Picture preview (optional)</label>
+                <small style="display:block;color:#777;line-height:1.5;margin:0 0 9px;">
+                    Use a still picture on this post instead of a GIF or moving preview (maximum 5 MiB).
+                </small>
+                <label class="upload-box" id="adminPictureUploadBox">
+                    <input type="file" id="adminPictureFile" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">
+                    <div class="upload-icon">🖼️</div>
+                    <strong>Choose Picture Preview</strong>
+                    <small>JPG, PNG or WebP, up to 5 MiB</small>
+                    <div class="file-name" id="adminPictureFileName"></div>
+                </label>
+                <div class="thumbnail-preview" id="adminPicturePreview">
+                    <img id="adminPictureImage" alt="Selected picture preview">
+                    <button type="button" class="remove-thumbnail" onclick="removeAdminPicture(event)" aria-label="Remove picture preview">×</button>
+                </div>
+            </div>
 
         </div>
 
@@ -6284,6 +6302,7 @@ let selectedVideoFile = null;
 let selectedThumbnailFile = null;
 
 let selectedAdminGifFile = null;
+let selectedAdminPictureFile = null;
 
 let editingVideoMetadataId = null;
 
@@ -6338,6 +6357,8 @@ const thumbnailFile =
 
 const adminGifFile =
     document.getElementById("adminGifFile");
+const adminPictureFile =
+    document.getElementById("adminPictureFile");
 
 
 /* =====================================================
@@ -7227,6 +7248,7 @@ adminGifFile.addEventListener(
             return;
         }
 
+        if(selectedAdminPictureFile) removeAdminPicture();
         document.getElementById("adminGifFileName").textContent =
             "✓ " + selectedAdminGifFile.name;
 
@@ -7244,6 +7266,46 @@ adminGifFile.addEventListener(
 /* =====================================================
    REMOVE THUMBNAIL
 ===================================================== */
+
+adminPictureFile.addEventListener("change",function(){
+    selectedAdminPictureFile = this.files[0] || null;
+    if(!selectedAdminPictureFile){
+        document.getElementById("adminPictureFileName").textContent = "";
+        return;
+    }
+    const extension = String(selectedAdminPictureFile.name || "").split(".").pop().toLowerCase();
+    const validType = ["image/jpeg","image/png","image/webp"].includes(selectedAdminPictureFile.type);
+    if(!["jpg","jpeg","png","webp"].includes(extension) || !validType ||
+       selectedAdminPictureFile.size > 5 * 1024 * 1024 || !selectedAdminPictureFile.size){
+        selectedAdminPictureFile = null;
+        this.value = "";
+        document.getElementById("adminPictureFileName").textContent = "";
+        document.getElementById("adminPicturePreview").style.display = "none";
+        document.getElementById("adminPictureUploadBox").style.display = "flex";
+        showMessage("❌ Choose a JPG, PNG or WebP picture up to 5 MiB.","error");
+        return;
+    }
+    if(selectedAdminGifFile) removeAdminGif();
+    document.getElementById("adminPictureFileName").textContent = "✓ " + selectedAdminPictureFile.name;
+    const reader = new FileReader();
+    reader.onload = event => {
+        document.getElementById("adminPictureImage").src = event.target.result;
+        document.getElementById("adminPicturePreview").style.display = "block";
+        document.getElementById("adminPictureUploadBox").style.display = "none";
+    };
+    reader.readAsDataURL(selectedAdminPictureFile);
+});
+
+function removeAdminPicture(event){
+    event?.preventDefault();
+    event?.stopPropagation();
+    selectedAdminPictureFile = null;
+    adminPictureFile.value = "";
+    document.getElementById("adminPicturePreview").style.display = "none";
+    document.getElementById("adminPictureUploadBox").style.display = "flex";
+    document.getElementById("adminPictureFileName").textContent = "";
+    document.getElementById("adminPictureImage").removeAttribute("src");
+}
 
 function removeThumbnail(event){
 
@@ -7281,8 +7343,8 @@ function removeThumbnail(event){
 
 
 function removeAdminGif(event){
-    event.preventDefault();
-    event.stopPropagation();
+    event?.preventDefault();
+    event?.stopPropagation();
     selectedAdminGifFile = null;
     adminGifFile.value = "";
     document.getElementById("adminGifPreview").style.display = "none";
@@ -9064,6 +9126,7 @@ async function uploadVideo(){
         let thumbnailURL =
             null;
         let adminGifURL = null;
+        let adminPictureURL = null;
 
 
         /* =========================================
@@ -9086,8 +9149,10 @@ async function uploadVideo(){
         updateProgress(
             70,
             selectedAdminGifFile
-                ? "Video uploaded. Uploading optional GIF preview..."
-                : "Video uploaded. Processing thumbnail..."
+                ? "Video uploaded. Uploading GIF preview..."
+                : selectedAdminPictureFile
+                    ? "Video uploaded. Uploading picture preview..."
+                    : "Video uploaded. Processing thumbnail..."
         );
 
 
@@ -9102,9 +9167,12 @@ async function uploadVideo(){
             if(selectedAdminGifFile){
                 adminGifURL = await uploadThumbnailToR2(session, selectedAdminGifFile);
             }
+            if(selectedAdminPictureFile){
+                adminPictureURL = await uploadThumbnailToR2(session, selectedAdminPictureFile);
+            }
         }
         catch(imageUploadError){
-            for(const publicUrl of [adminGifURL,thumbnailURL,videoURL]){
+            for(const publicUrl of [adminPictureURL,adminGifURL,thumbnailURL,videoURL]){
                 if(!publicUrl) continue;
                 try{
                     await deleteR2MediaObject(session, publicUrl);
@@ -9113,7 +9181,7 @@ async function uploadVideo(){
                     console.error("R2 cleanup after optional media upload failure:", cleanupError);
                 }
             }
-            throw new Error("Thumbnail or GIF upload failed: " + imageUploadError.message);
+            throw new Error("Thumbnail, picture or GIF upload failed: " + imageUploadError.message);
         }
 
 
@@ -9162,6 +9230,9 @@ async function uploadVideo(){
 
                     admin_gif_url:
                         adminGifURL,
+
+                    admin_picture_url:
+                        adminPictureURL,
 
                     admin_gif_size_bytes:
                         selectedAdminGifFile ? selectedAdminGifFile.size : null,
@@ -9220,6 +9291,14 @@ async function uploadVideo(){
                 }
                 catch(cleanupError){
                     console.error("R2 GIF cleanup after database insert failure:", cleanupError);
+                }
+            }
+            if(adminPictureURL){
+                try{
+                    await deleteR2MediaObject(session, adminPictureURL);
+                }
+                catch(cleanupError){
+                    console.error("R2 picture cleanup after database insert failure:", cleanupError);
                 }
             }
 
@@ -13625,6 +13704,8 @@ function clearForm(){
     adminGifFile.value =
         "";
 
+    adminPictureFile.value = "";
+
 
     selectedVideoFile =
         null;
@@ -13635,6 +13716,8 @@ function clearForm(){
 
     selectedAdminGifFile =
         null;
+
+    selectedAdminPictureFile = null;
 
 
     document.getElementById(
@@ -13664,6 +13747,10 @@ function clearForm(){
     document.getElementById("adminGifPreview").style.display = "none";
     document.getElementById("adminGifUploadBox").style.display = "flex";
     document.getElementById("adminGifImage").removeAttribute("src");
+    document.getElementById("adminPictureFileName").textContent = "";
+    document.getElementById("adminPicturePreview").style.display = "none";
+    document.getElementById("adminPictureUploadBox").style.display = "flex";
+    document.getElementById("adminPictureImage").removeAttribute("src");
 
 
     document.getElementById(

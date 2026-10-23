@@ -6127,7 +6127,11 @@ function hasPendingFeedThumbnails(){
 function requestFeedCardPreview(card,priority){
     requestFeedThumbnail(card.querySelector('.thumbnail-fallback'),priority);
     const preview = card.querySelector('.thumbnail-preview-video');
-    if(preview && priority === 'high') prepareFeedVideoPreview(preview);
+    // Finish the visible still image request before fetching the moving preview.
+    if(preview && priority === 'high' &&
+       card.querySelector('.thumbnail-fallback')?.dataset.thumbnailState === 'loaded'){
+        prepareFeedVideoPreview(preview);
+    }
 }
 
 function refreshFeedThumbnailWindow(){
@@ -6305,8 +6309,8 @@ function createVideoCard(video){
             ${thumbnail ? `
                 <img class="thumbnail-fallback"
                     data-thumbnail-src="${escapeHTML(thumbnail)}"
-                    alt="${escapeHTML(title)}" loading="lazy" decoding="async"
-                    fetchpriority="low" draggable="false">
+                    alt="${escapeHTML(title)}" loading="eager" decoding="async"
+                    fetchpriority="high" draggable="false">
             ` : `<div class="no-thumbnail">🎬</div>`}
 
             ${previewVideoURL ? `
@@ -7683,6 +7687,11 @@ function feedCardGifOwnsPreview(video){
 
 function prepareFeedVideoPreview(video){
     if(!video || !canLoadFeedThumbnails() || video.dataset.streamxPreviewPrepared === '1') return;
+    // Give the visible still picture first priority on slow connections.
+    const poster = video.closest(".thumbnail")?.querySelector(".thumbnail-fallback");
+    if(poster && poster.dataset.thumbnailSrc &&
+       poster.dataset.thumbnailState !== "loaded" &&
+       poster.dataset.thumbnailState !== "failed") return;
     if(feedCardGifOwnsPreview(video)) return;
     if(video.closest('.thumbnail')?.classList.contains('streamx-gif-ready')) return;
     const rect = video.getBoundingClientRect();

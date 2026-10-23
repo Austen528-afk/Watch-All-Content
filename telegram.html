@@ -5379,6 +5379,12 @@ function prepareThumbnailVideoPreview(video){
         return;
     }
 
+    const poster = video.closest(".thumbnail")?.querySelector(".thumbnail-fallback");
+    if(poster && poster.dataset.thumbnailSrc &&
+       poster.dataset.thumbnailState !== "loaded" &&
+       poster.dataset.thumbnailState !== "failed"){
+        return;
+    }
     video.dataset.streamxPreviewPrepared =
         "1";
 
@@ -6024,6 +6030,13 @@ function setupFeedThumbnailWindow(){
             if(image.getAttribute('src') !== image.dataset.thumbnailSrc) return;
             image.dataset.thumbnailState = 'loaded';
             scheduleFeedThumbnailWindow();
+            const preview = image.closest(".thumbnail")?.querySelector(".thumbnail-preview-video");
+            if(preview){
+                const rect = image.getBoundingClientRect();
+                if(rect.bottom > 0 && rect.top < (window.innerHeight || 800)){
+                    playThumbnailVideoPreview(preview);
+                }
+            }
         });
         image.addEventListener('error',() => {
             if(image.getAttribute('src') !== image.dataset.thumbnailSrc) return;
@@ -6220,8 +6233,8 @@ function createVideoCard(video){
             ${thumbnail ? `
                 <img class="thumbnail-fallback"
                     data-thumbnail-src="${escapeHTML(thumbnail)}"
-                    alt="${escapeHTML(title)}" loading="lazy" decoding="async"
-                    fetchpriority="low" draggable="false">
+                    alt="${escapeHTML(title)}" loading="eager" decoding="async"
+                    fetchpriority="high" draggable="false">
             ` : `<div class="no-thumbnail">🎬</div>`}
 
             ${previewVideoURL ? `

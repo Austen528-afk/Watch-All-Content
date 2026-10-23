@@ -5488,6 +5488,11 @@ function playThumbnailVideoPreview(video){
         return;
     }
 
+    // Avoid calling play() before the poster has loaded.
+    const poster = video.closest(".thumbnail")?.querySelector(".thumbnail-fallback");
+    if(poster && poster.dataset.thumbnailSrc &&
+       poster.dataset.thumbnailState !== "loaded" &&
+       poster.dataset.thumbnailState !== "failed") return;
     if(feedCardGifOwnsPreview(video)){
         pauseThumbnailVideoPreview(video);
         return;

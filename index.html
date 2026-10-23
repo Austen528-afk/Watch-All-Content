@@ -4510,6 +4510,7 @@ function normalizeRecommendationVideo(row){
         video_url:row && row.video_url || "",
         thumbnail_url:row && row.thumbnail_url || "",
         preview_video_url:row && row.preview_video_url || "",
+        admin_picture_url:row && row.admin_picture_url || sourceVideo && sourceVideo.admin_picture_url || "",
         admin_gif_url:row && row.admin_gif_url || sourceVideo && sourceVideo.admin_gif_url || "",
         admin_gif_size_bytes:Number(row && row.admin_gif_size_bytes || sourceVideo && sourceVideo.admin_gif_size_bytes || 0),
         created_at:row && row.created_at || null,
@@ -4964,7 +4965,7 @@ async function loadVideos(){
         const result =
             await supabaseClient
                 .from("videos")
-                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,admin_gif_url,admin_gif_size_bytes,created_at,views")
+                .select("id,title,description,category,video_url,thumbnail_url,preview_video_url,admin_picture_url,admin_gif_url,admin_gif_size_bytes,created_at,views")
                 .order(
                     "created_at",
                     {
@@ -5065,6 +5066,7 @@ function mergeRealtimeVideo(video){
         "thumbnail_url",
         "preview_video_url",
         "admin_gif_url",
+        "admin_picture_url",
         "admin_gif_size_bytes",
         "created_at"
     ];
@@ -6242,22 +6244,23 @@ function createVideoCard(video){
 
 
 
+    const selectedPictureURL = String(video.admin_picture_url || "").trim();
     const rawThumbnailURL = String(video.thumbnail_url || "").trim();
     const legacyGifURL = /\.gif(?:[?#]|$)/i.test(rawThumbnailURL)
         ? rawThumbnailURL
         : "";
     const adminGifURL = String(video.admin_gif_url || legacyGifURL || "").trim();
     const adminGifSizeBytes = Math.max(0, Number(video.admin_gif_size_bytes || video.gif_size_bytes) || 0);
-    const gifPreviewURL = adminGifURL &&
+    const gifPreviewURL = !selectedPictureURL && adminGifURL &&
         (!adminGifSizeBytes || adminGifSizeBytes <= 5 * 1024 * 1024)
         ? getPublicURL(adminGifURL, "thumbnails")
         : "";
     const thumbnail = getPublicURL(
-        legacyGifURL ? "" : video.thumbnail_url,
+        selectedPictureURL || (legacyGifURL ? "" : video.thumbnail_url),
         "thumbnails"
     );
     const gifSizeBytes = adminGifSizeBytes;
-    const previewVideoURL = video.preview_video_url
+    const previewVideoURL = !selectedPictureURL && video.preview_video_url
         ? getPublicURL(video.preview_video_url, "streamx-hls")
         : "";
 

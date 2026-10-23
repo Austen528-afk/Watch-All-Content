@@ -5961,6 +5961,64 @@ async function uploadOriginalVideoToR2(
 }
 
 
+
+/*
+ * Make feed still images small BEFORE they reach R2.
+ * The originals can be multi-megabyte camera images even when displayed
+ * as a 300 px poster; uploading them unmodified slows both clients.
+ */
+async function optimizeStreamXStillImage(file){
+    if(!file || !/^image\/(jpeg|png|webp)$/i.test(file.type || "")) return file;
+    const maxEdge = 768;
+    const maxBytes = 220 * 1024;
+    const imageUrl = URL.createObjectURL(file);
+    let bitmap = null;
+    try{
+        const image = await new Promise((resolve,reject)=>{
+            const source = new Image();
+            source.onload = ()=>resolve(source);
+            source.onerror = ()=>reject(new Error("Could not open the selected picture."));
+            source.src = imageUrl;
+        });
+        const ratio = Math.min(1,maxEdge / Math.max(image.naturalWidth,image.naturalHeight));
+        let width = Math.max(1,Math.round(image.naturalWidth * ratio));
+        let height = Math.max(1,Math.round(image.naturalHeight * ratio));
+        let output = null;
+        for(let attempt=0;attempt<4;attempt++){
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d",{alpha:true});
+            if(!ctx) throw new Error("Picture optimisation is not supported in this browser.");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(image,0,0,width,height);
+            const quality = [0.82,0.72,0.66,0.62][attempt];
+            const blob = await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
+            canvas.width = 0;
+            canvas.height = 0;
+            if(blob && blob.type === "image/webp"){
+                output = blob;
+                if(blob.size <= maxBytes) break;
+            }else{
+                break;
+            }
+            width = Math.max(1,Math.round(width * 0.82));
+            height = Math.max(1,Math.round(height * 0.82));
+        }
+        if(!output || output.size >= file.size){
+            return file; // Never increase bandwidth for a small original.
+        }
+        return new File([output],"optimized-picture.webp",{
+            type:"image/webp",lastModified:Date.now()
+        });
+    }
+    finally{
+        if(bitmap && typeof bitmap.close === "function") bitmap.close();
+        URL.revokeObjectURL(imageUrl);
+    }
+}
+
 async function uploadThumbnailToR2(session, file){
     if(!session?.access_token){
         throw new Error("Your admin session has expired. Please log in again.");
@@ -9162,13 +9220,17 @@ async function uploadVideo(){
 
         try{
             if(selectedThumbnailFile){
-                thumbnailURL = await uploadThumbnailToR2(session, selectedThumbnailFile);
+                updateProgress(72, "Optimising the poster picture...");
+                const optimisedThumbnail = await optimizeStreamXStillImage(selectedThumbnailFile);
+                thumbnailURL = await uploadThumbnailToR2(session, optimisedThumbnail);
             }
             if(selectedAdminGifFile){
                 adminGifURL = await uploadThumbnailToR2(session, selectedAdminGifFile);
             }
             if(selectedAdminPictureFile){
-                adminPictureURL = await uploadThumbnailToR2(session, selectedAdminPictureFile);
+                updateProgress(78, "Optimising your picture preview...");
+                const optimisedPicture = await optimizeStreamXStillImage(selectedAdminPictureFile);
+                adminPictureURL = await uploadThumbnailToR2(session, optimisedPicture);
             }
         }
         catch(imageUploadError){

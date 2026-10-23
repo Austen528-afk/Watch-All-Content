@@ -6127,7 +6127,11 @@ function hasPendingFeedThumbnails(){
 function requestFeedCardPreview(card,priority){
     requestFeedThumbnail(card.querySelector('.thumbnail-fallback'),priority);
     const preview = card.querySelector('.thumbnail-preview-video');
-    if(preview && priority === 'high') prepareFeedVideoPreview(preview);
+    // Finish the visible still image request before fetching the moving preview.
+    if(preview && priority === 'high' &&
+       card.querySelector('.thumbnail-fallback')?.dataset.thumbnailState === 'loaded'){
+        prepareFeedVideoPreview(preview);
+    }
 }
 
 function refreshFeedThumbnailWindow(){
@@ -6305,8 +6309,8 @@ function createVideoCard(video){
             ${thumbnail ? `
                 <img class="thumbnail-fallback"
                     data-thumbnail-src="${escapeHTML(thumbnail)}"
-                    alt="${escapeHTML(title)}" loading="lazy" decoding="async"
-                    fetchpriority="low" draggable="false">
+                    alt="${escapeHTML(title)}" loading="eager" decoding="async"
+                    fetchpriority="high" draggable="false">
             ` : `<div class="no-thumbnail">🎬</div>`}
 
             ${previewVideoURL ? `

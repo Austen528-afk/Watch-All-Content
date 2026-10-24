@@ -3204,6 +3204,46 @@ textarea{
 #overallAverageSessionTime{font-size:clamp(24px,2vw,34px);}
 
 
+
+.storage-target-panel{
+    background:#151515;border:1px solid #303030;border-radius:14px;
+    padding:20px;margin:16px 0 20px;
+}
+.storage-target-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.storage-target-heading h2{font-size:21px;color:#fff;margin:0 0 5px}
+.storage-target-heading p{color:#999;font-size:12px;margin:0}
+.storage-target-badge{
+    display:inline-flex;align-items:center;white-space:nowrap;
+    font-size:12px;font-weight:700;color:#bbb;border:1px solid #393939;
+    background:#222;padding:7px 11px;border-radius:20px;
+}
+.storage-target-badge.warning{color:#ffc575;border-color:#795121;background:#322719}
+.storage-target-badge.danger{color:#ff8b9f;border-color:#773145;background:#301a22}
+.storage-target-figures{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:16px;margin:20px 0;
+}
+.storage-target-figures>div{display:flex;flex-direction:column;gap:7px;min-width:0}
+.storage-target-figures span{color:#aaa;font-size:12px;line-height:1.5}
+.storage-target-figures strong{color:#fff;font-size:clamp(17px,1.7vw,25px);overflow-wrap:anywhere}
+#storageTargetMeter{position:relative;height:14px;overflow:hidden;margin-top:6px}
+.storage-meter-marker{position:absolute;z-index:1;top:0;bottom:0;width:2px;background:#eee9}
+.storage-meter-free{left:40%}.storage-meter-warning{left:92%;background:#ffc15b}
+.storage-target-scale{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#999;margin-top:9px}
+.storage-target-scale span{white-space:nowrap}
+.storage-target-notice{font-size:13px;color:#c5dfce;margin:18px 0 6px;line-height:1.5}
+.storage-target-notice.warning{color:#ffc575}
+.storage-target-notice.danger{color:#ff8b9f}
+#storageMeterFill.warning{background:#edaa3c}
+#storageMeterFill.danger{background:#ff1744}
+@media(max-width:900px){.storage-target-figures{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){
+    .storage-target-panel{padding:16px}
+    .storage-target-figures{gap:15px}
+    .storage-target-scale{font-size:9px}
+    .storage-target-scale span:nth-child(2){display:none}
+}
+
 .storage-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:16px 0 22px}
 .storage-metric{background:#161616;border:1px solid #303030;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px}
 .storage-metric span{color:#999;font-size:13px}.storage-metric strong{font-size:clamp(19px,2.1vw,29px);color:#fff}
@@ -5563,14 +5603,43 @@ textarea{
             <button class="user-button" type="button" id="storageRefreshButton" onclick="loadStorageReport()">↻ Refresh storage</button>
         </div>
         <p id="storageStatus" class="storage-status" role="status">Open Storage to calculate usage.</p>
+        <section class="storage-target-panel" aria-labelledby="storageTargetTitle">
+            <div class="storage-target-heading">
+                <div>
+                    <h2 id="storageTargetTitle">25 GB storage target</h2>
+                    <p>Cloudflare R2 Standard · streamx-media</p>
+                </div>
+                <span class="storage-target-badge" id="storageTargetBadge">Awaiting scan</span>
+            </div>
+            <div class="storage-target-figures">
+                <div><span>Bucket storage used</span><strong id="storageTargetUsed">—</strong></div>
+                <div><span>Remaining to 25 GB</span><strong id="storageTargetLeft">—</strong></div>
+                <div><span>Early warning</span><strong>23 GB</strong></div>
+                <div><span>Estimated storage cost at 25 GB</span><strong>≈ $0.23 / month*</strong></div>
+            </div>
+            <div class="storage-meter" id="storageTargetMeter"
+                role="progressbar" aria-label="Bucket storage as a proportion of 25 GB target"
+                aria-valuemin="0" aria-valuemax="25" aria-valuenow="0">
+                <div id="storageMeterFill"></div>
+                <span class="storage-meter-marker storage-meter-free" title="10 GB free-tier reference"></span>
+                <span class="storage-meter-marker storage-meter-warning" title="23 GB early warning"></span>
+            </div>
+            <div class="storage-target-scale">
+                <span>0 GB</span><span>10 GB free reference</span>
+                <span>23 GB warning</span><span>25 GB target</span>
+            </div>
+            <p id="storageTargetNotice" class="storage-target-notice" role="status" aria-live="polite">
+                Refresh storage to check the 23 GB warning threshold.
+            </p>
+            <p class="storage-caption">*Approximately $0.23/month for 25 GB-month of Standard storage with the 10 GB-month free allowance, before any other charges. This meter tracks the streamx-media bucket only, not all Cloudflare buckets or your actual monthly invoice. Cloudflare bills account-wide usage over time; 25 GB is a monitoring target, not an automatic upload or spending cap.</p>
+        </section>
         <div class="storage-summary">
-            <div class="storage-metric"><span>Total R2 content</span><strong id="storageTotal">—</strong></div>
-            <div class="storage-metric"><span>Estimated free-tier headroom</span><strong id="storageRemaining">—</strong></div>
+            <div class="storage-metric"><span>Total R2 content in this bucket</span><strong id="storageTotal">—</strong></div>
+            <div class="storage-metric"><span>Estimated remaining 10 GB free tier*</span><strong id="storageRemaining">—</strong></div>
             <div class="storage-metric"><span>Linked content</span><strong id="storageLinked">—</strong></div>
             <div class="storage-metric"><span>Review-needed files</span><strong id="storageReview">—</strong></div>
         </div>
-        <div class="storage-meter"><div id="storageMeterFill"></div></div>
-        <p class="storage-caption">The 10 GB-month R2 Standard free tier is account-wide billing usage, not a hard cap. Remaining amount above is a bucket-only estimate, not your verified Cloudflare bill or a fixed quota. Other buckets and storage classes are not included.</p>
+        <p class="storage-caption">*Bucket-only free-tier estimate: the 10 GB-month R2 Standard allowance is shared with any other buckets in the Cloudflare account.</p>
         <section class="section">
             <div class="section-heading"><h2>Individual video storage</h2><p>Includes all objects inside each video folder. GIFs, videos/HLS, and other assets are reported separately.</p></div>
             <div class="storage-table-wrap"><table class="storage-table"><thead><tr><th>Video</th><th>Video + HLS</th><th>GIF</th><th>Other</th><th>Total</th></tr></thead><tbody id="storageVideoRows"><tr><td colspan="5">Load storage to see per-video usage.</td></tr></tbody></table></div>
@@ -17914,6 +17983,54 @@ function renderVideoWatchTimeRanking(list,count,rows){
 
 
 let storageReportLoading = false;
+// The backend reports bytes. Decimal GB matches Cloudflare's bucket-size display.
+const STREAMX_STORAGE_GB_BYTES = 1000 * 1000 * 1000;
+const STREAMX_STORAGE_TARGET_BYTES = 25 * STREAMX_STORAGE_GB_BYTES;
+const STREAMX_STORAGE_WARNING_BYTES = 23 * STREAMX_STORAGE_GB_BYTES;
+function formatStorageDecimalGB(bytes){
+    const number = Number(bytes);
+    return Number.isFinite(number) && number >= 0
+        ? (number / STREAMX_STORAGE_GB_BYTES).toFixed(2) + " GB"
+        : "—";
+}
+function updateStreamXStorageTarget(totalBytes){
+    const total = Number(totalBytes);
+    if(!Number.isFinite(total) || total < 0){
+        throw new Error("The storage report returned an invalid bucket size.");
+    }
+    const remaining = Math.max(0, STREAMX_STORAGE_TARGET_BYTES - total);
+    const reached = total >= STREAMX_STORAGE_TARGET_BYTES;
+    const warning = total >= STREAMX_STORAGE_WARNING_BYTES;
+    const badge = document.getElementById("storageTargetBadge");
+    const message = document.getElementById("storageTargetNotice");
+    const progress = document.getElementById("storageMeterFill");
+    const meter = document.getElementById("storageTargetMeter");
+    document.getElementById("storageTargetUsed").textContent = formatStorageDecimalGB(total);
+    document.getElementById("storageTargetLeft").textContent = formatStorageDecimalGB(remaining);
+    const percentage = Math.min(100,Math.max(0,100 * total / STREAMX_STORAGE_TARGET_BYTES));
+    progress.style.width = percentage.toFixed(1) + "%";
+    progress.classList.toggle("warning", warning && !reached);
+    progress.classList.toggle("danger", reached);
+    badge.classList.toggle("warning", warning && !reached);
+    badge.classList.toggle("danger", reached);
+    message.classList.toggle("warning", warning && !reached);
+    message.classList.toggle("danger", reached);
+    badge.textContent = reached ? "Target reached" : warning ? "Near target" : "Within target";
+    meter.setAttribute("aria-valuenow",String(Math.min(25,total / STREAMX_STORAGE_GB_BYTES).toFixed(2)));
+    meter.setAttribute("aria-valuetext",formatStorageDecimalGB(total) + " of 25 GB target");
+    if(reached){
+        message.textContent = "25 GB target reached or exceeded. " +
+            formatStorageDecimalGB(total - STREAMX_STORAGE_TARGET_BYTES) +
+            " above the target. Review new uploads and file sizes; this does not prevent further uploads or charges.";
+    }else if(warning){
+        message.textContent = "Storage warning: " + formatStorageDecimalGB(remaining) +
+            " remaining to the 25 GB target. Review storage before adding more videos.";
+    }else{
+        message.textContent = "Storage is below the 23 GB early-warning threshold. " +
+            formatStorageDecimalGB(STREAMX_STORAGE_WARNING_BYTES - total) +
+            " until the warning; " + formatStorageDecimalGB(remaining) + " until the 25 GB target.";
+    }
+}
 function formatStorageBytes(value) {
     const n = Number(value);
     if(!Number.isFinite(n) || n < 0) return "—";
@@ -17939,12 +18056,11 @@ async function loadStorageReport(){
         });
         const report = await response.json().catch(()=>null);
         if(!response.ok || !report?.ok) throw new Error(report?.error || "Storage scan failed (HTTP " + response.status + ").");
-        document.getElementById("storageTotal").textContent = formatStorageBytes(report.totalBytes);
-        document.getElementById("storageRemaining").textContent = formatStorageBytes(report.estimatedBucketHeadroomBytes);
+        updateStreamXStorageTarget(report.totalBytes);
+        document.getElementById("storageTotal").textContent = formatStorageDecimalGB(report.totalBytes);
+        document.getElementById("storageRemaining").textContent = formatStorageDecimalGB(report.estimatedBucketHeadroomBytes);
         document.getElementById("storageLinked").textContent = formatStorageBytes(report.linkedBytes);
         document.getElementById("storageReview").textContent = formatStorageBytes(report.reviewBytes);
-        const percentage = 100 * report.totalBytes / report.freeTierReferenceBytes;
-        document.getElementById("storageMeterFill").style.width = Math.min(100,Math.max(0,percentage)) + "%";
         const videos = Array.isArray(report.videoStorage) ? report.videoStorage : [];
         document.getElementById("storageVideoRows").innerHTML = videos.length ? videos.map(v=>`
             <tr><td><strong>${escapeHTML(v.title)}</strong> <span style="color:#888">#${escapeHTML(v.id)}</span></td>
@@ -17966,6 +18082,22 @@ async function loadStorageReport(){
     } catch(error) {
         status.classList.add("error");
         status.textContent = error.message || "Unable to retrieve storage report.";
+        document.getElementById("storageTargetBadge").textContent = "Unavailable";
+        document.getElementById("storageTargetBadge").classList.remove("warning","danger");
+        document.getElementById("storageTargetUsed").textContent = "—";
+        document.getElementById("storageTargetLeft").textContent = "—";
+        const notice = document.getElementById("storageTargetNotice");
+        notice.classList.remove("warning","danger");
+        notice.textContent = "Storage could not be checked. The 23 GB warning status is currently unknown.";
+        const meter = document.getElementById("storageTargetMeter");
+        meter.setAttribute("aria-valuenow","0");
+        meter.setAttribute("aria-valuetext","Storage reading unavailable");
+        const fill = document.getElementById("storageMeterFill");
+        fill.style.width = "0%";
+        fill.classList.remove("warning","danger");
+        for(const id of ["storageTotal","storageRemaining","storageLinked","storageReview"]){
+            document.getElementById(id).textContent = "—";
+        }
     } finally {
         storageReportLoading = false;
         refresh.disabled = false;

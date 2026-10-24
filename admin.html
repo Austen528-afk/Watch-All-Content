@@ -4556,7 +4556,7 @@ textarea{
                     aria-selected="false"
                     aria-controls="videoLibraryPanel"
                     onclick="openVideoStatsPanel('videoLibraryPanel',this)"
-                >📚 Most Stored Video Ranking</button>
+                >📚 Most Saved in Libraries</button>
 
                 <button
                     type="button"
@@ -4656,7 +4656,7 @@ textarea{
             >
                 <div class="section-top">
                     <div>
-                        <p style="margin-top:6px;color:#777;font-size:12px;">Individual videos are ranked by how many personal libraries contain them.</p>
+                        <p style="margin-top:6px;color:#777;font-size:12px;">Ranked by current library saves: each saved video counts once per personal library. Removed saves are excluded.</p>
                     </div>
                     <span class="video-count" id="videoLibraryRankingCount">0 videos</span>
                 </div>
@@ -4665,10 +4665,10 @@ textarea{
                     <div class="statistics-table-header">
                         <span>Rank</span>
                         <span>Video</span>
-                        <span>Libraries</span>
+                        <span>Library Saves</span>
                     </div>
                     <div id="videoLibraryRankingList" class="statistics-table-body">
-                        <div class="statistics-status">Loading video library rankings...</div>
+                        <div class="statistics-status">Loading library-save rankings...</div>
                     </div>
                 </div>
             </div>
@@ -17364,6 +17364,35 @@ window.addEventListener("resize",function(){
 
 });
 
+/*
+ * Fetch every current library membership for correct video-save rankings.
+ * Supabase's default 1,000-row API limit would otherwise undercount videos
+ * when the library grows. video_library contains the active saved entries;
+ * removals no longer exist in this table.
+ */
+async function loadAllVideoLibraryMemberships(){
+    const pageSize = 1000;
+    const libraryRows = [];
+    let start = 0;
+
+    while(true){
+        const result = await supabaseClient
+            .from("video_library")
+            .select("video_id")
+            .order("video_id", { ascending:true })
+            .range(start,start + pageSize - 1);
+
+        if(result.error) return {data:null,error:result.error};
+
+        const rows = result.data || [];
+        libraryRows.push(...rows);
+        if(rows.length < pageSize) break;
+        start += rows.length;
+    }
+
+    return {data:libraryRows,error:null};
+}
+
 async function loadCategoryStatistics(){
 
     const rankingTargets = [
@@ -17423,8 +17452,8 @@ async function loadCategoryStatistics(){
             list:document.getElementById("videoLibraryRankingList"),
             count:document.getElementById("videoLibraryRankingCount"),
             metric:"stored",
-            unit:"libraries",
-            loadingText:"Loading video library rankings..."
+            unit:"saves",
+            loadingText:"Loading library-save rankings..."
         }
     ];
 
@@ -17480,9 +17509,7 @@ async function loadCategoryStatistics(){
             supabaseClient
                 .from("videos")
                 .select("id, title, category, views"),
-            supabaseClient
-                .from("video_library")
-                .select("video_id"),
+            loadAllVideoLibraryMemberships(),
             supabaseClient
                 .rpc("get_category_watch_time_rankings"),
             supabaseClient
@@ -17515,7 +17542,7 @@ async function loadCategoryStatistics(){
 
         if(libraryResult.error){
             console.warn(
-                "Could not load video library rankings:",
+                "Could not load complete video library-save rankings:",
                 libraryResult.error
             );
         }
@@ -17641,7 +17668,7 @@ async function loadCategoryStatistics(){
         if(libraryResult.error){
 
             const libraryErrorMessage =
-                '<div class="statistics-status error">Library rankings are not available. Run setup_personal_library.sql in Supabase first.</div>';
+                '<div class="statistics-status error">Library-save rankings are unavailable. Check that the video_library table can be read by the admin.</div>';
 
             rankingTargets
                 .filter(target => target.metric === "stored")

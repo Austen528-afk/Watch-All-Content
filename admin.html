@@ -3947,14 +3947,14 @@ textarea{
                 <small style="display:block;color:#777;line-height:1.5;margin:0 0 9px;">
                     Choose one still picture (JPG, PNG, WebP) or an animated GIF.
                     Pictures remain still; GIFs play their full original animation on the website and Mini App.
-                    Leave empty for the generated short video preview. Maximum: 5 MiB.
+                    Leave empty for the generated short video preview. Pictures: up to 50 MiB (optimised). GIFs: up to 100 MiB (original length). Large GIFs can load slowly.
                 </small>
                 <label class="upload-box" id="thumbnailUploadBox">
                     <input type="file" id="thumbnailFile"
                         accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif">
                     <div class="upload-icon">🖼️</div>
                     <strong>Choose Picture or GIF</strong>
-                    <small>JPG, PNG, WebP or GIF · up to 5 MiB</small>
+                    <small>JPG / PNG / WebP: up to 50 MiB · GIF: up to 100 MiB</small>
                     <div class="file-name" id="thumbnailFileName"></div>
                 </label>
                 <div class="thumbnail-preview" id="thumbnailPreview">
@@ -7111,48 +7111,84 @@ videoFile.addEventListener(
 /* =====================================================
    ONE PREVIEW PICKER: STILL PICTURE OR FULL-LENGTH GIF
 ===================================================== */
-thumbnailFile.addEventListener("change", function(){
+const STREAMX_PREVIEW_STILL_MAX_BYTES = 50 * 1024 * 1024;
+const STREAMX_PREVIEW_GIF_MAX_BYTES = 100 * 1024 * 1024;
+let streamxCurrentPreviewURL = null;
+let streamxPreviewChangeId = 0;
+
+function revokeStreamXPreviewURL(){
+    if(streamxCurrentPreviewURL) URL.revokeObjectURL(streamxCurrentPreviewURL);
+    streamxCurrentPreviewURL = null;
+}
+
+thumbnailFile.addEventListener("change",async function(){
     const file = this.files[0] || null;
+    const changeId = ++streamxPreviewChangeId;
     selectedThumbnailFile = null;
     selectedAdminGifFile = null;
-    if(!file){
-        document.getElementById("thumbnailFileName").textContent = "";
-        document.getElementById("thumbnailImage").removeAttribute("src");
-        document.getElementById("thumbnailPreview").style.display = "none";
-        document.getElementById("thumbnailUploadBox").style.display = "flex";
-        return;
-    }
+    revokeStreamXPreviewURL();
+    document.getElementById("thumbnailImage").removeAttribute("src");
+    document.getElementById("thumbnailPreview").style.display = "none";
+    document.getElementById("thumbnailUploadBox").style.display = "flex";
+    document.getElementById("thumbnailFileName").textContent = "";
+    if(!file) return;
 
-    const extension = String(file.name || "").split(".").pop().toLowerCase();
-    const isGif = extension === "gif" && (!file.type || file.type === "image/gif");
-    const isStill = ["jpg","jpeg","png","webp"].includes(extension) &&
-        (!file.type || ["image/jpeg","image/png","image/webp"].includes(file.type));
-    if((!isGif && !isStill) || !file.size || file.size > 5 * 1024 * 1024){
+    const fail = message => {
+        if(changeId !== streamxPreviewChangeId) return;
         this.value = "";
+        revokeStreamXPreviewURL();
         document.getElementById("thumbnailFileName").textContent = "";
         document.getElementById("thumbnailImage").removeAttribute("src");
         document.getElementById("thumbnailPreview").style.display = "none";
         document.getElementById("thumbnailUploadBox").style.display = "flex";
-        showMessage("❌ Select a JPG, PNG, WebP or GIF file up to 5 MiB.", "error");
+        showMessage("❌ " + message,"error");
+    };
+
+    if(!file.size || file.size > STREAMX_PREVIEW_GIF_MAX_BYTES){
+        fail("File size: " + (file.size/(1024*1024)).toFixed(2) +
+            " MiB. Maximum: 50 MiB for pictures, 100 MiB for GIFs.");
         return;
     }
 
-    if(isGif) selectedAdminGifFile = file;
-    else selectedThumbnailFile = file;
-    hideMessage();
-    document.getElementById("thumbnailFileName").textContent = "✓ " + file.name;
-    const reader = new FileReader();
-    reader.onload = event => {
-        if((isGif ? selectedAdminGifFile : selectedThumbnailFile) !== file) return;
-        document.getElementById("thumbnailImage").src = event.target.result;
+    try{
+        // Match the exact binary signatures accepted by the Railway/R2 media endpoint.
+        // Browser MIME types may be empty or application/octet-stream for genuine GIFs.
+        const bytes = new Uint8Array(await file.slice(0,12).arrayBuffer());
+        if(changeId !== streamxPreviewChangeId || this.files[0] !== file) return;
+        const ascii = (start,length) => String.fromCharCode(...bytes.slice(start,start+length));
+        const isGif = ascii(0,6) === "GIF89a" || ascii(0,6) === "GIF87a";
+        const isJpeg = bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
+        const isPng = bytes[0] === 137 && bytes[1] === 80 &&
+            bytes[2] === 78 && bytes[3] === 71 && bytes[4] === 13 &&
+            bytes[5] === 10 && bytes[6] === 26 && bytes[7] === 10;
+        const isWebp = ascii(0,4) === "RIFF" && ascii(8,4) === "WEBP";
+        if(!isGif && !isJpeg && !isPng && !isWebp){
+            fail("The selected file is not a JPG, PNG, WebP or GIF image. Please check: " + file.name);
+            return;
+        }
+        if(!isGif && file.size > STREAMX_PREVIEW_STILL_MAX_BYTES){
+            fail("Your picture is " + (file.size/(1024*1024)).toFixed(2) +
+                " MiB, above the 50 MiB picture limit.");
+            return;
+        }
+        if(isGif) selectedAdminGifFile = file;
+        else selectedThumbnailFile = file;
+        hideMessage();
+        streamxCurrentPreviewURL = URL.createObjectURL(file);
+        const preview = document.getElementById("thumbnailImage");
+        preview.src = streamxCurrentPreviewURL;
+        document.getElementById("thumbnailFileName").textContent =
+            "✓ " + file.name + " (" + (file.size/(1024*1024)).toFixed(2) +
+            " MiB)" + (isGif ? " · Original full GIF" : "");
         document.getElementById("thumbnailPreview").style.display = "block";
         document.getElementById("thumbnailUploadBox").style.display = "none";
-    };
-    reader.onerror = () => showMessage("❌ Could not display this picture or GIF.", "error");
-    // The original GIF remains an animated image, never converted to a shortened preview.
-    reader.readAsDataURL(file);
+        if(isGif && file.size > 12*1024*1024){
+            showMessage("⚠ Original GIF preserved. Large animations can load slowly on mobile.","info");
+        }
+    }catch(error){
+        fail("Could not read your preview file: " + (error.message || "Unknown error"));
+    }
 });
-
 
 function removeThumbnail(event){
 
@@ -7167,6 +7203,8 @@ function removeThumbnail(event){
     selectedAdminGifFile =
         null;
 
+    ++streamxPreviewChangeId;
+    revokeStreamXPreviewURL();
 
     thumbnailFile.value =
         "";
@@ -13543,6 +13581,8 @@ function clearForm(){
     thumbnailFile.value =
         "";
 
+    ++streamxPreviewChangeId;
+    revokeStreamXPreviewURL();
 
     selectedVideoFile =
         null;

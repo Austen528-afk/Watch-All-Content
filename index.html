@@ -5838,7 +5838,7 @@ const streamxGifLoadTimers = new WeakMap();
 let streamxGifDesired = new Set();
 const STREAMX_GIF_PREFETCH_MAX_BYTES = 3 * 1024 * 1024;
 const STREAMX_GIF_LOAD_NOTICE_MS = 12000;
-const STREAMX_GIF_LOAD_TIMEOUT_MS = 90000;
+const STREAMX_GIF_LOAD_TIMEOUT_MS = 180000; // Full-length GIFs may be larger on mobile.
 
 function getFeedGifConcurrency(){
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -6255,8 +6255,8 @@ function createVideoCard(video){
         : "";
     const adminGifURL = String(video.admin_gif_url || legacyGifURL || "").trim();
     const adminGifSizeBytes = Math.max(0, Number(video.admin_gif_size_bytes || video.gif_size_bytes) || 0);
-    const gifPreviewURL = !selectedPictureURL && adminGifURL &&
-        (!adminGifSizeBytes || adminGifSizeBytes <= 5 * 1024 * 1024)
+    // Full original GIF is always eligible, even above the old 5 MiB limit.
+    const gifPreviewURL = !selectedPictureURL && adminGifURL
         ? getPublicURL(adminGifURL, "thumbnails")
         : "";
     const thumbnail = getPublicURL(

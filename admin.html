@@ -8228,6 +8228,39 @@ function stopProcessingStatusMonitor(){
 }
 
 
+function clearAdaptiveProcessingStatusForVideo(videoId = null){
+    const ui =
+        getProcessingStatusElements();
+
+    if(!ui.panel){
+        return;
+    }
+
+    const displayedVideoId =
+        ui.panel.dataset.videoId ||
+        (
+            ui.video &&
+            ui.video.textContent.match(/^Video #(\d+)\s+•/)?.[1]
+        ) ||
+        "";
+
+    if(
+        videoId !== null &&
+        String(displayedVideoId) !== String(videoId)
+    ){
+        return;
+    }
+
+    stopProcessingStatusMonitor();
+
+    ui.panel.style.display =
+        "none";
+
+    ui.panel.dataset.videoId =
+        "";
+}
+
+
 function getProcessingStatusElements(){
 
     return {
@@ -8318,6 +8351,9 @@ function renderAdaptiveProcessingStatus({
     if(!ui.panel){
         return;
     }
+
+    ui.panel.dataset.videoId =
+        String(videoId);
 
     ui.panel.style.display =
         "block";
@@ -8705,7 +8741,7 @@ async function monitorAdaptiveProcessing(
                             "id",
                             videoId
                         )
-                        .single(),
+                        .maybeSingle(),
 
                     supabaseClient
                         .from(
@@ -8737,9 +8773,14 @@ async function monitorAdaptiveProcessing(
                 );
             }
 
+            if(!videoResult.data){
+                clearAdaptiveProcessingStatusForVideo(videoId);
+                return;
+            }
+
 
             const video =
-                videoResult.data || {};
+                videoResult.data;
 
 
             const job =
@@ -13139,6 +13180,8 @@ function removeDeletedVideoFromAdminUI(
 ){
 
     adminVideoCounterRevision++;
+
+    clearAdaptiveProcessingStatusForVideo(id);
 
     const grid =
         document.getElementById(

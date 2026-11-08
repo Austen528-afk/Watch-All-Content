@@ -3967,7 +3967,7 @@ textarea{
                     </strong>
 
                     <small>
-                        MP4, WebM, MOV
+                        MP4, WebM, MOV · up to 1 GiB
                     </small>
 
                     <div
@@ -6341,6 +6341,8 @@ async function requireStreamXAdminSession(){
 
 let selectedVideoFile = null;
 
+const STREAMX_ADMIN_UPLOAD_MAX_BYTES = 1024 * 1024 * 1024;
+
 let selectedThumbnailFile = null;
 
 let selectedAdminGifFile = null;
@@ -7153,11 +7155,18 @@ videoFile.addEventListener(
 
         if(selectedVideoFile){
 
+            const fileSizeMiB =
+                selectedVideoFile.size / (1024 * 1024);
+
+            const exceedsUploadLimit =
+                selectedVideoFile.size > STREAMX_ADMIN_UPLOAD_MAX_BYTES;
+
             document.getElementById(
                 "videoFileName"
             ).textContent =
-                "✓ " +
-                selectedVideoFile.name;
+                (exceedsUploadLimit ? "⚠ " : "✓ ") +
+                selectedVideoFile.name +
+                " (" + fileSizeMiB.toFixed(1) + " MiB)";
 
         }else{
 
@@ -9019,6 +9028,15 @@ async function uploadVideo(){
 
             throw new Error(
                 "Please select a video file."
+            );
+
+        }
+
+
+        if(selectedVideoFile.size > STREAMX_ADMIN_UPLOAD_MAX_BYTES){
+
+            throw new Error(
+                "This video is larger than the 1 GiB StreamX upload limit. Compress it to 1 GiB or smaller and try again."
             );
 
         }

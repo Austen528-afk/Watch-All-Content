@@ -18267,7 +18267,7 @@ async function deleteAllUnlinkedStorageObjects(){
     const countText = expectedReviewCount.toLocaleString();
     const sizeText = formatStorageBytes(expectedReviewBytes);
     const confirmed = window.confirm(
-        "Permanently delete all " + countText + " review-needed R2 files (" + sizeText + ")?\\n\\n" +
+        "Permanently delete all " + countText + " review-needed R2 files (" + sizeText + ")?\n\n" +
         "This includes candidates beyond the 500 shown in the table. StreamX will recheck known video and processing references. " +
         "External links and backups cannot be checked."
     );

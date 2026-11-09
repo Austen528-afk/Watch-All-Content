@@ -3258,6 +3258,11 @@ textarea{
 .storage-delete-button{background:#3b1721;border:1px solid #743044;color:#ff9db1;border-radius:7px;padding:6px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
 .storage-delete-button:hover:not(:disabled){background:#642437;color:#fff}
 .storage-delete-button:disabled{opacity:.55;cursor:wait}
+.storage-review-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:12px 0 14px;flex-wrap:wrap}
+.storage-delete-all-note{color:#999;font-size:12px;line-height:1.55;margin:0;max-width:780px;flex:1 1 420px}
+.storage-delete-all-button{background:#5a1b2b;border:1px solid #96384e;color:#fff;border-radius:8px;padding:10px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.storage-delete-all-button:hover:not(:disabled){background:#79253a}
+.storage-delete-all-button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:980px){.storage-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:550px){.storage-summary{grid-template-columns:1fr}}
 </style>
@@ -5650,6 +5655,10 @@ textarea{
         <section class="section">
             <div class="section-heading"><h2>Unlinked Files — Review needed</h2><p>Old R2 objects with no verified video association. This is not a deletion recommendation: check backups, prior references and external uses before removing anything.</p></div>
             <p class="storage-caption" id="storageReviewCount"></p>
+            <div class="storage-review-actions">
+                <p class="storage-delete-all-note">Delete all files classified as review-needed by the latest scan, including candidates beyond the 500 shown below. StreamX rechecks its video and processing records; external links and backups are not visible to it.</p>
+                <button type="button" class="storage-delete-all-button" id="storageDeleteAllButton" onclick="deleteAllUnlinkedStorageObjects()" disabled>Delete all review files</button>
+            </div>
             <div class="storage-table-wrap"><table class="storage-table"><thead><tr><th>R2 object key</th><th>Size</th><th>Uploaded / modified</th><th>Status</th><th>Action</th></tr></thead><tbody id="storageCandidateRows"><tr><td colspan="5">No scan yet.</td></tr></tbody></table></div>
         </section>
     </div>
@@ -18113,6 +18122,7 @@ async function loadStorageReport(){
     status.textContent = "Scanning Cloudflare R2 and checking Supabase references…";
     refresh.disabled = true;
     document.querySelectorAll("#storageCandidateRows .storage-delete-button").forEach(button=>{button.disabled=true;});
+    document.getElementById("storageDeleteAllButton").disabled = true;
     try {
         const {data:{session},error:sessionError} = await supabaseClient.auth.getSession();
         if(sessionError || !session?.access_token) throw new Error("Log in to view storage.");
@@ -18127,6 +18137,11 @@ async function loadStorageReport(){
         document.getElementById("storageRemaining").textContent = formatStorageDecimalGB(report.estimatedBucketHeadroomBytes);
         document.getElementById("storageLinked").textContent = formatStorageBytes(report.linkedBytes);
         document.getElementById("storageReview").textContent = formatStorageBytes(report.reviewBytes);
+        const deleteAllButton = document.getElementById("storageDeleteAllButton");
+        deleteAllButton.dataset.reviewCount = String(report.reviewCount);
+        deleteAllButton.dataset.reviewBytes = String(report.reviewBytes);
+        deleteAllButton.textContent = "Delete all review files";
+        deleteAllButton.disabled = Number(report.reviewCount) <= 0;
         const videos = Array.isArray(report.videoStorage) ? report.videoStorage : [];
         document.getElementById("storageVideoRows").innerHTML = videos.length ? videos.map(v=>`
             <tr><td><strong>${escapeHTML(v.title)}</strong> <span style="color:#888">#${escapeHTML(v.id)}</span></td>
@@ -18194,6 +18209,7 @@ async function deleteUnlinkedStorageObject(button){
     const status = document.getElementById("storageStatus");
     refresh.disabled = true;
     document.querySelectorAll("#storageCandidateRows .storage-delete-button").forEach(item=>{item.disabled=true;});
+    document.getElementById("storageDeleteAllButton").disabled = true;
     button.textContent = "Deleting…";
     status.classList.remove("error");
     status.textContent = "Rechecking references before deleting the selected R2 file…";
@@ -18230,10 +18246,99 @@ async function deleteUnlinkedStorageObject(button){
         status.textContent = error.message || "Could not delete this R2 file.";
         refresh.disabled = false;
         document.querySelectorAll("#storageCandidateRows .storage-delete-button").forEach(item=>{item.disabled=false;});
+        const deleteAllButton = document.getElementById("storageDeleteAllButton");
+        deleteAllButton.disabled = Number(deleteAllButton.dataset.reviewCount) <= 0;
         if(button.isConnected){
             button.disabled = false;
             button.textContent = "Delete";
         }
+    }
+}
+
+async function deleteAllUnlinkedStorageObjects(){
+    const button = document.getElementById("storageDeleteAllButton");
+    if(!button || button.disabled || storageReportLoading || storageDeleteInProgress) return;
+
+    const expectedReviewCount = Number(button.dataset.reviewCount);
+    const expectedReviewBytes = Number(button.dataset.reviewBytes);
+    if(!Number.isSafeInteger(expectedReviewCount) || expectedReviewCount <= 0 ||
+        !Number.isSafeInteger(expectedReviewBytes) || expectedReviewBytes < 0) return;
+
+    const countText = expectedReviewCount.toLocaleString();
+    const sizeText = formatStorageBytes(expectedReviewBytes);
+    const confirmed = window.confirm(
+        "Permanently delete all " + countText + " review-needed R2 files (" + sizeText + ")?\\n\\n" +
+        "This includes candidates beyond the 500 shown in the table. StreamX will recheck known video and processing references. " +
+        "External links and backups cannot be checked."
+    );
+    if(!confirmed) return;
+
+    const confirmationPhrase = window.prompt(
+        "Type DELETE ALL to confirm permanent deletion of " + countText + " review-needed files."
+    );
+    if(confirmationPhrase !== "DELETE ALL"){
+        if(confirmationPhrase !== null){
+            const status = document.getElementById("storageStatus");
+            status.textContent = "Bulk deletion cancelled because the confirmation text did not match.";
+        }
+        return;
+    }
+
+    storageDeleteInProgress = true;
+    const refresh = document.getElementById("storageRefreshButton");
+    const status = document.getElementById("storageStatus");
+    refresh.disabled = true;
+    button.disabled = true;
+    button.textContent = "Deleting all…";
+    document.querySelectorAll("#storageCandidateRows .storage-delete-button").forEach(item=>{item.disabled=true;});
+    status.classList.remove("error");
+    status.textContent = "Rechecking every review-needed file and deleting eligible objects…";
+
+    try {
+        const {data:{session},error:sessionError} = await supabaseClient.auth.getSession();
+        if(sessionError || !session?.access_token) throw new Error("Log in to delete storage files.");
+
+        const response = await fetch(STREAMX_MEDIA_WORKER_URL + "/admin/delete-all-unlinked-objects",{
+            method:"POST",
+            headers:{
+                "Authorization":"Bearer " + session.access_token,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                confirmationPhrase,
+                expectedReviewCount,
+                expectedReviewBytes
+            })
+        });
+        const result = await response.json().catch(()=>null);
+        if(!result || (!response.ok && !Number.isInteger(result.deletedCount))){
+            throw new Error(result?.error || "Bulk R2 deletion failed (HTTP " + response.status + ").");
+        }
+        if(!response.ok && result.deletedCount === 0){
+            throw new Error(result.error || "Bulk R2 deletion failed (HTTP " + response.status + ").");
+        }
+
+        storageDeleteInProgress = false;
+        await loadStorageReport();
+        if(result.failedCount > 0){
+            status.classList.add("error");
+            status.textContent = "Deleted " + result.deletedCount.toLocaleString() + " files (" +
+                formatStorageBytes(result.deletedBytes) + "); " + result.failedCount.toLocaleString() +
+                " could not be deleted. The report is refreshed; review the remaining files below.";
+        }else{
+            status.classList.remove("error");
+            status.textContent = "Deleted " + result.deletedCount.toLocaleString() + " files (" +
+                formatStorageBytes(result.deletedBytes) + "). Storage totals refreshed.";
+        }
+    } catch(error) {
+        storageDeleteInProgress = false;
+        const failureMessage = error.message || "Bulk R2 deletion did not complete.";
+        await loadStorageReport();
+        const refreshError = status.classList.contains("error") ? status.textContent : "";
+        status.classList.add("error");
+        status.textContent = refreshError
+            ? "Bulk deletion did not complete: " + failureMessage + " Storage refresh also failed: " + refreshError
+            : "Bulk deletion did not complete: " + failureMessage + " The storage list was refreshed; review it before trying again.";
     }
 }
 function openPage(pageId, button){

@@ -5614,32 +5614,32 @@ textarea{
         <section class="storage-target-panel" aria-labelledby="storageTargetTitle">
             <div class="storage-target-heading">
                 <div>
-                    <h2 id="storageTargetTitle">25 GB storage target</h2>
+                    <h2 id="storageTargetTitle">250 GB storage target</h2>
                     <p>Cloudflare R2 Standard · streamx-media</p>
                 </div>
                 <span class="storage-target-badge" id="storageTargetBadge">Awaiting scan</span>
             </div>
             <div class="storage-target-figures">
                 <div><span>Bucket storage used</span><strong id="storageTargetUsed">—</strong></div>
-                <div><span>Remaining to 25 GB</span><strong id="storageTargetLeft">—</strong></div>
-                <div><span>Early warning</span><strong>23 GB</strong></div>
-                <div><span>Estimated storage cost at 25 GB</span><strong>≈ $0.23 / month*</strong></div>
+                <div><span>Remaining to 250 GB</span><strong id="storageTargetLeft">—</strong></div>
+                <div><span>Early warning</span><strong>230 GB</strong></div>
+                <div><span>Estimated storage cost at 250 GB</span><strong>≈ $3.60 / month*</strong></div>
             </div>
             <div class="storage-meter" id="storageTargetMeter"
-                role="progressbar" aria-label="Bucket storage as a proportion of 25 GB target"
-                aria-valuemin="0" aria-valuemax="25" aria-valuenow="0">
+                role="progressbar" aria-label="Bucket storage as a proportion of 250 GB target"
+                aria-valuemin="0" aria-valuemax="250" aria-valuenow="0">
                 <div id="storageMeterFill"></div>
                 <span class="storage-meter-marker storage-meter-free" title="10 GB free-tier reference"></span>
-                <span class="storage-meter-marker storage-meter-warning" title="23 GB early warning"></span>
+                <span class="storage-meter-marker storage-meter-warning" title="230 GB early warning"></span>
             </div>
             <div class="storage-target-scale">
                 <span>0 GB</span><span>10 GB free reference</span>
-                <span>23 GB warning</span><span>25 GB target</span>
+                <span>230 GB warning</span><span>250 GB target</span>
             </div>
             <p id="storageTargetNotice" class="storage-target-notice" role="status" aria-live="polite">
-                Refresh storage to check the 23 GB warning threshold.
+                Refresh storage to check the 230 GB warning threshold.
             </p>
-            <p class="storage-caption">*Approximately $0.23/month for 25 GB-month of Standard storage with the 10 GB-month free allowance, before any other charges. This meter tracks the streamx-media bucket only, not all Cloudflare buckets or your actual monthly invoice. Cloudflare bills account-wide usage over time; 25 GB is a monitoring target, not an automatic upload or spending cap.</p>
+            <p class="storage-caption">*Approximately $3.60/month for 250 GB-month of Standard storage with the 10 GB-month free allowance, before any other charges. This meter tracks the streamx-media bucket only, not all Cloudflare buckets or your actual monthly invoice. Cloudflare bills account-wide usage over time; 250 GB is a monitoring target, not an automatic upload or spending cap.</p>
         </section>
         <div class="storage-summary">
             <div class="storage-metric"><span>Total R2 content in this bucket</span><strong id="storageTotal">—</strong></div>
@@ -18059,8 +18059,8 @@ let storageReportLoading = false;
 let storageDeleteInProgress = false;
 // The backend reports bytes. Decimal GB matches Cloudflare's bucket-size display.
 const STREAMX_STORAGE_GB_BYTES = 1000 * 1000 * 1000;
-const STREAMX_STORAGE_TARGET_BYTES = 25 * STREAMX_STORAGE_GB_BYTES;
-const STREAMX_STORAGE_WARNING_BYTES = 23 * STREAMX_STORAGE_GB_BYTES;
+const STREAMX_STORAGE_TARGET_BYTES = 250 * STREAMX_STORAGE_GB_BYTES;
+const STREAMX_STORAGE_WARNING_BYTES = 230 * STREAMX_STORAGE_GB_BYTES;
 function formatStorageDecimalGB(bytes){
     const number = Number(bytes);
     return Number.isFinite(number) && number >= 0
@@ -18090,19 +18090,19 @@ function updateStreamXStorageTarget(totalBytes){
     message.classList.toggle("warning", warning && !reached);
     message.classList.toggle("danger", reached);
     badge.textContent = reached ? "Target reached" : warning ? "Near target" : "Within target";
-    meter.setAttribute("aria-valuenow",String(Math.min(25,total / STREAMX_STORAGE_GB_BYTES).toFixed(2)));
-    meter.setAttribute("aria-valuetext",formatStorageDecimalGB(total) + " of 25 GB target");
+    meter.setAttribute("aria-valuenow",String(Math.min(250,total / STREAMX_STORAGE_GB_BYTES).toFixed(2)));
+    meter.setAttribute("aria-valuetext",formatStorageDecimalGB(total) + " of 250 GB target");
     if(reached){
-        message.textContent = "25 GB target reached or exceeded. " +
+        message.textContent = "250 GB target reached or exceeded. " +
             formatStorageDecimalGB(total - STREAMX_STORAGE_TARGET_BYTES) +
             " above the target. Review new uploads and file sizes; this does not prevent further uploads or charges.";
     }else if(warning){
         message.textContent = "Storage warning: " + formatStorageDecimalGB(remaining) +
-            " remaining to the 25 GB target. Review storage before adding more videos.";
+            " remaining to the 250 GB target. Review storage before adding more videos.";
     }else{
-        message.textContent = "Storage is below the 23 GB early-warning threshold. " +
+        message.textContent = "Storage is below the 230 GB early-warning threshold. " +
             formatStorageDecimalGB(STREAMX_STORAGE_WARNING_BYTES - total) +
-            " until the warning; " + formatStorageDecimalGB(remaining) + " until the 25 GB target.";
+            " until the warning; " + formatStorageDecimalGB(remaining) + " until the 250 GB target.";
     }
 }
 function formatStorageBytes(value) {
@@ -18173,7 +18173,7 @@ async function loadStorageReport(){
         document.getElementById("storageTargetLeft").textContent = "—";
         const notice = document.getElementById("storageTargetNotice");
         notice.classList.remove("warning","danger");
-        notice.textContent = "Storage could not be checked. The 23 GB warning status is currently unknown.";
+        notice.textContent = "Storage could not be checked. The 230 GB warning status is currently unknown.";
         const meter = document.getElementById("storageTargetMeter");
         meter.setAttribute("aria-valuenow","0");
         meter.setAttribute("aria-valuetext","Storage reading unavailable");
